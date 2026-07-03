@@ -1,0 +1,16 @@
+.main {
+  padding: 24px;
+}
+
+.members {
+  margin-top: 32px;
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  vertical-align: middle;
+}
+

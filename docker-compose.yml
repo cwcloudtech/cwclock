@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16-alpine
+    env_file:
+      - .env.example
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cwclock} -d ${POSTGRES_DB:-cwclock}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  flyway:
+    image: flyway/flyway:10-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      -url=jdbc:postgresql://db:5432/${POSTGRES_DB:-cwclock}
+      -user=${POSTGRES_USER:-cwclock}
+      -password=${POSTGRES_PASSWORD:-cwclock}
+      -connectRetries=10
+      migrate
+    volumes:
+      - ./cwclock-db/migrations:/flyway/sql
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    depends_on:
+      flyway:
+        condition: service_completed_successfully
+    env_file:
+      - .env.example
+    ports:
+      - "8080:8080"
+
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ui
+    env_file:
+      - .env.example
+    depends_on:
+      - api
+    ports:
+      - "3000:80"
+
+volumes:
+  db-data:

@@ -1,0 +1,130 @@
+.Task {
+  width: 70%;
+  margin: auto;
+  background-color: var(--cw-bg-alt);
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+}
+.TaskHead {
+  width: 70%;
+  margin: auto;
+  padding: 0.35rem 1.2rem;
+  background-color: var(--cw-bg-alt);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--cw-border);
+}
+.TaskHead > h6 {
+  padding: 0;
+  margin: 0;
+}
+.Edit {
+  display: flex;
+  font-size: 1.2rem;
+  align-items: center;
+  gap: 1.2rem;
+}
+.Edit > h6 {
+  padding: 0;
+  margin: 0;
+}
+.Desc {
+  width: 100%;
+  margin: auto;
+  padding: 1rem;
+  background-color: #fff;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--cw-spacing);
+  align-items: center;
+}
+.Desc > input {
+  padding: 0.5rem;
+  border: none;
+}
+
+.Projects {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  font-size: 22px;
+  color: var(--cw-primary);
+  gap: 0.6rem;
+}
+.Projects > h6 {
+  margin: 0;
+  padding: 0;
+}
+.Tags,
+.Tags2,
+.Tags3 {
+  background: none;
+  border: none;
+  padding: 0.3rem;
+  color: var(--cw-text-muted);
+  border-left: 1px solid var(--cw-border);
+  border-right: 1px solid var(--cw-border);
+  font: inherit;
+}
+.Tags:hover {
+  cursor: pointer;
+  color: var(--cw-primary);
+}
+.Tags2:hover {
+  color: var(--cw-danger);
+  cursor: pointer;
+}
+.Tags3:hover {
+  color: green;
+  cursor: pointer;
+}
+.Time {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+}
+.Time > h6 {
+  padding: 0;
+  margin: 0;
+}
+
+.Up > input {
+  padding: 0.3rem;
+  width: 100%;
+}
+.Up {
+  min-width: 20%;
+  padding: 8px;
+}
+.Up > h6 {
+  padding: 0;
+  margin: 0;
+}
+.Up:hover {
+  cursor: pointer;
+}
+
+@media only screen and (max-width: 980px) {
+  .Task {
+    width: 80%;
+  }
+  .TaskHead {
+    width: 80%;
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .Task {
+    width: 90%;
+  }
+  .TaskHead {
+    width: 90%;
+  }
+  .Desc {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.5rem;
+  }
+}

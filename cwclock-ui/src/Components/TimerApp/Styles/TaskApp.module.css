@@ -1,0 +1,43 @@
+.Body1 {
+  background-color: #f2f6f8;
+  min-height: 100vh;
+  padding-top: 30px;
+}
+.Empty {
+  padding: 2rem;
+  width: 25%;
+  margin: 2rem auto;
+  background-color: #fff;
+  text-align: center;
+}
+.Empty > p {
+  padding: 1.2rem;
+}
+.Empty > img {
+  width: 70%;
+  height: 25%;
+}
+.AppFlex {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+.sky {
+  border-top: 0.5px solid grey;
+  color: #1cb9f7;
+  cursor: pointer;
+  padding: 10px;
+}
+@media only screen and (max-width: 980px) {
+  .Empty {
+    width: 65%;
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .Empty {
+    width: 85%;
+  }
+}

@@ -1,0 +1,139 @@
+.Task {
+  width: 70%;
+  margin: auto;
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+}
+
+.Desc {
+  width: 100%;
+  margin: auto;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  align-items: stretch;
+}
+.Desc > input {
+  padding: 0.6rem;
+  border: 1px solid #ddd;
+  width: 100%;
+}
+
+.Projects {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  font-size: 1.4rem;
+  color: #1cb9f7;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.6rem;
+}
+.Projects > h6 {
+  padding: 0;
+  margin: 0;
+}
+.Tags {
+  color: slategrey;
+}
+.Tags:hover {
+  cursor: pointer;
+  color: #1cb9f7;
+  color: grey;
+  border-left: 1px light grey;
+  border-right: 1px light grey;
+}
+
+.TimerBtn {
+  width: 5rem;
+  padding: 0.5rem;
+  border: none;
+  background-color: #1cb9f7;
+  color: #fff;
+}
+.Blue {
+  color: white;
+  padding: 0.5rem;
+  width: 7.5rem;
+  background-color: #1cb9f7;
+  border: none;
+}
+.Red {
+  color: white;
+  padding: 0.5rem;
+  width: 7.5rem;
+  background-color: #f44336;
+  border: none;
+}
+.Timer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.2rem;
+  font-size: larger;
+  text-align: center;
+}
+.Timer > h6 {
+  padding: 0;
+  margin: 0;
+}
+@media only screen and (max-width: 980px) {
+  .Tags {
+    display: none;
+  }
+  .Desc > input {
+    padding: 0.6rem;
+    border: none;
+    width: 60%;
+    font-size: 0.7rem;
+  }
+  .Task {
+    width: 80%;
+  }
+  .TaskHead {
+    width: 80%;
+  }
+  .Desc {
+    padding: 0.5rem;
+  }
+  .Blue {
+    width: 6rem;
+  }
+  .Red {
+    width: 6rem;
+  }
+}
+@media only screen and (max-width: 600px) {
+  .Tags {
+    display: none;
+  }
+  .Projects {
+    font-size: 1rem;
+  }
+  .Desc > input {
+    padding: 0.6rem;
+    border: none;
+    width: 60%;
+    font-size: 0.7rem;
+  }
+  .Task {
+    width: 90%;
+  }
+  .TaskHead {
+    width: 90%;
+  }
+  .Desc {
+    padding: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .Blue {
+    padding: 0.2rem;
+    width: 4rem;
+  }
+  .Red {
+    padding: 0.2rem;
+    width: 4rem;
+  }
+}

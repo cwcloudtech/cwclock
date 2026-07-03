@@ -1,0 +1,4 @@
+body {
+  background-color: var(--cw-bg) !important;
+  font-family: var(--cw-font-family);
+}

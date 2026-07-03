@@ -1,0 +1,174 @@
+.Slideopen {
+  height: 100%;
+  width: 70px;
+  border: 2px solid black;
+}
+.Slideclose {
+  height: 100%;
+  width: 200px;
+  border: 2px solid red;
+}
+.main {
+  width: 100%;
+  height: 100vh;
+  background-color: white;
+  color: black;
+
+  /* position: absolute; */
+}
+.Slidebar {
+  height: 100%;
+  width: 100%;
+
+  /* border:1px solid greenyellow ; */
+}
+.slidingfuncbox {
+  display: flex;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin: auto;
+  border: 1px solid silver;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 5px -1px,
+    rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
+  text-align: center;
+  color: black;
+  height: 45px;
+  margin: auto;
+}
+.Slideflex {
+  display: flex;
+}
+
+.sidebarCol {
+  position: relative;
+}
+
+.sidebarToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  width: 100%;
+  background-color: #f1f1f1;
+  color: #444;
+  cursor: pointer;
+  border-bottom: 1px solid silver;
+}
+.sidebarToggle:hover {
+  background-color: #e0e0e0;
+  color: #1cb9f7;
+}
+
+.navbarleftmain {
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+  gap: 16px;
+  width: auto;
+}
+.navbarleftmain img {
+  width: 100px;
+  height: 90%;
+  margin-left: 10px;
+}
+
+.upgradebtn button {
+  display: none !important;
+}
+.upgradebtn button:hover {
+  color: white;
+  background-color: rgb(12, 172, 235);
+}
+.navbarrightmain {
+  display: flex;
+  justify-content: space-between;
+  width: 20%;
+  padding-left: 1.5rem;
+}
+.pages {
+  width: calc(100% - 20px);
+  height: 100vh;
+  overflow-x: hidden;
+}
+.pages::-webkit-scrollbar {
+  display: none;
+}
+.createOrgLink {
+  margin-top: 12px;
+  align-self: center;
+  color: #1cb9f7;
+  text-decoration: none;
+}
+
+.orgDropdownToggle,
+.profileDropdownToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #ddd !important;
+  background-color: white !important;
+  color: #333 !important;
+}
+.profileDropdownToggle {
+  border-radius: 50% !important;
+  width: 36px;
+  height: 36px;
+  padding: 0 !important;
+  justify-content: center;
+}
+.profileDropdownToggle::after {
+  display: none;
+}
+
+.orgAvatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.profileAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profileEmail {
+  color: #666666;
+  margin: 0;
+  word-break: break-all;
+  font-size: 0.85rem;
+}
+.uploadLabel {
+  color: #1cb9f7;
+  cursor: pointer;
+  margin: 0;
+}
+.loginBtn {
+  padding: 6px 12px;
+  background-color: #1cb9f7;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+@media (max-width: 800px) and (min-width: 300px) {
+  .navbar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 6px 0;
+  }
+  .navbarleftmain {
+    flex-wrap: wrap;
+  }
+  .navbarleftmain img {
+    width: 70px;
+  }
+  .navbarrightmain {
+    width: auto;
+    padding-left: 0.5rem;
+  }
+}

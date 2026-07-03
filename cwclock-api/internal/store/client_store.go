@@ -1,0 +1,163 @@
+package store
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"cwclock-api/internal/models"
+)
+
+type ClientStore struct {
+	pool *pgxpool.Pool
+}
+
+func NewClientStore(pool *pgxpool.Pool) *ClientStore {
+	return &ClientStore{pool: pool}
+}
+
+type clientData struct {
+	Name               string  `json:"name"`
+	Address            string  `json:"address"`
+	PostalCode         string  `json:"postalCode"`
+	City               string  `json:"city"`
+	Country            string  `json:"country"`
+	VATNumber          string  `json:"vatNumber"`
+	VATRate            float64 `json:"vatRate"`
+	VATDischargeMotive string  `json:"vatDischargeMotive"`
+	PurchaseOrder      string  `json:"purchaseOrder"`
+	HoursPerDay        float64 `json:"hoursPerDay"`
+}
+
+// ClientFields holds the editable, non-identifying fields of a client.
+type ClientFields struct {
+	Name               string
+	Address            string
+	PostalCode         string
+	City               string
+	Country            string
+	VATNumber          string
+	VATRate            float64
+	VATDischargeMotive string
+	PurchaseOrder      string
+	HoursPerDay        float64
+}
+
+func toClientData(f ClientFields) clientData {
+	vatRate := f.VATRate
+	if vatRate == 0 {
+		vatRate = 20
+	}
+	hoursPerDay := f.HoursPerDay
+	if hoursPerDay == 0 {
+		hoursPerDay = 7
+	}
+	return clientData{
+		Name:               f.Name,
+		Address:            f.Address,
+		PostalCode:         f.PostalCode,
+		City:               f.City,
+		Country:            f.Country,
+		VATNumber:          f.VATNumber,
+		VATRate:            vatRate,
+		VATDischargeMotive: f.VATDischargeMotive,
+		PurchaseOrder:      f.PurchaseOrder,
+		HoursPerDay:        hoursPerDay,
+	}
+}
+
+func scanClient(row pgx.Row) (models.Client, error) {
+	var c models.Client
+	var raw []byte
+	if err := row.Scan(&c.ID, &c.OrganizationID, &raw, &c.CreatedAt, &c.UpdatedAt); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return models.Client{}, ErrNotFound
+		}
+		return models.Client{}, err
+	}
+	var d clientData
+	if err := json.Unmarshal(raw, &d); err != nil {
+		return models.Client{}, err
+	}
+	c.Name = d.Name
+	c.Address = d.Address
+	c.PostalCode = d.PostalCode
+	c.City = d.City
+	c.Country = d.Country
+	c.VATNumber = d.VATNumber
+	c.VATRate = d.VATRate
+	c.VATDischargeMotive = d.VATDischargeMotive
+	c.PurchaseOrder = d.PurchaseOrder
+	c.HoursPerDay = d.HoursPerDay
+	return c, nil
+}
+
+func (s *ClientStore) Create(ctx context.Context, orgID string, f ClientFields) (models.Client, error) {
+	data, err := json.Marshal(toClientData(f))
+	if err != nil {
+		return models.Client{}, err
+	}
+	row := s.pool.QueryRow(ctx, `
+		INSERT INTO clients (organization_id, data)
+		VALUES ($1, $2)
+		RETURNING id, organization_id, data, created_at, updated_at
+	`, orgID, data)
+	return scanClient(row)
+}
+
+func (s *ClientStore) FindByID(ctx context.Context, id string) (models.Client, error) {
+	row := s.pool.QueryRow(ctx, `
+		SELECT id, organization_id, data, created_at, updated_at
+		FROM clients WHERE id = $1
+	`, id)
+	return scanClient(row)
+}
+
+func (s *ClientStore) List(ctx context.Context, orgID string) ([]models.Client, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, organization_id, data, created_at, updated_at
+		FROM clients WHERE organization_id = $1
+		ORDER BY created_at DESC
+	`, orgID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	clients := []models.Client{}
+	for rows.Next() {
+		c, err := scanClient(rows)
+		if err != nil {
+			return nil, err
+		}
+		clients = append(clients, c)
+	}
+	return clients, rows.Err()
+}
+
+func (s *ClientStore) Update(ctx context.Context, id string, f ClientFields) (models.Client, error) {
+	data, err := json.Marshal(toClientData(f))
+	if err != nil {
+		return models.Client{}, err
+	}
+	row := s.pool.QueryRow(ctx, `
+		UPDATE clients SET data = $2, updated_at = now()
+		WHERE id = $1
+		RETURNING id, organization_id, data, created_at, updated_at
+	`, id, data)
+	return scanClient(row)
+}
+
+func (s *ClientStore) Delete(ctx context.Context, id string) error {
+	tag, err := s.pool.Exec(ctx, `DELETE FROM clients WHERE id = $1`, id)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
