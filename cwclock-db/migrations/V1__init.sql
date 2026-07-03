@@ -22,7 +22,7 @@ CREATE TABLE organization_members (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'member', 'reader')),
+    role VARCHAR(20) NOT NULL CHECK (role IN ('owner', 'admin', 'member', 'reader')),
     data JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -67,12 +67,3 @@ CREATE TABLE time_entries (
 CREATE INDEX idx_time_entries_organization_id ON time_entries(organization_id);
 CREATE INDEX idx_time_entries_project_id ON time_entries(project_id);
 CREATE INDEX idx_time_entries_user_id ON time_entries(user_id);
-
-ALTER TABLE organization_members ADD CONSTRAINT organization_members_role_check CHECK (role IN ('owner', 'admin', 'member', 'reader'));
-
--- Give every organization's owner an explicit membership row so their
--- daily rate has somewhere to live, unifying owner/admin/member/reader
--- as rows of the same table instead of a virtual, row-less owner.
-INSERT INTO organization_members (organization_id, user_id, role)
-SELECT id, owner_id, 'owner' FROM organizations
-ON CONFLICT (organization_id, user_id) DO UPDATE SET role = 'owner';
