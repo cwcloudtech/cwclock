@@ -27,7 +27,7 @@ const clientFormConfig = {
     { name: "city", type: "text", label: "City" },
     { name: "country", type: "text", label: "Country" },
     { name: "vatNumber", type: "text", label: "VAT number" },
-    { name: "vatRate", type: "number", label: "VAT rate % (default 20)", step: "0.01" },
+    { name: "vatRate", type: "number", label: "VAT rate % (default 20%)", step: "0.01" },
     { name: "vatDischargeMotive", type: "text", label: "VAT discharge motive" },
     { name: "purchaseOrder", type: "text", label: "Purchase order" },
     { name: "hoursPerDay", type: "number", label: "Hours/day (default 7)", step: "0.01" },
