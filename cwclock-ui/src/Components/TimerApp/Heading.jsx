@@ -1,5 +1,4 @@
 import React from "react";
-import { FaRegEdit } from "react-icons/fa";
 import styles from "./Styles/TaskComp.module.css";
 
 const Heading = () => {
@@ -27,10 +26,9 @@ const Heading = () => {
     <div className={styles.TaskHead}>
       <h6>{day}</h6>
       <div className={styles.Edit}>
-        <h6>
+        <h6 title="Current time">
           {h < 10 ? "0" + h : h}:{m < 10 ? "0" + m : m}:{s < 10 ? "0" + s : s}
         </h6>
-        <FaRegEdit style={{ fontWeight: "light", fontSize: "20px" }} />
       </div>
     </div>
   );

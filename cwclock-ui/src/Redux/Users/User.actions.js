@@ -1,5 +1,5 @@
 import axios from "axios";
-import { updatePicture } from "../Auth/Auth.types";
+import { updatePicture, updateProfile } from "../Auth/Auth.types";
 
 const ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/users/`;
 
@@ -15,6 +15,16 @@ export const updatePictureApi = (picture, token) => async (dispatch) => {
   } catch (e) {
     // Swallow: the profile dropdown just keeps the previous picture.
   }
+};
+
+export const updateProfileApi = (name, surname, token) => async (dispatch) => {
+  const { data } = await axios.put(
+    `${ENDPOINT}me`,
+    { name, surname },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  dispatch({ type: updateProfile, payload: data });
+  return data;
 };
 
 // searchUsersApi powers email autocomplete; it doesn't touch global state,

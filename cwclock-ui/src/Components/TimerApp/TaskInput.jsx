@@ -26,7 +26,6 @@ const TaskInput = () => {
       }
       let taskObj = {
         text: name || "Task",
-        status: false,
         day: new Date().toISOString().slice(0, 10),
         start: start,
         end: `${hours2}:${minutes2}:${seconds2}`,
@@ -49,6 +48,7 @@ const TaskInput = () => {
           className={styles.textInput}
           type="text"
           placeholder="What are you working on?"
+          title="What are you working on?"
           onChange={(e) => setName(e.target.value)}
         />
         <select
@@ -56,6 +56,7 @@ const TaskInput = () => {
           value={projectId}
           disabled={timerOn}
           onChange={(e) => setProjectId(e.target.value)}
+          title="Project"
         >
           <option value="">Project</option>
           {projects.map((p) => (
@@ -65,7 +66,7 @@ const TaskInput = () => {
           ))}
         </select>
         <div className={styles.Timer}>
-          <span className={styles.clock}>
+          <span className={styles.clock} title="Elapsed time">
             {hrs < 10 ? "0" + hrs : hrs}:{min < 10 ? "0" + min : min}:
             {sec < 10 ? "0" + sec : sec}
           </span>
@@ -73,6 +74,7 @@ const TaskInput = () => {
             className={timerOn ? styles.Red : styles.Blue}
             onClick={handleSubmit}
             disabled={!projectId}
+            title={timerOn ? "Stop the timer" : "Start the timer"}
           >
             {timerOn ? "Stop" : "Start"}
           </button>

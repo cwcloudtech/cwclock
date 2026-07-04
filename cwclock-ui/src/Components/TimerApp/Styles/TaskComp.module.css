@@ -63,6 +63,16 @@
   padding: 0;
 }
 
+.Projects > select {
+  padding: 6px 8px;
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-sm);
+  color: var(--cw-primary-700);
+  font-weight: 600;
+  background-color: var(--cw-surface);
+  max-width: 160px;
+}
+
 .Tags,
 .Tags2,
 .Tags3 {
@@ -135,8 +145,11 @@
   color: var(--cw-text);
 }
 
-.Up:hover {
-  cursor: pointer;
+.RowActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
 }
 
 @media only screen and (max-width: 700px) {

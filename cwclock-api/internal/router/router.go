@@ -41,6 +41,7 @@ func New(
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.Auth(jwtSecret))
 				r.Get("/me", userHandler.Me)
+				r.Put("/me", userHandler.UpdateProfile)
 				r.Put("/me/picture", userHandler.UpdatePicture)
 				r.Get("/search", userHandler.Search)
 			})

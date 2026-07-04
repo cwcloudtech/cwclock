@@ -16,6 +16,7 @@ import { searchUsersApi } from "../../Redux/Users/User.actions";
 import RequiredMark from "../common/RequiredMark";
 import ConfigForm from "../common/ConfigForm";
 import CollapsiblePanel from "../common/CollapsiblePanel";
+import memberLabel from "../common/memberLabel";
 
 const useEmailAutocomplete = (email, enabled, token) => {
   const dispatch = useDispatch();
@@ -79,11 +80,14 @@ const MemberRow = ({ member, canSetRate, orgId, token }) => {
   return (
     <li className="cw-list-item">
       <div className={styles.memberRow}>
-        <span>{member.email} - {member.role}</span>
+        <span>
+          {memberLabel(member)}
+          {member.name && ` (${member.email})`} - {member.role}
+        </span>
         {canSetRate && !editing && (
           <span className={styles.rate}>
             {member.dailyRate ? `${member.dailyRate} ${member.currency}/day` : "No daily rate set"}{" "}
-            <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
+            <Button size="sm" variant="ghost" onClick={() => setEditing(true)} title="Edit daily rate">
               Edit
             </Button>
           </span>
@@ -100,6 +104,7 @@ const MemberRow = ({ member, canSetRate, orgId, token }) => {
               step="0.01"
               value={dailyRate}
               onChange={(e) => setDailyRate(e.target.value)}
+              title="Daily rate"
             />
           </div>
           <div className="cw-field">
@@ -109,12 +114,13 @@ const MemberRow = ({ member, canSetRate, orgId, token }) => {
               type="text"
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
+              title="Currency"
             />
           </div>
-          <Button size="sm" type="submit">
+          <Button size="sm" type="submit" title="Save daily rate">
             Save
           </Button>
-          <Button size="sm" variant="secondary" onClick={() => setEditing(false)}>
+          <Button size="sm" variant="secondary" onClick={() => setEditing(false)} title="Discard changes">
             Cancel
           </Button>
         </form>
@@ -229,7 +235,7 @@ const Organizations = () => {
       <ul className="cw-list">
         {organizations.map((org) => (
           <li key={org.id} className="cw-list-item">
-            <label className={styles.orgOption}>
+            <label className={styles.orgOption} title={`Switch to ${org.name}`}>
               <input
                 type="radio"
                 name="currentOrg"
@@ -269,12 +275,17 @@ const Organizations = () => {
                     submitLabel="Save"
                     error={editError}
                   />
-                  <Button variant="secondary" onClick={() => setEditFields(null)}>
+                  <Button variant="secondary" onClick={() => setEditFields(null)} title="Discard changes">
                     Cancel
                   </Button>
                 </div>
               ) : (
-                <Button variant="secondary" onClick={startEdit} className={styles.editOrgBtn}>
+                <Button
+                  variant="secondary"
+                  onClick={startEdit}
+                  className={styles.editOrgBtn}
+                  title="Edit this organization's details"
+                >
                   Edit organization
                 </Button>
               )}
@@ -310,10 +321,11 @@ const Organizations = () => {
                       value={memberEmail}
                       onChange={(e) => setMemberEmail(e.target.value)}
                       required
+                      title="Member email"
                     />
                     <datalist id="member-email-suggestions">
                       {memberSuggestions.map((u) => (
-                        <option key={u.id} value={u.email} />
+                        <option key={u.id} value={u.email} label={memberLabel(u)} />
                       ))}
                     </datalist>
                   </div>
@@ -323,13 +335,14 @@ const Organizations = () => {
                       className="cw-select"
                       value={memberRole}
                       onChange={(e) => setMemberRole(e.target.value)}
+                      title="Role"
                     >
                       <option value="admin">Admin</option>
                       <option value="member">Member</option>
                       <option value="reader">Reader</option>
                     </select>
                   </div>
-                  <Button type="submit">Add member</Button>
+                  <Button type="submit" title="Invite this member">Add member</Button>
                   {memberError && <p className="cw-error">{memberError}</p>}
                 </form>
               </CollapsiblePanel>
@@ -348,14 +361,15 @@ const Organizations = () => {
                       value={transferEmail}
                       onChange={(e) => setTransferEmail(e.target.value)}
                       required
+                      title="New owner's email"
                     />
                     <datalist id="transfer-email-suggestions">
                       {transferSuggestions.map((u) => (
-                        <option key={u.id} value={u.email} />
+                        <option key={u.id} value={u.email} label={memberLabel(u)} />
                       ))}
                     </datalist>
                   </div>
-                  <Button type="submit" variant="danger">
+                  <Button type="submit" variant="danger" title="Transfer ownership to this member">
                     Transfer ownership
                   </Button>
                   {transferError && <p className="cw-error">{transferError}</p>}

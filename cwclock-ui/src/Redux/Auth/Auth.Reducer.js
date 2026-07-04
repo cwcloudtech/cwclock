@@ -1,4 +1,4 @@
-import { error, loading, login, logout, register, updatePicture } from "./Auth.types";
+import { error, loading, login, logout, register, updatePicture, updateProfile } from "./Auth.types";
 
 const user = JSON.parse(localStorage.getItem("User"));
 
@@ -41,6 +41,11 @@ export const AuthReducer = (state = initialstate, { type, payload }) => {
     }
     case updatePicture: {
       const updatedUser = { ...state.user, picture: payload.picture };
+      localStorage.setItem("User", JSON.stringify(updatedUser));
+      return { ...state, user: updatedUser };
+    }
+    case updateProfile: {
+      const updatedUser = { ...state.user, name: payload.name, surname: payload.surname };
       localStorage.setItem("User", JSON.stringify(updatedUser));
       return { ...state, user: updatedUser };
     }

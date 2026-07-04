@@ -110,7 +110,7 @@ const ConfigForm = ({ config, values, onChange, onSubmit, submitLabel = "Save", 
           {renderControl(field)}
         </div>
       ))}
-      <Button type="submit">{submitLabel}</Button>
+      <Button type="submit" title={submitLabel}>{submitLabel}</Button>
       {error && <p className="cw-error">{error}</p>}
     </form>
   );

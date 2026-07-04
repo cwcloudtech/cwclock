@@ -12,6 +12,7 @@ const CollapsiblePanel = ({ title, defaultOpen = false, children }) => {
         className={styles.header}
         onClick={() => setOpen(!open)}
         aria-expanded={open}
+        title={open ? `Collapse ${title}` : `Expand ${title}`}
       >
         <span className={styles.title}>{title}</span>
         {open ? <FiChevronUp /> : <FiChevronDown />}

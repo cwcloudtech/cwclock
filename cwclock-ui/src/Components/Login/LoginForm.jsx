@@ -51,6 +51,7 @@ const LoginForm = ({ label, checkBox }) => {
             value={email}
             type="email"
             placeholder="Enter email"
+            title="Email address"
           />
         </div>
 
@@ -62,15 +63,16 @@ const LoginForm = ({ label, checkBox }) => {
             value={password}
             type="password"
             placeholder="Password"
+            title="Password"
           />
         </div>
 
-        <label className={styles.formflex}>
+        <label className={styles.formflex} title={checkBox}>
           <input type="checkbox" />
           {checkBox}
         </label>
 
-        <button type="submit" className={styles.btn}>
+        <button type="submit" className={styles.btn} title="Log in to your account">
           Log In
         </button>
       </form>

@@ -9,7 +9,6 @@ type TimeEntry struct {
 	ProjectID      string    `json:"projectId"`
 	UserID         string    `json:"userId"`
 	Text           string    `json:"text"`
-	Status         bool      `json:"status"`
 	Day            string    `json:"day"`
 	Start          *string   `json:"start"`
 	End            *string   `json:"end"`

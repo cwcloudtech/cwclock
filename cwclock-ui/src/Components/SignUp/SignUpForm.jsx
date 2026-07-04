@@ -10,13 +10,15 @@ const SignUpForm = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useSelector((state) => state.auth);
   const [formData, setFormData] = useState({
+    name: "",
+    surname: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
   const [error, setError] = useState("");
 
-  const { email, password, confirmPassword } = formData;
+  const { name, surname, email, password, confirmPassword } = formData;
 
   const onChange = (e) => {
     let { name, value } = e.target;
@@ -28,11 +30,13 @@ const SignUpForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError("Passwords doesn't match.");
       return;
     }
     setError("");
     const userData = {
+      name,
+      surname,
       email,
       password,
     };
@@ -56,10 +60,35 @@ const SignUpForm = () => {
           <input
             className={styles.input}
             onChange={onChange}
+            name="name"
+            value={name}
+            type="text"
+            placeholder="First name"
+            title="First name"
+          />
+        </div>
+
+        <div className={styles.field}>
+          <input
+            className={styles.input}
+            onChange={onChange}
+            name="surname"
+            value={surname}
+            type="text"
+            placeholder="Last name"
+            title="Last name"
+          />
+        </div>
+
+        <div className={styles.field}>
+          <input
+            className={styles.input}
+            onChange={onChange}
             name="email"
             value={email}
             type="email"
             placeholder="Enter email"
+            title="Email address"
           />
         </div>
 
@@ -71,6 +100,7 @@ const SignUpForm = () => {
             value={password}
             type="password"
             placeholder="Password"
+            title="Password"
           />
         </div>
 
@@ -82,12 +112,13 @@ const SignUpForm = () => {
             value={confirmPassword}
             type="password"
             placeholder="Confirm password"
+            title="Confirm password"
           />
         </div>
 
         {error && <p className="cw-error">{error}</p>}
 
-        <button type="submit" className={styles.btn}>
+        <button type="submit" className={styles.btn} title="Create your account">
           Create account
         </button>
       </form>

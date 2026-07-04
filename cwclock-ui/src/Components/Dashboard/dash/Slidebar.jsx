@@ -3,6 +3,8 @@ import styles from "./STYLE/Slidebar.module.css";
 import { FaChevronLeft, FaChevronRight, FaUserCheck } from "react-icons/fa";
 import { Route, Routes, useNavigate, Link } from "react-router-dom";
 import Dropdown, { DropdownItem, DropdownText, DropdownDivider } from "../../common/Dropdown";
+import EditProfileModal from "../../common/EditProfileModal";
+import memberLabel from "../../common/memberLabel";
 import logo from "../../../assets/images/cwclock-logo.svg";
 import TimeTracker from "../pages/TimeTracker";
 import SidebarNav from "./SidebarNav";
@@ -18,6 +20,7 @@ import fileToBase64 from "../../common/fileToBase64";
 
 const Slidebar = () => {
   const [expanded, setExpanded] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
   const handleclick = () => {
     setExpanded(!expanded);
   };
@@ -53,10 +56,11 @@ const Slidebar = () => {
     <div className={styles.main}>
       <div className={styles.navbar}>
         <div className={styles.navbarleftmain}>
-          <img src={logo} alt="cwclock logo" className={styles.logo} />
+          <img src={logo} alt="cwclock logo" className={styles.logo} title="CWClock" />
 
           {organizations.length > 0 ? (
             <Dropdown
+              title="Switch organization"
               trigger={
                 <>
                   {currentOrg?.picture && (
@@ -93,6 +97,7 @@ const Slidebar = () => {
           {user.token ? (
             <Dropdown
               align="end"
+              title="Account menu"
               triggerClassName={styles.profileTrigger}
               trigger={
                 user.picture ? (
@@ -102,23 +107,43 @@ const Slidebar = () => {
                 )
               }
             >
-              <DropdownText>{user.email}</DropdownText>
-              <DropdownText>
-                <label className={styles.uploadLabel}>
-                  Change picture
-                  <input type="file" accept="image/*" hidden onChange={handlePictureChange} />
-                </label>
-              </DropdownText>
-              <DropdownDivider />
-              <DropdownItem onClick={handleLogout}>Logout</DropdownItem>
+              {(close) => (
+                <>
+                  <DropdownText>{memberLabel(user)}</DropdownText>
+                  {(user.name || user.surname) && (
+                    <DropdownText className={styles.profileEmail}>{user.email}</DropdownText>
+                  )}
+                  <DropdownItem
+                    onClick={() => {
+                      setShowEditProfile(true);
+                      close();
+                    }}
+                    title="Edit your first and last name"
+                  >
+                    Edit profile
+                  </DropdownItem>
+                  <DropdownText>
+                    <label className={styles.uploadLabel} title="Upload a new profile picture">
+                      Change picture
+                      <input type="file" accept="image/*" hidden onChange={handlePictureChange} />
+                    </label>
+                  </DropdownText>
+                  <DropdownDivider />
+                  <DropdownItem onClick={handleLogout} title="Sign out of your account">
+                    Logout
+                  </DropdownItem>
+                </>
+              )}
             </Dropdown>
           ) : (
-            <button className={styles.loginBtn} onClick={() => navigate("/login")}>
+            <button className={styles.loginBtn} onClick={() => navigate("/login")} title="Go to the login page">
               Login
             </button>
           )}
         </div>
       </div>
+
+      <EditProfileModal show={showEditProfile} onClose={() => setShowEditProfile(false)} user={user} />
 
       <div className={styles.Slideflex}>
         <div className={`${styles.sidebarCol} ${expanded ? styles.sidebarColExpanded : ""}`}>

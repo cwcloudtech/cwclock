@@ -212,7 +212,7 @@ type memberData struct {
 func scanMember(row pgx.Row) (models.Member, error) {
 	var m models.Member
 	var raw []byte
-	if err := row.Scan(&m.ID, &m.OrganizationID, &m.UserID, &m.Email, &m.Role, &raw, &m.CreatedAt, &m.UpdatedAt); err != nil {
+	if err := row.Scan(&m.ID, &m.OrganizationID, &m.UserID, &m.Email, &m.Name, &m.Surname, &m.Role, &raw, &m.CreatedAt, &m.UpdatedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return models.Member{}, ErrNotFound
 		}
@@ -227,14 +227,25 @@ func scanMember(row pgx.Row) (models.Member, error) {
 	return m, nil
 }
 
-const memberColumns = `m.id, m.organization_id, m.user_id, u.email, m.role, m.data, m.created_at, m.updated_at`
+const memberColumns = `m.id, m.organization_id, m.user_id, u.email,
+	COALESCE(u.data->>'name', ''), COALESCE(u.data->>'surname', ''),
+	m.role, m.data, m.created_at, m.updated_at`
+
+// memberUserLookup fetches a single user's identity fields by id, used by
+// mutations below that RETURN a member row without joining organization_members.
+const memberUserLookup = `
+	(SELECT email FROM users WHERE id = $2),
+	(SELECT COALESCE(data->>'name', '') FROM users WHERE id = $2),
+	(SELECT COALESCE(data->>'surname', '') FROM users WHERE id = $2),
+`
 
 func (s *OrgStore) AddMember(ctx context.Context, orgID, userID string, role models.Role) (models.Member, error) {
 	row := s.pool.QueryRow(ctx, `
 		INSERT INTO organization_members (organization_id, user_id, role)
 		VALUES ($1, $2, $3)
 		RETURNING id, organization_id, user_id,
-			(SELECT email FROM users WHERE id = $2), role, data, created_at, updated_at
+			`+memberUserLookup+`
+			role, data, created_at, updated_at
 	`, orgID, userID, string(role))
 	return scanMember(row)
 }
@@ -244,7 +255,8 @@ func (s *OrgStore) UpdateMemberRole(ctx context.Context, orgID, userID string, r
 		UPDATE organization_members SET role = $3, updated_at = now()
 		WHERE organization_id = $1 AND user_id = $2
 		RETURNING id, organization_id, user_id,
-			(SELECT email FROM users WHERE id = $2), role, data, created_at, updated_at
+			`+memberUserLookup+`
+			role, data, created_at, updated_at
 	`, orgID, userID, string(role))
 	return scanMember(row)
 }
@@ -259,7 +271,8 @@ func (s *OrgStore) SetMemberRate(ctx context.Context, orgID, userID string, dail
 		UPDATE organization_members SET data = $3, updated_at = now()
 		WHERE organization_id = $1 AND user_id = $2
 		RETURNING id, organization_id, user_id,
-			(SELECT email FROM users WHERE id = $2), role, data, created_at, updated_at
+			`+memberUserLookup+`
+			role, data, created_at, updated_at
 	`, orgID, userID, data)
 	return scanMember(row)
 }

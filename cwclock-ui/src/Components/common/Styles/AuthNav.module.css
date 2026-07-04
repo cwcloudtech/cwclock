@@ -1,10 +1,12 @@
 .nav {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   max-width: 1000px;
   margin: 0 auto;
-  padding: 20px var(--cw-spacing-lg);
+  padding: var(--cw-spacing-xl) var(--cw-spacing-lg) var(--cw-spacing);
+  text-align: center;
 }
 
 .logo {
@@ -13,14 +15,16 @@
 }
 
 .logo img {
-  height: 32px;
+  height: 72px;
   width: auto;
 }
 
 .actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px;
+  margin-top: var(--cw-spacing);
   font-size: 0.9rem;
 }
 
@@ -40,7 +44,7 @@
 }
 
 @media (max-width: 480px) {
-  .prompt {
-    display: none;
+  .logo img {
+    height: 56px;
   }
 }

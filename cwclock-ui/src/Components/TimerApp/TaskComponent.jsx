@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import styles from "./Styles/TaskComp.module.css";
 import { MdDeleteForever } from "react-icons/md";
+import { FaRegEdit } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { deleteTasksApi, updateTasksApi } from "../../Redux/Tasks/Task.actions";
 import ConfirmModal from "../common/ConfirmModal";
+import memberLabel from "../common/memberLabel";
 
 const fieldsFromItem = (item) => ({
   text: item.text,
@@ -11,7 +13,7 @@ const fieldsFromItem = (item) => ({
   start: item.start || "",
   end: item.end || "",
   allDay: item.allDay,
-  status: item.status,
+  projectId: item.projectId,
   userId: item.userId,
 });
 
@@ -42,14 +44,16 @@ const TaskComponent = ({ item }) => {
   };
 
   const handleSave = () => {
+    const selectedProject = projects.find((p) => p.id === form.projectId);
     const update = {
       ...item,
       text: form.text,
       day: form.day,
-      status: form.status,
       allDay: form.allDay,
       start: form.allDay ? null : form.start,
       end: form.allDay ? null : form.end,
+      projectId: form.projectId,
+      clientId: selectedProject ? selectedProject.clientId : item.clientId,
       userId: form.userId,
     };
     dispatch(updateTasksApi(update, currentOrgId, user.token));
@@ -67,20 +71,32 @@ const TaskComponent = ({ item }) => {
               <input
                 type="text"
                 autoFocus
+                title="Task description"
                 value={form.text}
                 onChange={(e) => setForm({ ...form, text: e.target.value })}
               />
             </div>
             <div className={styles.Projects}>
-              <h6>{project ? project.name : ""}</h6>
+              <select
+                title="Project"
+                value={form.projectId}
+                onChange={(e) => setForm({ ...form, projectId: e.target.value })}
+              >
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className={styles.Time}>
               <input
                 type="date"
+                title="Day"
                 value={form.day}
                 onChange={(e) => setForm({ ...form, day: e.target.value })}
               />
-              <label>
+              <label title="Mark as an all-day entry">
                 <input
                   type="checkbox"
                   checked={form.allDay}
@@ -93,53 +109,49 @@ const TaskComponent = ({ item }) => {
                   <input
                     type="time"
                     step="1"
+                    title="Start time"
                     value={form.start}
                     onChange={(e) => setForm({ ...form, start: e.target.value })}
                   />
                   <input
                     type="time"
                     step="1"
+                    title="End time"
                     value={form.end}
                     onChange={(e) => setForm({ ...form, end: e.target.value })}
                   />
                 </>
               )}
-              <label>
-                <input
-                  type="checkbox"
-                  checked={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.checked })}
-                />{" "}
-                Done
-              </label>
               {isAdminOrOwner && (
                 <select
+                  title="Reassign to a member"
                   value={form.userId}
                   onChange={(e) => setForm({ ...form, userId: e.target.value })}
                 >
                   {members.map((m) => (
                     <option key={m.userId} value={m.userId}>
-                      {m.email}
+                      {memberLabel(m)}
                     </option>
                   ))}
                 </select>
               )}
             </div>
-            <button type="button" className={styles.Tags3} onClick={handleSave}>
+            <button type="button" className={styles.Tags3} onClick={handleSave} title="Save changes">
               Save
             </button>
-            <button type="button" className={styles.Tags} onClick={() => setIsEditing(false)}>
+            <button
+              type="button"
+              className={styles.Tags}
+              onClick={() => setIsEditing(false)}
+              title="Discard changes"
+            >
               Cancel
             </button>
           </>
         ) : (
           <>
-            <div
-              className={styles.Up}
-              onClick={canEdit ? () => setIsEditing(true) : undefined}
-              style={canEdit ? undefined : { cursor: "default" }}
-            >
-              <h6 style={{ color: item.status ? "var(--cw-success)" : "var(--cw-danger)" }}>{item.text}</h6>
+            <div className={styles.Up}>
+              <h6>{item.text}</h6>
             </div>
             <div className={styles.Projects}>
               <h6>{project ? project.name : ""}</h6>
@@ -147,18 +159,29 @@ const TaskComponent = ({ item }) => {
             <div className={styles.Time}>
               <span>{item.day}</span>
               <span>{timeLabel}</span>
-              {assignee && <span>{assignee.email}</span>}
+              {assignee && <span>{memberLabel(assignee)}</span>}
             </div>
           </>
         )}
         {!isEditing && canEdit && (
-          <button
-            type="button"
-            className={styles.Tags2}
-            onClick={() => setShowDeleteConfirm(true)}
-          >
-            <MdDeleteForever style={{ fontSize: "20px" }} />
-          </button>
+          <div className={styles.RowActions}>
+            <button
+              type="button"
+              className={styles.Tags}
+              onClick={() => setIsEditing(true)}
+              title="Edit"
+            >
+              <FaRegEdit style={{ fontSize: "18px" }} />
+            </button>
+            <button
+              type="button"
+              className={styles.Tags2}
+              onClick={() => setShowDeleteConfirm(true)}
+              title="Delete"
+            >
+              <MdDeleteForever style={{ fontSize: "20px" }} />
+            </button>
+          </div>
         )}
       </div>
 

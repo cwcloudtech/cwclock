@@ -32,6 +32,8 @@ type Member struct {
 	OrganizationID string    `json:"organizationId"`
 	UserID         string    `json:"userId"`
 	Email          string    `json:"email"`
+	Name           string    `json:"name"`
+	Surname        string    `json:"surname"`
 	Role           Role      `json:"role"`
 	DailyRate      *float64  `json:"dailyRate,omitempty"`
 	Currency       string    `json:"currency,omitempty"`

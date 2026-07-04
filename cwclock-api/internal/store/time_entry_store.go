@@ -21,18 +21,17 @@ func NewTimeEntryStore(pool *pgxpool.Pool) *TimeEntryStore {
 
 type timeEntryData struct {
 	Text   string  `json:"text"`
-	Status bool    `json:"status"`
 	Day    string  `json:"day"`
 	Start  *string `json:"start"`
 	End    *string `json:"end"`
 	AllDay bool    `json:"allDay"`
 }
 
-// TimeEntryFields holds the editable fields of a time entry. When AllDay is
-// true, Start/End are always stored as null regardless of what's passed.
+// TimeEntryFields holds the editable, non-relational fields of a time entry.
+// When AllDay is true, Start/End are always stored as null regardless of
+// what's passed.
 type TimeEntryFields struct {
 	Text   string
-	Status bool
 	Day    string
 	Start  *string
 	End    *string
@@ -40,7 +39,7 @@ type TimeEntryFields struct {
 }
 
 func toTimeEntryData(f TimeEntryFields) timeEntryData {
-	d := timeEntryData{Text: f.Text, Status: f.Status, Day: f.Day, AllDay: f.AllDay}
+	d := timeEntryData{Text: f.Text, Day: f.Day, AllDay: f.AllDay}
 	if !f.AllDay {
 		d.Start = f.Start
 		d.End = f.End
@@ -62,7 +61,6 @@ func scanTimeEntry(row pgx.Row) (models.TimeEntry, error) {
 		return models.TimeEntry{}, err
 	}
 	t.Text = d.Text
-	t.Status = d.Status
 	t.Day = d.Day
 	t.Start = d.Start
 	t.End = d.End
@@ -126,20 +124,32 @@ func (s *TimeEntryStore) List(ctx context.Context, orgID, userID string) ([]mode
 	return entries, rows.Err()
 }
 
-// Update updates a time entry's fields. When reassignUserID is non-empty,
-// the entry is also reassigned to that user (callers must have already
-// authorized the reassignment).
-func (s *TimeEntryStore) Update(ctx context.Context, id, reassignUserID string, f TimeEntryFields) (models.TimeEntry, error) {
+// TimeEntryReassignment holds the optional relational reassignments applied
+// on top of a field update. Empty strings mean "leave unchanged".
+type TimeEntryReassignment struct {
+	UserID    string
+	ClientID  string
+	ProjectID string
+}
+
+// Update updates a time entry's fields. Any non-empty field on reassign
+// also moves the entry to that user/client/project (callers must have
+// already authorized the reassignment).
+func (s *TimeEntryStore) Update(ctx context.Context, id string, reassign TimeEntryReassignment, f TimeEntryFields) (models.TimeEntry, error) {
 	data, err := json.Marshal(toTimeEntryData(f))
 	if err != nil {
 		return models.TimeEntry{}, err
 	}
 	row := s.pool.QueryRow(ctx, `
 		UPDATE time_entries
-		SET data = $2, user_id = COALESCE(NULLIF($3, '')::uuid, user_id), updated_at = now()
+		SET data = $2,
+		    user_id = COALESCE(NULLIF($3, '')::uuid, user_id),
+		    client_id = COALESCE(NULLIF($4, '')::uuid, client_id),
+		    project_id = COALESCE(NULLIF($5, '')::uuid, project_id),
+		    updated_at = now()
 		WHERE id = $1
 		RETURNING id, organization_id, client_id, project_id, user_id, data, created_at, updated_at
-	`, id, data, reassignUserID)
+	`, id, data, reassign.UserID, reassign.ClientID, reassign.ProjectID)
 	return scanTimeEntry(row)
 }
 

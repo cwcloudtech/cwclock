@@ -9,10 +9,10 @@ const ConfirmModal = ({ show, title, body, confirmLabel = "Confirm", onConfirm, 
     onClose={onCancel}
     footer={
       <>
-        <Button variant="secondary" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel} title="Cancel">
           Cancel
         </Button>
-        <Button variant="danger" onClick={onConfirm}>
+        <Button variant="danger" onClick={onConfirm} title={confirmLabel}>
           {confirmLabel}
         </Button>
       </>

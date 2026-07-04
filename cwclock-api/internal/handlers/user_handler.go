@@ -28,6 +28,13 @@ type credentials struct {
 	Password string `json:"password"`
 }
 
+type registerPayload struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Name     string `json:"name"`
+	Surname  string `json:"surname"`
+}
+
 func (h *UserHandler) generateToken(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
@@ -38,33 +45,33 @@ func (h *UserHandler) generateToken(userID string) (string, error) {
 }
 
 func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var creds credentials
-	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
+	var p registerPayload
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 		writeError(w, http.StatusBadRequest, "Please add all fields")
 		return
 	}
-	if creds.Email == "" || creds.Password == "" {
+	if p.Email == "" || p.Password == "" || p.Name == "" || p.Surname == "" {
 		writeError(w, http.StatusBadRequest, "Please add all fields")
 		return
 	}
 
-	if _, err := h.users.FindByEmail(r.Context(), creds.Email); err == nil {
-		writeError(w, http.StatusBadRequest, "User is Already Exist")
+	if _, err := h.users.FindByEmail(r.Context(), p.Email); err == nil {
+		writeError(w, http.StatusBadRequest, "A user with this email already exists")
 		return
 	} else if !errors.Is(err, store.ErrNotFound) {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(creds.Password), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(p.Password), bcrypt.DefaultCost)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	user, err := h.users.Create(r.Context(), creds.Email, string(hash))
+	user, err := h.users.Create(r.Context(), p.Email, string(hash), p.Name, p.Surname)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "Invalid user Data")
+		writeError(w, http.StatusBadRequest, "Invalid user data")
 		return
 	}
 
@@ -74,7 +81,10 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, models.UserResponse{ID: user.ID, Email: user.Email, Token: token, Picture: user.Picture})
+	writeJSON(w, http.StatusCreated, models.UserResponse{
+		ID: user.ID, Email: user.Email, Name: user.Name, Surname: user.Surname,
+		Token: token, Picture: user.Picture,
+	})
 }
 
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +111,10 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, models.UserResponse{ID: user.ID, Email: user.Email, Token: token, Picture: user.Picture})
+	writeJSON(w, http.StatusOK, models.UserResponse{
+		ID: user.ID, Email: user.Email, Name: user.Name, Surname: user.Surname,
+		Token: token, Picture: user.Picture,
+	})
 }
 
 func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
@@ -116,6 +129,8 @@ func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, models.UserMeResponse{
 		ID:        user.ID,
 		Email:     user.Email,
+		Name:      user.Name,
+		Surname:   user.Surname,
 		Picture:   user.Picture,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
@@ -146,6 +161,45 @@ func (h *UserHandler) UpdatePicture(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, models.UserMeResponse{
 		ID:        user.ID,
 		Email:     user.Email,
+		Name:      user.Name,
+		Surname:   user.Surname,
+		Picture:   user.Picture,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	})
+}
+
+type updateProfilePayload struct {
+	Name    string `json:"name"`
+	Surname string `json:"surname"`
+}
+
+// UpdateProfile lets the connected user set their own name and surname,
+// shown across the app wherever members are listed.
+func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	userID, _ := middleware.UserIDFromContext(r.Context())
+
+	var p updateProfilePayload
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+	if p.Name == "" || p.Surname == "" {
+		writeError(w, http.StatusBadRequest, "Please add name and surname fields")
+		return
+	}
+
+	user, err := h.users.UpdateProfile(r.Context(), userID, p.Name, p.Surname)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, models.UserMeResponse{
+		ID:        user.ID,
+		Email:     user.Email,
+		Name:      user.Name,
+		Surname:   user.Surname,
 		Picture:   user.Picture,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
@@ -169,7 +223,10 @@ func (h *UserHandler) Search(w http.ResponseWriter, r *http.Request) {
 
 	results := make([]models.UserMeResponse, len(users))
 	for i, u := range users {
-		results[i] = models.UserMeResponse{ID: u.ID, Email: u.Email, CreatedAt: u.CreatedAt, UpdatedAt: u.UpdatedAt}
+		results[i] = models.UserMeResponse{
+			ID: u.ID, Email: u.Email, Name: u.Name, Surname: u.Surname,
+			CreatedAt: u.CreatedAt, UpdatedAt: u.UpdatedAt,
+		}
 	}
 	writeJSON(w, http.StatusOK, results)
 }

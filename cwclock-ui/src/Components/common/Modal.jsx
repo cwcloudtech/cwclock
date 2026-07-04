@@ -21,7 +21,7 @@ const Modal = ({ show, title, onClose, children, footer }) => {
       >
         <div className={styles.header}>
           <h3 className={styles.title}>{title}</h3>
-          <button type="button" className={styles.close} onClick={onClose} aria-label="Close">
+          <button type="button" className={styles.close} onClick={onClose} aria-label="Close" title="Close">
             &times;
           </button>
         </div>

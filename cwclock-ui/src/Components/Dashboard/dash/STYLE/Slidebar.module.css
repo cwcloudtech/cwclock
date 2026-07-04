@@ -110,6 +110,12 @@
   object-fit: cover;
 }
 
+.profileEmail {
+  color: var(--cw-text-muted);
+  font-size: 0.8rem;
+  margin-top: -6px;
+}
+
 .uploadLabel {
   color: var(--cw-primary-600);
   cursor: pointer;

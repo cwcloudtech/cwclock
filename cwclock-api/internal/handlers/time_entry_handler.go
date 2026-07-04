@@ -24,7 +24,6 @@ type timeEntryPayload struct {
 	ProjectID string  `json:"projectId"`
 	UserID    string  `json:"userId"`
 	Text      string  `json:"text"`
-	Status    bool    `json:"status"`
 	Day       string  `json:"day"`
 	Start     *string `json:"start"`
 	End       *string `json:"end"`
@@ -34,7 +33,6 @@ type timeEntryPayload struct {
 func (p timeEntryPayload) toFields() store.TimeEntryFields {
 	return store.TimeEntryFields{
 		Text:   p.Text,
-		Status: p.Status,
 		Day:    p.Day,
 		Start:  p.Start,
 		End:    p.End,
@@ -118,7 +116,8 @@ func (h *TimeEntryHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p := timeEntryPayload{
-		Text: entry.Text, Status: entry.Status, Day: entry.Day,
+		ClientID: entry.ClientID, ProjectID: entry.ProjectID,
+		Text: entry.Text, Day: entry.Day,
 		Start: entry.Start, End: entry.End, AllDay: entry.AllDay,
 	}
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
@@ -126,16 +125,22 @@ func (h *TimeEntryHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reassignUserID := ""
+	reassign := store.TimeEntryReassignment{}
+	if p.ClientID != entry.ClientID {
+		reassign.ClientID = p.ClientID
+	}
+	if p.ProjectID != entry.ProjectID {
+		reassign.ProjectID = p.ProjectID
+	}
 	if p.UserID != "" && p.UserID != entry.UserID {
 		if !isAdminOrOwner(r) {
 			writeError(w, http.StatusForbidden, "Only an admin or the owner can reassign a time entry to another member")
 			return
 		}
-		reassignUserID = p.UserID
+		reassign.UserID = p.UserID
 	}
 
-	updated, err := h.entries.Update(r.Context(), id, reassignUserID, p.toFields())
+	updated, err := h.entries.Update(r.Context(), id, reassign, p.toFields())
 	if err != nil {
 		writeStoreError(w, err)
 		return
