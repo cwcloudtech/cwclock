@@ -139,7 +139,7 @@ const TaskComponent = ({ item }) => {
               onClick={canEdit ? () => setIsEditing(true) : undefined}
               style={canEdit ? undefined : { cursor: "default" }}
             >
-              <h6 style={{ color: item.status ? "green" : "var(--cw-danger)" }}>{item.text}</h6>
+              <h6 style={{ color: item.status ? "var(--cw-success)" : "var(--cw-danger)" }}>{item.text}</h6>
             </div>
             <div className={styles.Projects}>
               <h6>{project ? project.name : ""}</h6>
@@ -157,7 +157,7 @@ const TaskComponent = ({ item }) => {
             className={styles.Tags2}
             onClick={() => setShowDeleteConfirm(true)}
           >
-            <MdDeleteForever style={{ fontSize: "25px" }} />
+            <MdDeleteForever style={{ fontSize: "20px" }} />
           </button>
         )}
       </div>

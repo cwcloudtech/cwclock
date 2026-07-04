@@ -1,130 +1,152 @@
-.Task {
-  width: 70%;
-  margin: auto;
-  background-color: var(--cw-bg-alt);
-  box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
-}
 .TaskHead {
-  width: 70%;
-  margin: auto;
-  padding: 0.35rem 1.2rem;
-  background-color: var(--cw-bg-alt);
+  max-width: 900px;
+  margin: 0 auto var(--cw-spacing-sm);
+  padding: 8px calc(18px + var(--cw-spacing));
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border: 1px solid var(--cw-border);
+  color: var(--cw-text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
-.TaskHead > h6 {
-  padding: 0;
-  margin: 0;
-}
+
 .Edit {
   display: flex;
-  font-size: 1.2rem;
   align-items: center;
-  gap: 1.2rem;
+  gap: 10px;
+  font-variant-numeric: tabular-nums;
 }
-.Edit > h6 {
-  padding: 0;
-  margin: 0;
+
+.Task {
+  max-width: 900px;
+  margin: 0 auto 10px;
+  padding: 0 var(--cw-spacing);
 }
+
 .Desc {
-  width: 100%;
-  margin: auto;
-  padding: 1rem;
-  background-color: #fff;
   display: flex;
   flex-wrap: nowrap;
-  gap: var(--cw-spacing);
   align-items: center;
+  gap: var(--cw-spacing);
+  padding: 14px 18px;
+  background-color: var(--cw-surface);
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius);
+  transition: box-shadow var(--cw-transition);
 }
+
+.Desc:hover {
+  box-shadow: var(--cw-shadow-sm);
+}
+
 .Desc > input {
-  padding: 0.5rem;
-  border: none;
+  padding: 8px 10px;
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-sm);
 }
 
 .Projects {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  font-size: 22px;
-  color: var(--cw-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--cw-primary-700);
   gap: 0.6rem;
+  min-width: 140px;
 }
+
 .Projects > h6 {
   margin: 0;
   padding: 0;
 }
+
 .Tags,
 .Tags2,
 .Tags3 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
-  padding: 0.3rem;
+  padding: 6px 10px;
   color: var(--cw-text-muted);
-  border-left: 1px solid var(--cw-border);
-  border-right: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-sm);
   font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--cw-transition), color var(--cw-transition);
 }
+
 .Tags:hover {
   cursor: pointer;
-  color: var(--cw-primary);
+  color: var(--cw-primary-700);
+  background-color: var(--cw-primary-tint);
 }
+
+.Tags2 {
+  color: var(--cw-text-muted);
+}
+
 .Tags2:hover {
   color: var(--cw-danger);
+  background-color: var(--cw-danger-light);
   cursor: pointer;
 }
+
+.Tags3 {
+  color: white;
+  background-color: var(--cw-primary);
+}
+
 .Tags3:hover {
-  color: green;
+  background-color: var(--cw-primary-dark);
   cursor: pointer;
 }
+
 .Time {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 20px;
+  gap: var(--cw-spacing);
   flex: 1;
+  color: var(--cw-text-muted);
+  font-size: 0.9rem;
 }
-.Time > h6 {
-  padding: 0;
-  margin: 0;
+
+.Up {
+  min-width: 22%;
+  flex: 1;
 }
 
 .Up > input {
-  padding: 0.3rem;
+  padding: 6px 8px;
   width: 100%;
 }
-.Up {
-  min-width: 20%;
-  padding: 8px;
-}
+
 .Up > h6 {
   padding: 0;
   margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--cw-text);
 }
+
 .Up:hover {
   cursor: pointer;
 }
 
-@media only screen and (max-width: 980px) {
-  .Task {
-    width: 80%;
-  }
-  .TaskHead {
-    width: 80%;
-  }
-}
-
-@media only screen and (max-width: 600px) {
-  .Task {
-    width: 90%;
-  }
-  .TaskHead {
-    width: 90%;
-  }
+@media only screen and (max-width: 700px) {
   .Desc {
     flex-direction: column;
     align-items: stretch;
-    padding: 0.5rem;
+    padding: 12px;
+  }
+
+  .Projects {
+    min-width: 0;
   }
 }

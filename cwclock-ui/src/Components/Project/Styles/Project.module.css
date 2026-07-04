@@ -1,3 +1,27 @@
 .main {
-  padding: 24px;
+  max-width: 760px;
+  padding: var(--cw-spacing-lg);
+  margin: 0 auto;
+}
+
+.projectItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.clientName {
+  color: var(--cw-text-muted);
+  font-size: 0.9rem;
+}
+
+.clientName::before {
+  content: "· ";
 }

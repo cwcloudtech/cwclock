@@ -8,7 +8,9 @@ const Login = () => {
   return (
     <div className={styles.page}>
       <LoginNav />
-      <LoginForm label="Log In" checkBox="Stay Signed In" />
+      <div className={styles.main}>
+        <LoginForm label="Log In" checkBox="Stay Signed In" />
+      </div>
       <Footer />
     </div>
   );

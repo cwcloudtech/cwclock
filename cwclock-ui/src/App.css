@@ -1,4 +1,29 @@
-body {
-  background-color: var(--cw-bg) !important;
-  font-family: var(--cw-font-family);
+.App {
+  min-height: 100vh;
+}
+
+.loadingSpinnerContainer {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(248, 250, 252, 0.6);
+  backdrop-filter: blur(2px);
+  z-index: 5000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--cw-border);
+  border-top-color: var(--cw-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

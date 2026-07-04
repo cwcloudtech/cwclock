@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import Form from "react-bootstrap/Form";
-import Button from "react-bootstrap/Button";
+import Button from "../common/Button";
 import styles from "./Styles/Organizations.module.css";
 import {
   listOrgsApi,
@@ -79,43 +78,46 @@ const MemberRow = ({ member, canSetRate, orgId, token }) => {
 
   return (
     <li className="cw-list-item">
-      <div>{member.email} - {member.role}</div>
-      {canSetRate && (
-        editing ? (
-          <Form onSubmit={handleSave}>
-            <Form.Group className="mb-2">
-              <Form.Label>Daily rate</Form.Label>
-              <Form.Control
-                type="number"
-                min="0"
-                step="0.01"
-                value={dailyRate}
-                onChange={(e) => setDailyRate(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Currency</Form.Label>
-              <Form.Control
-                type="text"
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-              />
-            </Form.Group>
-            <Button size="sm" type="submit" className="me-2">
-              Save
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => setEditing(false)}>
-              Cancel
-            </Button>
-          </Form>
-        ) : (
-          <span>
+      <div className={styles.memberRow}>
+        <span>{member.email} - {member.role}</span>
+        {canSetRate && !editing && (
+          <span className={styles.rate}>
             {member.dailyRate ? `${member.dailyRate} ${member.currency}/day` : "No daily rate set"}{" "}
-            <Button size="sm" variant="link" onClick={() => setEditing(true)}>
+            <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
               Edit
             </Button>
           </span>
-        )
+        )}
+      </div>
+      {canSetRate && editing && (
+        <form className={styles.rateForm} onSubmit={handleSave}>
+          <div className="cw-field">
+            <label className="cw-label">Daily rate</label>
+            <input
+              className="cw-input"
+              type="number"
+              min="0"
+              step="0.01"
+              value={dailyRate}
+              onChange={(e) => setDailyRate(e.target.value)}
+            />
+          </div>
+          <div className="cw-field">
+            <label className="cw-label">Currency</label>
+            <input
+              className="cw-input"
+              type="text"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+            />
+          </div>
+          <Button size="sm" type="submit">
+            Save
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => setEditing(false)}>
+            Cancel
+          </Button>
+        </form>
       )}
     </li>
   );
@@ -227,14 +229,15 @@ const Organizations = () => {
       <ul className="cw-list">
         {organizations.map((org) => (
           <li key={org.id} className="cw-list-item">
-            <label>
+            <label className={styles.orgOption}>
               <input
                 type="radio"
                 name="currentOrg"
                 checked={org.id === currentOrgId}
                 onChange={() => dispatch(selectOrg(org.id))}
-              />{" "}
-              {org.picture && <img src={org.picture} alt="" className={styles.avatar} />} {org.name}
+              />
+              {org.picture && <img src={org.picture} alt="" className={styles.avatar} />}
+              {org.name}
             </label>
           </li>
         ))}
@@ -271,7 +274,7 @@ const Organizations = () => {
                   </Button>
                 </div>
               ) : (
-                <Button variant="outline-secondary" onClick={startEdit} className="mb-3">
+                <Button variant="secondary" onClick={startEdit} className={styles.editOrgBtn}>
                   Edit organization
                 </Button>
               )}
@@ -294,13 +297,14 @@ const Organizations = () => {
           {isOwner && (
             <>
               <CollapsiblePanel title="Add a member">
-                <Form onSubmit={handleAddMember}>
-                  <Form.Group className="mb-2">
-                    <Form.Label>
+                <form onSubmit={handleAddMember}>
+                  <div className="cw-field">
+                    <label className="cw-label">
                       Member email
                       <RequiredMark />
-                    </Form.Label>
-                    <Form.Control
+                    </label>
+                    <input
+                      className="cw-input"
                       list="member-email-suggestions"
                       type="email"
                       value={memberEmail}
@@ -312,28 +316,33 @@ const Organizations = () => {
                         <option key={u.id} value={u.email} />
                       ))}
                     </datalist>
-                  </Form.Group>
-                  <Form.Group className="mb-2">
-                    <Form.Label>Role</Form.Label>
-                    <Form.Select value={memberRole} onChange={(e) => setMemberRole(e.target.value)}>
+                  </div>
+                  <div className="cw-field">
+                    <label className="cw-label">Role</label>
+                    <select
+                      className="cw-select"
+                      value={memberRole}
+                      onChange={(e) => setMemberRole(e.target.value)}
+                    >
                       <option value="admin">Admin</option>
                       <option value="member">Member</option>
                       <option value="reader">Reader</option>
-                    </Form.Select>
-                  </Form.Group>
+                    </select>
+                  </div>
                   <Button type="submit">Add member</Button>
                   {memberError && <p className="cw-error">{memberError}</p>}
-                </Form>
+                </form>
               </CollapsiblePanel>
 
               <CollapsiblePanel title="Transfer ownership">
-                <Form onSubmit={handleTransferOwnership}>
-                  <Form.Group className="mb-2">
-                    <Form.Label>
+                <form onSubmit={handleTransferOwnership}>
+                  <div className="cw-field">
+                    <label className="cw-label">
                       New owner's email
                       <RequiredMark />
-                    </Form.Label>
-                    <Form.Control
+                    </label>
+                    <input
+                      className="cw-input"
                       list="transfer-email-suggestions"
                       type="email"
                       value={transferEmail}
@@ -345,12 +354,12 @@ const Organizations = () => {
                         <option key={u.id} value={u.email} />
                       ))}
                     </datalist>
-                  </Form.Group>
-                  <Button type="submit" variant="warning">
+                  </div>
+                  <Button type="submit" variant="danger">
                     Transfer ownership
                   </Button>
                   {transferError && <p className="cw-error">{transferError}</p>}
-                </Form>
+                </form>
               </CollapsiblePanel>
             </>
           )}

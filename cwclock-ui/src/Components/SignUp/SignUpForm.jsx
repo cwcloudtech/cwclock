@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import styles from "../Login/Styles/Form.module.css";
-import Form from "react-bootstrap/Form";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../spinner/Spinner";
@@ -50,48 +49,48 @@ const SignUpForm = () => {
     return <Spinner />;
   }
   return (
-    <div>
-      <div className={styles.form}>
-        <h5>Sign Up</h5>
-        <Form onSubmit={handleSubmit}>
-          {/* //email Input */}
-          <Form.Group className="mb-3" controlId="formBasicEmail">
-            <Form.Control
-              onChange={onChange}
-              name="email"
-              value={email}
-              type="email"
-              placeholder="Enter email"
-            />
-          </Form.Group>
+    <div className={styles.form}>
+      <h1 className={styles.heading}>Sign Up</h1>
+      <form onSubmit={handleSubmit}>
+        <div className={styles.field}>
+          <input
+            className={styles.input}
+            onChange={onChange}
+            name="email"
+            value={email}
+            type="email"
+            placeholder="Enter email"
+          />
+        </div>
 
-          <Form.Group className="mb-3" controlId="formBasicPassword">
-            <Form.Control
-              onChange={onChange}
-              name="password"
-              value={password}
-              type="password"
-              placeholder="Password"
-            />
-          </Form.Group>
+        <div className={styles.field}>
+          <input
+            className={styles.input}
+            onChange={onChange}
+            name="password"
+            value={password}
+            type="password"
+            placeholder="Password"
+          />
+        </div>
 
-          <Form.Group className="mb-3" controlId="formBasicConfirmPassword">
-            <Form.Control
-              onChange={onChange}
-              name="confirmPassword"
-              value={confirmPassword}
-              type="password"
-              placeholder="Confirm password"
-            />
-          </Form.Group>
+        <div className={styles.field}>
+          <input
+            className={styles.input}
+            onChange={onChange}
+            name="confirmPassword"
+            value={confirmPassword}
+            type="password"
+            placeholder="Confirm password"
+          />
+        </div>
 
-          {error && <p className="cw-error">{error}</p>}
+        {error && <p className="cw-error">{error}</p>}
 
-          <button type="submit" className={styles.btn}>
-            CREATE ACCOUNT
-          </button>
-        </Form>
-      </div>
+        <button type="submit" className={styles.btn}>
+          Create account
+        </button>
+      </form>
     </div>
   );
 };

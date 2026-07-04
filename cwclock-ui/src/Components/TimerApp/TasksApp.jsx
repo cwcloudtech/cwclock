@@ -40,9 +40,7 @@ const TasksApp = () => {
   if (isLoading) {
     return (
       <div className={styles.Body1}>
-        <h1 className={styles.Load1}>
-          <Spinner />
-        </h1>
+        <Spinner />
       </div>
     );
   }
@@ -50,10 +48,12 @@ const TasksApp = () => {
   if (!currentOrgId) {
     return (
       <div className={styles.Body1}>
-        <p>
-          You need an organization before you can track time.{" "}
-          <Link to="/dashboard/organizations">Create one</Link>.
-        </p>
+        <div className={styles.Empty}>
+          <p>
+            You need an organization before you can track time.{" "}
+            <Link to="/dashboard/organizations">Create one</Link>.
+          </p>
+        </div>
       </div>
     );
   }

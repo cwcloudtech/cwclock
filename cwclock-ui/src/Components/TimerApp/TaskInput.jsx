@@ -46,8 +46,9 @@ const TaskInput = () => {
     <div className={styles.Task}>
       <div className={styles.Desc}>
         <input
+          className={styles.textInput}
           type="text"
-          placeholder="What Are You Working On"
+          placeholder="What are you working on?"
           onChange={(e) => setName(e.target.value)}
         />
         <select
@@ -64,10 +65,10 @@ const TaskInput = () => {
           ))}
         </select>
         <div className={styles.Timer}>
-          <h6>
+          <span className={styles.clock}>
             {hrs < 10 ? "0" + hrs : hrs}:{min < 10 ? "0" + min : min}:
             {sec < 10 ? "0" + sec : sec}
-          </h6>
+          </span>
           <button
             className={timerOn ? styles.Red : styles.Blue}
             onClick={handleSubmit}

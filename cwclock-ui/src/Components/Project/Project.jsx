@@ -82,9 +82,10 @@ const Project = () => {
         {projects.map((project) => {
           const client = clients.find((c) => c.id === project.clientId);
           return (
-            <li className="cw-list-item" key={project.id}>
-              <span style={{ color: project.color }}>{project.name}</span>{" "}
-              {client ? `- ${client.name}` : ""}
+            <li className={`cw-list-item ${styles.projectItem}`} key={project.id}>
+              <span className={styles.swatch} style={{ backgroundColor: project.color }} />
+              <strong>{project.name}</strong>
+              {client && <span className={styles.clientName}>{client.name}</span>}
             </li>
           );
         })}

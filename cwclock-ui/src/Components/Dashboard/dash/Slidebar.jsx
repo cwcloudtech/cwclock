@@ -2,11 +2,10 @@ import React, { useState, useEffect } from "react";
 import styles from "./STYLE/Slidebar.module.css";
 import { FaChevronLeft, FaChevronRight, FaUserCheck } from "react-icons/fa";
 import { Route, Routes, useNavigate, Link } from "react-router-dom";
-import Dropdown from "react-bootstrap/Dropdown";
+import Dropdown, { DropdownItem, DropdownText, DropdownDivider } from "../../common/Dropdown";
 import logo from "../../../assets/images/cwclock-logo.svg";
 import TimeTracker from "../pages/TimeTracker";
-import Slideclose from "./Slideclose";
-import Slideopen from "./Slideopen";
+import SidebarNav from "./SidebarNav";
 
 import Clientdiv from "../pages/Client";
 import Organizationsdiv from "../pages/Organizations";
@@ -18,9 +17,9 @@ import { listOrgsApi, selectOrg } from "../../../Redux/Organizations/Org.actions
 import fileToBase64 from "../../common/fileToBase64";
 
 const Slidebar = () => {
-  const [state, setstate] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const handleclick = () => {
-    setstate(!state);
+    setExpanded(!expanded);
   };
 
   const navigate = useNavigate();
@@ -54,30 +53,34 @@ const Slidebar = () => {
     <div className={styles.main}>
       <div className={styles.navbar}>
         <div className={styles.navbarleftmain}>
-          <div>
-            <img src={logo} alt="cwclock logo"></img>
-          </div>
+          <img src={logo} alt="cwclock logo" className={styles.logo} />
 
           {organizations.length > 0 ? (
-            <Dropdown>
-              <Dropdown.Toggle variant="light" className={styles.orgDropdownToggle}>
-                {currentOrg?.picture && (
-                  <img src={currentOrg.picture} alt="" className={styles.orgAvatar} />
-                )}
-                {currentOrg?.name}
-              </Dropdown.Toggle>
-              <Dropdown.Menu>
-                {organizations.map((org) => (
-                  <Dropdown.Item
+            <Dropdown
+              trigger={
+                <>
+                  {currentOrg?.picture && (
+                    <img src={currentOrg.picture} alt="" className={styles.orgAvatar} />
+                  )}
+                  {currentOrg?.name}
+                </>
+              }
+            >
+              {(close) =>
+                organizations.map((org) => (
+                  <DropdownItem
                     key={org.id}
-                    onClick={() => dispatch(selectOrg(org.id))}
                     active={org.id === currentOrgId}
+                    onClick={() => {
+                      dispatch(selectOrg(org.id));
+                      close();
+                    }}
                   >
                     {org.picture && <img src={org.picture} alt="" className={styles.orgAvatar} />}
                     {org.name}
-                  </Dropdown.Item>
-                ))}
-              </Dropdown.Menu>
+                  </DropdownItem>
+                ))
+              }
             </Dropdown>
           ) : (
             <Link className={styles.createOrgLink} to="/dashboard/organizations">
@@ -86,28 +89,28 @@ const Slidebar = () => {
           )}
         </div>
 
-        {/* right div */}
         <div className={styles.navbarrightmain}>
           {user.token ? (
-            <Dropdown align="end">
-              <Dropdown.Toggle variant="light" className={styles.profileDropdownToggle}>
-                {user.picture ? (
+            <Dropdown
+              align="end"
+              triggerClassName={styles.profileTrigger}
+              trigger={
+                user.picture ? (
                   <img src={user.picture} alt="" className={styles.profileAvatar} />
                 ) : (
-                  <FaUserCheck fontSize="22px" />
-                )}
-              </Dropdown.Toggle>
-              <Dropdown.Menu>
-                <Dropdown.ItemText className={styles.profileEmail}>{user.email}</Dropdown.ItemText>
-                <Dropdown.ItemText>
-                  <label className={styles.uploadLabel}>
-                    Change picture
-                    <input type="file" accept="image/*" hidden onChange={handlePictureChange} />
-                  </label>
-                </Dropdown.ItemText>
-                <Dropdown.Divider />
-                <Dropdown.Item onClick={handleLogout}>Logout</Dropdown.Item>
-              </Dropdown.Menu>
+                  <FaUserCheck fontSize="18px" />
+                )
+              }
+            >
+              <DropdownText>{user.email}</DropdownText>
+              <DropdownText>
+                <label className={styles.uploadLabel}>
+                  Change picture
+                  <input type="file" accept="image/*" hidden onChange={handlePictureChange} />
+                </label>
+              </DropdownText>
+              <DropdownDivider />
+              <DropdownItem onClick={handleLogout}>Logout</DropdownItem>
             </Dropdown>
           ) : (
             <button className={styles.loginBtn} onClick={() => navigate("/login")}>
@@ -118,28 +121,15 @@ const Slidebar = () => {
       </div>
 
       <div className={styles.Slideflex}>
-        <div className={styles.sidebarCol}>
-          <div
+        <div className={`${styles.sidebarCol} ${expanded ? styles.sidebarColExpanded : ""}`}>
+          <SidebarNav expanded={expanded} />
+          <button
             className={styles.sidebarToggle}
             onClick={handleclick}
-            title={state ? "Collapse sidebar" : "Expand sidebar"}
+            title={expanded ? "Collapse sidebar" : "Expand sidebar"}
           >
-            {state ? <FaChevronLeft /> : <FaChevronRight />}
-          </div>
-          {state ? (
-            <div className={styles.slidingfuncbox}>
-              <div>
-                <Slideopen />
-              </div>
-              <div>
-                <Slideclose />
-              </div>
-            </div>
-          ) : (
-            <div>
-              <Slideopen />
-            </div>
-          )}
+            {expanded ? <FaChevronLeft /> : <FaChevronRight />}
+          </button>
         </div>
         <div className={styles.pages}>
           <Routes>

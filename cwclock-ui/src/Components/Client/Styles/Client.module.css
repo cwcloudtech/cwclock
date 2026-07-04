@@ -1,3 +1,5 @@
 .main {
-  padding: 24px;
+  max-width: 760px;
+  padding: var(--cw-spacing-lg);
+  margin: 0 auto;
 }

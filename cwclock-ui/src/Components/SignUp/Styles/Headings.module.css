@@ -1,25 +1,17 @@
-.Section{
-    width:50%;
-    margin:40px auto;
-    padding:20px;
-}
-.Section>p{
-    font-size: 14px;
-    margin: 20px;
-}
-.Section>h6{
-    margin: 20px;
+.Section {
+  max-width: 420px;
+  margin: 0 auto var(--cw-spacing-lg);
+  padding: 0 var(--cw-spacing);
+  text-align: center;
 }
 
-@media only screen and (min-width:480px)  and (max-width:980px){
-.Section{
-    width:75%;
-    padding:17px;
+.title {
+  font-size: 1.6rem;
+  margin: 0 0 8px;
 }
-}
-@media only screen and (min-width:0px)  and (max-width:479px){
-.Section{
-    width:85%;
-    padding:17px;
-}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: var(--cw-text-muted);
+  margin: 0;
 }

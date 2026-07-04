@@ -1,6 +1,5 @@
 import React from "react";
-import Form from "react-bootstrap/Form";
-import Button from "react-bootstrap/Button";
+import Button from "./Button";
 import RequiredMark from "./RequiredMark";
 import fileToBase64 from "./fileToBase64";
 
@@ -19,16 +18,19 @@ const ConfigForm = ({ config, values, onChange, onSubmit, submitLabel = "Save", 
     switch (field.type) {
       case "checkbox":
         return (
-          <Form.Check
-            type="checkbox"
-            label={field.label}
-            checked={!!value}
-            onChange={(e) => onChange(field.name, e.target.checked)}
-          />
+          <label className="cw-checkbox">
+            <input
+              type="checkbox"
+              checked={!!value}
+              onChange={(e) => onChange(field.name, e.target.checked)}
+            />
+            {field.label}
+          </label>
         );
       case "select":
         return (
-          <Form.Select
+          <select
+            className="cw-select"
             value={value}
             onChange={(e) => onChange(field.name, e.target.value)}
             required={field.required}
@@ -39,18 +41,19 @@ const ConfigForm = ({ config, values, onChange, onSubmit, submitLabel = "Save", 
                 {option.label}
               </option>
             ))}
-          </Form.Select>
+          </select>
         );
       case "image":
         return (
           <>
-            <Form.Control type="file" accept="image/*" onChange={setImageField(field)} />
+            <input className="cw-input" type="file" accept="image/*" onChange={setImageField(field)} />
             {value && <img src={value} alt="" className="cw-image-preview" />}
           </>
         );
       case "number":
         return (
-          <Form.Control
+          <input
+            className="cw-input"
             type="number"
             step={field.step}
             min={field.min}
@@ -62,7 +65,8 @@ const ConfigForm = ({ config, values, onChange, onSubmit, submitLabel = "Save", 
         );
       case "color":
         return (
-          <Form.Control
+          <input
+            className="cw-input"
             type="color"
             value={value}
             onChange={(e) => onChange(field.name, e.target.value)}
@@ -70,7 +74,8 @@ const ConfigForm = ({ config, values, onChange, onSubmit, submitLabel = "Save", 
         );
       case "email":
         return (
-          <Form.Control
+          <input
+            className="cw-input"
             type="email"
             placeholder={field.placeholder}
             value={value}
@@ -80,7 +85,8 @@ const ConfigForm = ({ config, values, onChange, onSubmit, submitLabel = "Save", 
         );
       default:
         return (
-          <Form.Control
+          <input
+            className="cw-input"
             type="text"
             placeholder={field.placeholder}
             value={value}
@@ -92,21 +98,21 @@ const ConfigForm = ({ config, values, onChange, onSubmit, submitLabel = "Save", 
   };
 
   return (
-    <Form onSubmit={onSubmit}>
+    <form onSubmit={onSubmit}>
       {config.fields.map((field) => (
-        <Form.Group className="mb-2" key={field.name}>
+        <div className="cw-field" key={field.name}>
           {field.type !== "checkbox" && (
-            <Form.Label>
+            <label className="cw-label">
               {field.label}
               {field.required && <RequiredMark />}
-            </Form.Label>
+            </label>
           )}
           {renderControl(field)}
-        </Form.Group>
+        </div>
       ))}
       <Button type="submit">{submitLabel}</Button>
       {error && <p className="cw-error">{error}</p>}
-    </Form>
+    </form>
   );
 };
 

@@ -1,9 +1,18 @@
 .main {
-  padding: 24px;
+  max-width: 760px;
+  padding: var(--cw-spacing-lg);
+  margin: 0 auto;
 }
 
 .members {
-  margin-top: 32px;
+  margin-top: var(--cw-spacing-lg);
+}
+
+.orgOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
 }
 
 .avatar {
@@ -12,5 +21,31 @@
   border-radius: 50%;
   object-fit: cover;
   vertical-align: middle;
+  margin-right: 6px;
+}
+
+.editOrgBtn {
+  margin-bottom: var(--cw-spacing);
+}
+
+.memberRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cw-spacing);
+  flex-wrap: wrap;
+}
+
+.rate {
+  color: var(--cw-text-muted);
+  font-size: 0.9rem;
+}
+
+.rateForm {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--cw-spacing-sm);
+  flex-wrap: wrap;
+  margin-top: var(--cw-spacing-sm);
 }
 

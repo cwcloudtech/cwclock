@@ -1,43 +1,36 @@
 .Body1 {
-  background-color: #f2f6f8;
+  background-color: var(--cw-bg);
   min-height: 100vh;
-  padding-top: 30px;
+  padding: var(--cw-spacing-lg) 0;
 }
+
 .Empty {
-  padding: 2rem;
-  width: 25%;
-  margin: 2rem auto;
-  background-color: #fff;
+  max-width: 360px;
+  padding: var(--cw-spacing-xl) var(--cw-spacing-lg);
+  margin: var(--cw-spacing-xl) auto 0;
+  background-color: var(--cw-surface);
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-lg);
+  box-shadow: var(--cw-shadow-sm);
   text-align: center;
 }
+
+.Empty > h4 {
+  margin: var(--cw-spacing) 0 8px;
+}
+
 .Empty > p {
-  padding: 1.2rem;
+  margin: 0;
+  color: var(--cw-text-muted);
 }
+
 .Empty > img {
-  width: 70%;
-  height: 25%;
-}
-.AppFlex {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-}
-.sky {
-  border-top: 0.5px solid grey;
-  color: #1cb9f7;
-  cursor: pointer;
-  padding: 10px;
-}
-@media only screen and (max-width: 980px) {
-  .Empty {
-    width: 65%;
-  }
+  width: 45%;
+  height: auto;
 }
 
 @media only screen and (max-width: 600px) {
   .Empty {
-    width: 85%;
+    max-width: calc(100% - 40px);
   }
 }

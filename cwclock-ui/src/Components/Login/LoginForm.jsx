@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Form from "react-bootstrap/Form";
 import styles from "./Styles/Form.module.css";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -42,36 +41,39 @@ const LoginForm = ({ label, checkBox }) => {
   }
   return (
     <div className={styles.form}>
-      <h5>{label}</h5>
-      <Form onSubmit={handleSubmit}>
-        <Form.Group className="mb-3" controlId="formBasicEmail">
-          <Form.Control
+      <h1 className={styles.heading}>{label}</h1>
+      <form onSubmit={handleSubmit}>
+        <div className={styles.field}>
+          <input
+            className={styles.input}
             onChange={onChange}
             name="email"
             value={email}
             type="email"
             placeholder="Enter email"
           />
-        </Form.Group>
+        </div>
 
-        <Form.Group className="mb-3" controlId="formBasicPassword">
-          <Form.Control
+        <div className={styles.field}>
+          <input
+            className={styles.input}
             onChange={onChange}
             name="password"
             value={password}
             type="password"
             placeholder="Password"
           />
-        </Form.Group>
-
-        <div className={styles.formflex}>
-          <Form.Check type="checkbox" label={checkBox} />
         </div>
+
+        <label className={styles.formflex}>
+          <input type="checkbox" />
+          {checkBox}
+        </label>
 
         <button type="submit" className={styles.btn}>
           Log In
         </button>
-      </Form>
+      </form>
     </div>
   );
 };
