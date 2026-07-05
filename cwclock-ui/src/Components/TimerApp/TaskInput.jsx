@@ -5,6 +5,7 @@ import useTimer from "./useTimer";
 import useDateHook from "./useDateHook";
 import { postTasksApi, startTask } from "../../Redux/Tasks/Task.actions";
 import useTime from "./useTime";
+import projectLabel from "../common/projectLabel";
 
 const TaskInput = () => {
   const { timerOn, sec, min, hrs, handleTimer } = useTimer();
@@ -12,11 +13,19 @@ const TaskInput = () => {
   const { hours2, minutes2, seconds2 } = useTime();
   const [name, setName] = useState("");
   const [projectId, setProjectId] = useState("");
+  const [projectQuery, setProjectQuery] = useState("");
   const { start } = useSelector((state) => state.tasks);
   const { user } = useSelector((state) => state.auth);
   const { currentOrgId } = useSelector((state) => state.organizations);
   const { projects } = useSelector((state) => state.projects);
+  const { clients } = useSelector((state) => state.clients);
   const dispatch = useDispatch();
+
+  const handleProjectInput = (text) => {
+    setProjectQuery(text);
+    const match = projects.find((p) => projectLabel(p, clients) === text);
+    setProjectId(match ? match.id : "");
+  };
 
   const handleSubmit = () => {
     if (timerOn) {
@@ -51,20 +60,20 @@ const TaskInput = () => {
           title="What are you working on?"
           onChange={(e) => setName(e.target.value)}
         />
-        <select
+        <input
+          list="task-input-project-options"
           className={styles.Projects}
-          value={projectId}
+          value={projectQuery}
           disabled={timerOn}
-          onChange={(e) => setProjectId(e.target.value)}
-          title="Project"
-        >
-          <option value="">Project</option>
+          onChange={(e) => handleProjectInput(e.target.value)}
+          placeholder="Project"
+          title="Search by customer or project name"
+        />
+        <datalist id="task-input-project-options">
           {projects.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
+            <option key={p.id} value={projectLabel(p, clients)} />
           ))}
-        </select>
+        </datalist>
         <div className={styles.Timer}>
           <span className={styles.clock} title="Elapsed time">
             {hrs < 10 ? "0" + hrs : hrs}:{min < 10 ? "0" + min : min}:

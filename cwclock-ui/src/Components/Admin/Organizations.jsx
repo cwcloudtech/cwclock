@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { FaRegEdit } from "react-icons/fa";
+import { FaRegEdit, FaExchangeAlt } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";
 import Tooltip from "../common/Tooltip";
 import ConfirmModal from "../common/ConfirmModal";
 import EditOrgModal from "./EditOrgModal";
+import TransferOwnershipModal from "./TransferOwnershipModal";
 import { listAllOrganizationsApi } from "../../Redux/Admin/Admin.actions";
 import { deleteOrgApi } from "../../Redux/Organizations/Org.actions";
 import styles from "./Styles/Admin.module.css";
@@ -14,6 +15,7 @@ const Organizations = () => {
   const { user } = useSelector((state) => state.auth);
   const { organizations } = useSelector((state) => state.admin);
   const [editingOrg, setEditingOrg] = useState(null);
+  const [transferringOrg, setTransferringOrg] = useState(null);
   const [deletingOrg, setDeletingOrg] = useState(null);
 
   useEffect(() => {
@@ -35,11 +37,18 @@ const Organizations = () => {
         {organizations.map((org) => (
           <li className={`cw-list-item ${styles.orgRow}`} key={org.id}>
             <span className={styles.denomination}>{org.name}</span>
-            <span className={styles.email}>
-              {[org.city, org.country].filter(Boolean).join(", ") || "—"}
-            </span>
+            <span className={styles.email}>{org.ownerEmail}</span>
             <span />
             <div className={styles.rowActions}>
+              <Tooltip label="Transfer ownership">
+                <button
+                  type="button"
+                  className={styles.iconBtn}
+                  onClick={() => setTransferringOrg(org)}
+                >
+                  <FaExchangeAlt style={{ fontSize: "16px" }} />
+                </button>
+              </Tooltip>
               <Tooltip label="Edit">
                 <button type="button" className={styles.iconBtn} onClick={() => setEditingOrg(org)}>
                   <FaRegEdit style={{ fontSize: "18px" }} />
@@ -63,6 +72,13 @@ const Organizations = () => {
         show={!!editingOrg}
         onClose={() => setEditingOrg(null)}
         targetOrg={editingOrg}
+        token={user.token}
+      />
+
+      <TransferOwnershipModal
+        show={!!transferringOrg}
+        onClose={() => setTransferringOrg(null)}
+        targetOrg={transferringOrg}
         token={user.token}
       />
 

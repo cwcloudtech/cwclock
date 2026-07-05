@@ -12,30 +12,11 @@ import {
   transferOwnershipApi,
   setMemberRateApi,
 } from "../../Redux/Organizations/Org.actions";
-import { searchUsersApi } from "../../Redux/Users/User.actions";
 import RequiredMark from "../common/RequiredMark";
 import ConfigForm from "../common/ConfigForm";
 import CollapsiblePanel from "../common/CollapsiblePanel";
 import memberLabel from "../common/memberLabel";
-
-const useEmailAutocomplete = (email, enabled, token) => {
-  const dispatch = useDispatch();
-  const [suggestions, setSuggestions] = useState([]);
-
-  useEffect(() => {
-    if (!enabled || email.length < 2) {
-      setSuggestions([]);
-      return;
-    }
-    const timeout = setTimeout(async () => {
-      const results = await dispatch(searchUsersApi(email, token));
-      setSuggestions(results || []);
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [email, enabled, token, dispatch]);
-
-  return suggestions;
-};
+import useEmailAutocomplete from "../common/useEmailAutocomplete";
 
 const emptyFields = {
   name: "",

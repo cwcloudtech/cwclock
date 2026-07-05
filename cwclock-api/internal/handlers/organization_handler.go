@@ -83,7 +83,7 @@ func (h *OrganizationHandler) List(w http.ResponseWriter, r *http.Request) {
 // AdminList returns every organization, regardless of membership, for the
 // superuser's organization-management screen.
 func (h *OrganizationHandler) AdminList(w http.ResponseWriter, r *http.Request) {
-	orgs, err := h.orgs.ListAll(r.Context())
+	orgs, err := h.orgs.ListAllWithOwner(r.Context())
 	if err != nil {
 		writeStoreError(w, err)
 		return

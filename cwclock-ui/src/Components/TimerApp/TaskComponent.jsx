@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { deleteTasksApi, updateTasksApi } from "../../Redux/Tasks/Task.actions";
 import ConfirmModal from "../common/ConfirmModal";
 import memberLabel from "../common/memberLabel";
+import projectLabel from "../common/projectLabel";
 import Tooltip from "../common/Tooltip";
 
 const fieldsFromItem = (item) => ({
@@ -23,9 +24,11 @@ const TaskComponent = ({ item }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [form, setForm] = useState(fieldsFromItem(item));
   const [reassignText, setReassignText] = useState("");
+  const [projectQuery, setProjectQuery] = useState("");
   const { user } = useSelector((state) => state.auth);
   const { currentOrgId, members } = useSelector((state) => state.organizations);
   const { projects } = useSelector((state) => state.projects);
+  const { clients } = useSelector((state) => state.clients);
   const dispatch = useDispatch();
 
   const project = projects.find((p) => p.id === item.projectId);
@@ -40,7 +43,9 @@ const TaskComponent = ({ item }) => {
     } else {
       const current = members.find((m) => m.userId === item.userId);
       setReassignText(current ? memberLabel(current) : "");
+      setProjectQuery(project ? projectLabel(project, clients) : "");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item, isEditing, members]);
 
   const handleReassignInput = (text) => {
@@ -48,6 +53,14 @@ const TaskComponent = ({ item }) => {
     const match = members.find((m) => memberLabel(m) === text || m.email === text);
     if (match) {
       setForm((f) => ({ ...f, userId: match.userId }));
+    }
+  };
+
+  const handleProjectInput = (text) => {
+    setProjectQuery(text);
+    const match = projects.find((p) => projectLabel(p, clients) === text);
+    if (match) {
+      setForm((f) => ({ ...f, projectId: match.id }));
     }
   };
 
@@ -90,17 +103,18 @@ const TaskComponent = ({ item }) => {
               />
             </div>
             <div className={styles.Projects}>
-              <select
-                title="Project"
-                value={form.projectId}
-                onChange={(e) => setForm({ ...form, projectId: e.target.value })}
-              >
+              <input
+                list={`project-options-${item.id}`}
+                title="Search by customer or project name"
+                placeholder="Project"
+                value={projectQuery}
+                onChange={(e) => handleProjectInput(e.target.value)}
+              />
+              <datalist id={`project-options-${item.id}`}>
                 {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
+                  <option key={p.id} value={projectLabel(p, clients)} />
                 ))}
-              </select>
+              </datalist>
             </div>
             <div className={styles.Time}>
               <input

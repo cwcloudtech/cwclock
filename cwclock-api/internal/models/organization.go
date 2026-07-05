@@ -27,6 +27,14 @@ type Organization struct {
 	UpdatedAt  time.Time `json:"updatedAt"`
 }
 
+// OrganizationWithOwner adds the owner's email to an Organization, for the
+// superuser's organization-management screen (which lists orgs the caller
+// isn't necessarily a member of, so it can't resolve the owner client-side).
+type OrganizationWithOwner struct {
+	Organization
+	OwnerEmail string `json:"ownerEmail"`
+}
+
 type Member struct {
 	ID             string    `json:"id"`
 	OrganizationID string    `json:"organizationId"`

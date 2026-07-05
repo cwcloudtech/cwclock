@@ -1,7 +1,8 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { FiClock } from "react-icons/fi";
-import { FaFileAlt, FaRegUserCircle, FaBuilding, FaUserShield, FaShieldAlt } from "react-icons/fa";
+import { FaFileAlt, FaRegUserCircle, FaBuilding, FaUserShield } from "react-icons/fa";
+import { FaBuildingShield } from "react-icons/fa6";
 import Tooltip from "../../common/Tooltip";
 import styles from "./STYLE/SidebarNav.module.css";
 
@@ -14,7 +15,7 @@ const items = [
 
 const adminItems = [
   { to: "/dashboard/admin", label: "Users", Icon: FaUserShield },
-  { to: "/dashboard/admin/organizations", label: "Organizations admin", Icon: FaShieldAlt },
+  { to: "/dashboard/admin/organizations", label: "Organizations admin", Icon: FaBuildingShield },
 ];
 
 // Single sidebar nav that renders either as an icon rail or an expanded

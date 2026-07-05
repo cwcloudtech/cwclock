@@ -22,8 +22,13 @@
   transition-delay: 0s;
 }
 
-.wrapper:hover .bubble,
-.wrapper:focus-within .bubble {
+/* Direct-child combinator only: Tooltips can be nested (eg. an icon tooltip
+   inside a dropdown that itself has a tooltip on its trigger), and .bubble
+   is always its own wrapper's direct child, never a nested wrapper's. Using
+   a descendant selector here would make hovering anywhere inside an outer
+   wrapper also reveal an inner Tooltip's bubble. */
+.wrapper:hover > .bubble,
+.wrapper:focus-within > .bubble {
   opacity: 1;
   transform: translateY(0);
   transition-delay: 300ms;
@@ -35,8 +40,8 @@
   transform: translate(-50%, 2px);
 }
 
-.wrapper:hover .bubble[data-position="top"],
-.wrapper:focus-within .bubble[data-position="top"] {
+.wrapper:hover > .bubble[data-position="top"],
+.wrapper:focus-within > .bubble[data-position="top"] {
   transform: translate(-50%, 0);
 }
 
@@ -46,8 +51,8 @@
   transform: translate(-2px, -50%);
 }
 
-.wrapper:hover .bubble[data-position="right"],
-.wrapper:focus-within .bubble[data-position="right"] {
+.wrapper:hover > .bubble[data-position="right"],
+.wrapper:focus-within > .bubble[data-position="right"] {
   transform: translate(0, -50%);
 }
 
@@ -57,7 +62,7 @@
   transform: translate(-50%, -2px);
 }
 
-.wrapper:hover .bubble[data-position="bottom"],
-.wrapper:focus-within .bubble[data-position="bottom"] {
+.wrapper:hover > .bubble[data-position="bottom"],
+.wrapper:focus-within > .bubble[data-position="bottom"] {
   transform: translate(-50%, 0);
 }

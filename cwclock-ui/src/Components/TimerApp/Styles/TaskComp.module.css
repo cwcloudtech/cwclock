@@ -63,14 +63,15 @@
   padding: 0;
 }
 
-.Projects > select {
+.Projects > select,
+.Projects > input {
   padding: 6px 8px;
   border: 1px solid var(--cw-border);
   border-radius: var(--cw-radius-sm);
   color: var(--cw-primary-700);
   font-weight: 600;
   background-color: var(--cw-surface);
-  max-width: 160px;
+  max-width: 220px;
 }
 
 .Tags,

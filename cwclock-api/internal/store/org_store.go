@@ -45,18 +45,12 @@ type OrganizationFields struct {
 	Picture    string
 }
 
-func scanOrganization(row pgx.Row) (models.Organization, error) {
-	var o models.Organization
-	var raw []byte
-	if err := row.Scan(&o.ID, &o.OwnerID, &raw, &o.CreatedAt, &o.UpdatedAt); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return models.Organization{}, ErrNotFound
-		}
-		return models.Organization{}, err
-	}
+// applyOrgData unmarshals the stored JSON blob onto an organization already
+// populated with its scanned columns (id, owner, timestamps).
+func applyOrgData(o *models.Organization, raw []byte) error {
 	var d orgData
 	if err := json.Unmarshal(raw, &d); err != nil {
-		return models.Organization{}, err
+		return err
 	}
 	o.Name = d.Name
 	o.Address = d.Address
@@ -67,6 +61,21 @@ func scanOrganization(row pgx.Row) (models.Organization, error) {
 	o.SIREN = d.SIREN
 	o.SIRET = d.SIRET
 	o.Picture = d.Picture
+	return nil
+}
+
+func scanOrganization(row pgx.Row) (models.Organization, error) {
+	var o models.Organization
+	var raw []byte
+	if err := row.Scan(&o.ID, &o.OwnerID, &raw, &o.CreatedAt, &o.UpdatedAt); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return models.Organization{}, ErrNotFound
+		}
+		return models.Organization{}, err
+	}
+	if err := applyOrgData(&o, raw); err != nil {
+		return models.Organization{}, err
+	}
 	return o, nil
 }
 
@@ -155,24 +164,32 @@ func (s *OrgStore) ListForUser(ctx context.Context, userID string) ([]models.Org
 }
 
 // ListAll returns every organization, for the superuser's org-management screen.
-func (s *OrgStore) ListAll(ctx context.Context) ([]models.Organization, error) {
+// ListAllWithOwner returns every organization with its owner's email, for
+// the superuser's organization-management screen.
+func (s *OrgStore) ListAllWithOwner(ctx context.Context) ([]models.OrganizationWithOwner, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT id, owner_id, data, created_at, updated_at
-		FROM organizations
-		ORDER BY created_at DESC
+		SELECT o.id, o.owner_id, o.data, o.created_at, o.updated_at, u.email
+		FROM organizations o
+		JOIN users u ON u.id = o.owner_id
+		ORDER BY o.created_at DESC
 	`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	orgs := []models.Organization{}
+	orgs := []models.OrganizationWithOwner{}
 	for rows.Next() {
-		o, err := scanOrganization(rows)
-		if err != nil {
+		var o models.Organization
+		var raw []byte
+		var ownerEmail string
+		if err := rows.Scan(&o.ID, &o.OwnerID, &raw, &o.CreatedAt, &o.UpdatedAt, &ownerEmail); err != nil {
 			return nil, err
 		}
-		orgs = append(orgs, o)
+		if err := applyOrgData(&o, raw); err != nil {
+			return nil, err
+		}
+		orgs = append(orgs, models.OrganizationWithOwner{Organization: o, OwnerEmail: ownerEmail})
 	}
 	return orgs, rows.Err()
 }
