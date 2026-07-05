@@ -28,11 +28,21 @@ var roleRank = map[models.Role]int{
 
 // OrgMembership resolves the caller's role in the organization identified by
 // the {orgId} URL param and rejects the request if they aren't a member.
-func OrgMembership(orgs *store.OrgStore) func(http.Handler) http.Handler {
+// The global superuser is granted an implicit owner role in every
+// organization, even ones they never joined, so they can manage or delete
+// any organization and transfer its ownership.
+func OrgMembership(orgs *store.OrgStore, users *store.UserStore) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			userID, _ := UserIDFromContext(r.Context())
 			orgID := chi.URLParam(r, "orgId")
+
+			if user, err := users.FindByID(r.Context(), userID); err == nil && user.Role == models.GlobalRoleSuperuser {
+				ctx := context.WithValue(r.Context(), orgIDKey, orgID)
+				ctx = context.WithValue(ctx, orgRoleKey, models.RoleOwner)
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
+			}
 
 			role, err := orgs.GetRole(r.Context(), orgID, userID)
 			if err != nil {

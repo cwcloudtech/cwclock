@@ -84,7 +84,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusCreated, models.UserResponse{
 		ID: user.ID, Email: user.Email, Name: user.Name, Surname: user.Surname,
-		Token: token, Picture: user.Picture,
+		Role: user.Role, Token: token, Picture: user.Picture,
 	})
 }
 
@@ -114,7 +114,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, models.UserResponse{
 		ID: user.ID, Email: user.Email, Name: user.Name, Surname: user.Surname,
-		Token: token, Picture: user.Picture,
+		Role: user.Role, Token: token, Picture: user.Picture,
 	})
 }
 
@@ -132,6 +132,7 @@ func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
 		Email:     user.Email,
 		Name:      user.Name,
 		Surname:   user.Surname,
+		Role:      user.Role,
 		Picture:   user.Picture,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
@@ -164,6 +165,7 @@ func (h *UserHandler) UpdatePicture(w http.ResponseWriter, r *http.Request) {
 		Email:     user.Email,
 		Name:      user.Name,
 		Surname:   user.Surname,
+		Role:      user.Role,
 		Picture:   user.Picture,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
@@ -201,6 +203,7 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		Email:     user.Email,
 		Name:      user.Name,
 		Surname:   user.Surname,
+		Role:      user.Role,
 		Picture:   user.Picture,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
@@ -226,7 +229,7 @@ func (h *UserHandler) Search(w http.ResponseWriter, r *http.Request) {
 	for i, u := range users {
 		results[i] = models.UserMeResponse{
 			ID: u.ID, Email: u.Email, Name: u.Name, Surname: u.Surname,
-			CreatedAt: u.CreatedAt, UpdatedAt: u.UpdatedAt,
+			Role: u.Role, CreatedAt: u.CreatedAt, UpdatedAt: u.UpdatedAt,
 		}
 	}
 	writeJSON(w, http.StatusOK, results)

@@ -1,4 +1,4 @@
-import { error, loading, login, logout, register, updatePicture, updateProfile } from "./Auth.types";
+import { error, loading, login, logout, register, updatePicture, updateProfile, syncUser } from "./Auth.types";
 
 const user = JSON.parse(localStorage.getItem("User"));
 
@@ -46,6 +46,14 @@ export const AuthReducer = (state = initialstate, { type, payload }) => {
     }
     case updateProfile: {
       const updatedUser = { ...state.user, name: payload.name, surname: payload.surname };
+      localStorage.setItem("User", JSON.stringify(updatedUser));
+      return { ...state, user: updatedUser };
+    }
+    case syncUser: {
+      // Merge the latest /me snapshot (role can change server-side, eg. the
+      // superuser confirms or disables the account) without a token field,
+      // which /me never returns, so the existing token is preserved.
+      const updatedUser = { ...state.user, ...payload };
       localStorage.setItem("User", JSON.stringify(updatedUser));
       return { ...state, user: updatedUser };
     }

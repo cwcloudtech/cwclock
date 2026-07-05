@@ -5,3 +5,4 @@ export const loading = "auth/loading";
 export const error = "auth/error";
 export const updatePicture = "auth/updatePicture";
 export const updateProfile = "auth/updateProfile";
+export const syncUser = "auth/syncUser";

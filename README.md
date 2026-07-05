@@ -2,6 +2,14 @@
 
 Opensource alternative to [Clockify](https://clockify.me) written in Go and react.
 
+## Features
+
+* Track time spent on tasks
+* Manage organizations, clients and project
+* Export in CSV or PDF compliant with Clockify format
+* Reimport clockify CSV files
+* Print and send invoices with daily rates and VAT (stored in object storage)
+
 ## Technologies
 
 - [Go](https://go.dev) and [PostgreSQL](https://www.postgresql.org) for the API

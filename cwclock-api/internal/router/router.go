@@ -18,7 +18,9 @@ func New(
 	clientHandler *handlers.ClientHandler,
 	projectHandler *handlers.ProjectHandler,
 	timeEntryHandler *handlers.TimeEntryHandler,
+	adminHandler *handlers.AdminHandler,
 	orgs *store.OrgStore,
+	users *store.UserStore,
 	jwtSecret string,
 ) http.Handler {
 	r := chi.NewRouter()
@@ -41,19 +43,32 @@ func New(
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.Auth(jwtSecret))
 				r.Get("/me", userHandler.Me)
-				r.Put("/me", userHandler.UpdateProfile)
-				r.Put("/me/picture", userHandler.UpdatePicture)
-				r.Get("/search", userHandler.Search)
+
+				r.Group(func(r chi.Router) {
+					r.Use(middleware.RequireActiveUser(users))
+					r.Put("/me", userHandler.UpdateProfile)
+					r.Put("/me/picture", userHandler.UpdatePicture)
+					r.Get("/search", userHandler.Search)
+				})
 			})
+		})
+
+		r.Route("/admin/users", func(r chi.Router) {
+			r.Use(middleware.Auth(jwtSecret))
+			r.Use(middleware.RequireActiveUser(users))
+			r.Use(middleware.RequireSuperuser(users))
+			r.Get("/", adminHandler.ListUsers)
+			r.Put("/{id}", adminHandler.UpdateUser)
 		})
 
 		r.Route("/organizations", func(r chi.Router) {
 			r.Use(middleware.Auth(jwtSecret))
+			r.Use(middleware.RequireActiveUser(users))
 			r.Post("/", orgHandler.Create)
 			r.Get("/", orgHandler.List)
 
 			r.Route("/{orgId}", func(r chi.Router) {
-				r.Use(middleware.OrgMembership(orgs))
+				r.Use(middleware.OrgMembership(orgs, users))
 
 				r.Get("/", orgHandler.Get)
 				r.With(middleware.RequireRole(models.RoleOwner)).Put("/", orgHandler.Update)

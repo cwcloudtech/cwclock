@@ -22,6 +22,7 @@ const TaskComponent = ({ item }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [form, setForm] = useState(fieldsFromItem(item));
+  const [reassignText, setReassignText] = useState("");
   const { user } = useSelector((state) => state.auth);
   const { currentOrgId, members } = useSelector((state) => state.organizations);
   const { projects } = useSelector((state) => state.projects);
@@ -36,8 +37,19 @@ const TaskComponent = ({ item }) => {
   useEffect(() => {
     if (!isEditing) {
       setForm(fieldsFromItem(item));
+    } else {
+      const current = members.find((m) => m.userId === item.userId);
+      setReassignText(current ? memberLabel(current) : "");
     }
-  }, [item, isEditing]);
+  }, [item, isEditing, members]);
+
+  const handleReassignInput = (text) => {
+    setReassignText(text);
+    const match = members.find((m) => memberLabel(m) === text || m.email === text);
+    if (match) {
+      setForm((f) => ({ ...f, userId: match.userId }));
+    }
+  };
 
   const handleDelete = () => {
     setShowDeleteConfirm(false);
@@ -124,17 +136,20 @@ const TaskComponent = ({ item }) => {
                 </>
               )}
               {isAdminOrOwner && (
-                <select
-                  title="Reassign to a member"
-                  value={form.userId}
-                  onChange={(e) => setForm({ ...form, userId: e.target.value })}
-                >
-                  {members.map((m) => (
-                    <option key={m.userId} value={m.userId}>
-                      {memberLabel(m)}
-                    </option>
-                  ))}
-                </select>
+                <>
+                  <input
+                    list={`reassign-options-${item.id}`}
+                    title="Reassign to a member"
+                    placeholder="Search member..."
+                    value={reassignText}
+                    onChange={(e) => handleReassignInput(e.target.value)}
+                  />
+                  <datalist id={`reassign-options-${item.id}`}>
+                    {members.map((m) => (
+                      <option key={m.userId} value={memberLabel(m)} />
+                    ))}
+                  </datalist>
+                </>
               )}
             </div>
             <button type="button" className={styles.Tags3} onClick={handleSave} title="Save changes">

@@ -1,0 +1,29 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--cw-bg);
+  padding: var(--cw-spacing);
+}
+
+.card {
+  max-width: 420px;
+  padding: var(--cw-spacing-xl) var(--cw-spacing-lg);
+  background-color: var(--cw-surface);
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-lg);
+  box-shadow: var(--cw-shadow);
+  text-align: center;
+}
+
+.title {
+  font-size: 1.3rem;
+  margin: 0 0 12px;
+  color: var(--cw-danger);
+}
+
+.body {
+  color: var(--cw-text-muted);
+  margin: 0 0 var(--cw-spacing-lg);
+}

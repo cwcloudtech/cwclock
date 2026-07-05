@@ -35,8 +35,12 @@ func main() {
 	clientHandler := handlers.NewClientHandler(clientStore)
 	projectHandler := handlers.NewProjectHandler(projectStore)
 	timeEntryHandler := handlers.NewTimeEntryHandler(timeEntryStore)
+	adminHandler := handlers.NewAdminHandler(userStore)
 
-	r := router.New(userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, orgStore, cfg.JWTSecret)
+	r := router.New(
+		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, adminHandler,
+		orgStore, userStore, cfg.JWTSecret,
+	)
 
 	log.Printf("Server started on port %s", cfg.Port)
 	if err := http.ListenAndServe(":"+cfg.Port, r); err != nil {

@@ -4,6 +4,7 @@ import { AuthReducer } from "./Auth/Auth.Reducer";
 import { OrgReducer } from "./Organizations/Org.reducer";
 import { ClientReducer } from "./Clients/Client.reducer";
 import { ProjectReducer } from "./Projects/Project.reducer";
+import { AdminReducer } from "./Admin/Admin.reducer";
 import thunk from "redux-thunk";
 
 const rootRuducer = combineReducers({
@@ -12,6 +13,7 @@ const rootRuducer = combineReducers({
   organizations: OrgReducer,
   clients: ClientReducer,
   projects: ProjectReducer,
+  admin: AdminReducer,
 });
 
 export const Store = legacy_createStore(rootRuducer, applyMiddleware(thunk));

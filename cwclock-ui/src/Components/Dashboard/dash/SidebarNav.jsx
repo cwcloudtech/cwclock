@@ -1,7 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { FiClock } from "react-icons/fi";
-import { FaFileAlt, FaRegUserCircle, FaBuilding } from "react-icons/fa";
+import { FaFileAlt, FaRegUserCircle, FaBuilding, FaUserShield } from "react-icons/fa";
 import Tooltip from "../../common/Tooltip";
 import styles from "./STYLE/SidebarNav.module.css";
 
@@ -12,13 +12,16 @@ const items = [
   { to: "/dashboard/projects", label: "Projects", Icon: FaFileAlt },
 ];
 
+const adminItem = { to: "/dashboard/admin", label: "Users", Icon: FaUserShield };
+
 // Single sidebar nav that renders either as an icon rail or an expanded
 // rail with labels, replacing the previously separate Slideopen/Slideclose
 // components that duplicated the same link list.
-const SidebarNav = ({ expanded }) => {
+const SidebarNav = ({ expanded, isSuperuser }) => {
+  const links = isSuperuser ? [...items, adminItem] : items;
   return (
     <nav className={styles.nav}>
-      {items.map(({ to, label, Icon }) => (
+      {links.map(({ to, label, Icon }) => (
         <Tooltip key={to} label={expanded ? null : label} position="right" className={styles.tooltipWrapper}>
           <NavLink
             to={to}

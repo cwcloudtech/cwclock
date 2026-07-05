@@ -4,6 +4,7 @@ import { FaChevronLeft, FaChevronRight, FaUserCheck } from "react-icons/fa";
 import { Route, Routes, useNavigate, Link } from "react-router-dom";
 import Dropdown, { DropdownItem, DropdownText, DropdownDivider } from "../../common/Dropdown";
 import EditProfileModal from "../../common/EditProfileModal";
+import DisabledNotice from "../../common/DisabledNotice";
 import memberLabel from "../../common/memberLabel";
 import Tooltip from "../../common/Tooltip";
 import logo from "../../../assets/images/cwclock-logo.svg";
@@ -13,11 +14,10 @@ import SidebarNav from "./SidebarNav";
 import Clientdiv from "../pages/Client";
 import Organizationsdiv from "../pages/Organizations";
 import Projectsdiv from "../pages/Projects";
+import Admindiv from "../pages/Admin";
 import { useSelector, useDispatch } from "react-redux";
 import { meApi, logoutUser } from "../../../Redux/Auth/Auth.actions";
-import { updatePictureApi } from "../../../Redux/Users/User.actions";
 import { listOrgsApi, selectOrg } from "../../../Redux/Organizations/Org.actions";
-import fileToBase64 from "../../common/fileToBase64";
 
 const Slidebar = () => {
   const [expanded, setExpanded] = useState(false);
@@ -31,6 +31,7 @@ const Slidebar = () => {
   const { user } = useSelector((state) => state.auth);
   const { organizations, currentOrgId } = useSelector((state) => state.organizations);
   const currentOrg = organizations.find((o) => o.id === currentOrgId);
+  const isSuperuser = user.role === "superuser";
 
   useEffect(() => {
     if (!user.token) {
@@ -46,12 +47,9 @@ const Slidebar = () => {
     navigate("/login");
   };
 
-  const handlePictureChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const picture = await fileToBase64(file);
-    dispatch(updatePictureApi(picture, user.token));
-  };
+  if (user.role === "disabled") {
+    return <DisabledNotice />;
+  }
 
   return (
     <div className={styles.main}>
@@ -119,16 +117,10 @@ const Slidebar = () => {
                       setShowEditProfile(true);
                       close();
                     }}
-                    title="Edit your first and last name"
+                    title="Edit your profile and avatar"
                   >
                     Edit profile
                   </DropdownItem>
-                  <DropdownText>
-                    <label className={styles.uploadLabel} title="Upload a new profile picture">
-                      Change picture
-                      <input type="file" accept="image/*" hidden onChange={handlePictureChange} />
-                    </label>
-                  </DropdownText>
                   <DropdownDivider />
                   <DropdownItem onClick={handleLogout} title="Sign out of your account">
                     Logout
@@ -149,7 +141,7 @@ const Slidebar = () => {
 
       <div className={styles.Slideflex}>
         <div className={`${styles.sidebarCol} ${expanded ? styles.sidebarColExpanded : ""}`}>
-          <SidebarNav expanded={expanded} />
+          <SidebarNav expanded={expanded} isSuperuser={isSuperuser} />
           <Tooltip label={expanded ? "Collapse sidebar" : "Expand sidebar"} position="right" className={styles.toggleTooltip}>
             <button className={styles.sidebarToggle} onClick={handleclick}>
               {expanded ? <FaChevronLeft /> : <FaChevronRight />}
@@ -162,6 +154,7 @@ const Slidebar = () => {
             <Route path="/organizations" element={<Organizationsdiv />}></Route>
             <Route path="/clients" element={<Clientdiv />}></Route>
             <Route path="/projects" element={<Projectsdiv />}></Route>
+            {isSuperuser && <Route path="/admin" element={<Admindiv />}></Route>}
           </Routes>
         </div>
       </div>

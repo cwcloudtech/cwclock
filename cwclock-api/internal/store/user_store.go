@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/utils"
 )
 
 var ErrNotFound = errors.New("not found")
@@ -25,11 +26,53 @@ type userData struct {
 	Password string `json:"password"`
 	Name     string `json:"name,omitempty"`
 	Surname  string `json:"surname,omitempty"`
+	Role     string `json:"role,omitempty"`
 	Picture  string `json:"picture,omitempty"`
 }
 
+func scanUser(row pgx.Row) (models.User, error) {
+	var u models.User
+	var raw []byte
+	if err := row.Scan(&u.ID, &u.Email, &raw, &u.CreatedAt, &u.UpdatedAt); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return models.User{}, ErrNotFound
+		}
+		return models.User{}, err
+	}
+	var d userData
+	if err := json.Unmarshal(raw, &d); err != nil {
+		return models.User{}, err
+	}
+	u.PasswordHash = d.Password
+	u.Name = d.Name
+	u.Surname = d.Surname
+	u.Role = models.GlobalRole(d.Role)
+	u.Picture = d.Picture
+	return u, nil
+}
+
+// Count returns the total number of registered users, used to decide
+// whether a newly registering user is the very first (and thus superuser).
+func (s *UserStore) Count(ctx context.Context) (int, error) {
+	var count int
+	row := s.pool.QueryRow(ctx, `SELECT count(*) FROM users`)
+	if err := row.Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+// Create registers a user. The very first account ever created becomes the
+// superuser; every other account starts disabled until the superuser
+// confirms it.
 func (s *UserStore) Create(ctx context.Context, email, passwordHash, name, surname string) (models.User, error) {
-	data, err := json.Marshal(userData{Password: passwordHash, Name: name, Surname: surname})
+	count, err := s.Count(ctx)
+	if err != nil {
+		return models.User{}, err
+	}
+	role := utils.If(count == 0, models.GlobalRoleSuperuser, models.GlobalRoleDisabled)
+
+	data, err := json.Marshal(userData{Password: passwordHash, Name: name, Surname: surname, Role: string(role)})
 	if err != nil {
 		return models.User{}, err
 	}
@@ -46,80 +89,63 @@ func (s *UserStore) Create(ctx context.Context, email, passwordHash, name, surna
 	u.PasswordHash = passwordHash
 	u.Name = name
 	u.Surname = surname
+	u.Role = role
 	return u, nil
 }
 
 func (s *UserStore) FindByEmail(ctx context.Context, email string) (models.User, error) {
-	var u models.User
-	var raw []byte
 	row := s.pool.QueryRow(ctx, `
 		SELECT id, email, data, created_at, updated_at
 		FROM users WHERE email = $1
 	`, email)
-	if err := row.Scan(&u.ID, &u.Email, &raw, &u.CreatedAt, &u.UpdatedAt); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return models.User{}, ErrNotFound
-		}
-		return models.User{}, err
-	}
-	var d userData
-	if err := json.Unmarshal(raw, &d); err != nil {
-		return models.User{}, err
-	}
-	u.PasswordHash = d.Password
-	u.Name = d.Name
-	u.Surname = d.Surname
-	u.Picture = d.Picture
-	return u, nil
+	return scanUser(row)
 }
 
 func (s *UserStore) FindByID(ctx context.Context, id string) (models.User, error) {
-	var u models.User
-	var raw []byte
 	row := s.pool.QueryRow(ctx, `
 		SELECT id, email, data, created_at, updated_at
 		FROM users WHERE id = $1
 	`, id)
-	if err := row.Scan(&u.ID, &u.Email, &raw, &u.CreatedAt, &u.UpdatedAt); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return models.User{}, ErrNotFound
+	return scanUser(row)
+}
+
+// List returns every registered user, for the superuser's user management screen.
+func (s *UserStore) List(ctx context.Context) ([]models.User, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, email, data, created_at, updated_at
+		FROM users
+		ORDER BY created_at
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []models.User{}
+	for rows.Next() {
+		u, err := scanUser(rows)
+		if err != nil {
+			return nil, err
 		}
-		return models.User{}, err
+		users = append(users, u)
 	}
-	var d userData
-	if err := json.Unmarshal(raw, &d); err != nil {
-		return models.User{}, err
-	}
-	u.Name = d.Name
-	u.Surname = d.Surname
-	u.Picture = d.Picture
-	return u, nil
+	return users, rows.Err()
 }
 
 // UpdatePicture sets the user's avatar picture (base64) via jsonb_set, so it
 // can't clobber the password hash stored alongside it in the same column.
 func (s *UserStore) UpdatePicture(ctx context.Context, id, picture string) (models.User, error) {
-	var u models.User
 	row := s.pool.QueryRow(ctx, `
 		UPDATE users SET data = jsonb_set(data, '{picture}', to_jsonb($2::text), true), updated_at = now()
 		WHERE id = $1
-		RETURNING id, email, created_at, updated_at
+		RETURNING id, email, data, created_at, updated_at
 	`, id, picture)
-	if err := row.Scan(&u.ID, &u.Email, &u.CreatedAt, &u.UpdatedAt); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return models.User{}, ErrNotFound
-		}
-		return models.User{}, err
-	}
-	u.Picture = picture
-	return u, nil
+	return scanUser(row)
 }
 
 // UpdateProfile sets the user's name and surname via jsonb_set, leaving the
 // password hash and picture stored alongside them untouched.
 func (s *UserStore) UpdateProfile(ctx context.Context, id, name, surname string) (models.User, error) {
-	var u models.User
-	var raw []byte
 	row := s.pool.QueryRow(ctx, `
 		UPDATE users
 		SET data = jsonb_set(jsonb_set(data, '{name}', to_jsonb($2::text), true), '{surname}', to_jsonb($3::text), true),
@@ -127,20 +153,46 @@ func (s *UserStore) UpdateProfile(ctx context.Context, id, name, surname string)
 		WHERE id = $1
 		RETURNING id, email, data, created_at, updated_at
 	`, id, name, surname)
-	if err := row.Scan(&u.ID, &u.Email, &raw, &u.CreatedAt, &u.UpdatedAt); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return models.User{}, ErrNotFound
-		}
+	return scanUser(row)
+}
+
+// AdminUserFields holds the fields the superuser may set on any account.
+// PasswordHash and Picture are pointers so a nil value means "leave
+// unchanged" (the superuser edit form never displays the current password).
+type AdminUserFields struct {
+	Name         string
+	Surname      string
+	Role         string
+	PasswordHash *string
+	Picture      *string
+}
+
+// AdminUpdate lets the superuser edit any account's profile, role, picture
+// and/or password. It merges only the provided keys into the stored JSON so
+// omitted fields (like an unset password) are left untouched.
+func (s *UserStore) AdminUpdate(ctx context.Context, id string, f AdminUserFields) (models.User, error) {
+	patch := map[string]any{
+		"name":    f.Name,
+		"surname": f.Surname,
+		"role":    f.Role,
+	}
+	if f.PasswordHash != nil {
+		patch["password"] = *f.PasswordHash
+	}
+	if f.Picture != nil {
+		patch["picture"] = *f.Picture
+	}
+	data, err := json.Marshal(patch)
+	if err != nil {
 		return models.User{}, err
 	}
-	var d userData
-	if err := json.Unmarshal(raw, &d); err != nil {
-		return models.User{}, err
-	}
-	u.Name = d.Name
-	u.Surname = d.Surname
-	u.Picture = d.Picture
-	return u, nil
+
+	row := s.pool.QueryRow(ctx, `
+		UPDATE users SET data = data || $2::jsonb, updated_at = now()
+		WHERE id = $1
+		RETURNING id, email, data, created_at, updated_at
+	`, id, data)
+	return scanUser(row)
 }
 
 // SearchByEmail returns users whose email contains query, for invite
@@ -160,17 +212,10 @@ func (s *UserStore) SearchByEmail(ctx context.Context, query string, limit int) 
 
 	users := []models.User{}
 	for rows.Next() {
-		var u models.User
-		var raw []byte
-		if err := rows.Scan(&u.ID, &u.Email, &raw, &u.CreatedAt, &u.UpdatedAt); err != nil {
+		u, err := scanUser(rows)
+		if err != nil {
 			return nil, err
 		}
-		var d userData
-		if err := json.Unmarshal(raw, &d); err != nil {
-			return nil, err
-		}
-		u.Name = d.Name
-		u.Surname = d.Surname
 		users = append(users, u)
 	}
 	return users, rows.Err()

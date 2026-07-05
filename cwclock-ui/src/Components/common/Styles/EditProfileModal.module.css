@@ -1,0 +1,35 @@
+.avatarRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: var(--cw-spacing-lg);
+  padding-bottom: var(--cw-spacing);
+  border-bottom: 1px solid var(--cw-border);
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--cw-border);
+}
+
+.avatarPlaceholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--cw-bg-alt);
+  border: 1px solid var(--cw-border);
+}
+
+.avatarLabel {
+  color: var(--cw-primary-600);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.avatarLabel:hover {
+  color: var(--cw-primary-700);
+}

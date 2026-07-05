@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import Modal from "./Modal";
 import Button from "./Button";
-import { updateProfileApi } from "../../Redux/Users/User.actions";
+import { updateProfileApi, updatePictureApi } from "../../Redux/Users/User.actions";
+import fileToBase64 from "./fileToBase64";
+import styles from "./Styles/EditProfileModal.module.css";
 
 const EditProfileModal = ({ show, onClose, user }) => {
   const dispatch = useDispatch();
@@ -17,6 +19,13 @@ const EditProfileModal = ({ show, onClose, user }) => {
       setError("");
     }
   }, [show, user.name, user.surname]);
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const picture = await fileToBase64(file);
+    dispatch(updatePictureApi(picture, user.token));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,6 +43,18 @@ const EditProfileModal = ({ show, onClose, user }) => {
 
   return (
     <Modal show={show} title="Edit profile" onClose={onClose}>
+      <div className={styles.avatarRow}>
+        {user.picture ? (
+          <img src={user.picture} alt="" className={styles.avatar} />
+        ) : (
+          <div className={styles.avatarPlaceholder} />
+        )}
+        <label className={styles.avatarLabel} title="Upload a new profile picture">
+          Update avatar
+          <input type="file" accept="image/*" hidden onChange={handleAvatarChange} />
+        </label>
+      </div>
+
       <form onSubmit={handleSubmit}>
         <div className="cw-field">
           <label className="cw-label">First name</label>

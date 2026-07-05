@@ -1,5 +1,5 @@
 import axios from "axios";
-import { error, loading, logout, register } from "./Auth.types";
+import { error, loading, logout, register, syncUser } from "./Auth.types";
 import { toast } from "react-toastify";
 
 const ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/users/`;
@@ -37,13 +37,16 @@ export const logoutUser = () => (dispatch) => {
   dispatch({ type: logout });
 };
 
-// meApi verifies that the connected user still exists in the database,
-// disconnecting them otherwise (eg. their account was deleted elsewhere).
+// meApi verifies that the connected user still exists in the database, and
+// refreshes their locally cached profile (in particular the global role,
+// which can change server-side after the token was issued), disconnecting
+// them if the account no longer exists.
 export const meApi = (token) => async (dispatch) => {
   try {
-    await axios.get(`${ENDPOINT}me`, {
+    const { data } = await axios.get(`${ENDPOINT}me`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    dispatch({ type: syncUser, payload: data });
   } catch (e) {
     dispatch({ type: logout });
   }
