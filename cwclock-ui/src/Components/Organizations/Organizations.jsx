@@ -117,12 +117,16 @@ const MemberRow = ({ member, canSetRate, orgId, token }) => {
               title="Currency"
             />
           </div>
-          <Button size="sm" type="submit" title="Save daily rate">
-            Save
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => setEditing(false)} title="Discard changes">
-            Cancel
-          </Button>
+          <div className="cw-field">
+            <Button size="sm" type="submit" title="Save daily rate">
+              Save
+            </Button>
+          </div>
+          <div className="cw-field">
+            <Button size="sm" variant="secondary" onClick={() => setEditing(false)} title="Discard changes">
+              Cancel
+            </Button>
+          </div>
         </form>
       )}
     </li>
