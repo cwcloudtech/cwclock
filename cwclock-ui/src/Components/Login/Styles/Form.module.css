@@ -55,16 +55,6 @@
   background-color: var(--cw-primary-dark);
 }
 
-.formflex {
-  display: flex;
-  align-items: center;
-  margin-bottom: var(--cw-spacing);
-  gap: 8px;
-  font-size: 0.9rem;
-  color: var(--cw-text-muted);
-  cursor: pointer;
-}
-
 .footer {
   position: relative;
   bottom: 0;

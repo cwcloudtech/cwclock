@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import Spinner from "../spinner/Spinner";
 import { loginApi } from "../../Redux/Auth/Auth.actions";
 
-const LoginForm = ({ label, checkBox }) => {
+const LoginForm = ({ label }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user, isLoading } = useSelector((state) => state.auth);
@@ -66,11 +66,6 @@ const LoginForm = ({ label, checkBox }) => {
             title="Password"
           />
         </div>
-
-        <label className={styles.formflex} title={checkBox}>
-          <input type="checkbox" />
-          {checkBox}
-        </label>
 
         <button type="submit" className={styles.btn} title="Log in to your account">
           Log In

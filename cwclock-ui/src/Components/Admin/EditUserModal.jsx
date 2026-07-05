@@ -10,6 +10,7 @@ const ROLES = ["superuser", "confirmed", "disabled"];
 
 const EditUserModal = ({ show, onClose, targetUser, token }) => {
   const dispatch = useDispatch();
+  const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [role, setRole] = useState("confirmed");
@@ -19,6 +20,7 @@ const EditUserModal = ({ show, onClose, targetUser, token }) => {
 
   useEffect(() => {
     if (show && targetUser) {
+      setEmail(targetUser.email || "");
       setName(targetUser.name || "");
       setSurname(targetUser.surname || "");
       setRole(targetUser.role || "confirmed");
@@ -38,18 +40,22 @@ const EditUserModal = ({ show, onClose, targetUser, token }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !surname) {
-      setError("Please add both first and last name.");
+    if (!email || !name || !surname) {
+      setError("Please add a valid email, first and last name.");
       return;
     }
-    const fields = { name, surname, role };
+    const fields = { email, name, surname, role };
     if (password) fields.password = password;
     if (picture !== undefined) fields.picture = picture;
     try {
       await dispatch(updateUserApi(targetUser.id, fields, token));
       onClose();
     } catch (err) {
-      setError("Could not update this user. Please try again.");
+      setError(
+        err.response?.status === 400 && /email/i.test(err.response?.data?.message || "")
+          ? "This email is already in use."
+          : "Could not update this user. Please try again."
+      );
     }
   };
 
@@ -68,6 +74,16 @@ const EditUserModal = ({ show, onClose, targetUser, token }) => {
       </div>
 
       <form onSubmit={handleSubmit}>
+        <div className="cw-field">
+          <label className="cw-label">Email</label>
+          <input
+            className="cw-input"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            title="Email"
+          />
+        </div>
         <div className="cw-field">
           <label className="cw-label">First name</label>
           <input

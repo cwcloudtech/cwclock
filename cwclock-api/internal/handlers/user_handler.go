@@ -173,12 +173,14 @@ func (h *UserHandler) UpdatePicture(w http.ResponseWriter, r *http.Request) {
 }
 
 type updateProfilePayload struct {
-	Name    string `json:"name"`
-	Surname string `json:"surname"`
+	Name            string `json:"name"`
+	Surname         string `json:"surname"`
+	Password        string `json:"password"`
+	ConfirmPassword string `json:"confirmPassword"`
 }
 
-// UpdateProfile lets the connected user set their own name and surname,
-// shown across the app wherever members are listed.
+// UpdateProfile lets the connected user set their own name, surname and,
+// optionally, a new password (left untouched when the field is empty).
 func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	userID, _ := middleware.UserIDFromContext(r.Context())
 
@@ -192,7 +194,22 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.users.UpdateProfile(r.Context(), userID, p.Name, p.Surname)
+	var passwordHash *string
+	if utils.IsNotBlank(p.Password) {
+		if p.Password != p.ConfirmPassword {
+			writeError(w, http.StatusBadRequest, "Passwords do not match")
+			return
+		}
+		hash, err := bcrypt.GenerateFromPassword([]byte(p.Password), bcrypt.DefaultCost)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		hashed := string(hash)
+		passwordHash = &hashed
+	}
+
+	user, err := h.users.UpdateProfile(r.Context(), userID, p.Name, p.Surname, passwordHash)
 	if err != nil {
 		writeStoreError(w, err)
 		return

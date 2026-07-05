@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styles from "./STYLE/Slidebar.module.css";
 import { FaChevronLeft, FaChevronRight, FaUserCheck } from "react-icons/fa";
+import { FiLogOut } from "react-icons/fi";
 import { Route, Routes, useNavigate, Link } from "react-router-dom";
 import Dropdown, { DropdownItem, DropdownText, DropdownDivider } from "../../common/Dropdown";
 import EditProfileModal from "../../common/EditProfileModal";
@@ -15,6 +16,7 @@ import Clientdiv from "../pages/Client";
 import Organizationsdiv from "../pages/Organizations";
 import Projectsdiv from "../pages/Projects";
 import Admindiv from "../pages/Admin";
+import AdminOrganizationsdiv from "../pages/AdminOrganizations";
 import { useSelector, useDispatch } from "react-redux";
 import { meApi, logoutUser } from "../../../Redux/Auth/Auth.actions";
 import { listOrgsApi, selectOrg } from "../../../Redux/Organizations/Org.actions";
@@ -122,9 +124,11 @@ const Slidebar = () => {
                     Edit profile
                   </DropdownItem>
                   <DropdownDivider />
-                  <DropdownItem onClick={handleLogout} title="Sign out of your account">
-                    Logout
-                  </DropdownItem>
+                  <Tooltip label="Logout" className={styles.logoutTooltip}>
+                    <DropdownItem onClick={handleLogout} className={styles.logoutItem}>
+                      <FiLogOut style={{ fontSize: "16px" }} />
+                    </DropdownItem>
+                  </Tooltip>
                 </>
               )}
             </Dropdown>
@@ -155,6 +159,9 @@ const Slidebar = () => {
             <Route path="/clients" element={<Clientdiv />}></Route>
             <Route path="/projects" element={<Projectsdiv />}></Route>
             {isSuperuser && <Route path="/admin" element={<Admindiv />}></Route>}
+            {isSuperuser && (
+              <Route path="/admin/organizations" element={<AdminOrganizationsdiv />}></Route>
+            )}
           </Routes>
         </div>
       </div>

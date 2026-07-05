@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"golang.org/x/crypto/bcrypt"
 
+	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/utils"
@@ -58,6 +59,7 @@ func validGlobalRole(role string) bool {
 }
 
 type adminUpdateUserPayload struct {
+	Email    string  `json:"email"`
 	Name     string  `json:"name"`
 	Surname  string  `json:"surname"`
 	Role     string  `json:"role"`
@@ -65,20 +67,20 @@ type adminUpdateUserPayload struct {
 	Picture  *string `json:"picture"`
 }
 
-// UpdateUser lets the superuser edit any account: profile, role, avatar and
-// optionally a new password. An already-set password is never returned to
-// the client; sending a non-empty "password" simply overrides it.
+// UpdateUser lets the superuser edit any account: email, profile, role,
+// avatar and optionally a new password. An already-set password is never
+// returned to the client; sending a non-empty "password" simply overrides it.
 func (h *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	var p adminUpdateUserPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil ||
-		utils.IsBlank(p.Name) || utils.IsBlank(p.Surname) || !validGlobalRole(p.Role) {
-		writeError(w, http.StatusBadRequest, "Please add valid name, surname and role fields")
+		utils.IsBlank(p.Email) || utils.IsBlank(p.Name) || utils.IsBlank(p.Surname) || !validGlobalRole(p.Role) {
+		writeError(w, http.StatusBadRequest, "Please add valid email, name, surname and role fields")
 		return
 	}
 
-	fields := store.AdminUserFields{Name: p.Name, Surname: p.Surname, Role: p.Role}
+	fields := store.AdminUserFields{Email: p.Email, Name: p.Name, Surname: p.Surname, Role: p.Role}
 
 	if p.Password != nil && utils.IsNotBlank(*p.Password) {
 		hash, err := bcrypt.GenerateFromPassword([]byte(*p.Password), bcrypt.DefaultCost)
@@ -99,4 +101,22 @@ func (h *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, toUserMeResponse(user))
+}
+
+// DeleteUser removes an account. The superuser can't delete their own
+// account this way, to avoid locking everyone out of user management.
+func (h *AdminHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	callerID, _ := middleware.UserIDFromContext(r.Context())
+
+	if id == callerID {
+		writeError(w, http.StatusBadRequest, "You can't delete your own account")
+		return
+	}
+
+	if err := h.users.Delete(r.Context(), id); err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"id": id})
 }

@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"cwclock-api/internal/models"
@@ -143,23 +144,36 @@ func (s *UserStore) UpdatePicture(ctx context.Context, id, picture string) (mode
 	return scanUser(row)
 }
 
-// UpdateProfile sets the user's name and surname via jsonb_set, leaving the
-// password hash and picture stored alongside them untouched.
-func (s *UserStore) UpdateProfile(ctx context.Context, id, name, surname string) (models.User, error) {
+// UpdateProfile sets the user's name and surname, and optionally their
+// password hash (nil leaves the current password untouched), leaving the
+// picture stored alongside them untouched either way.
+func (s *UserStore) UpdateProfile(ctx context.Context, id, name, surname string, passwordHash *string) (models.User, error) {
+	patch := map[string]any{"name": name, "surname": surname}
+	if passwordHash != nil {
+		patch["password"] = *passwordHash
+	}
+	data, err := json.Marshal(patch)
+	if err != nil {
+		return models.User{}, err
+	}
+
 	row := s.pool.QueryRow(ctx, `
-		UPDATE users
-		SET data = jsonb_set(jsonb_set(data, '{name}', to_jsonb($2::text), true), '{surname}', to_jsonb($3::text), true),
-		    updated_at = now()
+		UPDATE users SET data = data || $2::jsonb, updated_at = now()
 		WHERE id = $1
 		RETURNING id, email, data, created_at, updated_at
-	`, id, name, surname)
+	`, id, data)
 	return scanUser(row)
 }
+
+// ErrDuplicateEmail is returned when an admin edit would collide with
+// another account's email address.
+var ErrDuplicateEmail = errors.New("email already in use")
 
 // AdminUserFields holds the fields the superuser may set on any account.
 // PasswordHash and Picture are pointers so a nil value means "leave
 // unchanged" (the superuser edit form never displays the current password).
 type AdminUserFields struct {
+	Email        string
 	Name         string
 	Surname      string
 	Role         string
@@ -167,9 +181,9 @@ type AdminUserFields struct {
 	Picture      *string
 }
 
-// AdminUpdate lets the superuser edit any account's profile, role, picture
-// and/or password. It merges only the provided keys into the stored JSON so
-// omitted fields (like an unset password) are left untouched.
+// AdminUpdate lets the superuser edit any account's email, profile, role,
+// picture and/or password. It merges only the provided keys into the stored
+// JSON so omitted fields (like an unset password) are left untouched.
 func (s *UserStore) AdminUpdate(ctx context.Context, id string, f AdminUserFields) (models.User, error) {
 	patch := map[string]any{
 		"name":    f.Name,
@@ -188,11 +202,32 @@ func (s *UserStore) AdminUpdate(ctx context.Context, id string, f AdminUserField
 	}
 
 	row := s.pool.QueryRow(ctx, `
-		UPDATE users SET data = data || $2::jsonb, updated_at = now()
+		UPDATE users SET email = $3, data = data || $2::jsonb, updated_at = now()
 		WHERE id = $1
 		RETURNING id, email, data, created_at, updated_at
-	`, id, data)
-	return scanUser(row)
+	`, id, data, f.Email)
+	user, err := scanUser(row)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return models.User{}, ErrDuplicateEmail
+		}
+		return models.User{}, err
+	}
+	return user, nil
+}
+
+// Delete removes an account entirely (cascading to organizations it owns,
+// per the schema's ON DELETE CASCADE).
+func (s *UserStore) Delete(ctx context.Context, id string) error {
+	tag, err := s.pool.Exec(ctx, `DELETE FROM users WHERE id = $1`, id)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 // SearchByEmail returns users whose email contains query, for invite

@@ -154,6 +154,29 @@ func (s *OrgStore) ListForUser(ctx context.Context, userID string) ([]models.Org
 	return orgs, rows.Err()
 }
 
+// ListAll returns every organization, for the superuser's org-management screen.
+func (s *OrgStore) ListAll(ctx context.Context) ([]models.Organization, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, owner_id, data, created_at, updated_at
+		FROM organizations
+		ORDER BY created_at DESC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	orgs := []models.Organization{}
+	for rows.Next() {
+		o, err := scanOrganization(rows)
+		if err != nil {
+			return nil, err
+		}
+		orgs = append(orgs, o)
+	}
+	return orgs, rows.Err()
+}
+
 func (s *OrgStore) Update(ctx context.Context, id string, f OrganizationFields) (models.Organization, error) {
 	data, err := json.Marshal(toOrgData(f))
 	if err != nil {

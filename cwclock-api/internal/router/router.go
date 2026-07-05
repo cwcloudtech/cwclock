@@ -59,6 +59,14 @@ func New(
 			r.Use(middleware.RequireSuperuser(users))
 			r.Get("/", adminHandler.ListUsers)
 			r.Put("/{id}", adminHandler.UpdateUser)
+			r.Delete("/{id}", adminHandler.DeleteUser)
+		})
+
+		r.Route("/admin/organizations", func(r chi.Router) {
+			r.Use(middleware.Auth(jwtSecret))
+			r.Use(middleware.RequireActiveUser(users))
+			r.Use(middleware.RequireSuperuser(users))
+			r.Get("/", orgHandler.AdminList)
 		})
 
 		r.Route("/organizations", func(r chi.Router) {

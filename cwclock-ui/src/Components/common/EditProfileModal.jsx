@@ -10,12 +10,16 @@ const EditProfileModal = ({ show, onClose, user }) => {
   const dispatch = useDispatch();
   const [name, setName] = useState(user.name || "");
   const [surname, setSurname] = useState(user.surname || "");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (show) {
       setName(user.name || "");
       setSurname(user.surname || "");
+      setPassword("");
+      setConfirmPassword("");
       setError("");
     }
   }, [show, user.name, user.surname]);
@@ -33,8 +37,12 @@ const EditProfileModal = ({ show, onClose, user }) => {
       setError("Please add both first and last name.");
       return;
     }
+    if (password && password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
     try {
-      await dispatch(updateProfileApi(name, surname, user.token));
+      await dispatch(updateProfileApi(name, surname, password, confirmPassword, user.token));
       onClose();
     } catch (err) {
       setError("Could not update your profile. Please try again.");
@@ -75,6 +83,27 @@ const EditProfileModal = ({ show, onClose, user }) => {
             value={surname}
             onChange={(e) => setSurname(e.target.value)}
             title="Last name"
+          />
+        </div>
+        <div className="cw-field">
+          <label className="cw-label">New password</label>
+          <input
+            className="cw-input"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Leave blank to keep the current password"
+            title="Leave blank to keep the current password"
+          />
+        </div>
+        <div className="cw-field">
+          <label className="cw-label">Confirm password</label>
+          <input
+            className="cw-input"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            title="Confirm password"
           />
         </div>
         {error && <p className="cw-error">{error}</p>}

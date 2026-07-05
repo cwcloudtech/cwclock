@@ -7,6 +7,7 @@ import {
   OrgMembersSUCCESS,
   OrgOwnerTransferred,
   OrgUpdateSUCCESS,
+  OrgDeleteSUCCESS,
 } from "./Org.types";
 
 const initialstate = {
@@ -49,6 +50,11 @@ export const OrgReducer = (state = initialstate, { type, payload }) => {
     case OrgUpdateSUCCESS: {
       const organizations = state.organizations.map((o) => (o.id === payload.id ? payload : o));
       return { ...state, organizations, isLoading: false };
+    }
+    case OrgDeleteSUCCESS: {
+      const organizations = state.organizations.filter((o) => o.id !== payload);
+      const currentOrgId = state.currentOrgId === payload ? "" : state.currentOrgId;
+      return { ...state, organizations, currentOrgId, isLoading: false };
     }
     default: {
       return state;

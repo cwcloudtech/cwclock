@@ -8,6 +8,7 @@ import {
   OrgMembersSUCCESS,
   OrgOwnerTransferred,
   OrgUpdateSUCCESS,
+  OrgDeleteSUCCESS,
 } from "./Org.types";
 
 const ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/organizations/`;
@@ -43,6 +44,17 @@ export const updateOrgApi = (orgId, fields, token) => async (dispatch) => {
     const { data } = await axios.put(`${ENDPOINT}${orgId}`, fields, authConfig(token));
     dispatch({ type: OrgUpdateSUCCESS, payload: data });
     return data;
+  } catch (e) {
+    dispatch({ type: OrgERROR });
+    throw e;
+  }
+};
+
+export const deleteOrgApi = (orgId, token) => async (dispatch) => {
+  dispatch({ type: OrgLOADING });
+  try {
+    await axios.delete(`${ENDPOINT}${orgId}`, authConfig(token));
+    dispatch({ type: OrgDeleteSUCCESS, payload: orgId });
   } catch (e) {
     dispatch({ type: OrgERROR });
     throw e;

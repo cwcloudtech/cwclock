@@ -17,10 +17,10 @@ export const updatePictureApi = (picture, token) => async (dispatch) => {
   }
 };
 
-export const updateProfileApi = (name, surname, token) => async (dispatch) => {
+export const updateProfileApi = (name, surname, password, confirmPassword, token) => async (dispatch) => {
   const { data } = await axios.put(
     `${ENDPOINT}me`,
-    { name, surname },
+    { name, surname, password, confirmPassword },
     { headers: { Authorization: `Bearer ${token}` } }
   );
   dispatch({ type: updateProfile, payload: data });

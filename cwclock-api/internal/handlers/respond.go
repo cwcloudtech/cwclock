@@ -25,10 +25,14 @@ func writeError(w http.ResponseWriter, status int, message string) {
 }
 
 // writeStoreError maps a store error to its HTTP status: 404 when the
-// resource doesn't exist, 500 for anything else.
+// resource doesn't exist, 400 for a duplicate email, 500 for anything else.
 func writeStoreError(w http.ResponseWriter, err error) {
 	if errors.Is(err, store.ErrNotFound) {
 		writeError(w, http.StatusNotFound, "Resource not found")
+		return
+	}
+	if errors.Is(err, store.ErrDuplicateEmail) {
+		writeError(w, http.StatusBadRequest, "Email already in use")
 		return
 	}
 	writeError(w, http.StatusInternalServerError, err.Error())

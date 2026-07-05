@@ -80,6 +80,17 @@ func (h *OrganizationHandler) List(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, orgs)
 }
 
+// AdminList returns every organization, regardless of membership, for the
+// superuser's organization-management screen.
+func (h *OrganizationHandler) AdminList(w http.ResponseWriter, r *http.Request) {
+	orgs, err := h.orgs.ListAll(r.Context())
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, orgs)
+}
+
 func (h *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
 

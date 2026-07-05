@@ -120,6 +120,15 @@
   margin-top: -6px;
 }
 
+.logoutTooltip {
+  width: 100%;
+}
+
+.logoutItem {
+  justify-content: center;
+  color: var(--cw-danger);
+}
+
 .uploadLabel {
   color: var(--cw-primary-600);
   cursor: pointer;

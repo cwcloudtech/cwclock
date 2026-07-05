@@ -6,3 +6,4 @@ export const OrgSelect = "org/Select";
 export const OrgMembersSUCCESS = "org/MembersSuccess";
 export const OrgOwnerTransferred = "org/OwnerTransferred";
 export const OrgUpdateSUCCESS = "org/UpdateSuccess";
+export const OrgDeleteSUCCESS = "org/DeleteSuccess";

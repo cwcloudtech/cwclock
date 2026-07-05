@@ -9,7 +9,7 @@ const Login = () => {
     <div className={styles.page}>
       <LoginNav />
       <div className={styles.main}>
-        <LoginForm label="Log In" checkBox="Stay Signed In" />
+        <LoginForm label="Log In" />
       </div>
       <Footer />
     </div>
