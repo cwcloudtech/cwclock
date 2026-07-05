@@ -26,7 +26,7 @@ const TasksApp = () => {
     } else {
       navigate("/login");
     }
-  }, [user, dispatch, navigate]);
+  }, [user.token, dispatch, navigate]);
 
   useEffect(() => {
     if (user.token && currentOrgId) {
@@ -35,7 +35,7 @@ const TasksApp = () => {
       dispatch(listProjectsApi(currentOrgId, user.token));
       dispatch(listMembersApi(currentOrgId, user.token));
     }
-  }, [user, currentOrgId, dispatch]);
+  }, [user.token, currentOrgId, dispatch]);
 
   if (isLoading) {
     return (

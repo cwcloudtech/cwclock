@@ -42,7 +42,12 @@ const Slidebar = () => {
     }
     dispatch(meApi(user.token));
     dispatch(listOrgsApi(user.token));
-  }, [user, dispatch, navigate]);
+    // Depend on the token only: meApi syncs the profile (role, name, picture...)
+    // into this same user object, so depending on the whole object would
+    // re-trigger this effect on every successful sync, calling meApi again
+    // in an infinite loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.token, dispatch, navigate]);
 
   const handleLogout = () => {
     dispatch(logoutUser());
