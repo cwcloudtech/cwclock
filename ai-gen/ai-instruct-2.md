@@ -2,7 +2,13 @@
 
 ## UX/UI
 
-Improve the tooltip UI design (for now it seems it's just titles and are not shown when hovering).
+Improve the tooltip UI design (for now it seems it's just titles and are not shown when hovering on the sidebar).
+
+The color picker must display the selected color surligning the hexadecimal value.
+
+## Frontend refactoring
+
+Cancel secondary buttons must be inside the `ConfigForm` webcomponent and display in the same line on the right of the submit button.
 
 ## Backend refactoring
 
