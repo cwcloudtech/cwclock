@@ -273,11 +273,9 @@ const Organizations = () => {
                     onChange={setEditField}
                     onSubmit={handleEditSubmit}
                     submitLabel="Save"
+                    onCancel={() => setEditFields(null)}
                     error={editError}
                   />
-                  <Button variant="secondary" onClick={() => setEditFields(null)} title="Discard changes">
-                    Cancel
-                  </Button>
                 </div>
               ) : (
                 <Button

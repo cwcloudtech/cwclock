@@ -8,6 +8,7 @@ import (
 
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/store"
+	"cwclock-api/internal/utils"
 )
 
 type ProjectHandler struct {
@@ -26,9 +27,7 @@ type projectPayload struct {
 func (h *ProjectHandler) List(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
 	clientID := chi.URLParam(r, "clientId")
-	if clientID == "" {
-		clientID = r.URL.Query().Get("clientId")
-	}
+	clientID = utils.If(utils.IsBlank(clientID), r.URL.Query().Get("clientId"), clientID)
 
 	projects, err := h.projects.List(r.Context(), orgID, clientID)
 	if err != nil {
@@ -43,7 +42,7 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 	clientID := chi.URLParam(r, "clientId")
 
 	var p projectPayload
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || p.Name == "" {
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || utils.IsBlank(p.Name) {
 		writeError(w, http.StatusBadRequest, "Please add a name field")
 		return
 	}
@@ -60,7 +59,7 @@ func (h *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "projectId")
 
 	var p projectPayload
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || p.Name == "" {
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || utils.IsBlank(p.Name) {
 		writeError(w, http.StatusBadRequest, "Please add a name field")
 		return
 	}

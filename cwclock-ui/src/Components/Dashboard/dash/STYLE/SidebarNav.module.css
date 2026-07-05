@@ -5,6 +5,10 @@
   gap: 2px;
 }
 
+.tooltipWrapper {
+  width: 100%;
+}
+
 .link {
   display: flex;
   align-items: center;

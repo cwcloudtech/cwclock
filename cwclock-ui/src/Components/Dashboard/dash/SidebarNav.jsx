@@ -2,6 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { FiClock } from "react-icons/fi";
 import { FaFileAlt, FaRegUserCircle, FaBuilding } from "react-icons/fa";
+import Tooltip from "../../common/Tooltip";
 import styles from "./STYLE/SidebarNav.module.css";
 
 const items = [
@@ -18,15 +19,15 @@ const SidebarNav = ({ expanded }) => {
   return (
     <nav className={styles.nav}>
       {items.map(({ to, label, Icon }) => (
-        <NavLink
-          key={to}
-          to={to}
-          title={label}
-          className={({ isActive }) => `${styles.link} ${isActive ? styles.linkActive : ""}`}
-        >
-          <Icon className={styles.icon} />
-          {expanded && <span className={styles.label}>{label}</span>}
-        </NavLink>
+        <Tooltip key={to} label={expanded ? null : label} position="right" className={styles.tooltipWrapper}>
+          <NavLink
+            to={to}
+            className={({ isActive }) => `${styles.link} ${isActive ? styles.linkActive : ""}`}
+          >
+            <Icon className={styles.icon} />
+            {expanded && <span className={styles.label}>{label}</span>}
+          </NavLink>
+        </Tooltip>
       ))}
     </nav>
   );

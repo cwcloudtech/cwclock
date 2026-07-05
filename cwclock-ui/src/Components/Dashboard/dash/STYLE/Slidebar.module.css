@@ -52,12 +52,16 @@
   width: 200px;
 }
 
+.toggleTooltip {
+  padding: 8px;
+}
+
 .sidebarToggle {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   height: 36px;
-  margin: 8px;
   background-color: var(--cw-bg-alt);
   color: var(--cw-text-muted);
   border: none;

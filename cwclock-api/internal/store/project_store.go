@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/utils"
 )
 
 type ProjectStore struct {
@@ -67,7 +68,7 @@ func (s *ProjectStore) FindByID(ctx context.Context, id string) (models.Project,
 func (s *ProjectStore) List(ctx context.Context, orgID, clientID string) ([]models.Project, error) {
 	var rows pgx.Rows
 	var err error
-	if clientID == "" {
+	if utils.IsBlank(clientID) {
 		rows, err = s.pool.Query(ctx, `
 			SELECT id, organization_id, client_id, data, created_at, updated_at
 			FROM projects WHERE organization_id = $1

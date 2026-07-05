@@ -2,10 +2,21 @@ import React from "react";
 import Button from "./Button";
 import RequiredMark from "./RequiredMark";
 import fileToBase64 from "./fileToBase64";
+import contrastColor from "./contrastColor";
+import styles from "./Styles/ConfigForm.module.css";
 
 // Renders a form from a field-config object instead of hand-rolled JSX, e.g.:
 // { name: "Organization", fields: [{ name: "name", type: "text", label: "Name", required: true }] }
-const ConfigForm = ({ config, values, onChange, onSubmit, submitLabel = "Save", error }) => {
+const ConfigForm = ({
+  config,
+  values,
+  onChange,
+  onSubmit,
+  submitLabel = "Save",
+  onCancel,
+  cancelLabel = "Cancel",
+  error,
+}) => {
   const setImageField = (field) => async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -65,12 +76,20 @@ const ConfigForm = ({ config, values, onChange, onSubmit, submitLabel = "Save", 
         );
       case "color":
         return (
-          <input
-            className="cw-input"
-            type="color"
-            value={value}
-            onChange={(e) => onChange(field.name, e.target.value)}
-          />
+          <div className={styles.colorField}>
+            <input
+              className={styles.colorInput}
+              type="color"
+              value={value}
+              onChange={(e) => onChange(field.name, e.target.value)}
+            />
+            <span
+              className={styles.colorHex}
+              style={{ backgroundColor: value, color: contrastColor(value) }}
+            >
+              {value}
+            </span>
+          </div>
         );
       case "email":
         return (
@@ -110,7 +129,14 @@ const ConfigForm = ({ config, values, onChange, onSubmit, submitLabel = "Save", 
           {renderControl(field)}
         </div>
       ))}
-      <Button type="submit" title={submitLabel}>{submitLabel}</Button>
+      <div className={styles.actions}>
+        <Button type="submit" title={submitLabel}>{submitLabel}</Button>
+        {onCancel && (
+          <Button type="button" variant="secondary" onClick={onCancel} title={cancelLabel}>
+            {cancelLabel}
+          </Button>
+        )}
+      </div>
       {error && <p className="cw-error">{error}</p>}
     </form>
   );

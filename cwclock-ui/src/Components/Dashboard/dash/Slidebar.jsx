@@ -5,6 +5,7 @@ import { Route, Routes, useNavigate, Link } from "react-router-dom";
 import Dropdown, { DropdownItem, DropdownText, DropdownDivider } from "../../common/Dropdown";
 import EditProfileModal from "../../common/EditProfileModal";
 import memberLabel from "../../common/memberLabel";
+import Tooltip from "../../common/Tooltip";
 import logo from "../../../assets/images/cwclock-logo.svg";
 import TimeTracker from "../pages/TimeTracker";
 import SidebarNav from "./SidebarNav";
@@ -95,9 +96,9 @@ const Slidebar = () => {
 
         <div className={styles.navbarrightmain}>
           {user.token ? (
+            <Tooltip label="Account menu">
             <Dropdown
               align="end"
-              title="Account menu"
               triggerClassName={styles.profileTrigger}
               trigger={
                 user.picture ? (
@@ -135,6 +136,7 @@ const Slidebar = () => {
                 </>
               )}
             </Dropdown>
+            </Tooltip>
           ) : (
             <button className={styles.loginBtn} onClick={() => navigate("/login")} title="Go to the login page">
               Login
@@ -148,13 +150,11 @@ const Slidebar = () => {
       <div className={styles.Slideflex}>
         <div className={`${styles.sidebarCol} ${expanded ? styles.sidebarColExpanded : ""}`}>
           <SidebarNav expanded={expanded} />
-          <button
-            className={styles.sidebarToggle}
-            onClick={handleclick}
-            title={expanded ? "Collapse sidebar" : "Expand sidebar"}
-          >
-            {expanded ? <FaChevronLeft /> : <FaChevronRight />}
-          </button>
+          <Tooltip label={expanded ? "Collapse sidebar" : "Expand sidebar"} position="right" className={styles.toggleTooltip}>
+            <button className={styles.sidebarToggle} onClick={handleclick}>
+              {expanded ? <FaChevronLeft /> : <FaChevronRight />}
+            </button>
+          </Tooltip>
         </div>
         <div className={styles.pages}>
           <Routes>

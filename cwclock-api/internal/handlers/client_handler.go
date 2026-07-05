@@ -8,6 +8,7 @@ import (
 
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/store"
+	"cwclock-api/internal/utils"
 )
 
 type ClientHandler struct {
@@ -32,7 +33,7 @@ type clientPayload struct {
 }
 
 func (p clientPayload) valid() bool {
-	return p.Name != ""
+	return utils.IsNotBlank(p.Name)
 }
 
 func (p clientPayload) toFields() store.ClientFields {

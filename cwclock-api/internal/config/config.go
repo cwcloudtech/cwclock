@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+
+	"cwclock-api/internal/utils"
 )
 
 type Config struct {
@@ -42,8 +44,6 @@ func Load() Config {
 }
 
 func getEnv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
+	v := os.Getenv(key)
+	return utils.If(utils.IsNotBlank(v), v, fallback)
 }

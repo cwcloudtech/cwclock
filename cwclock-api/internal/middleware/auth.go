@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
+
+	"cwclock-api/internal/utils"
 )
 
 type contextKey string
@@ -33,7 +35,7 @@ func Auth(secret string) func(http.Handler) http.Handler {
 			}
 
 			sub, ok := claims["sub"].(string)
-			if !ok || sub == "" {
+			if !ok || utils.IsBlank(sub) {
 				unauthorized(w, "Not Authorised")
 				return
 			}

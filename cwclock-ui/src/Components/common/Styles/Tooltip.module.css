@@ -1,0 +1,63 @@
+.wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.bubble {
+  position: absolute;
+  z-index: 3000;
+  padding: 5px 9px;
+  border-radius: var(--cw-radius-sm);
+  background-color: var(--cw-gray-900);
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1.2;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 120ms ease, transform 120ms ease;
+  transition-delay: 0s;
+}
+
+.wrapper:hover .bubble,
+.wrapper:focus-within .bubble {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 300ms;
+}
+
+.bubble[data-position="top"] {
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translate(-50%, 2px);
+}
+
+.wrapper:hover .bubble[data-position="top"],
+.wrapper:focus-within .bubble[data-position="top"] {
+  transform: translate(-50%, 0);
+}
+
+.bubble[data-position="right"] {
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translate(-2px, -50%);
+}
+
+.wrapper:hover .bubble[data-position="right"],
+.wrapper:focus-within .bubble[data-position="right"] {
+  transform: translate(0, -50%);
+}
+
+.bubble[data-position="bottom"] {
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translate(-50%, -2px);
+}
+
+.wrapper:hover .bubble[data-position="bottom"],
+.wrapper:focus-within .bubble[data-position="bottom"] {
+  transform: translate(-50%, 0);
+}

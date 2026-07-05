@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/utils"
 )
 
 type TimeEntryStore struct {
@@ -95,7 +96,7 @@ func (s *TimeEntryStore) FindByID(ctx context.Context, id string) (models.TimeEn
 func (s *TimeEntryStore) List(ctx context.Context, orgID, userID string) ([]models.TimeEntry, error) {
 	var rows pgx.Rows
 	var err error
-	if userID == "" {
+	if utils.IsBlank(userID) {
 		rows, err = s.pool.Query(ctx, `
 			SELECT id, organization_id, client_id, project_id, user_id, data, created_at, updated_at
 			FROM time_entries WHERE organization_id = $1

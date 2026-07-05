@@ -1,0 +1,31 @@
+.colorField {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.colorInput {
+  padding: 2px;
+  width: 44px;
+  height: 32px;
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-sm);
+  background-color: var(--cw-surface);
+  cursor: pointer;
+}
+
+.colorHex {
+  padding: 4px 10px;
+  border-radius: var(--cw-radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

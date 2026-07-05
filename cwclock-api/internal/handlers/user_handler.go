@@ -12,6 +12,7 @@ import (
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
 	"cwclock-api/internal/store"
+	"cwclock-api/internal/utils"
 )
 
 type UserHandler struct {
@@ -50,7 +51,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "Please add all fields")
 		return
 	}
-	if p.Email == "" || p.Password == "" || p.Name == "" || p.Surname == "" {
+	if utils.IsBlank(p.Email) || utils.IsBlank(p.Password) || utils.IsBlank(p.Name) || utils.IsBlank(p.Surname) {
 		writeError(w, http.StatusBadRequest, "Please add all fields")
 		return
 	}
@@ -184,7 +185,7 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	if p.Name == "" || p.Surname == "" {
+	if utils.IsBlank(p.Name) || utils.IsBlank(p.Surname) {
 		writeError(w, http.StatusBadRequest, "Please add name and surname fields")
 		return
 	}

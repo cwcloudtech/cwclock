@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import Tooltip from "./Tooltip";
 import styles from "./Styles/Modal.module.css";
 
 const Modal = ({ show, title, onClose, children, footer }) => {
@@ -21,9 +22,11 @@ const Modal = ({ show, title, onClose, children, footer }) => {
       >
         <div className={styles.header}>
           <h3 className={styles.title}>{title}</h3>
-          <button type="button" className={styles.close} onClick={onClose} aria-label="Close" title="Close">
-            &times;
-          </button>
+          <Tooltip label="Close">
+            <button type="button" className={styles.close} onClick={onClose} aria-label="Close">
+              &times;
+            </button>
+          </Tooltip>
         </div>
         <div className={styles.body}>{children}</div>
         {footer && <div className={styles.footer}>{footer}</div>}

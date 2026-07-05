@@ -10,6 +10,7 @@ import (
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
 	"cwclock-api/internal/store"
+	"cwclock-api/internal/utils"
 )
 
 type OrganizationHandler struct {
@@ -34,7 +35,7 @@ type organizationPayload struct {
 }
 
 func (p organizationPayload) valid() bool {
-	return p.Name != ""
+	return utils.IsNotBlank(p.Name)
 }
 
 func (p organizationPayload) toFields() store.OrganizationFields {
@@ -163,7 +164,7 @@ func (h *OrganizationHandler) AddMember(w http.ResponseWriter, r *http.Request) 
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
 
 	var p memberPayload
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || p.Email == "" || !validRole(p.Role) {
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || utils.IsBlank(p.Email) || !validRole(p.Role) {
 		writeError(w, http.StatusBadRequest, "Please add a valid email and role (admin, member or reader)")
 		return
 	}
@@ -218,10 +219,7 @@ func (h *OrganizationHandler) SetMemberRate(w http.ResponseWriter, r *http.Reque
 		writeError(w, http.StatusBadRequest, "Please add a valid dailyRate")
 		return
 	}
-	currency := p.Currency
-	if currency == "" {
-		currency = "euros"
-	}
+	currency := utils.If(utils.IsBlank(p.Currency), "euros", p.Currency)
 
 	member, err := h.orgs.SetMemberRate(r.Context(), orgID, userID, p.DailyRate, currency)
 	if err != nil {
@@ -251,7 +249,7 @@ func (h *OrganizationHandler) TransferOwnership(w http.ResponseWriter, r *http.R
 	previousOwnerID, _ := middleware.UserIDFromContext(r.Context())
 
 	var p transferOwnershipPayload
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || p.Email == "" {
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || utils.IsBlank(p.Email) {
 		writeError(w, http.StatusBadRequest, "Please add a valid email")
 		return
 	}

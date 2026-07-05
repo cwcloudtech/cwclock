@@ -9,6 +9,7 @@ import (
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
 	"cwclock-api/internal/store"
+	"cwclock-api/internal/utils"
 )
 
 type TimeEntryHandler struct {
@@ -85,11 +86,11 @@ func (h *TimeEntryHandler) Create(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	if p.Text == "" || p.ClientID == "" || p.ProjectID == "" || p.Day == "" {
+	if utils.IsBlank(p.Text) || utils.IsBlank(p.ClientID) || utils.IsBlank(p.ProjectID) || utils.IsBlank(p.Day) {
 		writeError(w, http.StatusBadRequest, "Please add text, clientId, projectId and day fields")
 		return
 	}
-	if !p.AllDay && (p.Start == nil || p.End == nil || *p.Start == "" || *p.End == "") {
+	if !p.AllDay && (p.Start == nil || p.End == nil || utils.IsBlank(*p.Start) || utils.IsBlank(*p.End)) {
 		writeError(w, http.StatusBadRequest, "Please add start and end fields, or check allDay")
 		return
 	}
@@ -132,7 +133,7 @@ func (h *TimeEntryHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if p.ProjectID != entry.ProjectID {
 		reassign.ProjectID = p.ProjectID
 	}
-	if p.UserID != "" && p.UserID != entry.UserID {
+	if utils.IsNotBlank(p.UserID) && p.UserID != entry.UserID {
 		if !isAdminOrOwner(r) {
 			writeError(w, http.StatusForbidden, "Only an admin or the owner can reassign a time entry to another member")
 			return

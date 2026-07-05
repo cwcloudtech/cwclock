@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { deleteTasksApi, updateTasksApi } from "../../Redux/Tasks/Task.actions";
 import ConfirmModal from "../common/ConfirmModal";
 import memberLabel from "../common/memberLabel";
+import Tooltip from "../common/Tooltip";
 
 const fieldsFromItem = (item) => ({
   text: item.text,
@@ -165,22 +166,20 @@ const TaskComponent = ({ item }) => {
         )}
         {!isEditing && canEdit && (
           <div className={styles.RowActions}>
-            <button
-              type="button"
-              className={styles.Tags}
-              onClick={() => setIsEditing(true)}
-              title="Edit"
-            >
-              <FaRegEdit style={{ fontSize: "18px" }} />
-            </button>
-            <button
-              type="button"
-              className={styles.Tags2}
-              onClick={() => setShowDeleteConfirm(true)}
-              title="Delete"
-            >
-              <MdDeleteForever style={{ fontSize: "20px" }} />
-            </button>
+            <Tooltip label="Edit">
+              <button type="button" className={styles.Tags} onClick={() => setIsEditing(true)}>
+                <FaRegEdit style={{ fontSize: "18px" }} />
+              </button>
+            </Tooltip>
+            <Tooltip label="Delete">
+              <button
+                type="button"
+                className={styles.Tags2}
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                <MdDeleteForever style={{ fontSize: "20px" }} />
+              </button>
+            </Tooltip>
           </div>
         )}
       </div>
@@ -188,7 +187,7 @@ const TaskComponent = ({ item }) => {
       <ConfirmModal
         show={showDeleteConfirm}
         title="Delete time record"
-        body={`Delete "${item.text}"? This cannot be undone.`}
+        body={`Are you sure to delete "${item.text}"? This can't be undone.`}
         confirmLabel="Delete"
         onConfirm={handleDelete}
         onCancel={() => setShowDeleteConfirm(false)}
