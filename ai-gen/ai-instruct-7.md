@@ -28,8 +28,8 @@ Also other filters as autocomplete dropdown:
 
 #### Frontend output
 
-* [Detailed export](./assets/detailed-reports-gui.png)
-* [Summary export](./assets/summary-reports-gui.png)
+* [Detailed export](./assets/detailed-report-gui.png)
+* [Summary export](./assets/summary-report-gui.png)
 
 Notes:
 * a member should not be able to see the calculated price from daily rate, only administrators and owner.
@@ -41,7 +41,16 @@ Of course adapt using the current UI/UX design, icons, etc and keep consistency.
 
 #### CSV output
 
-#### Detailed
+##### Summary
+
+```csv
+"Project","Client","Description","Time (h)","Time (decimal)","Amount (EUR)"
+"INOVTECH-INOVTECH2022","inovshop","Resolve inovtech-server-api error (#275)","04:08:01","4.13","0.00"
+"INTERNE-INTERNE","inovshop","Remove unused snapshots (#264)","00:34:30","0.58","0.00"
+"OMNI-OMNI2022","inovshop","Update env variables (#274)","05:17:51","5.30","0.00"
+```
+
+##### Detailed
 
 ```csv
 "Project","Client","Description","Task","User","Group","Email","Tags","Billable","Start Date","Start Time","End Date","End Time","Duration (h)","Duration (decimal)","Billable Rate (EUR)","Billable Amount (EUR)","Date of creation"
@@ -57,6 +66,3 @@ Of course adapt using the current UI/UX design, icons, etc and keep consistency.
 Notes: 
 * on the billable column put always "Yes", it's for keeping compliance with clockify exports.
 * same thing for empty columns like tags or groups
-
-
-

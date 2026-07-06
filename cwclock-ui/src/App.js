@@ -4,10 +4,11 @@ import Login from "./Pages/Login";
 import SignUp from "./Pages/SignUp";
 import { ToastContainer } from "react-toastify";
 import Slidebar from "./Components/Dashboard/dash/Slidebar";
+import { ThemeProvider } from "./Components/common/ThemeContext";
 
 function App() {
   return (
-    <>
+    <ThemeProvider>
       <div className="App">
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
@@ -19,7 +20,7 @@ function App() {
         </Routes>
       </div>
       <ToastContainer position="top-right" />
-    </>
+    </ThemeProvider>
   );
 }
 

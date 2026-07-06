@@ -15,7 +15,7 @@ const items = [
 
 const adminItems = [
   { to: "/dashboard/admin", label: "Users", Icon: FaUserShield },
-  { to: "/dashboard/admin/organizations", label: "Organizations admin", Icon: FaBuildingShield },
+  { to: "/dashboard/admin/organizations", label: "Organizations", Icon: FaBuildingShield },
 ];
 
 // Single sidebar nav that renders either as an icon rail or an expanded

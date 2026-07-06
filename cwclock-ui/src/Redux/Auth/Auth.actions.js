@@ -1,13 +1,9 @@
 import axios from "axios";
 import { error, loading, logout, register, syncUser } from "./Auth.types";
 import { toast } from "react-toastify";
+import toastOptions from "../toastOptions";
 
 const ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/users/`;
-
-const toastOptions = {
-  autoClose: 8000,
-  draggable: true,
-};
 
 export const registerApi = (userData) => async (dispatch) => {
   dispatch({ type: loading });
@@ -15,6 +11,7 @@ export const registerApi = (userData) => async (dispatch) => {
     console.log(userData);
     const { data } = await axios.post(ENDPOINT, userData);
     dispatch({ type: register, payload: data });
+    toast.success("Account created successfully.", toastOptions);
   } catch (e) {
     toast.error(e.message, toastOptions);
     dispatch({ type: error, payload: e.message });
@@ -27,6 +24,7 @@ export const loginApi = (userData) => async (dispatch) => {
     const { data } = await axios.post(ENDPOINT + "login", userData);
     console.log(data);
     dispatch({ type: register, payload: data });
+    toast.success("Logged in successfully.", toastOptions);
   } catch (e) {
     toast.error(e.message, toastOptions);
     dispatch({ type: error, payload: e.message });

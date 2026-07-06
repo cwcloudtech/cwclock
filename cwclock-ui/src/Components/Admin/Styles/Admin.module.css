@@ -78,7 +78,7 @@
 }
 
 .roleConfirmed {
-  background-color: #dcfce7;
+  background-color: var(--cw-success-tint);
   color: var(--cw-success);
 }
 

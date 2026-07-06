@@ -33,6 +33,7 @@
   --cw-danger-dark: #b91c1c;
   --cw-danger-light: #fee2e2;
   --cw-success: #16a34a;
+  --cw-success-tint: #dcfce7;
 
   /* Shape & elevation */
   --cw-radius-sm: 6px;
@@ -52,6 +53,59 @@
   --cw-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto,
     Helvetica, Arial, sans-serif;
   --cw-transition: 150ms ease;
+}
+
+/* Dark theme: applied automatically when the OS is set to dark and the user
+   hasn't picked a theme explicitly, and forced in either direction once
+   they toggle it from the profile dropdown (data-theme wins either way). */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --cw-primary-tint: rgba(28, 185, 247, 0.14);
+    --cw-bg: #0b1220;
+    --cw-bg-alt: #182234;
+    --cw-surface: #141d2e;
+    --cw-border: #2a3750;
+    --cw-text: #f1f5f9;
+    --cw-text-muted: #94a3b8;
+    --cw-danger-light: rgba(220, 38, 38, 0.18);
+    --cw-success-tint: rgba(22, 163, 74, 0.16);
+    --cw-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --cw-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    --cw-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+  }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --cw-primary-tint: var(--cw-primary-50);
+  --cw-bg: var(--cw-gray-50);
+  --cw-bg-alt: var(--cw-gray-100);
+  --cw-surface: var(--cw-gray-0);
+  --cw-border: var(--cw-gray-200);
+  --cw-text: var(--cw-gray-900);
+  --cw-text-muted: var(--cw-gray-500);
+  --cw-danger-light: #fee2e2;
+  --cw-success-tint: #dcfce7;
+  --cw-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --cw-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+  --cw-shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.12);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --cw-primary-tint: rgba(28, 185, 247, 0.14);
+  --cw-bg: #0b1220;
+  --cw-bg-alt: #182234;
+  --cw-surface: #141d2e;
+  --cw-border: #2a3750;
+  --cw-text: #f1f5f9;
+  --cw-text-muted: #94a3b8;
+  --cw-danger-light: rgba(220, 38, 38, 0.18);
+  --cw-success-tint: rgba(22, 163, 74, 0.16);
+  --cw-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --cw-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --cw-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
 }
 
 * {

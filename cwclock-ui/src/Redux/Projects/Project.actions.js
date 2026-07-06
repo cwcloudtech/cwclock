@@ -1,5 +1,7 @@
 import axios from "axios";
+import { toast } from "react-toastify";
 import { ProjectLOADING, ProjectERROR, ProjectListSUCCESS, ProjectCreateSUCCESS } from "./Project.types";
+import toastOptions from "../toastOptions";
 
 const ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/organizations/`;
 
@@ -25,6 +27,7 @@ export const createProjectApi = (orgId, clientId, name, color, token) => async (
       authConfig(token)
     );
     dispatch({ type: ProjectCreateSUCCESS, payload: data });
+    toast.success("Project created.", toastOptions);
     return data;
   } catch (e) {
     dispatch({ type: ProjectERROR });

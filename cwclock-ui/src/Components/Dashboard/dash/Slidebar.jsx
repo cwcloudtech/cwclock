@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import styles from "./STYLE/Slidebar.module.css";
 import { FaChevronLeft, FaChevronRight, FaUserCheck } from "react-icons/fa";
-import { FiLogOut } from "react-icons/fi";
+import { FiLogOut, FiSun, FiMoon } from "react-icons/fi";
 import { Route, Routes, useNavigate, Link } from "react-router-dom";
 import Dropdown, { DropdownItem, DropdownText, DropdownDivider } from "../../common/Dropdown";
 import EditProfileModal from "../../common/EditProfileModal";
 import DisabledNotice from "../../common/DisabledNotice";
 import memberLabel from "../../common/memberLabel";
 import Tooltip from "../../common/Tooltip";
+import { useTheme } from "../../common/ThemeContext";
 import logo from "../../../assets/images/cwclock-logo.svg";
 import TimeTracker from "../pages/TimeTracker";
 import SidebarNav from "./SidebarNav";
@@ -30,6 +31,7 @@ const Slidebar = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { theme, toggleTheme } = useTheme();
   const { user } = useSelector((state) => state.auth);
   const { organizations, currentOrgId } = useSelector((state) => state.organizations);
   const currentOrg = organizations.find((o) => o.id === currentOrgId);
@@ -128,8 +130,21 @@ const Slidebar = () => {
                   >
                     Edit profile
                   </DropdownItem>
+                  <Tooltip
+                    label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                    className={styles.menuItemTooltip}
+                  >
+                    <DropdownItem onClick={toggleTheme}>
+                      {theme === "dark" ? (
+                        <FiSun style={{ fontSize: "16px" }} />
+                      ) : (
+                        <FiMoon style={{ fontSize: "16px" }} />
+                      )}
+                      {theme === "dark" ? "Light mode" : "Dark mode"}
+                    </DropdownItem>
+                  </Tooltip>
                   <DropdownDivider />
-                  <Tooltip label="Logout" className={styles.logoutTooltip}>
+                  <Tooltip label="Logout" className={styles.menuItemTooltip}>
                     <DropdownItem onClick={handleLogout} className={styles.logoutItem}>
                       <FiLogOut style={{ fontSize: "16px" }} />
                     </DropdownItem>
