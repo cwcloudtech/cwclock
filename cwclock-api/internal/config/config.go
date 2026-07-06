@@ -17,6 +17,7 @@ type Config struct {
 	MaxWorkers        int
 	PostgresPoolSize  int
 	AllowedCurrencies []string
+	CorsEnabled       bool
 }
 
 func Load() Config {
@@ -44,6 +45,7 @@ func Load() Config {
 		MaxWorkers:        maxWorkers,
 		PostgresPoolSize:  postgresPoolSize,
 		AllowedCurrencies: parseAllowedCurrencies(os.Getenv("CWCLOCK_ALLOWED_CURRENCIES")),
+		CorsEnabled:       utils.IsTrue(os.Getenv("CWCLOCK_CORS_ENABLED")),
 	}
 }
 
