@@ -19,7 +19,7 @@ The time export should be on a _report_ item in the sidebar with a graph icon it
 * This year
 * Last year
 
-Also other filters as autocomplete dropdown:
+Also other filters as autocomplete+multiselect dropdown:
 
 * Client
 * Project
@@ -29,6 +29,7 @@ Also other filters as autocomplete dropdown:
 
 * If the record is "all day" set to true, the duration is set to the organization HoursPerDay
 * Do not calculate with the VAT, it will be done in a future invoicing feature, just the sum of hours per member, devide by HoursPerDay the multiply per daily rate of each members
+* In the summary the tasks are aggregated by redundant labeles
 
 # Example of the exports
 
