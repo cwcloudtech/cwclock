@@ -23,6 +23,12 @@ Also other filters as autocomplete dropdown:
 
 * Client
 * Project
+* Member
+
+### Calculation rules
+
+* If the record is "all day" set to true, the duration is set to the organization HoursPerDay
+* Do not calculate with the VAT, it will be done in a future invoicing feature, just the sum of hours per member, devide by HoursPerDay the multiply per daily rate of each members
 
 ### Outputs
 
