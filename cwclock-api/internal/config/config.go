@@ -1,7 +1,9 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 
@@ -9,11 +11,12 @@ import (
 )
 
 type Config struct {
-	Port             string
-	DatabaseURL      string
-	JWTSecret        string
-	MaxWorkers       int
-	PostgresPoolSize int
+	Port              string
+	DatabaseURL       string
+	JWTSecret         string
+	MaxWorkers        int
+	PostgresPoolSize  int
+	AllowedCurrencies []string
 }
 
 func Load() Config {
@@ -35,15 +38,31 @@ func Load() Config {
 	}
 
 	return Config{
-		Port:             getEnv("PORT", "8080"),
-		DatabaseURL:      fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, pass, host, port, db, sslmode),
-		JWTSecret:        os.Getenv("JWT_SECRET"),
-		MaxWorkers:       maxWorkers,
-		PostgresPoolSize: postgresPoolSize,
+		Port:              getEnv("PORT", "8080"),
+		DatabaseURL:       fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, pass, host, port, db, sslmode),
+		JWTSecret:         os.Getenv("JWT_SECRET"),
+		MaxWorkers:        maxWorkers,
+		PostgresPoolSize:  postgresPoolSize,
+		AllowedCurrencies: parseAllowedCurrencies(os.Getenv("CWCLOCK_ALLOWED_CURRENCIES")),
 	}
 }
 
 func getEnv(key, fallback string) string {
 	v := os.Getenv(key)
 	return utils.If(utils.IsNotBlank(v), v, fallback)
+}
+
+// parseAllowedCurrencies decodes CWCLOCK_ALLOWED_CURRENCIES, a JSON array of
+// ISO 4217 codes like ["EUR","USD","GBP"]. An empty or invalid value yields
+// nil, which callers treat as "keep the built-in default list".
+func parseAllowedCurrencies(raw string) []string {
+	if utils.IsBlank(raw) {
+		return nil
+	}
+	var codes []string
+	if err := json.Unmarshal([]byte(raw), &codes); err != nil {
+		log.Printf("invalid CWCLOCK_ALLOWED_CURRENCIES, ignoring: %v", err)
+		return nil
+	}
+	return codes
 }

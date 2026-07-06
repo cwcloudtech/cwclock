@@ -64,7 +64,7 @@ func applyOrgData(o *models.Organization, raw []byte) error {
 	o.SIREN = d.SIREN
 	o.SIRET = d.SIRET
 	o.Picture = d.Picture
-	o.Currency = utils.If(utils.IsBlank(d.Currency), models.DefaultCurrency, d.Currency)
+	o.Currency = utils.If(utils.IsBlank(d.Currency), models.DefaultCurrency(), d.Currency)
 	return nil
 }
 
@@ -94,7 +94,7 @@ func toOrgData(f OrganizationFields) orgData {
 		SIREN:      f.SIREN,
 		SIRET:      f.SIRET,
 		Picture:    f.Picture,
-		Currency:   utils.If(utils.IsBlank(f.Currency), models.DefaultCurrency, f.Currency),
+		Currency:   utils.If(utils.IsBlank(f.Currency), models.DefaultCurrency(), f.Currency),
 	}
 }
 

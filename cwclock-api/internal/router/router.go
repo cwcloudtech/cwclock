@@ -36,6 +36,8 @@ func New(
 	})
 
 	r.Route("/v1", func(r chi.Router) {
+		r.Get("/currencies", handlers.ListCurrencies)
+
 		r.Route("/users", func(r chi.Router) {
 			r.Post("/", userHandler.Register)
 			r.Post("/login", userHandler.Login)

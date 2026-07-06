@@ -97,6 +97,7 @@
   height: 22px;
   border-radius: 50%;
   object-fit: cover;
+  background-color: var(--cw-avatar-bg);
 }
 
 .profileTrigger {
@@ -112,6 +113,7 @@
   height: 26px;
   border-radius: 50%;
   object-fit: cover;
+  background-color: var(--cw-avatar-bg);
 }
 
 .profileEmail {

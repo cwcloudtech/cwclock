@@ -19,7 +19,7 @@ import memberLabel from "../common/memberLabel";
 import useEmailAutocomplete from "../common/useEmailAutocomplete";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
-import CURRENCIES, { DEFAULT_CURRENCY } from "../common/currencies";
+import useCurrencies from "../common/useCurrencies";
 
 const emptyFields = {
   name: "",
@@ -31,7 +31,7 @@ const emptyFields = {
   siren: "",
   siret: "",
   picture: "",
-  currency: DEFAULT_CURRENCY,
+  currency: "",
 };
 
 const roleLabelKey = {
@@ -127,6 +127,7 @@ const Organizations = () => {
   const [memberError, setMemberError] = useState("");
   const [transferEmail, setTransferEmail] = useState("");
   const [transferError, setTransferError] = useState("");
+  const currencies = useCurrencies();
 
   const orgFormConfig = {
     name: "Organization",
@@ -144,7 +145,7 @@ const Organizations = () => {
         type: "select",
         label: t("common.currency"),
         required: true,
-        options: CURRENCIES.map((code) => ({ value: code, label: code })),
+        options: currencies.map((code) => ({ value: code, label: code })),
       },
       { name: "picture", type: "image", label: t("common.picture") },
     ],
@@ -153,6 +154,15 @@ const Organizations = () => {
   useEffect(() => {
     dispatch(listOrgsApi(user.token));
   }, [dispatch, user.token]);
+
+  useEffect(() => {
+    if (currencies.length && !fields.currency) {
+      setFields((f) => ({ ...f, currency: currencies[0] }));
+    }
+    // Only react to the currency list becoming available, not to every
+    // keystroke in the rest of the create-organization form.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currencies]);
 
   useEffect(() => {
     if (currentOrgId) {
@@ -176,7 +186,7 @@ const Organizations = () => {
     setCreateError("");
     try {
       await dispatch(createOrgApi(fields, user.token));
-      setFields(emptyFields);
+      setFields({ ...emptyFields, currency: currencies[0] || "" });
     } catch (err) {
       setCreateError(apiErrorMessage(err, locale));
     }
@@ -193,7 +203,7 @@ const Organizations = () => {
       vatNumber: currentOrg.vatNumber || "",
       siren: currentOrg.siren || "",
       siret: currentOrg.siret || "",
-      currency: currentOrg.currency || DEFAULT_CURRENCY,
+      currency: currentOrg.currency || currencies[0] || "",
       picture: currentOrg.picture || "",
     });
   };

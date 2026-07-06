@@ -9,6 +9,7 @@ import (
 	"cwclock-api/internal/config"
 	"cwclock-api/internal/db"
 	"cwclock-api/internal/handlers"
+	"cwclock-api/internal/models"
 	"cwclock-api/internal/router"
 	"cwclock-api/internal/store"
 )
@@ -16,6 +17,7 @@ import (
 func main() {
 	cfg := config.Load()
 	runtime.GOMAXPROCS(cfg.MaxWorkers)
+	models.SetAllowedCurrencies(cfg.AllowedCurrencies)
 
 	ctx := context.Background()
 	pool, err := db.Connect(ctx, cfg.DatabaseURL, cfg.PostgresPoolSize)

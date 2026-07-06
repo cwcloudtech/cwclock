@@ -22,6 +22,7 @@
   object-fit: cover;
   vertical-align: middle;
   margin-right: 6px;
+  background-color: var(--cw-avatar-bg);
 }
 
 .editOrgBtn {
