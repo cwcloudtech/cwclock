@@ -1,12 +1,14 @@
 import React from 'react';
 import styles from './Styles/Headings.module.css';
+import { useI18n } from '../../i18n/I18nContext';
 
 
 const Heading = () => {
+  const { t } = useI18n();
   return (
     <div className={styles.Section}>
-       <h1 className={styles.title}>Get started with CWClock</h1>
-       <p className={styles.subtitle}>Create an account to start tracking time and improve your productivity.</p>
+       <h1 className={styles.title}>{t('auth.getStartedTitle')}</h1>
+       <p className={styles.subtitle}>{t('auth.getStartedSubtitle')}</p>
     </div>
   )
 }

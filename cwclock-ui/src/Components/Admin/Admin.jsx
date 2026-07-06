@@ -7,6 +7,7 @@ import ConfirmModal from "../common/ConfirmModal";
 import memberLabel from "../common/memberLabel";
 import EditUserModal from "./EditUserModal";
 import { listAllUsersApi, deleteUserApi } from "../../Redux/Admin/Admin.actions";
+import { useI18n } from "../../i18n/I18nContext";
 import styles from "./Styles/Admin.module.css";
 
 const roleBadgeClass = {
@@ -18,12 +19,16 @@ const roleBadgeClass = {
 const FILTERS = ["all", "superuser", "confirmed", "disabled"];
 
 const Admin = () => {
+  const { t } = useI18n();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { users } = useSelector((state) => state.admin);
   const [editingUser, setEditingUser] = useState(null);
   const [deletingUser, setDeletingUser] = useState(null);
   const [filter, setFilter] = useState("all");
+
+  const filterLabel = (f) => (f === "all" ? t("admin.filterAll") : t(`common.globalRole${f.charAt(0).toUpperCase()}${f.slice(1)}`));
+  const roleLabel = (role) => t(`common.globalRole${(role || "confirmed").charAt(0).toUpperCase()}${(role || "confirmed").slice(1)}`);
 
   useEffect(() => {
     dispatch(listAllUsersApi(user.token));
@@ -38,7 +43,7 @@ const Admin = () => {
 
   return (
     <div className={styles.main}>
-      <h1 className="cw-title">Users</h1>
+      <h1 className="cw-title">{t("admin.usersTitle")}</h1>
 
       <div className={styles.filters}>
         {FILTERS.map((f) => (
@@ -47,9 +52,9 @@ const Admin = () => {
             type="button"
             className={`${styles.filterBtn} ${filter === f ? styles.filterBtnActive : ""}`}
             onClick={() => setFilter(f)}
-            title={`Show ${f} users`}
+            title={t("admin.showFilterUsers", { filter: filterLabel(f) })}
           >
-            {f}
+            {filterLabel(f)}
           </button>
         ))}
       </div>
@@ -59,14 +64,14 @@ const Admin = () => {
           <li className={`cw-list-item ${styles.userRow}`} key={u.id}>
             <span className={styles.denomination}>{memberLabel(u)}</span>
             <span className={styles.email}>{u.email}</span>
-            <span className={`${styles.roleBadge} ${roleBadgeClass[u.role] || ""}`}>{u.role || "confirmed"}</span>
+            <span className={`${styles.roleBadge} ${roleBadgeClass[u.role] || ""}`}>{roleLabel(u.role)}</span>
             <div className={styles.rowActions}>
-              <Tooltip label="Edit">
+              <Tooltip label={t("common.edit")}>
                 <button type="button" className={styles.iconBtn} onClick={() => setEditingUser(u)}>
                   <FaRegEdit style={{ fontSize: "18px" }} />
                 </button>
               </Tooltip>
-              <Tooltip label="Delete">
+              <Tooltip label={t("common.delete")}>
                 <button
                   type="button"
                   className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
@@ -90,9 +95,9 @@ const Admin = () => {
 
       <ConfirmModal
         show={!!deletingUser}
-        title="Delete user"
-        body={deletingUser ? `Delete "${deletingUser.email}"? This cannot be undone.` : ""}
-        confirmLabel="Delete"
+        title={t("admin.deleteUserTitle")}
+        body={deletingUser ? t("admin.deleteUserBody", { email: deletingUser.email }) : ""}
+        confirmLabel={t("common.delete")}
         onConfirm={handleDelete}
         onCancel={() => setDeletingUser(null)}
       />

@@ -8,6 +8,7 @@ import ConfirmModal from "../common/ConfirmModal";
 import memberLabel from "../common/memberLabel";
 import projectLabel from "../common/projectLabel";
 import Tooltip from "../common/Tooltip";
+import { useI18n } from "../../i18n/I18nContext";
 
 const fieldsFromItem = (item) => ({
   text: item.text,
@@ -20,6 +21,7 @@ const fieldsFromItem = (item) => ({
 });
 
 const TaskComponent = ({ item }) => {
+  const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [form, setForm] = useState(fieldsFromItem(item));
@@ -86,7 +88,7 @@ const TaskComponent = ({ item }) => {
     setIsEditing(false);
   };
 
-  const timeLabel = item.allDay ? "All day" : `${item.start || "?"} - ${item.end || "?"}`;
+  const timeLabel = item.allDay ? t("timeTracker.allDay") : `${item.start || "?"} - ${item.end || "?"}`;
 
   return (
     <div className={styles.Task}>
@@ -97,7 +99,7 @@ const TaskComponent = ({ item }) => {
               <input
                 type="text"
                 autoFocus
-                title="Task description"
+                title={t("timeTracker.taskDescription")}
                 value={form.text}
                 onChange={(e) => setForm({ ...form, text: e.target.value })}
               />
@@ -105,8 +107,8 @@ const TaskComponent = ({ item }) => {
             <div className={styles.Projects}>
               <input
                 list={`project-options-${item.id}`}
-                title="Search by customer or project name"
-                placeholder="Project"
+                title={t("timeTracker.searchByCustomerOrProject")}
+                placeholder={t("timeTracker.project")}
                 value={projectQuery}
                 onChange={(e) => handleProjectInput(e.target.value)}
               />
@@ -119,31 +121,31 @@ const TaskComponent = ({ item }) => {
             <div className={styles.Time}>
               <input
                 type="date"
-                title="Day"
+                title={t("timeTracker.day")}
                 value={form.day}
                 onChange={(e) => setForm({ ...form, day: e.target.value })}
               />
-              <label title="Mark as an all-day entry">
+              <label title={t("timeTracker.markAllDay")}>
                 <input
                   type="checkbox"
                   checked={form.allDay}
                   onChange={(e) => setForm({ ...form, allDay: e.target.checked })}
                 />{" "}
-                All day
+                {t("timeTracker.allDay")}
               </label>
               {!form.allDay && (
                 <>
                   <input
                     type="time"
                     step="1"
-                    title="Start time"
+                    title={t("timeTracker.startTime")}
                     value={form.start}
                     onChange={(e) => setForm({ ...form, start: e.target.value })}
                   />
                   <input
                     type="time"
                     step="1"
-                    title="End time"
+                    title={t("timeTracker.endTime")}
                     value={form.end}
                     onChange={(e) => setForm({ ...form, end: e.target.value })}
                   />
@@ -153,8 +155,8 @@ const TaskComponent = ({ item }) => {
                 <>
                   <input
                     list={`reassign-options-${item.id}`}
-                    title="Reassign to a member"
-                    placeholder="Search member..."
+                    title={t("timeTracker.reassignToMember")}
+                    placeholder={t("timeTracker.searchMember")}
                     value={reassignText}
                     onChange={(e) => handleReassignInput(e.target.value)}
                   />
@@ -166,16 +168,16 @@ const TaskComponent = ({ item }) => {
                 </>
               )}
             </div>
-            <button type="button" className={styles.Tags3} onClick={handleSave} title="Save changes">
-              Save
+            <button type="button" className={styles.Tags3} onClick={handleSave} title={t("common.saveChanges")}>
+              {t("common.save")}
             </button>
             <button
               type="button"
               className={styles.Tags}
               onClick={() => setIsEditing(false)}
-              title="Discard changes"
+              title={t("common.discardChanges")}
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           </>
         ) : (
@@ -184,7 +186,7 @@ const TaskComponent = ({ item }) => {
               <h6>{item.text}</h6>
             </div>
             <div className={styles.Projects}>
-              <h6>{project ? project.name : ""}</h6>
+              <h6>{project ? projectLabel(project, clients) : ""}</h6>
             </div>
             <div className={styles.Time}>
               <span>{item.day}</span>
@@ -195,12 +197,12 @@ const TaskComponent = ({ item }) => {
         )}
         {!isEditing && canEdit && (
           <div className={styles.RowActions}>
-            <Tooltip label="Edit">
+            <Tooltip label={t("common.edit")}>
               <button type="button" className={styles.Tags} onClick={() => setIsEditing(true)}>
                 <FaRegEdit style={{ fontSize: "18px" }} />
               </button>
             </Tooltip>
-            <Tooltip label="Delete">
+            <Tooltip label={t("common.delete")}>
               <button
                 type="button"
                 className={styles.Tags2}
@@ -215,9 +217,9 @@ const TaskComponent = ({ item }) => {
 
       <ConfirmModal
         show={showDeleteConfirm}
-        title="Delete time record"
-        body={`Are you sure to delete "${item.text}"? This can't be undone.`}
-        confirmLabel="Delete"
+        title={t("timeTracker.deleteRecordTitle")}
+        body={t("timeTracker.deleteRecordBody", { text: item.text })}
+        confirmLabel={t("common.delete")}
         onConfirm={handleDelete}
         onCancel={() => setShowDeleteConfirm(false)}
       />

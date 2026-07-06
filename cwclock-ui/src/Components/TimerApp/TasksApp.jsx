@@ -12,8 +12,10 @@ import { getTasksApi } from "../../Redux/Tasks/Task.actions";
 import { listOrgsApi, listMembersApi } from "../../Redux/Organizations/Org.actions";
 import { listClientsApi } from "../../Redux/Clients/Client.actions";
 import { listProjectsApi } from "../../Redux/Projects/Project.actions";
+import { useI18n } from "../../i18n/I18nContext";
 
 const TasksApp = () => {
+  const { t } = useI18n();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { tasks, isLoading } = useSelector((state) => state.tasks);
@@ -50,8 +52,8 @@ const TasksApp = () => {
       <div className={styles.Body1}>
         <div className={styles.Empty}>
           <p>
-            You need an organization before you can track time.{" "}
-            <Link to="/dashboard/organizations">Create one</Link>.
+            {t("timeTracker.needOrganization")}{" "}
+            <Link to="/dashboard/organizations">{t("common.createOne")}</Link>.
           </p>
         </div>
       </div>

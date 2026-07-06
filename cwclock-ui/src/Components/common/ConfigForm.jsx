@@ -3,6 +3,7 @@ import Button from "./Button";
 import RequiredMark from "./RequiredMark";
 import fileToBase64 from "./fileToBase64";
 import contrastColor from "./contrastColor";
+import { useI18n } from "../../i18n/I18nContext";
 import styles from "./Styles/ConfigForm.module.css";
 
 // Renders a form from a field-config object instead of hand-rolled JSX, e.g.:
@@ -12,11 +13,15 @@ const ConfigForm = ({
   values,
   onChange,
   onSubmit,
-  submitLabel = "Save",
+  submitLabel,
   onCancel,
-  cancelLabel = "Cancel",
+  cancelLabel,
   error,
 }) => {
+  const { t } = useI18n();
+  const resolvedSubmitLabel = submitLabel ?? t("common.save");
+  const resolvedCancelLabel = cancelLabel ?? t("common.cancel");
+
   const setImageField = (field) => async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -46,7 +51,7 @@ const ConfigForm = ({
             onChange={(e) => onChange(field.name, e.target.value)}
             required={field.required}
           >
-            <option value="">{field.placeholder || `Select ${field.label}`}</option>
+            <option value="">{field.placeholder || `${t("common.select")} ${field.label}`}</option>
             {(field.options || []).map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -130,10 +135,10 @@ const ConfigForm = ({
         </div>
       ))}
       <div className={styles.actions}>
-        <Button type="submit" title={submitLabel}>{submitLabel}</Button>
+        <Button type="submit" title={resolvedSubmitLabel}>{resolvedSubmitLabel}</Button>
         {onCancel && (
-          <Button type="button" variant="secondary" onClick={onCancel} title={cancelLabel}>
-            {cancelLabel}
+          <Button type="button" variant="secondary" onClick={onCancel} title={resolvedCancelLabel}>
+            {resolvedCancelLabel}
           </Button>
         )}
       </div>

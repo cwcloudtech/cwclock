@@ -9,7 +9,7 @@ const Login = () => {
     <div className={styles.page}>
       <LoginNav />
       <div className={styles.main}>
-        <LoginForm label="Log In" />
+        <LoginForm />
       </div>
       <Footer />
     </div>

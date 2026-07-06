@@ -8,9 +8,11 @@ import EditOrgModal from "./EditOrgModal";
 import TransferOwnershipModal from "./TransferOwnershipModal";
 import { listAllOrganizationsApi } from "../../Redux/Admin/Admin.actions";
 import { deleteOrgApi } from "../../Redux/Organizations/Org.actions";
+import { useI18n } from "../../i18n/I18nContext";
 import styles from "./Styles/Admin.module.css";
 
 const Organizations = () => {
+  const { t } = useI18n();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { organizations } = useSelector((state) => state.admin);
@@ -31,7 +33,7 @@ const Organizations = () => {
 
   return (
     <div className={styles.main}>
-      <h1 className="cw-title">Organizations</h1>
+      <h1 className="cw-title">{t("admin.organizationsTitle")}</h1>
 
       <ul className={`cw-list ${styles.userList}`}>
         {organizations.map((org) => (
@@ -40,7 +42,7 @@ const Organizations = () => {
             <span className={styles.email}>{org.ownerEmail}</span>
             <span />
             <div className={styles.rowActions}>
-              <Tooltip label="Transfer ownership">
+              <Tooltip label={t("organizations.transferOwnership")}>
                 <button
                   type="button"
                   className={styles.iconBtn}
@@ -49,12 +51,12 @@ const Organizations = () => {
                   <FaExchangeAlt style={{ fontSize: "16px" }} />
                 </button>
               </Tooltip>
-              <Tooltip label="Edit">
+              <Tooltip label={t("common.edit")}>
                 <button type="button" className={styles.iconBtn} onClick={() => setEditingOrg(org)}>
                   <FaRegEdit style={{ fontSize: "18px" }} />
                 </button>
               </Tooltip>
-              <Tooltip label="Delete">
+              <Tooltip label={t("common.delete")}>
                 <button
                   type="button"
                   className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
@@ -84,9 +86,9 @@ const Organizations = () => {
 
       <ConfirmModal
         show={!!deletingOrg}
-        title="Delete organization"
-        body={deletingOrg ? `Delete "${deletingOrg.name}"? This cannot be undone.` : ""}
-        confirmLabel="Delete"
+        title={t("admin.deleteOrgTitle")}
+        body={deletingOrg ? t("admin.deleteOrgBody", { name: deletingOrg.name }) : ""}
+        confirmLabel={t("common.delete")}
         onConfirm={handleDelete}
         onCancel={() => setDeletingOrg(null)}
       />

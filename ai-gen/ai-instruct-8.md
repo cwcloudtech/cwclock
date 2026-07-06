@@ -4,6 +4,9 @@
 
 The remaining parts should also be translated:
 * All messages in the toasts
+* All error messages from the api (it should add in the payload a `i18n_code` and in the frontend if it's present, it should be translated using i18n system)
+
+The languages in the connected user dropdown should be a select of existing languages in case there's a third one in the future, also with flags representing the language (uk for english, france for french).
 
 ## Organization currency
 

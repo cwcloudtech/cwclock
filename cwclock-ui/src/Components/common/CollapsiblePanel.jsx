@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { useI18n } from "../../i18n/I18nContext";
 import styles from "./Styles/CollapsiblePanel.module.css";
 
 const CollapsiblePanel = ({ title, defaultOpen = false, children }) => {
+  const { t } = useI18n();
   const [open, setOpen] = useState(defaultOpen);
 
   return (
@@ -12,7 +14,7 @@ const CollapsiblePanel = ({ title, defaultOpen = false, children }) => {
         className={styles.header}
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        title={open ? `Collapse ${title}` : `Expand ${title}`}
+        title={`${open ? t("common.collapse") : t("common.expand")} ${title}`}
       >
         <span className={styles.title}>{title}</span>
         {open ? <FiChevronUp /> : <FiChevronDown />}

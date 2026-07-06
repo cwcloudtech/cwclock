@@ -4,11 +4,13 @@ import Modal from "../common/Modal";
 import Button from "../common/Button";
 import fileToBase64 from "../common/fileToBase64";
 import { updateUserApi } from "../../Redux/Admin/Admin.actions";
+import { useI18n } from "../../i18n/I18nContext";
 import styles from "./Styles/Admin.module.css";
 
 const ROLES = ["superuser", "confirmed", "disabled"];
 
 const EditUserModal = ({ show, onClose, targetUser, token }) => {
+  const { t } = useI18n();
   const dispatch = useDispatch();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -32,6 +34,8 @@ const EditUserModal = ({ show, onClose, targetUser, token }) => {
 
   if (!targetUser) return null;
 
+  const roleLabel = (r) => t(`common.globalRole${r.charAt(0).toUpperCase()}${r.slice(1)}`);
+
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -41,7 +45,7 @@ const EditUserModal = ({ show, onClose, targetUser, token }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !name || !surname) {
-      setError("Please add a valid email, first and last name.");
+      setError(t("admin.pleaseValidUserFields"));
       return;
     }
     const fields = { email, name, surname, role };
@@ -53,85 +57,85 @@ const EditUserModal = ({ show, onClose, targetUser, token }) => {
     } catch (err) {
       setError(
         err.response?.status === 400 && /email/i.test(err.response?.data?.message || "")
-          ? "This email is already in use."
-          : "Could not update this user. Please try again."
+          ? t("admin.emailInUse")
+          : t("admin.couldNotUpdateUser")
       );
     }
   };
 
   return (
-    <Modal show={show} title={`Edit ${targetUser.email}`} onClose={onClose}>
+    <Modal show={show} title={t("admin.editUserTitle", { email: targetUser.email })} onClose={onClose}>
       <div className={styles.avatarRow}>
         {(picture ?? targetUser.picture) ? (
           <img src={picture ?? targetUser.picture} alt="" className={styles.avatar} />
         ) : (
           <div className={styles.avatarPlaceholder} />
         )}
-        <label className={styles.avatarLabel} title="Upload a new profile picture">
-          Update avatar
+        <label className={styles.avatarLabel} title={t("common.uploadNewPicture")}>
+          {t("common.updateAvatar")}
           <input type="file" accept="image/*" hidden onChange={handleAvatarChange} />
         </label>
       </div>
 
       <form onSubmit={handleSubmit}>
         <div className="cw-field">
-          <label className="cw-label">Email</label>
+          <label className="cw-label">{t("common.email")}</label>
           <input
             className="cw-input"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            title="Email"
+            title={t("common.email")}
           />
         </div>
         <div className="cw-field">
-          <label className="cw-label">First name</label>
+          <label className="cw-label">{t("common.firstName")}</label>
           <input
             className="cw-input"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            title="First name"
+            title={t("common.firstName")}
           />
         </div>
         <div className="cw-field">
-          <label className="cw-label">Last name</label>
+          <label className="cw-label">{t("common.lastName")}</label>
           <input
             className="cw-input"
             type="text"
             value={surname}
             onChange={(e) => setSurname(e.target.value)}
-            title="Last name"
+            title={t("common.lastName")}
           />
         </div>
         <div className="cw-field">
-          <label className="cw-label">Global role</label>
-          <select className="cw-select" value={role} onChange={(e) => setRole(e.target.value)} title="Global role">
+          <label className="cw-label">{t("admin.globalRole")}</label>
+          <select className="cw-select" value={role} onChange={(e) => setRole(e.target.value)} title={t("admin.globalRole")}>
             {ROLES.map((r) => (
               <option key={r} value={r}>
-                {r}
+                {roleLabel(r)}
               </option>
             ))}
           </select>
         </div>
         <div className="cw-field">
-          <label className="cw-label">New password</label>
+          <label className="cw-label">{t("common.newPassword")}</label>
           <input
             className="cw-input"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Leave blank to keep the current password"
-            title="Leave blank to keep the current password"
+            placeholder={t("common.leaveBlankPassword")}
+            title={t("common.leaveBlankPassword")}
           />
         </div>
         {error && <p className="cw-error">{error}</p>}
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
-          <Button type="button" variant="secondary" onClick={onClose} title="Discard changes">
-            Cancel
+          <Button type="button" variant="secondary" onClick={onClose} title={t("common.discardChanges")}>
+            {t("common.cancel")}
           </Button>
-          <Button type="submit" title="Save this user">
-            Save
+          <Button type="submit" title={t("admin.saveUser")}>
+            {t("common.save")}
           </Button>
         </div>
       </form>

@@ -6,10 +6,12 @@ import { listClientsApi } from "../../Redux/Clients/Client.actions";
 import { listProjectsApi, createProjectApi } from "../../Redux/Projects/Project.actions";
 import ConfigForm from "../common/ConfigForm";
 import CollapsiblePanel from "../common/CollapsiblePanel";
+import { useI18n } from "../../i18n/I18nContext";
 
 const initialFields = { clientId: "", name: "", color: "#1cb9f7" };
 
 const Project = () => {
+  const { t } = useI18n();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { currentOrgId } = useSelector((state) => state.organizations);
@@ -32,13 +34,13 @@ const Project = () => {
       {
         name: "clientId",
         type: "select",
-        label: "Client",
+        label: t("common.client"),
         required: true,
-        placeholder: "Select a client",
+        placeholder: t("common.selectAClient"),
         options: clients.map((client) => ({ value: client.id, label: client.name })),
       },
-      { name: "name", type: "text", label: "Name", required: true },
-      { name: "color", type: "color", label: "Color" },
+      { name: "name", type: "text", label: t("common.name"), required: true },
+      { name: "color", type: "color", label: t("common.color") },
     ],
   };
 
@@ -50,16 +52,16 @@ const Project = () => {
   };
 
   if (!currentOrgId) {
-    return <h1 className="cw-title">Select or create an organization first</h1>;
+    return <h1 className="cw-title">{t("organizations.selectOrCreateFirst")}</h1>;
   }
 
   if (clients.length === 0) {
     return (
       <div className={styles.main}>
-        <h1 className="cw-title">Projects</h1>
+        <h1 className="cw-title">{t("projects.title")}</h1>
         <p>
-          You need a client before you can create a project.{" "}
-          <Link to="/dashboard/clients">Create one</Link>.
+          {t("projects.needClient")}{" "}
+          <Link to="/dashboard/clients">{t("common.createOne")}</Link>.
         </p>
       </div>
     );
@@ -67,14 +69,14 @@ const Project = () => {
 
   return (
     <div className={styles.main}>
-      <h1 className="cw-title">Projects</h1>
-      <CollapsiblePanel title="Create a project">
+      <h1 className="cw-title">{t("projects.title")}</h1>
+      <CollapsiblePanel title={t("projects.createProject")}>
         <ConfigForm
           config={projectFormConfig}
           values={fields}
           onChange={setField}
           onSubmit={handleSubmit}
-          submitLabel="ADD"
+          submitLabel={t("common.add")}
         />
       </CollapsiblePanel>
 

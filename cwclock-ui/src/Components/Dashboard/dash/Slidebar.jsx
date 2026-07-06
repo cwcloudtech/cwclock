@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styles from "./STYLE/Slidebar.module.css";
 import { FaChevronLeft, FaChevronRight, FaUserCheck } from "react-icons/fa";
-import { FiLogOut, FiSun, FiMoon } from "react-icons/fi";
+import { FiLogOut, FiSun, FiMoon, FiGlobe } from "react-icons/fi";
 import { Route, Routes, useNavigate, Link } from "react-router-dom";
 import Dropdown, { DropdownItem, DropdownText, DropdownDivider } from "../../common/Dropdown";
 import EditProfileModal from "../../common/EditProfileModal";
@@ -9,6 +9,7 @@ import DisabledNotice from "../../common/DisabledNotice";
 import memberLabel from "../../common/memberLabel";
 import Tooltip from "../../common/Tooltip";
 import { useTheme } from "../../common/ThemeContext";
+import { useI18n } from "../../../i18n/I18nContext";
 import logo from "../../../assets/images/cwclock-logo.svg";
 import TimeTracker from "../pages/TimeTracker";
 import SidebarNav from "./SidebarNav";
@@ -32,6 +33,7 @@ const Slidebar = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { theme, toggleTheme } = useTheme();
+  const { locale, setLocale, t } = useI18n();
   const { user } = useSelector((state) => state.auth);
   const { organizations, currentOrgId } = useSelector((state) => state.organizations);
   const currentOrg = organizations.find((o) => o.id === currentOrgId);
@@ -64,11 +66,11 @@ const Slidebar = () => {
     <div className={styles.main}>
       <div className={styles.navbar}>
         <div className={styles.navbarleftmain}>
-          <img src={logo} alt="cwclock logo" className={styles.logo} title="CWClock" />
+          <img src={logo} alt="cwclock logo" className={styles.logo} title={t("nav.cwclock")} />
 
           {organizations.length > 0 ? (
             <Dropdown
-              title="Switch organization"
+              title={t("nav.switchOrganization")}
               trigger={
                 <>
                   {currentOrg?.picture && (
@@ -96,14 +98,14 @@ const Slidebar = () => {
             </Dropdown>
           ) : (
             <Link className={styles.createOrgLink} to="/dashboard/organizations">
-              Create organization
+              {t("nav.createOrganization")}
             </Link>
           )}
         </div>
 
         <div className={styles.navbarrightmain}>
           {user.token ? (
-            <Tooltip label="Account menu">
+            <Tooltip label={t("nav.accountMenu")}>
             <Dropdown
               align="end"
               triggerClassName={styles.profileTrigger}
@@ -126,12 +128,12 @@ const Slidebar = () => {
                       setShowEditProfile(true);
                       close();
                     }}
-                    title="Edit your profile and avatar"
+                    title={t("nav.editProfileTooltip")}
                   >
-                    Edit profile
+                    {t("nav.editProfile")}
                   </DropdownItem>
                   <Tooltip
-                    label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                    label={theme === "dark" ? t("nav.switchToLightMode") : t("nav.switchToDarkMode")}
                     className={styles.menuItemTooltip}
                   >
                     <DropdownItem onClick={toggleTheme}>
@@ -140,11 +142,17 @@ const Slidebar = () => {
                       ) : (
                         <FiMoon style={{ fontSize: "16px" }} />
                       )}
-                      {theme === "dark" ? "Light mode" : "Dark mode"}
+                      {theme === "dark" ? t("nav.lightMode") : t("nav.darkMode")}
+                    </DropdownItem>
+                  </Tooltip>
+                  <Tooltip label={t("common.switchLanguage")} className={styles.menuItemTooltip}>
+                    <DropdownItem onClick={() => setLocale(locale === "fr" ? "en" : "fr")}>
+                      <FiGlobe style={{ fontSize: "16px" }} />
+                      {locale === "fr" ? "Français" : "English"}
                     </DropdownItem>
                   </Tooltip>
                   <DropdownDivider />
-                  <Tooltip label="Logout" className={styles.menuItemTooltip}>
+                  <Tooltip label={t("nav.logout")} className={styles.menuItemTooltip}>
                     <DropdownItem onClick={handleLogout} className={styles.logoutItem}>
                       <FiLogOut style={{ fontSize: "16px" }} />
                     </DropdownItem>
@@ -154,8 +162,8 @@ const Slidebar = () => {
             </Dropdown>
             </Tooltip>
           ) : (
-            <button className={styles.loginBtn} onClick={() => navigate("/login")} title="Go to the login page">
-              Login
+            <button className={styles.loginBtn} onClick={() => navigate("/login")} title={t("nav.goToLogin")}>
+              {t("nav.login")}
             </button>
           )}
         </div>
@@ -166,7 +174,7 @@ const Slidebar = () => {
       <div className={styles.Slideflex}>
         <div className={`${styles.sidebarCol} ${expanded ? styles.sidebarColExpanded : ""}`}>
           <SidebarNav expanded={expanded} isSuperuser={isSuperuser} />
-          <Tooltip label={expanded ? "Collapse sidebar" : "Expand sidebar"} position="right" className={styles.toggleTooltip}>
+          <Tooltip label={expanded ? t("nav.collapseSidebar") : t("nav.expandSidebar")} position="right" className={styles.toggleTooltip}>
             <button className={styles.sidebarToggle} onClick={handleclick}>
               {expanded ? <FaChevronLeft /> : <FaChevronRight />}
             </button>

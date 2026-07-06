@@ -6,8 +6,10 @@ import useDateHook from "./useDateHook";
 import { postTasksApi, startTask } from "../../Redux/Tasks/Task.actions";
 import useTime from "./useTime";
 import projectLabel from "../common/projectLabel";
+import { useI18n } from "../../i18n/I18nContext";
 
 const TaskInput = () => {
+  const { t } = useI18n();
   const { timerOn, sec, min, hrs, handleTimer } = useTimer();
   const { hours, minutes, seconds } = useDateHook();
   const { hours2, minutes2, seconds2 } = useTime();
@@ -34,7 +36,7 @@ const TaskInput = () => {
         return;
       }
       let taskObj = {
-        text: name || "Task",
+        text: name || t("timeTracker.defaultTaskName"),
         day: new Date().toISOString().slice(0, 10),
         start: start,
         end: `${hours2}:${minutes2}:${seconds2}`,
@@ -56,8 +58,8 @@ const TaskInput = () => {
         <input
           className={styles.textInput}
           type="text"
-          placeholder="What are you working on?"
-          title="What are you working on?"
+          placeholder={t("timeTracker.whatAreYouWorkingOn")}
+          title={t("timeTracker.whatAreYouWorkingOn")}
           onChange={(e) => setName(e.target.value)}
         />
         <input
@@ -66,8 +68,8 @@ const TaskInput = () => {
           value={projectQuery}
           disabled={timerOn}
           onChange={(e) => handleProjectInput(e.target.value)}
-          placeholder="Project"
-          title="Search by customer or project name"
+          placeholder={t("timeTracker.project")}
+          title={t("timeTracker.searchByCustomerOrProject")}
         />
         <datalist id="task-input-project-options">
           {projects.map((p) => (
@@ -75,7 +77,7 @@ const TaskInput = () => {
           ))}
         </datalist>
         <div className={styles.Timer}>
-          <span className={styles.clock} title="Elapsed time">
+          <span className={styles.clock} title={t("timeTracker.elapsedTime")}>
             {hrs < 10 ? "0" + hrs : hrs}:{min < 10 ? "0" + min : min}:
             {sec < 10 ? "0" + sec : sec}
           </span>
@@ -83,9 +85,9 @@ const TaskInput = () => {
             className={timerOn ? styles.Red : styles.Blue}
             onClick={handleSubmit}
             disabled={!projectId}
-            title={timerOn ? "Stop the timer" : "Start the timer"}
+            title={timerOn ? t("timeTracker.stopTimer") : t("timeTracker.startTimer")}
           >
-            {timerOn ? "Stop" : "Start"}
+            {timerOn ? t("timeTracker.stop") : t("timeTracker.start")}
           </button>
         </div>
       </div>

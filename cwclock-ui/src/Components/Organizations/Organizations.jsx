@@ -17,6 +17,7 @@ import ConfigForm from "../common/ConfigForm";
 import CollapsiblePanel from "../common/CollapsiblePanel";
 import memberLabel from "../common/memberLabel";
 import useEmailAutocomplete from "../common/useEmailAutocomplete";
+import { useI18n } from "../../i18n/I18nContext";
 
 const emptyFields = {
   name: "",
@@ -30,22 +31,15 @@ const emptyFields = {
   picture: "",
 };
 
-const orgFormConfig = {
-  name: "Organization",
-  fields: [
-    { name: "name", type: "text", label: "Name", required: true },
-    { name: "address", type: "text", label: "Address" },
-    { name: "postalCode", type: "text", label: "Postal code" },
-    { name: "city", type: "text", label: "City" },
-    { name: "country", type: "text", label: "Country" },
-    { name: "vatNumber", type: "text", label: "VAT number" },
-    { name: "siren", type: "text", label: "SIREN" },
-    { name: "siret", type: "text", label: "SIRET" },
-    { name: "picture", type: "image", label: "Picture" },
-  ],
+const roleLabelKey = {
+  owner: "common.roleOwner",
+  admin: "common.roleAdmin",
+  member: "common.roleMember",
+  reader: "common.roleReader",
 };
 
 const MemberRow = ({ member, canSetRate, orgId, token }) => {
+  const { t } = useI18n();
   const dispatch = useDispatch();
   const [editing, setEditing] = useState(false);
   const [dailyRate, setDailyRate] = useState(member.dailyRate || "");
@@ -63,13 +57,15 @@ const MemberRow = ({ member, canSetRate, orgId, token }) => {
       <div className={styles.memberRow}>
         <span>
           {memberLabel(member)}
-          {member.name && ` (${member.email})`} - {member.role}
+          {member.name && ` (${member.email})`} - {t(roleLabelKey[member.role] || "common.roleMember")}
         </span>
         {canSetRate && !editing && (
           <span className={styles.rate}>
-            {member.dailyRate ? `${member.dailyRate} ${member.currency}/day` : "No daily rate set"}{" "}
-            <Button size="sm" variant="ghost" onClick={() => setEditing(true)} title="Edit daily rate">
-              Edit
+            {member.dailyRate
+              ? t("organizations.dailyRatePerDay", { rate: member.dailyRate, currency: member.currency })
+              : t("organizations.noDailyRateSet")}{" "}
+            <Button size="sm" variant="ghost" onClick={() => setEditing(true)} title={t("organizations.editDailyRate")}>
+              {t("common.edit")}
             </Button>
           </span>
         )}
@@ -77,7 +73,7 @@ const MemberRow = ({ member, canSetRate, orgId, token }) => {
       {canSetRate && editing && (
         <form className={styles.rateForm} onSubmit={handleSave}>
           <div className="cw-field">
-            <label className="cw-label">Daily rate</label>
+            <label className="cw-label">{t("organizations.dailyRate")}</label>
             <input
               className="cw-input"
               type="number"
@@ -85,27 +81,27 @@ const MemberRow = ({ member, canSetRate, orgId, token }) => {
               step="0.01"
               value={dailyRate}
               onChange={(e) => setDailyRate(e.target.value)}
-              title="Daily rate"
+              title={t("organizations.dailyRate")}
             />
           </div>
           <div className="cw-field">
-            <label className="cw-label">Currency</label>
+            <label className="cw-label">{t("organizations.currency")}</label>
             <input
               className="cw-input"
               type="text"
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-              title="Currency"
+              title={t("organizations.currency")}
             />
           </div>
           <div className="cw-field">
-            <Button size="sm" type="submit" title="Save daily rate">
-              Save
+            <Button size="sm" type="submit" title={t("organizations.saveDailyRate")}>
+              {t("common.save")}
             </Button>
           </div>
           <div className="cw-field">
-            <Button size="sm" variant="secondary" onClick={() => setEditing(false)} title="Discard changes">
-              Cancel
+            <Button size="sm" variant="secondary" onClick={() => setEditing(false)} title={t("common.discardChanges")}>
+              {t("common.cancel")}
             </Button>
           </div>
         </form>
@@ -115,6 +111,7 @@ const MemberRow = ({ member, canSetRate, orgId, token }) => {
 };
 
 const Organizations = () => {
+  const { t } = useI18n();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { organizations, members, currentOrgId } = useSelector((state) => state.organizations);
@@ -127,6 +124,21 @@ const Organizations = () => {
   const [memberError, setMemberError] = useState("");
   const [transferEmail, setTransferEmail] = useState("");
   const [transferError, setTransferError] = useState("");
+
+  const orgFormConfig = {
+    name: "Organization",
+    fields: [
+      { name: "name", type: "text", label: t("common.name"), required: true },
+      { name: "address", type: "text", label: t("common.address") },
+      { name: "postalCode", type: "text", label: t("common.postalCode") },
+      { name: "city", type: "text", label: t("common.city") },
+      { name: "country", type: "text", label: t("common.country") },
+      { name: "vatNumber", type: "text", label: t("common.vatNumber") },
+      { name: "siren", type: "text", label: "SIREN" },
+      { name: "siret", type: "text", label: "SIRET" },
+      { name: "picture", type: "image", label: t("common.picture") },
+    ],
+  };
 
   useEffect(() => {
     dispatch(listOrgsApi(user.token));
@@ -156,7 +168,7 @@ const Organizations = () => {
       await dispatch(createOrgApi(fields, user.token));
       setFields(emptyFields);
     } catch (err) {
-      setCreateError("Name is required.");
+      setCreateError(t("organizations.nameRequired"));
     }
   };
 
@@ -182,7 +194,7 @@ const Organizations = () => {
       await dispatch(updateOrgApi(currentOrgId, editFields, user.token));
       setEditFields(null);
     } catch (err) {
-      setEditError("Name is required.");
+      setEditError(t("organizations.nameRequired"));
     }
   };
 
@@ -194,7 +206,7 @@ const Organizations = () => {
       await dispatch(addMemberApi(currentOrgId, memberEmail, memberRole, user.token));
       setMemberEmail("");
     } catch (err) {
-      setMemberError("Could not add member. Check the email and try again.");
+      setMemberError(t("organizations.couldNotAddMember"));
     }
   };
 
@@ -202,25 +214,25 @@ const Organizations = () => {
     e.preventDefault();
     setTransferError("");
     if (!transferEmail) return;
-    if (!window.confirm(`Transfer ownership of "${currentOrg.name}" to ${transferEmail}?`)) {
+    if (!window.confirm(t("organizations.confirmTransfer", { name: currentOrg.name, email: transferEmail }))) {
       return;
     }
     try {
       await dispatch(transferOwnershipApi(currentOrgId, transferEmail, user.token));
       setTransferEmail("");
     } catch (err) {
-      setTransferError("Could not transfer ownership. Check the email and try again.");
+      setTransferError(t("organizations.couldNotTransfer"));
     }
   };
 
   return (
     <div className={styles.main}>
-      <h1 className="cw-title">Organizations</h1>
+      <h1 className="cw-title">{t("organizations.title")}</h1>
 
       <ul className="cw-list">
         {organizations.map((org) => (
           <li key={org.id} className="cw-list-item">
-            <label className={styles.orgOption} title={`Switch to ${org.name}`}>
+            <label className={styles.orgOption} title={t("organizations.switchTo", { name: org.name })}>
               <input
                 type="radio"
                 name="currentOrg"
@@ -234,13 +246,13 @@ const Organizations = () => {
         ))}
       </ul>
 
-      <CollapsiblePanel title="Create an organization" defaultOpen={organizations.length === 0}>
+      <CollapsiblePanel title={t("organizations.createOrganization")} defaultOpen={organizations.length === 0}>
         <ConfigForm
           config={orgFormConfig}
           values={fields}
           onChange={setField}
           onSubmit={handleCreate}
-          submitLabel="Create"
+          submitLabel={t("common.create")}
           error={createError}
         />
       </CollapsiblePanel>
@@ -251,13 +263,13 @@ const Organizations = () => {
             <>
               {editFields ? (
                 <div>
-                  <h2 className="cw-subtitle">Edit {currentOrg.name}</h2>
+                  <h2 className="cw-subtitle">{t("organizations.editOrgTitle", { name: currentOrg.name })}</h2>
                   <ConfigForm
                     config={orgFormConfig}
                     values={editFields}
                     onChange={setEditField}
                     onSubmit={handleEditSubmit}
-                    submitLabel="Save"
+                    submitLabel={t("common.save")}
                     onCancel={() => setEditFields(null)}
                     error={editError}
                   />
@@ -267,15 +279,15 @@ const Organizations = () => {
                   variant="secondary"
                   onClick={startEdit}
                   className={styles.editOrgBtn}
-                  title="Edit this organization's details"
+                  title={t("organizations.editOrgTooltip")}
                 >
-                  Edit organization
+                  {t("organizations.editOrganization")}
                 </Button>
               )}
             </>
           )}
 
-          <h2 className="cw-subtitle">Members of {currentOrg.name}</h2>
+          <h2 className="cw-subtitle">{t("organizations.membersOf", { name: currentOrg.name })}</h2>
           <ul className="cw-list">
             {members.map((m) => (
               <MemberRow
@@ -290,11 +302,11 @@ const Organizations = () => {
 
           {isOwner && (
             <>
-              <CollapsiblePanel title="Add a member">
+              <CollapsiblePanel title={t("organizations.addMemberPanel")}>
                 <form onSubmit={handleAddMember}>
                   <div className="cw-field">
                     <label className="cw-label">
-                      Member email
+                      {t("organizations.memberEmail")}
                       <RequiredMark />
                     </label>
                     <input
@@ -304,7 +316,7 @@ const Organizations = () => {
                       value={memberEmail}
                       onChange={(e) => setMemberEmail(e.target.value)}
                       required
-                      title="Member email"
+                      title={t("organizations.memberEmail")}
                     />
                     <datalist id="member-email-suggestions">
                       {memberSuggestions.map((u) => (
@@ -313,28 +325,30 @@ const Organizations = () => {
                     </datalist>
                   </div>
                   <div className="cw-field">
-                    <label className="cw-label">Role</label>
+                    <label className="cw-label">{t("common.role")}</label>
                     <select
                       className="cw-select"
                       value={memberRole}
                       onChange={(e) => setMemberRole(e.target.value)}
-                      title="Role"
+                      title={t("common.role")}
                     >
-                      <option value="admin">Admin</option>
-                      <option value="member">Member</option>
-                      <option value="reader">Reader</option>
+                      <option value="admin">{t("common.roleAdmin")}</option>
+                      <option value="member">{t("common.roleMember")}</option>
+                      <option value="reader">{t("common.roleReader")}</option>
                     </select>
                   </div>
-                  <Button type="submit" title="Invite this member">Add member</Button>
+                  <Button type="submit" title={t("organizations.inviteMember")}>
+                    {t("organizations.addMemberButton")}
+                  </Button>
                   {memberError && <p className="cw-error">{memberError}</p>}
                 </form>
               </CollapsiblePanel>
 
-              <CollapsiblePanel title="Transfer ownership">
+              <CollapsiblePanel title={t("organizations.transferOwnership")}>
                 <form onSubmit={handleTransferOwnership}>
                   <div className="cw-field">
                     <label className="cw-label">
-                      New owner's email
+                      {t("organizations.newOwnerEmail")}
                       <RequiredMark />
                     </label>
                     <input
@@ -344,7 +358,7 @@ const Organizations = () => {
                       value={transferEmail}
                       onChange={(e) => setTransferEmail(e.target.value)}
                       required
-                      title="New owner's email"
+                      title={t("organizations.newOwnerEmail")}
                     />
                     <datalist id="transfer-email-suggestions">
                       {transferSuggestions.map((u) => (
@@ -352,8 +366,8 @@ const Organizations = () => {
                       ))}
                     </datalist>
                   </div>
-                  <Button type="submit" variant="danger" title="Transfer ownership to this member">
-                    Transfer ownership
+                  <Button type="submit" variant="danger" title={t("organizations.transferOwnershipTooltip")}>
+                    {t("organizations.transferOwnership")}
                   </Button>
                   {transferError && <p className="cw-error">{transferError}</p>}
                 </form>

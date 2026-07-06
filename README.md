@@ -8,7 +8,9 @@ Opensource alternative to [Clockify](https://clockify.me) written in Go and reac
 * Manage organizations, clients and project
 * Export in CSV or PDF compliant with Clockify format
 * Reimport clockify CSV files
-* Print and send invoices with daily rates and VAT (stored in object storage)
+* Print invoices with daily rates and VAT (stored in object storage)
+* I18N (English and French for now)
+* Light/Dark mode
 
 ## Technologies
 

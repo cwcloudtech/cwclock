@@ -6,8 +6,10 @@ import RequiredMark from "../common/RequiredMark";
 import useEmailAutocomplete from "../common/useEmailAutocomplete";
 import { transferOwnershipApi } from "../../Redux/Organizations/Org.actions";
 import { listAllOrganizationsApi } from "../../Redux/Admin/Admin.actions";
+import { useI18n } from "../../i18n/I18nContext";
 
 const TransferOwnershipModal = ({ show, onClose, targetOrg, token }) => {
+  const { t } = useI18n();
   const dispatch = useDispatch();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
@@ -25,7 +27,7 @@ const TransferOwnershipModal = ({ show, onClose, targetOrg, token }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email) return;
-    if (!window.confirm(`Transfer ownership of "${targetOrg.name}" to ${email}?`)) {
+    if (!window.confirm(t("organizations.confirmTransfer", { name: targetOrg.name, email }))) {
       return;
     }
     setError("");
@@ -34,16 +36,16 @@ const TransferOwnershipModal = ({ show, onClose, targetOrg, token }) => {
       await dispatch(listAllOrganizationsApi(token));
       onClose();
     } catch (err) {
-      setError("Could not transfer ownership. Check the email and try again.");
+      setError(t("organizations.couldNotTransfer"));
     }
   };
 
   return (
-    <Modal show={show} title={`Transfer ownership of ${targetOrg.name}`} onClose={onClose}>
+    <Modal show={show} title={t("admin.transferModalTitle", { name: targetOrg.name })} onClose={onClose}>
       <form onSubmit={handleSubmit}>
         <div className="cw-field">
           <label className="cw-label">
-            New owner's email
+            {t("organizations.newOwnerEmail")}
             <RequiredMark />
           </label>
           <input
@@ -52,7 +54,7 @@ const TransferOwnershipModal = ({ show, onClose, targetOrg, token }) => {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            title="New owner's email"
+            title={t("organizations.newOwnerEmail")}
             required
             autoFocus
           />
@@ -64,11 +66,11 @@ const TransferOwnershipModal = ({ show, onClose, targetOrg, token }) => {
         </div>
         {error && <p className="cw-error">{error}</p>}
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
-          <Button type="button" variant="secondary" onClick={onClose} title="Discard">
-            Cancel
+          <Button type="button" variant="secondary" onClick={onClose} title={t("common.discardChanges")}>
+            {t("common.cancel")}
           </Button>
-          <Button type="submit" variant="danger" title="Transfer ownership to this member">
-            Transfer
+          <Button type="submit" variant="danger" title={t("organizations.transferOwnershipTooltip")}>
+            {t("admin.transfer")}
           </Button>
         </div>
       </form>
