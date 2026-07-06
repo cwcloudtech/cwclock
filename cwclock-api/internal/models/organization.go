@@ -23,6 +23,7 @@ type Organization struct {
 	SIREN      string    `json:"siren"`
 	SIRET      string    `json:"siret"`
 	Picture    string    `json:"picture,omitempty"`
+	Stamp      string    `json:"stamp,omitempty"`
 	Currency   string    `json:"currency"`
 	CreatedAt  time.Time `json:"createdAt"`
 	UpdatedAt  time.Time `json:"updatedAt"`

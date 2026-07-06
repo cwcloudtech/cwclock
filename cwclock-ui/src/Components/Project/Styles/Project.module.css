@@ -25,3 +25,28 @@
 .clientName::before {
   content: "· ";
 }
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 6px 10px;
+  color: var(--cw-text-muted);
+  border-radius: var(--cw-radius-sm);
+  cursor: pointer;
+  transition: background-color var(--cw-transition), color var(--cw-transition);
+}
+
+.iconBtn:hover {
+  color: var(--cw-primary-700);
+  background-color: var(--cw-primary-tint);
+}

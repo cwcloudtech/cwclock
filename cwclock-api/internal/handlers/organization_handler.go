@@ -32,6 +32,7 @@ type organizationPayload struct {
 	SIREN      string `json:"siren"`
 	SIRET      string `json:"siret"`
 	Picture    string `json:"picture"`
+	Stamp      string `json:"stamp"`
 	Currency   string `json:"currency"`
 }
 
@@ -54,6 +55,7 @@ func (p organizationPayload) toFields() store.OrganizationFields {
 		SIREN:      p.SIREN,
 		SIRET:      p.SIRET,
 		Picture:    p.Picture,
+		Stamp:      p.Stamp,
 		Currency:   p.Currency,
 	}
 }

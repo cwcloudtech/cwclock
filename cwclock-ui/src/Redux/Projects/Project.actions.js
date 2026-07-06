@@ -1,6 +1,12 @@
 import axios from "axios";
 import { toast } from "react-toastify";
-import { ProjectLOADING, ProjectERROR, ProjectListSUCCESS, ProjectCreateSUCCESS } from "./Project.types";
+import {
+  ProjectLOADING,
+  ProjectERROR,
+  ProjectListSUCCESS,
+  ProjectCreateSUCCESS,
+  ProjectUpdateSUCCESS,
+} from "./Project.types";
 import toastOptions from "../toastOptions";
 import { translate, getStoredLocale } from "../../i18n/translate";
 
@@ -29,6 +35,23 @@ export const createProjectApi = (orgId, clientId, name, color, token) => async (
     );
     dispatch({ type: ProjectCreateSUCCESS, payload: data });
     toast.success(translate(getStoredLocale(), "toasts.projectCreated"), toastOptions);
+    return data;
+  } catch (e) {
+    dispatch({ type: ProjectERROR });
+    throw e;
+  }
+};
+
+export const updateProjectApi = (orgId, projectId, name, color, token) => async (dispatch) => {
+  dispatch({ type: ProjectLOADING });
+  try {
+    const { data } = await axios.put(
+      `${ENDPOINT}${orgId}/projects/${projectId}`,
+      { name, color },
+      authConfig(token)
+    );
+    dispatch({ type: ProjectUpdateSUCCESS, payload: data });
+    toast.success(translate(getStoredLocale(), "toasts.projectUpdated"), toastOptions);
     return data;
   } catch (e) {
     dispatch({ type: ProjectERROR });

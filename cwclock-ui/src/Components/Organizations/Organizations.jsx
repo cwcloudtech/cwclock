@@ -31,6 +31,7 @@ const emptyFields = {
   siren: "",
   siret: "",
   picture: "",
+  stamp: "",
   currency: "",
 };
 
@@ -148,6 +149,7 @@ const Organizations = () => {
         options: currencies.map((code) => ({ value: code, label: code })),
       },
       { name: "picture", type: "image", label: t("common.picture") },
+      { name: "stamp", type: "image", label: t("organizations.stamp") },
     ],
   };
 
@@ -205,6 +207,7 @@ const Organizations = () => {
       siret: currentOrg.siret || "",
       currency: currentOrg.currency || currencies[0] || "",
       picture: currentOrg.picture || "",
+      stamp: currentOrg.stamp || "",
     });
   };
 

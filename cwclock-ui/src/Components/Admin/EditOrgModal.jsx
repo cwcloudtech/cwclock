@@ -18,6 +18,7 @@ const emptyFields = {
   siren: "",
   siret: "",
   picture: "",
+  stamp: "",
   currency: "",
 };
 
@@ -47,6 +48,7 @@ const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
         options: currencies.map((code) => ({ value: code, label: code })),
       },
       { name: "picture", type: "image", label: t("common.picture") },
+      { name: "stamp", type: "image", label: t("organizations.stamp") },
     ],
   };
 
@@ -63,6 +65,7 @@ const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
         siret: targetOrg.siret || "",
         currency: targetOrg.currency || currencies[0] || "",
         picture: targetOrg.picture || "",
+        stamp: targetOrg.stamp || "",
       });
       setError("");
     }

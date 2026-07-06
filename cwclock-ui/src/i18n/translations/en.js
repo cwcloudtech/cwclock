@@ -164,6 +164,7 @@ const en = {
     currency: "Currency",
     saveDailyRate: "Save daily rate",
     selectOrCreateFirst: "Select or create an organization first",
+    stamp: "Stamp",
   },
   clients: {
     title: "Clients",
@@ -173,11 +174,13 @@ const en = {
     purchaseOrder: "Purchase order",
     hoursPerDay: "Hours/day (default 7)",
     vatAndHours: " - VAT {{rate}}% - {{hours}}h/day",
+    editClientTitle: "Edit {{name}}",
   },
   projects: {
     title: "Projects",
     createProject: "Create a project",
     needClient: "You need a client before you can create a project.",
+    editProjectTitle: "Edit {{name}}",
   },
   admin: {
     usersTitle: "Users",
@@ -207,6 +210,8 @@ const en = {
     ownershipTransferred: "Ownership transferred.",
     projectCreated: "Project created.",
     clientCreated: "Client created.",
+    projectUpdated: "Project updated.",
+    clientUpdated: "Client updated.",
     userUpdated: "User updated.",
     userDeleted: "User deleted.",
     timeRecordDeleted: "Time record deleted.",

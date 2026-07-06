@@ -30,6 +30,7 @@ type orgData struct {
 	SIREN      string `json:"siren"`
 	SIRET      string `json:"siret"`
 	Picture    string `json:"picture,omitempty"`
+	Stamp      string `json:"stamp,omitempty"`
 	Currency   string `json:"currency,omitempty"`
 }
 
@@ -45,6 +46,7 @@ type OrganizationFields struct {
 	SIREN      string
 	SIRET      string
 	Picture    string
+	Stamp      string
 	Currency   string
 }
 
@@ -64,6 +66,7 @@ func applyOrgData(o *models.Organization, raw []byte) error {
 	o.SIREN = d.SIREN
 	o.SIRET = d.SIRET
 	o.Picture = d.Picture
+	o.Stamp = d.Stamp
 	o.Currency = utils.If(utils.IsBlank(d.Currency), models.DefaultCurrency(), d.Currency)
 	return nil
 }
@@ -94,6 +97,7 @@ func toOrgData(f OrganizationFields) orgData {
 		SIREN:      f.SIREN,
 		SIRET:      f.SIRET,
 		Picture:    f.Picture,
+		Stamp:      f.Stamp,
 		Currency:   utils.If(utils.IsBlank(f.Currency), models.DefaultCurrency(), f.Currency),
 	}
 }

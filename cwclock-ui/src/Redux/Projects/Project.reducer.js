@@ -1,4 +1,10 @@
-import { ProjectLOADING, ProjectERROR, ProjectListSUCCESS, ProjectCreateSUCCESS } from "./Project.types";
+import {
+  ProjectLOADING,
+  ProjectERROR,
+  ProjectListSUCCESS,
+  ProjectCreateSUCCESS,
+  ProjectUpdateSUCCESS,
+} from "./Project.types";
 
 const initialstate = {
   projects: [],
@@ -19,6 +25,10 @@ export const ProjectReducer = (state = initialstate, { type, payload }) => {
     }
     case ProjectCreateSUCCESS: {
       return { ...state, projects: [...state.projects, payload], isLoading: false };
+    }
+    case ProjectUpdateSUCCESS: {
+      const projects = state.projects.map((p) => (p.id === payload.id ? payload : p));
+      return { ...state, projects, isLoading: false };
     }
     default: {
       return state;

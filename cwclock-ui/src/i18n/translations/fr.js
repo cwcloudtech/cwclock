@@ -164,6 +164,7 @@ const fr = {
     currency: "Devise",
     saveDailyRate: "Enregistrer le taux journalier",
     selectOrCreateFirst: "Sélectionnez ou créez d'abord une organisation",
+    stamp: "Cachet",
   },
   clients: {
     title: "Clients",
@@ -173,11 +174,13 @@ const fr = {
     purchaseOrder: "Bon de commande",
     hoursPerDay: "Heures/jour (par défaut 7)",
     vatAndHours: " - TVA {{rate}}% - {{hours}}h/jour",
+    editClientTitle: "Modifier {{name}}",
   },
   projects: {
     title: "Projets",
     createProject: "Créer un projet",
     needClient: "Vous avez besoin d'un client avant de pouvoir créer un projet.",
+    editProjectTitle: "Modifier {{name}}",
   },
   admin: {
     usersTitle: "Utilisateurs",
@@ -207,6 +210,8 @@ const fr = {
     ownershipTransferred: "Propriété transférée.",
     projectCreated: "Projet créé.",
     clientCreated: "Client créé.",
+    projectUpdated: "Projet mis à jour.",
+    clientUpdated: "Client mis à jour.",
     userUpdated: "Utilisateur mis à jour.",
     userDeleted: "Utilisateur supprimé.",
     timeRecordDeleted: "Entrée de temps supprimée.",

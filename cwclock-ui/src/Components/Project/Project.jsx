@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { FaRegEdit } from "react-icons/fa";
 import styles from "./Styles/Project.module.css";
 import { listClientsApi } from "../../Redux/Clients/Client.actions";
 import { listProjectsApi, createProjectApi } from "../../Redux/Projects/Project.actions";
+import { listMembersApi } from "../../Redux/Organizations/Org.actions";
 import ConfigForm from "../common/ConfigForm";
 import CollapsiblePanel from "../common/CollapsiblePanel";
+import Tooltip from "../common/Tooltip";
+import EditProjectModal from "./EditProjectModal";
 import { useI18n } from "../../i18n/I18nContext";
 
 const initialFields = { clientId: "", name: "", color: "#1cb9f7" };
@@ -17,12 +21,18 @@ const Project = () => {
   const { currentOrgId } = useSelector((state) => state.organizations);
   const { clients } = useSelector((state) => state.clients);
   const { projects } = useSelector((state) => state.projects);
+  const { members } = useSelector((state) => state.organizations);
   const [fields, setFields] = useState(initialFields);
+  const [editingProject, setEditingProject] = useState(null);
+
+  const myRole = members.find((m) => m.userId === user.id)?.role;
+  const isAdminOrOwner = myRole === "admin" || myRole === "owner";
 
   useEffect(() => {
     if (currentOrgId) {
       dispatch(listClientsApi(currentOrgId, user.token));
       dispatch(listProjectsApi(currentOrgId, user.token));
+      dispatch(listMembersApi(currentOrgId, user.token));
     }
   }, [dispatch, currentOrgId, user.token]);
 
@@ -88,10 +98,31 @@ const Project = () => {
               <span className={styles.swatch} style={{ backgroundColor: project.color }} />
               <strong>{project.name}</strong>
               {client && <span className={styles.clientName}>{client.name}</span>}
+              {isAdminOrOwner && (
+                <div className={styles.rowActions}>
+                  <Tooltip label={t("common.edit")}>
+                    <button
+                      type="button"
+                      className={styles.iconBtn}
+                      onClick={() => setEditingProject(project)}
+                    >
+                      <FaRegEdit style={{ fontSize: "18px" }} />
+                    </button>
+                  </Tooltip>
+                </div>
+              )}
             </li>
           );
         })}
       </ul>
+
+      <EditProjectModal
+        show={!!editingProject}
+        onClose={() => setEditingProject(null)}
+        targetProject={editingProject}
+        orgId={currentOrgId}
+        token={user.token}
+      />
     </div>
   );
 };
