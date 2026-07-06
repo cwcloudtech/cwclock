@@ -1,4 +1,25 @@
-# AI instruction 7
+# AI instruction 8
+
+## Organization currency
+
+It must be fixed by a list (dropdown autocomplete) of ISO 4217 currency codes (3 chars): https://www.iban.com/currency-codes
+
+And must start with this order
+
+* `EUR`
+* `USD`
+* `GBP`
+* `CHF`
+* `CNY`
+* `JPY`
+* `SAR`
+* `AED`
+* `TND`
+* `DZD`
+
+For the rest, keep alphabetical order.
+
+By default it's `EUR` for every organization.
 
 ## Time tracking export
 
@@ -72,3 +93,4 @@ Of course adapt using the current UI/UX design, icons, etc and keep consistency.
 Notes: 
 * on the billable column put always "Yes", it's for keeping compliance with clockify exports.
 * same thing for empty columns like tags or groups
+* `EUR` must be changed by the Organization currency
