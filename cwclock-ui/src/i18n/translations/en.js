@@ -114,7 +114,7 @@ const en = {
     emptyTitle: "Let's start tracking!",
     emptyBody: "Pick a project above and start the timer.",
     needOrganization: "You need an organization before you can track time.",
-    taskDescription: "Task description",
+    taskDescription: "Description",
     day: "Day",
     allDay: "All day",
     markAllDay: "Mark as an all-day entry",

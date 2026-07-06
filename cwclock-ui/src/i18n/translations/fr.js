@@ -114,7 +114,7 @@ const fr = {
     emptyTitle: "Commençons à suivre votre temps !",
     emptyBody: "Choisissez un projet ci-dessus et démarrez le chronomètre.",
     needOrganization: "Vous avez besoin d'une organisation pour suivre votre temps.",
-    taskDescription: "Description de la tâche",
+    taskDescription: "Description",
     day: "Jour",
     allDay: "Toute la journée",
     markAllDay: "Marquer comme une entrée de toute la journée",
