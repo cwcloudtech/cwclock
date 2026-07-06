@@ -23,12 +23,13 @@ func New(
 	users *store.UserStore,
 	jwtSecret string,
 	corsEnabled bool,
+	corsAllowedOrigins []string,
 ) http.Handler {
 	r := chi.NewRouter()
 
 	if corsEnabled {
 		r.Use(cors.Handler(cors.Options{
-			AllowedOrigins: []string{"*"},
+			AllowedOrigins: corsAllowedOrigins,
 			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowedHeaders: []string{"Authorization", "Content-Type"},
 		}))
