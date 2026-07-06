@@ -24,15 +24,26 @@ func formatAmount(amt float64) string {
 	return fmt.Sprintf("%.2f", amt)
 }
 
+// formatAMPM renders a wall-clock string as "HH:MM:SSAM/PM", matching the
+// reference export's format. It goes through parseSecondsOfDay (not
+// time.Parse) so it handles both "HH:MM:SS" (real entries, since their time
+// inputs use step="1") and "HH:MM" (the synthetic all-day display window)
+// uniformly.
 func formatAMPM(hm *string) string {
 	if hm == nil {
 		return ""
 	}
-	t, err := time.Parse("15:04", *hm)
-	if err != nil {
-		return *hm
+	total := parseSecondsOfDay(*hm) % (24 * 3600)
+	h, m, s := total/3600, (total%3600)/60, total%60
+	period := "AM"
+	if h >= 12 {
+		period = "PM"
 	}
-	return t.Format("03:04PM")
+	h12 := h % 12
+	if h12 == 0 {
+		h12 = 12
+	}
+	return fmt.Sprintf("%02d:%02d:%02d%s", h12, m, s, period)
 }
 
 func formatUSDate(day string) string {

@@ -35,14 +35,21 @@ func hoursPerDay(client models.Client) float64 {
 	return client.HoursPerDay
 }
 
-func parseMinutesOfDay(hm string) int {
-	parts := strings.SplitN(hm, ":", 2)
-	if len(parts) != 2 {
-		return 0
+// parseSecondsOfDay parses a wall-clock string into seconds since midnight.
+// The time inputs that produce Start/End use step="1" (second granularity),
+// so the value is "HH:MM:SS", not "HH:MM" — but this still accepts a bare
+// "HH:MM" (as used by allDayWindow's synthetic display window below) by
+// treating a missing part as zero.
+func parseSecondsOfDay(hms string) int {
+	parts := strings.Split(hms, ":")
+	get := func(i int) int {
+		if i >= len(parts) {
+			return 0
+		}
+		v, _ := strconv.Atoi(parts[i])
+		return v
 	}
-	h, _ := strconv.Atoi(parts[0])
-	m, _ := strconv.Atoi(parts[1])
-	return h*60 + m
+	return get(0)*3600 + get(1)*60 + get(2)
 }
 
 func formatMinutesOfDay(min int) string {
@@ -68,12 +75,12 @@ func durationSecs(entry models.TimeEntry, client models.Client) int {
 	if entry.Start == nil || entry.End == nil {
 		return 0
 	}
-	startMin := parseMinutesOfDay(*entry.Start)
-	endMin := parseMinutesOfDay(*entry.End)
-	if endMin < startMin {
-		endMin += 24 * 60
+	startSec := parseSecondsOfDay(*entry.Start)
+	endSec := parseSecondsOfDay(*entry.End)
+	if endSec < startSec {
+		endSec += 24 * 3600
 	}
-	return (endMin - startMin) * 60
+	return endSec - startSec
 }
 
 // amount converts a duration into a billable amount: hours worked, divided
