@@ -30,6 +30,23 @@ Also other filters as autocomplete dropdown:
 * If the record is "all day" set to true, the duration is set to the organization HoursPerDay
 * Do not calculate with the VAT, it will be done in a future invoicing feature, just the sum of hours per member, devide by HoursPerDay the multiply per daily rate of each members
 
+# Example of the exports
+
+Pattern:
+
+```
+CWClock_Time_Report_{type}_{startDate}-{endDate}.{extension}
+```
+
+Examples:
+
+```
+CWClock_Time_Report_Summary_04_27_2026-05_03_2026.csv
+CWClock_Time_Report_Detailed_04_27_2026-05_03_2026.csv
+CWClock_Time_Report_Summary_04_27_2026-05_03_2026.pdf
+CWClock_Time_Report_Detailed_04_27_2026-05_03_2026.pdf
+```
+
 ### Outputs
 
 #### Frontend output
