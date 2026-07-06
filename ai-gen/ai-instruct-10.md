@@ -101,5 +101,5 @@ See those examples:
 
 Notes:
 * `CWCLOUD` is the organization name
-* The picture on top right is the organization avatar (if not set, use the [cwclock logo](./assets/logo.svg)
+* The picture on top right is the organization avatar (if not set, use the [cwclock logo](./assets/logo.png)
 * Use a markdown+go template to generate the PDF in a generic function because we will reuse it for the invoicing feature

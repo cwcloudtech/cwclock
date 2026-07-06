@@ -17,6 +17,7 @@ import SidebarNav from "./SidebarNav";
 import Clientdiv from "../pages/Client";
 import Organizationsdiv from "../pages/Organizations";
 import Projectsdiv from "../pages/Projects";
+import Reportsdiv from "../pages/Reports";
 import Admindiv from "../pages/Admin";
 import AdminOrganizationsdiv from "../pages/AdminOrganizations";
 import { useSelector, useDispatch } from "react-redux";
@@ -190,6 +191,7 @@ const Slidebar = () => {
         <div className={styles.pages}>
           <Routes>
             <Route path="/timetracker" element={<TimeTracker />}></Route>
+            <Route path="/reports" element={<Reportsdiv />}></Route>
             <Route path="/organizations" element={<Organizationsdiv />}></Route>
             <Route path="/clients" element={<Clientdiv />}></Route>
             <Route path="/projects" element={<Projectsdiv />}></Route>

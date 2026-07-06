@@ -38,10 +38,11 @@ func main() {
 	projectHandler := handlers.NewProjectHandler(projectStore)
 	timeEntryHandler := handlers.NewTimeEntryHandler(timeEntryStore)
 	adminHandler := handlers.NewAdminHandler(userStore)
+	reportHandler := handlers.NewReportHandler(orgStore, clientStore, projectStore, timeEntryStore)
 
 	r := router.New(
-		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, adminHandler,
-		orgStore, userStore, cfg.JWTSecret, cfg.CorsEnabled, cfg.CorsAllowedOrigins,
+		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler,
+		orgStore, userStore, cfg.JWTSecret, cfg.CorsEnabled, cfg.CorsAllowedOrigins, cfg.Version,
 	)
 
 	log.Printf("Server started on port %s", cfg.Port)

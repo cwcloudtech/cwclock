@@ -1,0 +1,227 @@
+.main {
+  max-width: 1100px;
+  padding: var(--cw-spacing-lg);
+  margin: 0 auto;
+}
+
+.titleIcon {
+  vertical-align: -2px;
+  margin-right: 8px;
+  color: var(--cw-primary);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: var(--cw-spacing);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  background-color: var(--cw-bg-alt);
+  border-radius: var(--cw-radius-sm);
+  padding: 4px;
+}
+
+.tab {
+  background: none;
+  border: none;
+  padding: 6px 14px;
+  border-radius: var(--cw-radius-sm);
+  color: var(--cw-text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tabActive {
+  background-color: var(--cw-surface);
+  color: var(--cw-primary-600);
+  box-shadow: var(--cw-shadow-sm);
+}
+
+/* Matches the date pickers/shortcuts trigger height in the same toolbar row. */
+.exportTrigger {
+  height: 40px;
+  box-sizing: border-box;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: var(--cw-spacing);
+}
+
+.reportBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cw-spacing);
+}
+
+.totals {
+  display: flex;
+  gap: var(--cw-spacing-lg);
+  flex-wrap: wrap;
+  background-color: var(--cw-bg-alt);
+  border-radius: var(--cw-radius-sm);
+  padding: var(--cw-spacing-sm) var(--cw-spacing);
+  font-size: 0.95rem;
+}
+
+/* Daily bar chart: thin rounded-top bars on a recessive baseline, sparse
+   x-axis labels, native title attribute as the hover layer. */
+.chart {
+  background-color: var(--cw-surface);
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius);
+  padding: var(--cw-spacing);
+}
+
+.chartBars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 160px;
+  border-bottom: 1px solid var(--cw-border);
+}
+
+.chartBarCol {
+  flex: 1;
+  min-width: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.chartBarTrack {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.chartBar {
+  width: 100%;
+  min-height: 2px;
+  background-color: var(--cw-primary);
+  border-radius: 4px 4px 0 0;
+  transition: background-color var(--cw-transition);
+}
+
+.chartBarCol:hover .chartBar {
+  background-color: var(--cw-primary-600);
+}
+
+.chartBarLabel {
+  margin-top: 4px;
+  font-size: 0.7rem;
+  color: var(--cw-text-muted);
+  white-space: nowrap;
+}
+
+.chartHint {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: var(--cw-text-muted);
+}
+
+.table {
+  display: flex;
+  flex-direction: column;
+}
+
+.tableHeader,
+.tableRow {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: var(--cw-spacing-sm) var(--cw-spacing-xs);
+}
+
+.tableHeader {
+  color: var(--cw-text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--cw-border);
+}
+
+.tableRow {
+  border-bottom: 1px solid var(--cw-border);
+  font-size: 0.9rem;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.subText {
+  color: var(--cw-text-muted);
+  font-size: 0.8rem;
+}
+
+.empty {
+  color: var(--cw-text-muted);
+  padding: var(--cw-spacing);
+  text-align: center;
+}
+
+.rowActions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.iconBtn {
+  background: none;
+  border: none;
+  color: var(--cw-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+}
+
+.iconBtn:hover {
+  color: var(--cw-primary-600);
+}
+
+.editRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: var(--cw-spacing-sm) var(--cw-spacing-xs);
+  border-bottom: 1px solid var(--cw-border);
+}
+
+.allDayLabel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.editRowActions {
+  display: flex;
+  gap: 6px;
+}
+
+@media (max-width: 900px) {
+  .tableHeader,
+  .tableRow {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .tableHeader span:nth-child(n + 4),
+  .tableRow span:nth-child(n + 4) {
+    display: none;
+  }
+}

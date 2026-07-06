@@ -9,6 +9,7 @@ import (
 	"cwclock-api/internal/handlers"
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/openapi"
 	"cwclock-api/internal/store"
 )
 
@@ -18,12 +19,14 @@ func New(
 	clientHandler *handlers.ClientHandler,
 	projectHandler *handlers.ProjectHandler,
 	timeEntryHandler *handlers.TimeEntryHandler,
+	reportHandler *handlers.ReportHandler,
 	adminHandler *handlers.AdminHandler,
 	orgs *store.OrgStore,
 	users *store.UserStore,
 	jwtSecret string,
 	corsEnabled bool,
 	corsAllowedOrigins []string,
+	apiVersion string,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -34,10 +37,6 @@ func New(
 			AllowedHeaders: []string{"Authorization", "Content-Type"},
 		}))
 	}
-
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello Welcome to cwclock Backend"))
-	})
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/currencies", handlers.ListCurrencies)
@@ -121,9 +120,21 @@ func New(
 					r.With(middleware.RequireRole(models.RoleMember)).Put("/{id}", timeEntryHandler.Update)
 					r.With(middleware.RequireRole(models.RoleMember)).Delete("/{id}", timeEntryHandler.Delete)
 				})
+
+				r.Route("/reports", func(r chi.Router) {
+					r.Use(middleware.RequireRole(models.RoleMember))
+					r.Get("/", reportHandler.Get)
+					r.Get("/export", reportHandler.Export)
+				})
 			})
 		})
 	})
+
+	// Generated after every /v1 route above is registered, so it's always in
+	// sync with the router — never a hand-maintained spec file to go stale.
+	spec := openapi.Generate(r, "CWClock API", apiVersion)
+	r.Get("/openapi.json", handlers.NewOpenAPIHandler(spec))
+	r.Get("/", handlers.ServeSwaggerUI)
 
 	return r
 }
