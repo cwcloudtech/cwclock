@@ -97,6 +97,7 @@ const TaskComponent = ({ item }) => {
           <>
             <div className={styles.Up}>
               <input
+                className="cw-input"
                 type="text"
                 autoFocus
                 title={t("timeTracker.taskDescription")}
@@ -106,6 +107,7 @@ const TaskComponent = ({ item }) => {
             </div>
             <div className={styles.Projects}>
               <input
+                className="cw-input"
                 list={`project-options-${item.id}`}
                 title={t("timeTracker.searchByCustomerOrProject")}
                 placeholder={t("timeTracker.project")}
@@ -120,12 +122,13 @@ const TaskComponent = ({ item }) => {
             </div>
             <div className={styles.Time}>
               <input
+                className="cw-input"
                 type="date"
                 title={t("timeTracker.day")}
                 value={form.day}
                 onChange={(e) => setForm({ ...form, day: e.target.value })}
               />
-              <label title={t("timeTracker.markAllDay")}>
+              <label className={styles.allDayLabel} title={t("timeTracker.markAllDay")}>
                 <input
                   type="checkbox"
                   checked={form.allDay}
@@ -136,6 +139,7 @@ const TaskComponent = ({ item }) => {
               {!form.allDay && (
                 <>
                   <input
+                    className="cw-input"
                     type="time"
                     step="1"
                     title={t("timeTracker.startTime")}
@@ -143,6 +147,7 @@ const TaskComponent = ({ item }) => {
                     onChange={(e) => setForm({ ...form, start: e.target.value })}
                   />
                   <input
+                    className="cw-input"
                     type="time"
                     step="1"
                     title={t("timeTracker.endTime")}
@@ -154,6 +159,7 @@ const TaskComponent = ({ item }) => {
               {isAdminOrOwner && (
                 <>
                   <input
+                    className="cw-input"
                     list={`reassign-options-${item.id}`}
                     title={t("timeTracker.reassignToMember")}
                     placeholder={t("timeTracker.searchMember")}
