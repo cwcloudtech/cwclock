@@ -8,3 +8,4 @@
 * [ai-instruct-6](./ai-instruct-6.md)
 * [ai-instruct-7](./ai-instruct-7.md)
 * [ai-instruct-8](./ai-instruct-8.md)
+* [ai-instruct-9](./ai-instruct-8.md)
