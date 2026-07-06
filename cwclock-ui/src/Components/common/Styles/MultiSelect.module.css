@@ -1,6 +1,11 @@
 .trigger {
   min-width: 140px;
   justify-content: space-between;
+  /* Matches the cw-input fields (e.g. the report date pickers) it sits
+     beside in a filter toolbar, which are taller than Dropdown's default
+     trigger padding. */
+  height: 40px;
+  box-sizing: border-box;
 }
 
 .triggerLabel {

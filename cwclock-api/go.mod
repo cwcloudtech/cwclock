@@ -5,6 +5,7 @@ go 1.26.3
 require (
 	github.com/go-chi/chi/v5 v5.3.0
 	github.com/go-chi/cors v1.2.2
+	github.com/go-pdf/fpdf v0.8.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/mandolyte/mdtopdf v1.5.3
@@ -14,7 +15,6 @@ require (
 require (
 	github.com/canhlinh/svg2png v0.0.0-20201124065332-6ba87c82371f // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
-	github.com/go-pdf/fpdf v0.8.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect

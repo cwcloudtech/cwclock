@@ -102,8 +102,9 @@ type detailedTableData struct {
 var detailedTableTemplate = template.Must(template.New("detailedTable").Parse(detailedTableMarkdownTpl))
 
 // SummaryPDF renders the summary report as a PDF: a header with totals
-// followed by one table row per (project, description) group.
-func SummaryPDF(orgName, start, end string, report models.SummaryReport) ([]byte, error) {
+// followed by one table row per (project, description) group. logoData/
+// logoType (see ResolveLogo) are placed in the header's top-right corner.
+func SummaryPDF(orgName, start, end string, report models.SummaryReport, logoData []byte, logoType string) ([]byte, error) {
 	var buf strings.Builder
 	if err := headerTemplate.Execute(&buf, newReportHeader("Summary report", orgName, start, end, report.Totals)); err != nil {
 		return nil, err
@@ -137,12 +138,13 @@ func SummaryPDF(orgName, start, end string, report models.SummaryReport) ([]byte
 		return nil, err
 	}
 
-	return RenderMarkdownPDF(buf.String())
+	return RenderMarkdownPDF(buf.String(), logoData, logoType)
 }
 
 // DetailedPDF renders the detailed report as a PDF: a header with totals
-// followed by one table row per time entry.
-func DetailedPDF(orgName, start, end string, report models.DetailedReport) ([]byte, error) {
+// followed by one table row per time entry. logoData/logoType (see
+// ResolveLogo) are placed in the header's top-right corner.
+func DetailedPDF(orgName, start, end string, report models.DetailedReport, logoData []byte, logoType string) ([]byte, error) {
 	var buf strings.Builder
 	if err := headerTemplate.Execute(&buf, newReportHeader("Detailed report", orgName, start, end, report.Totals)); err != nil {
 		return nil, err
@@ -151,10 +153,7 @@ func DetailedPDF(orgName, start, end string, report models.DetailedReport) ([]by
 	showAmount := report.Totals.Amount != nil
 	rows := make([]detailedRowVM, 0, len(report.Entries))
 	for _, e := range report.Entries {
-		timeRange := "All day"
-		if !e.AllDay {
-			timeRange = formatAMPM(e.Start) + " - " + formatAMPM(e.End)
-		}
+		timeRange := formatAMPM(e.Start) + " - " + formatAMPM(e.End)
 		vm := detailedRowVM{
 			Day:           formatUSDate(e.Day),
 			Description:   e.Text,
@@ -182,5 +181,5 @@ func DetailedPDF(orgName, start, end string, report models.DetailedReport) ([]by
 		return nil, err
 	}
 
-	return RenderMarkdownPDF(buf.String())
+	return RenderMarkdownPDF(buf.String(), logoData, logoType)
 }

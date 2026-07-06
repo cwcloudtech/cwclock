@@ -5,6 +5,15 @@
   flex-wrap: wrap;
 }
 
+/* Matches the Dropdown trigger's height to the cw-input fields beside it:
+   the date pickers use cw-input's padding/font-size and end up taller than
+   Dropdown's default trigger padding otherwise. */
+.wrapper input[type="date"],
+.shortcutTrigger {
+  height: 40px;
+  box-sizing: border-box;
+}
+
 .shortcutTrigger {
   white-space: nowrap;
 }

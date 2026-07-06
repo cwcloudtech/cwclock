@@ -6,7 +6,7 @@ import styles from "./Styles/Reports.module.css";
 
 const DetailedReportView = ({ report, orgId, isAdminOrOwner, onChanged }) => {
   const { t } = useI18n();
-  const { totals, entries } = report;
+  const { totals, entries = [] } = report;
   const showAmount = totals.amount !== undefined && totals.amount !== null;
 
   return (

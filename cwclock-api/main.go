@@ -42,7 +42,7 @@ func main() {
 
 	r := router.New(
 		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler,
-		orgStore, userStore, cfg.JWTSecret, cfg.CorsEnabled, cfg.CorsAllowedOrigins,
+		orgStore, userStore, cfg.JWTSecret, cfg.CorsEnabled, cfg.CorsAllowedOrigins, cfg.Version,
 	)
 
 	log.Printf("Server started on port %s", cfg.Port)

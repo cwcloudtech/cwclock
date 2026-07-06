@@ -170,19 +170,21 @@ func (h *ReportHandler) Export(w http.ResponseWriter, r *http.Request) {
 		data, err = report.DetailedCSV(entries, canSeeAmount, org.Currency)
 	case reportType == "detailed" && format == "pdf":
 		contentType = "application/pdf"
+		logoData, logoType := report.ResolveLogo(org.Picture)
 		data, err = report.DetailedPDF(org.Name, filter.Start, filter.End, models.DetailedReport{
 			Totals:  report.Totals(entries, canSeeAmount, org.Currency),
 			Entries: entries,
-		})
+		}, logoData, logoType)
 	case reportType == "summary" && format == "csv":
 		contentType = "text/csv"
 		data, err = report.SummaryCSV(report.SummaryRows(entries, canSeeAmount), canSeeAmount, org.Currency)
 	case reportType == "summary" && format == "pdf":
 		contentType = "application/pdf"
+		logoData, logoType := report.ResolveLogo(org.Picture)
 		data, err = report.SummaryPDF(org.Name, filter.Start, filter.End, models.SummaryReport{
 			Totals: report.Totals(entries, canSeeAmount, org.Currency),
 			Rows:   report.SummaryRows(entries, canSeeAmount),
-		})
+		}, logoData, logoType)
 	default:
 		writeError(w, http.StatusBadRequest, "Please specify a valid report type and format", CodeInvalidRequestBody)
 		return

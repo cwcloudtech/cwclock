@@ -4,6 +4,7 @@
 package report
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -11,6 +12,11 @@ import (
 
 	"cwclock-api/internal/models"
 )
+
+// allDayStartMinutes is the wall-clock start assumed for an "all day" entry
+// (9:00 AM), so it renders as a plausible work window instead of a literal
+// 00:00-23:59 span.
+const allDayStartMinutes = 9 * 60
 
 // Lookups holds the related records a raw TimeEntry needs to be enriched
 // into a ReportEntry, keyed by ID.
@@ -37,6 +43,18 @@ func parseMinutesOfDay(hm string) int {
 	h, _ := strconv.Atoi(parts[0])
 	m, _ := strconv.Atoi(parts[1])
 	return h*60 + m
+}
+
+func formatMinutesOfDay(min int) string {
+	return fmt.Sprintf("%02d:%02d", min/60, min%60)
+}
+
+// allDayWindow returns the display start/end for an "all day" entry: 9:00 AM
+// through 9:00 AM plus the client's HoursPerDay (falling back to 7h if
+// unset) — not a literal 00:00-23:59 span.
+func allDayWindow(client models.Client) (start, end string) {
+	endMinutes := allDayStartMinutes + int(hoursPerDay(client)*60)
+	return formatMinutesOfDay(allDayStartMinutes), formatMinutesOfDay(endMinutes)
 }
 
 // durationSecs computes an entry's duration: an all-day entry takes its
@@ -88,11 +106,17 @@ func Enrich(entries []models.TimeEntry, lk Lookups, canSeeAmount bool) []models.
 		member := lk.Members[e.UserID]
 		dur := durationSecs(e, client)
 
+		start, end := e.Start, e.End
+		if e.AllDay {
+			s, en := allDayWindow(client)
+			start, end = &s, &en
+		}
+
 		re := models.ReportEntry{
 			ID:           e.ID,
 			Day:          e.Day,
-			Start:        e.Start,
-			End:          e.End,
+			Start:        start,
+			End:          end,
 			AllDay:       e.AllDay,
 			DurationSecs: dur,
 			Text:         e.Text,
@@ -160,16 +184,16 @@ func DailyBuckets(entries []models.ReportEntry, start, end time.Time) []models.R
 	return buckets
 }
 
-// SummaryRows aggregates entries by (project, description) — "aggregated by
-// redundant labels": repeated tasks under the same project are combined
-// into one row with a summed duration/amount, ranked by duration.
+// SummaryRows aggregates entries by task name/label: a "task" is one summary
+// line, and every time record sharing the same name — regardless of which
+// day or session it was logged in — is combined into that one line, summing
+// duration/amount. Ranked by duration, most time-consuming task first.
 func SummaryRows(entries []models.ReportEntry, canSeeAmount bool) []models.ReportSummaryRow {
-	type key struct{ projectID, text string }
-	byKey := map[key]*models.ReportSummaryRow{}
-	order := []key{}
+	byKey := map[string]*models.ReportSummaryRow{}
+	order := []string{}
 
 	for _, e := range entries {
-		k := key{e.ProjectID, e.Text}
+		k := e.Text
 		row, ok := byKey[k]
 		if !ok {
 			row = &models.ReportSummaryRow{

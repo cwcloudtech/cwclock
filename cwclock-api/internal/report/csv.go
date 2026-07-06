@@ -99,10 +99,7 @@ func DetailedCSV(entries []models.ReportEntry, canSeeAmount bool, currency strin
 
 	for _, e := range entries {
 		dayStr := formatUSDate(e.Day)
-		startStr, endStr := "12:00AM", "11:59PM"
-		if !e.AllDay {
-			startStr, endStr = formatAMPM(e.Start), formatAMPM(e.End)
-		}
+		startStr, endStr := formatAMPM(e.Start), formatAMPM(e.End)
 
 		record := []string{
 			e.ProjectName, e.ClientName, e.Text, "", e.UserName, "", e.UserEmail, "", "Yes",

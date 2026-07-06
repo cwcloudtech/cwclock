@@ -44,6 +44,12 @@
   box-shadow: var(--cw-shadow-sm);
 }
 
+/* Matches the date pickers/shortcuts trigger height in the same toolbar row. */
+.exportTrigger {
+  height: 40px;
+  box-sizing: border-box;
+}
+
 .filters {
   display: flex;
   gap: 8px;

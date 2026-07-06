@@ -166,7 +166,10 @@ const ReportEntryRow = ({ entry, orgId, currency, isAdminOrOwner, showAmount, on
           {entry.projectName} - {entry.clientName}
         </div>
       </span>
-      <span>{entry.allDay ? t("timeTracker.allDay") : `${entry.start || "?"} - ${entry.end || "?"}`}</span>
+      <span>
+        {entry.start || "?"} - {entry.end || "?"}
+        {entry.allDay && ` (${t("timeTracker.allDay")})`}
+      </span>
       <span>{formatHMS(entry.durationSecs)}</span>
       <span>{entry.userName}</span>
       {showAmount && (

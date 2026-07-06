@@ -9,6 +9,7 @@ import (
 	"cwclock-api/internal/handlers"
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/openapi"
 	"cwclock-api/internal/store"
 )
 
@@ -25,6 +26,7 @@ func New(
 	jwtSecret string,
 	corsEnabled bool,
 	corsAllowedOrigins []string,
+	apiVersion string,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -35,10 +37,6 @@ func New(
 			AllowedHeaders: []string{"Authorization", "Content-Type"},
 		}))
 	}
-
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello Welcome to cwclock Backend"))
-	})
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/currencies", handlers.ListCurrencies)
@@ -131,6 +129,12 @@ func New(
 			})
 		})
 	})
+
+	// Generated after every /v1 route above is registered, so it's always in
+	// sync with the router — never a hand-maintained spec file to go stale.
+	spec := openapi.Generate(r, "CWClock API", apiVersion)
+	r.Get("/openapi.json", handlers.NewOpenAPIHandler(spec))
+	r.Get("/", handlers.ServeSwaggerUI)
 
 	return r
 }

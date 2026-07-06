@@ -20,6 +20,7 @@ type Config struct {
 	AllowedCurrencies  []string
 	CorsEnabled        bool
 	CorsAllowedOrigins []string
+	Version            string
 }
 
 func Load() Config {
@@ -50,6 +51,7 @@ func Load() Config {
 		AllowedCurrencies:  parseAllowedCurrencies(os.Getenv("CWCLOCK_ALLOWED_CURRENCIES")),
 		CorsEnabled:        utils.IsTrue(os.Getenv("CWCLOCK_CORS_ENABLED")),
 		CorsAllowedOrigins: strings.Split(allowedOrigins, ","),
+		Version:            getEnv("APP_VERSION", "1.0.0"),
 	}
 }
 

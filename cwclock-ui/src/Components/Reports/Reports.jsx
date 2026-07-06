@@ -52,6 +52,8 @@ const Reports = () => {
   }, [dispatch, currentOrgId, user.token]);
 
   const filters = { type: tab, start: range.start, end: range.end, clientIds, projectIds, userIds };
+  const isSummaryReport = report && Array.isArray(report.rows);
+  const isDetailedReport = report && Array.isArray(report.entries);
 
   const refresh = () => {
     if (currentOrgId && canAccess) {
@@ -106,7 +108,12 @@ const Reports = () => {
 
         <DateRangePicker start={range.start} end={range.end} onChange={setRange} />
 
-        <Dropdown title={t("reports.export")} align="end" trigger={<>{t("reports.export")}</>}>
+        <Dropdown
+          title={t("reports.export")}
+          align="end"
+          triggerClassName={styles.exportTrigger}
+          trigger={<>{t("reports.export")}</>}
+        >
           {(close) => (
             <>
               <DropdownItem
@@ -137,8 +144,12 @@ const Reports = () => {
       </div>
 
       {isLoading && <Spinner />}
-      {!isLoading && report && tab === "summary" && <SummaryReportView report={report} />}
-      {!isLoading && report && tab === "detailed" && (
+      {/* report can still hold the other tab's shape for one render after
+          switching tabs, until the new fetch resolves — check the actual
+          shape, not just tab === report's presence, or the wrong view can
+          be handed the wrong-shaped data and crash. */}
+      {!isLoading && isSummaryReport && tab === "summary" && <SummaryReportView report={report} />}
+      {!isLoading && isDetailedReport && tab === "detailed" && (
         <DetailedReportView report={report} orgId={currentOrgId} isAdminOrOwner={isAdminOrOwner} onChanged={refresh} />
       )}
     </div>

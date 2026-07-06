@@ -6,7 +6,7 @@ import styles from "./Styles/Reports.module.css";
 
 const SummaryReportView = ({ report }) => {
   const { t } = useI18n();
-  const { totals, daily, rows } = report;
+  const { totals, daily = [], rows = [] } = report;
   const showAmount = totals.amount !== undefined && totals.amount !== null;
 
   return (
