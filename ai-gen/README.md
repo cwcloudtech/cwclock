@@ -11,3 +11,4 @@
 * [ai-instruct-9](./ai-instruct-9.md)
 * [ai-instruct-10](./ai-instruct-10.md)
 * [ai-instruct-11](./ai-instruct-11.md)
+* [ai-instruct-12](./ai-instruct-12.md)
