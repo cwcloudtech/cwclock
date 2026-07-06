@@ -13,7 +13,7 @@ for app in $CWCLOCK_APPS; do
   export IMAGE_NAME="cwclock-${app}"
   export SERVICE_NAME="${app}"
 
-  docker buildx bake --push ${SERVICE_NAME}
+  docker buildx bake -f docker-compose-build.yml --push ${SERVICE_NAME}
   if [[ $VERSION != $VERSION_SHA ]]; then
     docker tag "${CI_REGISTRY}/${IMAGE_NAME}:${VERSION}" "${CI_REGISTRY}/${IMAGE_NAME}:${VERSION_SHA}"
     docker push "${CI_REGISTRY}/${IMAGE_NAME}:${VERSION_SHA}"

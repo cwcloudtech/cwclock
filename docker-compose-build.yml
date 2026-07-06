@@ -1,0 +1,15 @@
+services:
+
+  api:
+    image: ${CI_REGISTRY}/cwclock-api:${VERSION}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+
+  ui:
+    image: ${CI_REGISTRY}/cwclock-ui:${VERSION}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ui
