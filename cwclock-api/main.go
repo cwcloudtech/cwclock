@@ -38,9 +38,10 @@ func main() {
 	projectHandler := handlers.NewProjectHandler(projectStore)
 	timeEntryHandler := handlers.NewTimeEntryHandler(timeEntryStore)
 	adminHandler := handlers.NewAdminHandler(userStore)
+	reportHandler := handlers.NewReportHandler(orgStore, clientStore, projectStore, timeEntryStore)
 
 	r := router.New(
-		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, adminHandler,
+		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, adminHandler, reportHandler,
 		orgStore, userStore, cfg.JWTSecret,
 	)
 

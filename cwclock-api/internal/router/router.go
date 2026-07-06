@@ -19,6 +19,7 @@ func New(
 	projectHandler *handlers.ProjectHandler,
 	timeEntryHandler *handlers.TimeEntryHandler,
 	adminHandler *handlers.AdminHandler,
+	reportHandler *handlers.ReportHandler,
 	orgs *store.OrgStore,
 	users *store.UserStore,
 	jwtSecret string,
@@ -116,6 +117,12 @@ func New(
 					r.With(middleware.RequireRole(models.RoleMember)).Post("/", timeEntryHandler.Create)
 					r.With(middleware.RequireRole(models.RoleMember)).Put("/{id}", timeEntryHandler.Update)
 					r.With(middleware.RequireRole(models.RoleMember)).Delete("/{id}", timeEntryHandler.Delete)
+				})
+
+				r.Route("/reports", func(r chi.Router) {
+					r.Use(middleware.RequireRole(models.RoleMember))
+					r.Get("/", reportHandler.Get)
+					r.Get("/export", reportHandler.Export)
 				})
 			})
 		})

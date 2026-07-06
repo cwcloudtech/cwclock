@@ -1,0 +1,59 @@
+.trigger {
+  min-width: 140px;
+  justify-content: space-between;
+}
+
+.triggerLabel {
+  color: var(--cw-text-muted);
+  font-size: 0.8rem;
+}
+
+.triggerSummary {
+  font-weight: 600;
+}
+
+.panel {
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.search {
+  margin-bottom: 2px;
+}
+
+.list {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--cw-radius-sm);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.option:hover {
+  background-color: var(--cw-bg-alt);
+}
+
+.clear {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--cw-primary-600);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.clear:hover {
+  color: var(--cw-primary-700);
+}

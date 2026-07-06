@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -152,6 +153,58 @@ func (s *TimeEntryStore) Update(ctx context.Context, id string, reassign TimeEnt
 		RETURNING id, organization_id, client_id, project_id, user_id, data, created_at, updated_at
 	`, id, data, reassign.UserID, reassign.ClientID, reassign.ProjectID)
 	return scanTimeEntry(row)
+}
+
+// ReportFilter narrows the entries a report is built from.
+type ReportFilter struct {
+	Start      string // inclusive, "YYYY-MM-DD"
+	End        string // inclusive, "YYYY-MM-DD"
+	ClientIDs  []string
+	ProjectIDs []string
+	UserIDs    []string
+}
+
+// ListForReport returns an organization's time entries within a date range,
+// optionally narrowed to specific clients/projects/members, oldest first
+// within a day so summary/detailed reports can present a stable order.
+func (s *TimeEntryStore) ListForReport(ctx context.Context, orgID string, f ReportFilter) ([]models.TimeEntry, error) {
+	query := `
+		SELECT id, organization_id, client_id, project_id, user_id, data, created_at, updated_at
+		FROM time_entries
+		WHERE organization_id = $1
+		  AND data->>'day' >= $2
+		  AND data->>'day' <= $3
+	`
+	args := []any{orgID, f.Start, f.End}
+
+	addFilter := func(column string, ids []string) {
+		if len(ids) == 0 {
+			return
+		}
+		args = append(args, ids)
+		query += fmt.Sprintf(" AND %s::text = ANY($%d)", column, len(args))
+	}
+	addFilter("client_id", f.ClientIDs)
+	addFilter("project_id", f.ProjectIDs)
+	addFilter("user_id", f.UserIDs)
+
+	query += " ORDER BY data->>'day', data->>'start'"
+
+	rows, err := s.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	entries := []models.TimeEntry{}
+	for rows.Next() {
+		t, err := scanTimeEntry(rows)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, t)
+	}
+	return entries, rows.Err()
 }
 
 func (s *TimeEntryStore) Delete(ctx context.Context, id string) error {

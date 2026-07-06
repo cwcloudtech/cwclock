@@ -1,0 +1,14 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.shortcutTrigger {
+  white-space: nowrap;
+}
+
+.sep {
+  color: var(--cw-text-muted);
+}
