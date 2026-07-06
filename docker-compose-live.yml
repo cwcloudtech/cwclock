@@ -23,7 +23,7 @@ services:
       - .env.cwclock.db
       - .env.cwclock.api
     ports:
-      - "8080:8080"
+      - "18080:8080"
 
   ui:
     image: ${CI_REGISTRY}/cwclock-ui:${VERSION}
@@ -33,4 +33,4 @@ services:
     depends_on:
       - api
     ports:
-      - "3000:80"
+      - "13000:80"
