@@ -1,0 +1,36 @@
+services:
+  flyway:
+    image: flyway/flyway:10-alpine
+    container_name: cwclock-db-migrate
+    env_file:
+      - .env.cwclock.db
+    command: >
+      -url=jdbc:postgresql://${POSGRES_HOST}:${POSGRES_PORT}/${POSTGRES_DB}
+      -user=${POSTGRES_USER}
+      -password=${POSTGRES_PASSWORD}
+      -connectRetries=10
+      migrate
+    volumes:
+      - ./cwclock-db/migrations:/flyway/sql
+
+  api:
+    image: ${CI_REGISTRY}/cwclock-api:${VERSION}
+    container_name: cwclock-api
+    depends_on:
+      flyway:
+        condition: service_completed_successfully
+    env_file:
+      - .env.cwclock.db
+      - .env.cwclock.api
+    ports:
+      - "18080:8080"
+
+  ui:
+    image: ${CI_REGISTRY}/cwclock-ui:${VERSION}
+    container_name: cwclock-ui
+    env_file:
+      -  .env.cwclock.ui
+    depends_on:
+      - api
+    ports:
+      - "13000:80"
