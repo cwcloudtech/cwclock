@@ -75,7 +75,7 @@ const fr = {
     clients: "Clients",
     projects: "Projets",
     users: "Utilisateurs",
-    organizationsAdmin: "Administration des organisations",
+    organizationsAdmin: "Organisations",
   },
   auth: {
     doesNotHaveAccount: "Vous n'avez pas de compte ?",
