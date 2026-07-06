@@ -48,37 +48,37 @@ func (h *UserHandler) generateToken(userID string) (string, error) {
 func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var p registerPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		writeError(w, http.StatusBadRequest, "Please add all fields")
+		writeError(w, http.StatusBadRequest, "Please add all fields", CodeInvalidRequestBody)
 		return
 	}
 	if utils.IsBlank(p.Email) || utils.IsBlank(p.Password) || utils.IsBlank(p.Name) || utils.IsBlank(p.Surname) {
-		writeError(w, http.StatusBadRequest, "Please add all fields")
+		writeError(w, http.StatusBadRequest, "Please add all fields", CodeAllFieldsRequired)
 		return
 	}
 
 	if _, err := h.users.FindByEmail(r.Context(), p.Email); err == nil {
-		writeError(w, http.StatusBadRequest, "A user with this email already exists")
+		writeError(w, http.StatusBadRequest, "A user with this email already exists", CodeDuplicateEmail)
 		return
 	} else if !errors.Is(err, store.ErrNotFound) {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
 		return
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(p.Password), bcrypt.DefaultCost)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
 		return
 	}
 
 	user, err := h.users.Create(r.Context(), p.Email, string(hash), p.Name, p.Surname)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "Invalid user data")
+		writeError(w, http.StatusBadRequest, "Invalid user data", CodeInvalidUserData)
 		return
 	}
 
 	token, err := h.generateToken(user.ID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
 		return
 	}
 
@@ -91,24 +91,24 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var creds credentials
 	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
-		writeError(w, http.StatusBadRequest, "Invalid credentials")
+		writeError(w, http.StatusBadRequest, "Invalid credentials", CodeInvalidCredentials)
 		return
 	}
 
 	user, err := h.users.FindByEmail(r.Context(), creds.Email)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, "Invalid credentials")
+		writeError(w, http.StatusUnauthorized, "Invalid credentials", CodeInvalidCredentials)
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(creds.Password)); err != nil {
-		writeError(w, http.StatusUnauthorized, "Invalid credentials")
+		writeError(w, http.StatusUnauthorized, "Invalid credentials", CodeInvalidCredentials)
 		return
 	}
 
 	token, err := h.generateToken(user.ID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
 		return
 	}
 
@@ -123,7 +123,7 @@ func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.users.FindByID(r.Context(), userID)
 	if err != nil {
-		writeError(w, http.StatusNotFound, "User not found")
+		writeError(w, http.StatusNotFound, "User not found", CodeUserNotFound)
 		return
 	}
 
@@ -150,7 +150,7 @@ func (h *UserHandler) UpdatePicture(w http.ResponseWriter, r *http.Request) {
 
 	var p updatePicturePayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		writeError(w, http.StatusBadRequest, "Invalid request body")
+		writeError(w, http.StatusBadRequest, "Invalid request body", CodeInvalidRequestBody)
 		return
 	}
 
@@ -186,23 +186,23 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 	var p updateProfilePayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		writeError(w, http.StatusBadRequest, "Invalid request body")
+		writeError(w, http.StatusBadRequest, "Invalid request body", CodeInvalidRequestBody)
 		return
 	}
 	if utils.IsBlank(p.Name) || utils.IsBlank(p.Surname) {
-		writeError(w, http.StatusBadRequest, "Please add name and surname fields")
+		writeError(w, http.StatusBadRequest, "Please add name and surname fields", CodeNameAndSurnameRequired)
 		return
 	}
 
 	var passwordHash *string
 	if utils.IsNotBlank(p.Password) {
 		if p.Password != p.ConfirmPassword {
-			writeError(w, http.StatusBadRequest, "Passwords do not match")
+			writeError(w, http.StatusBadRequest, "Passwords do not match", CodePasswordsMismatch)
 			return
 		}
 		hash, err := bcrypt.GenerateFromPassword([]byte(p.Password), bcrypt.DefaultCost)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
 			return
 		}
 		hashed := string(hash)

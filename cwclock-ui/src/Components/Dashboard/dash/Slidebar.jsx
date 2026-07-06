@@ -9,7 +9,7 @@ import DisabledNotice from "../../common/DisabledNotice";
 import memberLabel from "../../common/memberLabel";
 import Tooltip from "../../common/Tooltip";
 import { useTheme } from "../../common/ThemeContext";
-import { useI18n } from "../../../i18n/I18nContext";
+import { useI18n, LANGUAGES } from "../../../i18n/I18nContext";
 import logo from "../../../assets/images/cwclock-logo.svg";
 import TimeTracker from "../pages/TimeTracker";
 import SidebarNav from "./SidebarNav";
@@ -145,12 +145,19 @@ const Slidebar = () => {
                       {theme === "dark" ? t("nav.lightMode") : t("nav.darkMode")}
                     </DropdownItem>
                   </Tooltip>
-                  <Tooltip label={t("common.switchLanguage")} className={styles.menuItemTooltip}>
-                    <DropdownItem onClick={() => setLocale(locale === "fr" ? "en" : "fr")}>
-                      <FiGlobe style={{ fontSize: "16px" }} />
-                      {locale === "fr" ? "Français" : "English"}
+                  <DropdownText className={styles.languageLabel}>
+                    <FiGlobe style={{ fontSize: "14px" }} /> {t("common.language")}
+                  </DropdownText>
+                  {LANGUAGES.map((lang) => (
+                    <DropdownItem
+                      key={lang.code}
+                      active={lang.code === locale}
+                      onClick={() => setLocale(lang.code)}
+                      title={lang.label}
+                    >
+                      <span aria-hidden="true">{lang.flag}</span> {lang.label}
                     </DropdownItem>
-                  </Tooltip>
+                  ))}
                   <DropdownDivider />
                   <Tooltip label={t("nav.logout")} className={styles.menuItemTooltip}>
                     <DropdownItem onClick={handleLogout} className={styles.logoutItem}>

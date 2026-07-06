@@ -7,9 +7,10 @@ import useEmailAutocomplete from "../common/useEmailAutocomplete";
 import { transferOwnershipApi } from "../../Redux/Organizations/Org.actions";
 import { listAllOrganizationsApi } from "../../Redux/Admin/Admin.actions";
 import { useI18n } from "../../i18n/I18nContext";
+import { apiErrorMessage } from "../../i18n/translate";
 
 const TransferOwnershipModal = ({ show, onClose, targetOrg, token }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dispatch = useDispatch();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
@@ -36,7 +37,7 @@ const TransferOwnershipModal = ({ show, onClose, targetOrg, token }) => {
       await dispatch(listAllOrganizationsApi(token));
       onClose();
     } catch (err) {
-      setError(t("organizations.couldNotTransfer"));
+      setError(apiErrorMessage(err, locale));
     }
   };
 

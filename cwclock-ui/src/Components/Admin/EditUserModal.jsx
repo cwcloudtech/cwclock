@@ -5,12 +5,13 @@ import Button from "../common/Button";
 import fileToBase64 from "../common/fileToBase64";
 import { updateUserApi } from "../../Redux/Admin/Admin.actions";
 import { useI18n } from "../../i18n/I18nContext";
+import { apiErrorMessage } from "../../i18n/translate";
 import styles from "./Styles/Admin.module.css";
 
 const ROLES = ["superuser", "confirmed", "disabled"];
 
 const EditUserModal = ({ show, onClose, targetUser, token }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dispatch = useDispatch();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -55,11 +56,7 @@ const EditUserModal = ({ show, onClose, targetUser, token }) => {
       await dispatch(updateUserApi(targetUser.id, fields, token));
       onClose();
     } catch (err) {
-      setError(
-        err.response?.status === 400 && /email/i.test(err.response?.data?.message || "")
-          ? t("admin.emailInUse")
-          : t("admin.couldNotUpdateUser")
-      );
+      setError(apiErrorMessage(err, locale));
     }
   };
 

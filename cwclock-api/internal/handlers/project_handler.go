@@ -43,7 +43,7 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	var p projectPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || utils.IsBlank(p.Name) {
-		writeError(w, http.StatusBadRequest, "Please add a name field")
+		writeError(w, http.StatusBadRequest, "Please add a name field", CodeNameRequired)
 		return
 	}
 
@@ -60,7 +60,7 @@ func (h *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var p projectPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || utils.IsBlank(p.Name) {
-		writeError(w, http.StatusBadRequest, "Please add a name field")
+		writeError(w, http.StatusBadRequest, "Please add a name field", CodeNameRequired)
 		return
 	}
 

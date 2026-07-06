@@ -2,6 +2,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { ClientLOADING, ClientERROR, ClientListSUCCESS, ClientCreateSUCCESS } from "./Client.types";
 import toastOptions from "../toastOptions";
+import { translate, getStoredLocale } from "../../i18n/translate";
 
 const ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/organizations/`;
 
@@ -27,7 +28,7 @@ export const createClientApi = (orgId, fields, token) => async (dispatch) => {
       authConfig(token)
     );
     dispatch({ type: ClientCreateSUCCESS, payload: data });
-    toast.success("Client created.", toastOptions);
+    toast.success(translate(getStoredLocale(), "toasts.clientCreated"), toastOptions);
     return data;
   } catch (e) {
     dispatch({ type: ClientERROR });

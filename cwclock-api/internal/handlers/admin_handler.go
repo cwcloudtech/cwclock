@@ -76,7 +76,7 @@ func (h *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var p adminUpdateUserPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil ||
 		utils.IsBlank(p.Email) || utils.IsBlank(p.Name) || utils.IsBlank(p.Surname) || !validGlobalRole(p.Role) {
-		writeError(w, http.StatusBadRequest, "Please add valid email, name, surname and role fields")
+		writeError(w, http.StatusBadRequest, "Please add valid email, name, surname and role fields", CodeInvalidAdminUserEdit)
 		return
 	}
 
@@ -85,7 +85,7 @@ func (h *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if p.Password != nil && utils.IsNotBlank(*p.Password) {
 		hash, err := bcrypt.GenerateFromPassword([]byte(*p.Password), bcrypt.DefaultCost)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
 			return
 		}
 		hashed := string(hash)
@@ -110,7 +110,7 @@ func (h *AdminHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	callerID, _ := middleware.UserIDFromContext(r.Context())
 
 	if id == callerID {
-		writeError(w, http.StatusBadRequest, "You can't delete your own account")
+		writeError(w, http.StatusBadRequest, "You can't delete your own account", CodeCantDeleteOwnAccount)
 		return
 	}
 

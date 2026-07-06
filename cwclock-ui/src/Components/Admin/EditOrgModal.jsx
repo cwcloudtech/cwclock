@@ -5,6 +5,8 @@ import ConfigForm from "../common/ConfigForm";
 import { updateOrgApi } from "../../Redux/Organizations/Org.actions";
 import { listAllOrganizationsApi } from "../../Redux/Admin/Admin.actions";
 import { useI18n } from "../../i18n/I18nContext";
+import { apiErrorMessage } from "../../i18n/translate";
+import CURRENCIES, { DEFAULT_CURRENCY } from "../common/currencies";
 
 const emptyFields = {
   name: "",
@@ -16,10 +18,11 @@ const emptyFields = {
   siren: "",
   siret: "",
   picture: "",
+  currency: DEFAULT_CURRENCY,
 };
 
 const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dispatch = useDispatch();
   const [fields, setFields] = useState(emptyFields);
   const [error, setError] = useState("");
@@ -35,6 +38,13 @@ const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
       { name: "vatNumber", type: "text", label: t("common.vatNumber") },
       { name: "siren", type: "text", label: "SIREN" },
       { name: "siret", type: "text", label: "SIRET" },
+      {
+        name: "currency",
+        type: "select",
+        label: t("common.currency"),
+        required: true,
+        options: CURRENCIES.map((code) => ({ value: code, label: code })),
+      },
       { name: "picture", type: "image", label: t("common.picture") },
     ],
   };
@@ -50,6 +60,7 @@ const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
         vatNumber: targetOrg.vatNumber || "",
         siren: targetOrg.siren || "",
         siret: targetOrg.siret || "",
+        currency: targetOrg.currency || DEFAULT_CURRENCY,
         picture: targetOrg.picture || "",
       });
       setError("");
@@ -68,7 +79,7 @@ const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
       await dispatch(listAllOrganizationsApi(token));
       onClose();
     } catch (err) {
-      setError(t("organizations.nameRequired"));
+      setError(apiErrorMessage(err, locale));
     }
   };
 

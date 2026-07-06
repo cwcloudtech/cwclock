@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/utils"
 )
 
 type OrgStore struct {
@@ -29,6 +30,7 @@ type orgData struct {
 	SIREN      string `json:"siren"`
 	SIRET      string `json:"siret"`
 	Picture    string `json:"picture,omitempty"`
+	Currency   string `json:"currency,omitempty"`
 }
 
 // OrganizationFields holds the editable, non-identifying fields of an
@@ -43,6 +45,7 @@ type OrganizationFields struct {
 	SIREN      string
 	SIRET      string
 	Picture    string
+	Currency   string
 }
 
 // applyOrgData unmarshals the stored JSON blob onto an organization already
@@ -61,6 +64,7 @@ func applyOrgData(o *models.Organization, raw []byte) error {
 	o.SIREN = d.SIREN
 	o.SIRET = d.SIRET
 	o.Picture = d.Picture
+	o.Currency = utils.If(utils.IsBlank(d.Currency), models.DefaultCurrency, d.Currency)
 	return nil
 }
 
@@ -90,6 +94,7 @@ func toOrgData(f OrganizationFields) orgData {
 		SIREN:      f.SIREN,
 		SIRET:      f.SIRET,
 		Picture:    f.Picture,
+		Currency:   utils.If(utils.IsBlank(f.Currency), models.DefaultCurrency, f.Currency),
 	}
 }
 

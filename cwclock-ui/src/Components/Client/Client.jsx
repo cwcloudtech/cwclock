@@ -5,6 +5,7 @@ import { listClientsApi, createClientApi } from "../../Redux/Clients/Client.acti
 import ConfigForm from "../common/ConfigForm";
 import CollapsiblePanel from "../common/CollapsiblePanel";
 import { useI18n } from "../../i18n/I18nContext";
+import { apiErrorMessage } from "../../i18n/translate";
 
 const initialFields = {
   name: "",
@@ -20,7 +21,7 @@ const initialFields = {
 };
 
 const Clients = () => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { currentOrgId } = useSelector((state) => state.organizations);
@@ -65,7 +66,7 @@ const Clients = () => {
       await dispatch(createClientApi(currentOrgId, payload, user.token));
       setFields(initialFields);
     } catch (err) {
-      setError(t("organizations.nameRequired"));
+      setError(apiErrorMessage(err, locale));
     }
   };
 

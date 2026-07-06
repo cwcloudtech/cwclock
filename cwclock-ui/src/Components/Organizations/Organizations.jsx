@@ -18,6 +18,8 @@ import CollapsiblePanel from "../common/CollapsiblePanel";
 import memberLabel from "../common/memberLabel";
 import useEmailAutocomplete from "../common/useEmailAutocomplete";
 import { useI18n } from "../../i18n/I18nContext";
+import { apiErrorMessage } from "../../i18n/translate";
+import CURRENCIES, { DEFAULT_CURRENCY } from "../common/currencies";
 
 const emptyFields = {
   name: "",
@@ -29,6 +31,7 @@ const emptyFields = {
   siren: "",
   siret: "",
   picture: "",
+  currency: DEFAULT_CURRENCY,
 };
 
 const roleLabelKey = {
@@ -111,7 +114,7 @@ const MemberRow = ({ member, canSetRate, orgId, token }) => {
 };
 
 const Organizations = () => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { organizations, members, currentOrgId } = useSelector((state) => state.organizations);
@@ -136,6 +139,13 @@ const Organizations = () => {
       { name: "vatNumber", type: "text", label: t("common.vatNumber") },
       { name: "siren", type: "text", label: "SIREN" },
       { name: "siret", type: "text", label: "SIRET" },
+      {
+        name: "currency",
+        type: "select",
+        label: t("common.currency"),
+        required: true,
+        options: CURRENCIES.map((code) => ({ value: code, label: code })),
+      },
       { name: "picture", type: "image", label: t("common.picture") },
     ],
   };
@@ -168,7 +178,7 @@ const Organizations = () => {
       await dispatch(createOrgApi(fields, user.token));
       setFields(emptyFields);
     } catch (err) {
-      setCreateError(t("organizations.nameRequired"));
+      setCreateError(apiErrorMessage(err, locale));
     }
   };
 
@@ -183,6 +193,7 @@ const Organizations = () => {
       vatNumber: currentOrg.vatNumber || "",
       siren: currentOrg.siren || "",
       siret: currentOrg.siret || "",
+      currency: currentOrg.currency || DEFAULT_CURRENCY,
       picture: currentOrg.picture || "",
     });
   };
@@ -194,7 +205,7 @@ const Organizations = () => {
       await dispatch(updateOrgApi(currentOrgId, editFields, user.token));
       setEditFields(null);
     } catch (err) {
-      setEditError(t("organizations.nameRequired"));
+      setEditError(apiErrorMessage(err, locale));
     }
   };
 
@@ -206,7 +217,7 @@ const Organizations = () => {
       await dispatch(addMemberApi(currentOrgId, memberEmail, memberRole, user.token));
       setMemberEmail("");
     } catch (err) {
-      setMemberError(t("organizations.couldNotAddMember"));
+      setMemberError(apiErrorMessage(err, locale));
     }
   };
 
@@ -221,7 +232,7 @@ const Organizations = () => {
       await dispatch(transferOwnershipApi(currentOrgId, transferEmail, user.token));
       setTransferEmail("");
     } catch (err) {
-      setTransferError(t("organizations.couldNotTransfer"));
+      setTransferError(apiErrorMessage(err, locale));
     }
   };
 

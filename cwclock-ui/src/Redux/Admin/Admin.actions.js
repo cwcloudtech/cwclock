@@ -9,6 +9,7 @@ import {
   AdminOrgsListSUCCESS,
 } from "./Admin.types";
 import toastOptions from "../toastOptions";
+import { translate, getStoredLocale } from "../../i18n/translate";
 
 const USERS_ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/admin/users/`;
 const ORGS_ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/admin/organizations/`;
@@ -31,7 +32,7 @@ export const updateUserApi = (id, fields, token) => async (dispatch) => {
   try {
     const { data } = await axios.put(USERS_ENDPOINT + id, fields, authConfig(token));
     dispatch({ type: AdminUserUpdateSUCCESS, payload: data });
-    toast.success("User updated.", toastOptions);
+    toast.success(translate(getStoredLocale(), "toasts.userUpdated"), toastOptions);
     return data;
   } catch (e) {
     dispatch({ type: AdminERROR });
@@ -44,7 +45,7 @@ export const deleteUserApi = (id, token) => async (dispatch) => {
   try {
     await axios.delete(USERS_ENDPOINT + id, authConfig(token));
     dispatch({ type: AdminUserDeleteSUCCESS, payload: id });
-    toast.success("User deleted.", toastOptions);
+    toast.success(translate(getStoredLocale(), "toasts.userDeleted"), toastOptions);
   } catch (e) {
     dispatch({ type: AdminERROR });
     throw e;

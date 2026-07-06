@@ -32,10 +32,15 @@ type organizationPayload struct {
 	SIREN      string `json:"siren"`
 	SIRET      string `json:"siret"`
 	Picture    string `json:"picture"`
+	Currency   string `json:"currency"`
 }
 
 func (p organizationPayload) valid() bool {
 	return utils.IsNotBlank(p.Name)
+}
+
+func (p organizationPayload) validCurrency() bool {
+	return utils.IsBlank(p.Currency) || models.IsAllowedCurrency(p.Currency)
 }
 
 func (p organizationPayload) toFields() store.OrganizationFields {
@@ -49,6 +54,7 @@ func (p organizationPayload) toFields() store.OrganizationFields {
 		SIREN:      p.SIREN,
 		SIRET:      p.SIRET,
 		Picture:    p.Picture,
+		Currency:   p.Currency,
 	}
 }
 
@@ -57,7 +63,11 @@ func (h *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	var p organizationPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !p.valid() {
-		writeError(w, http.StatusBadRequest, "Please add a name field")
+		writeError(w, http.StatusBadRequest, "Please add a name field", CodeNameRequired)
+		return
+	}
+	if !p.validCurrency() {
+		writeError(w, http.StatusBadRequest, "Please use a supported currency code", CodeInvalidCurrency)
 		return
 	}
 
@@ -107,7 +117,11 @@ func (h *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var p organizationPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !p.valid() {
-		writeError(w, http.StatusBadRequest, "Please add a name field")
+		writeError(w, http.StatusBadRequest, "Please add a name field", CodeNameRequired)
+		return
+	}
+	if !p.validCurrency() {
+		writeError(w, http.StatusBadRequest, "Please use a supported currency code", CodeInvalidCurrency)
 		return
 	}
 
@@ -176,14 +190,14 @@ func (h *OrganizationHandler) AddMember(w http.ResponseWriter, r *http.Request) 
 
 	var p memberPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || utils.IsBlank(p.Email) || !validRole(p.Role) {
-		writeError(w, http.StatusBadRequest, "Please add a valid email and role (admin, member or reader)")
+		writeError(w, http.StatusBadRequest, "Please add a valid email and role (admin, member or reader)", CodeInvalidMemberInvite)
 		return
 	}
 
 	user, err := h.users.FindByEmail(r.Context(), p.Email)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			writeError(w, http.StatusNotFound, "No user with this email")
+			writeError(w, http.StatusNotFound, "No user with this email", CodeNoUserWithEmail)
 			return
 		}
 		writeStoreError(w, err)
@@ -204,7 +218,7 @@ func (h *OrganizationHandler) UpdateMember(w http.ResponseWriter, r *http.Reques
 
 	var p memberPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !validRole(p.Role) {
-		writeError(w, http.StatusBadRequest, "Please add a valid role (admin, member or reader)")
+		writeError(w, http.StatusBadRequest, "Please add a valid role (admin, member or reader)", CodeInvalidRole)
 		return
 	}
 
@@ -227,7 +241,7 @@ func (h *OrganizationHandler) SetMemberRate(w http.ResponseWriter, r *http.Reque
 
 	var p memberRatePayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || p.DailyRate <= 0 {
-		writeError(w, http.StatusBadRequest, "Please add a valid dailyRate")
+		writeError(w, http.StatusBadRequest, "Please add a valid dailyRate", CodeInvalidDailyRate)
 		return
 	}
 	currency := utils.If(utils.IsBlank(p.Currency), "euros", p.Currency)
@@ -261,14 +275,14 @@ func (h *OrganizationHandler) TransferOwnership(w http.ResponseWriter, r *http.R
 
 	var p transferOwnershipPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || utils.IsBlank(p.Email) {
-		writeError(w, http.StatusBadRequest, "Please add a valid email")
+		writeError(w, http.StatusBadRequest, "Please add a valid email", CodeInvalidEmail)
 		return
 	}
 
 	newOwner, err := h.users.FindByEmail(r.Context(), p.Email)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			writeError(w, http.StatusNotFound, "No user with this email")
+			writeError(w, http.StatusNotFound, "No user with this email", CodeNoUserWithEmail)
 			return
 		}
 		writeStoreError(w, err)

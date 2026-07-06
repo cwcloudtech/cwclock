@@ -67,7 +67,7 @@ func (h *ClientHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	var p clientPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !p.valid() {
-		writeError(w, http.StatusBadRequest, "Please add a name field")
+		writeError(w, http.StatusBadRequest, "Please add a name field", CodeNameRequired)
 		return
 	}
 
@@ -84,7 +84,7 @@ func (h *ClientHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var p clientPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !p.valid() {
-		writeError(w, http.StatusBadRequest, "Please add a name field")
+		writeError(w, http.StatusBadRequest, "Please add a name field", CodeNameRequired)
 		return
 	}
 

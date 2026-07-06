@@ -5,10 +5,11 @@ import Button from "./Button";
 import { updateProfileApi, updatePictureApi } from "../../Redux/Users/User.actions";
 import fileToBase64 from "./fileToBase64";
 import { useI18n } from "../../i18n/I18nContext";
+import { apiErrorMessage } from "../../i18n/translate";
 import styles from "./Styles/EditProfileModal.module.css";
 
 const EditProfileModal = ({ show, onClose, user }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dispatch = useDispatch();
   const [name, setName] = useState(user.name || "");
   const [surname, setSurname] = useState(user.surname || "");
@@ -47,7 +48,7 @@ const EditProfileModal = ({ show, onClose, user }) => {
       await dispatch(updateProfileApi(name, surname, password, confirmPassword, user.token));
       onClose();
     } catch (err) {
-      setError(t("profile.couldNotUpdate"));
+      setError(apiErrorMessage(err, locale));
     }
   };
 

@@ -124,6 +124,17 @@
   width: 100%;
 }
 
+.languageLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--cw-text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 4px;
+}
+
 .logoutItem {
   justify-content: center;
   color: var(--cw-danger);

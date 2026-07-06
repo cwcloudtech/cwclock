@@ -83,15 +83,15 @@ func (h *TimeEntryHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	var p timeEntryPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		writeError(w, http.StatusBadRequest, "Invalid request body")
+		writeError(w, http.StatusBadRequest, "Invalid request body", CodeInvalidRequestBody)
 		return
 	}
 	if utils.IsBlank(p.Text) || utils.IsBlank(p.ClientID) || utils.IsBlank(p.ProjectID) || utils.IsBlank(p.Day) {
-		writeError(w, http.StatusBadRequest, "Please add text, clientId, projectId and day fields")
+		writeError(w, http.StatusBadRequest, "Please add text, clientId, projectId and day fields", CodeTimeEntryFields)
 		return
 	}
 	if !p.AllDay && (p.Start == nil || p.End == nil || utils.IsBlank(*p.Start) || utils.IsBlank(*p.End)) {
-		writeError(w, http.StatusBadRequest, "Please add start and end fields, or check allDay")
+		writeError(w, http.StatusBadRequest, "Please add start and end fields, or check allDay", CodeTimeEntryStartEnd)
 		return
 	}
 
@@ -112,7 +112,7 @@ func (h *TimeEntryHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !canManage(r, entry.UserID) {
-		writeError(w, http.StatusForbidden, "You can only update your own time entries")
+		writeError(w, http.StatusForbidden, "You can only update your own time entries", CodeOwnTimeEntriesOnly)
 		return
 	}
 
@@ -122,7 +122,7 @@ func (h *TimeEntryHandler) Update(w http.ResponseWriter, r *http.Request) {
 		Start: entry.Start, End: entry.End, AllDay: entry.AllDay,
 	}
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		writeError(w, http.StatusBadRequest, "Invalid request body")
+		writeError(w, http.StatusBadRequest, "Invalid request body", CodeInvalidRequestBody)
 		return
 	}
 
@@ -135,7 +135,7 @@ func (h *TimeEntryHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	if utils.IsNotBlank(p.UserID) && p.UserID != entry.UserID {
 		if !isAdminOrOwner(r) {
-			writeError(w, http.StatusForbidden, "Only an admin or the owner can reassign a time entry to another member")
+			writeError(w, http.StatusForbidden, "Only an admin or the owner can reassign a time entry to another member", CodeReassignForbidden)
 			return
 		}
 		reassign.UserID = p.UserID
@@ -158,7 +158,7 @@ func (h *TimeEntryHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !canManage(r, entry.UserID) {
-		writeError(w, http.StatusForbidden, "You can only delete your own time entries")
+		writeError(w, http.StatusForbidden, "You can only delete your own time entries", CodeOwnTimeEntriesOnly)
 		return
 	}
 

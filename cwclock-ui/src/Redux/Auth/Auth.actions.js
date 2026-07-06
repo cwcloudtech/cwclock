@@ -2,6 +2,7 @@ import axios from "axios";
 import { error, loading, logout, register, syncUser } from "./Auth.types";
 import { toast } from "react-toastify";
 import toastOptions from "../toastOptions";
+import { translate, getStoredLocale, apiErrorMessage } from "../../i18n/translate";
 
 const ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/users/`;
 
@@ -11,9 +12,9 @@ export const registerApi = (userData) => async (dispatch) => {
     console.log(userData);
     const { data } = await axios.post(ENDPOINT, userData);
     dispatch({ type: register, payload: data });
-    toast.success("Account created successfully.", toastOptions);
+    toast.success(translate(getStoredLocale(), "toasts.accountCreated"), toastOptions);
   } catch (e) {
-    toast.error(e.message, toastOptions);
+    toast.error(apiErrorMessage(e, getStoredLocale()), toastOptions);
     dispatch({ type: error, payload: e.message });
   }
 };
@@ -24,9 +25,9 @@ export const loginApi = (userData) => async (dispatch) => {
     const { data } = await axios.post(ENDPOINT + "login", userData);
     console.log(data);
     dispatch({ type: register, payload: data });
-    toast.success("Logged in successfully.", toastOptions);
+    toast.success(translate(getStoredLocale(), "toasts.loggedIn"), toastOptions);
   } catch (e) {
-    toast.error(e.message, toastOptions);
+    toast.error(apiErrorMessage(e, getStoredLocale()), toastOptions);
     dispatch({ type: error, payload: e.message });
   }
 };

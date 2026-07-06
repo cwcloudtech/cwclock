@@ -12,6 +12,7 @@ import {
   OrgDeleteSUCCESS,
 } from "./Org.types";
 import toastOptions from "../toastOptions";
+import { translate, getStoredLocale } from "../../i18n/translate";
 
 const ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/organizations/`;
 
@@ -33,7 +34,7 @@ export const createOrgApi = (fields, token) => async (dispatch) => {
   try {
     const { data } = await axios.post(ENDPOINT, fields, authConfig(token));
     dispatch({ type: OrgCreateSUCCESS, payload: data });
-    toast.success("Organization created.", toastOptions);
+    toast.success(translate(getStoredLocale(), "toasts.orgCreated"), toastOptions);
     return data;
   } catch (e) {
     dispatch({ type: OrgERROR });
@@ -46,7 +47,7 @@ export const updateOrgApi = (orgId, fields, token) => async (dispatch) => {
   try {
     const { data } = await axios.put(`${ENDPOINT}${orgId}`, fields, authConfig(token));
     dispatch({ type: OrgUpdateSUCCESS, payload: data });
-    toast.success("Organization updated.", toastOptions);
+    toast.success(translate(getStoredLocale(), "toasts.orgUpdated"), toastOptions);
     return data;
   } catch (e) {
     dispatch({ type: OrgERROR });
@@ -59,7 +60,7 @@ export const deleteOrgApi = (orgId, token) => async (dispatch) => {
   try {
     await axios.delete(`${ENDPOINT}${orgId}`, authConfig(token));
     dispatch({ type: OrgDeleteSUCCESS, payload: orgId });
-    toast.success("Organization deleted.", toastOptions);
+    toast.success(translate(getStoredLocale(), "toasts.orgDeleted"), toastOptions);
   } catch (e) {
     dispatch({ type: OrgERROR });
     throw e;
@@ -85,7 +86,7 @@ export const addMemberApi = (orgId, email, role, token) => async (dispatch) => {
   try {
     await axios.post(`${ENDPOINT}${orgId}/members/`, { email, role }, authConfig(token));
     dispatch(listMembersApi(orgId, token));
-    toast.success("Member added.", toastOptions);
+    toast.success(translate(getStoredLocale(), "toasts.memberAdded"), toastOptions);
   } catch (e) {
     dispatch({ type: OrgERROR });
     throw e;
@@ -100,7 +101,7 @@ export const setMemberRateApi = (orgId, userId, dailyRate, currency, token) => a
       authConfig(token)
     );
     dispatch(listMembersApi(orgId, token));
-    toast.success("Daily rate updated.", toastOptions);
+    toast.success(translate(getStoredLocale(), "toasts.dailyRateUpdated"), toastOptions);
   } catch (e) {
     dispatch({ type: OrgERROR });
     throw e;
@@ -112,7 +113,7 @@ export const transferOwnershipApi = (orgId, email, token) => async (dispatch) =>
     const { data } = await axios.put(`${ENDPOINT}${orgId}/owner`, { email }, authConfig(token));
     dispatch({ type: OrgOwnerTransferred, payload: data });
     dispatch(listMembersApi(orgId, token));
-    toast.success("Ownership transferred.", toastOptions);
+    toast.success(translate(getStoredLocale(), "toasts.ownershipTransferred"), toastOptions);
     return data;
   } catch (e) {
     dispatch({ type: OrgERROR });
