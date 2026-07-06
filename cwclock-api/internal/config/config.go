@@ -6,17 +6,20 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"cwclock-api/internal/utils"
 )
 
 type Config struct {
-	Port              string
-	DatabaseURL       string
-	JWTSecret         string
-	MaxWorkers        int
-	PostgresPoolSize  int
-	AllowedCurrencies []string
+	Port               string
+	DatabaseURL        string
+	JWTSecret          string
+	MaxWorkers         int
+	PostgresPoolSize   int
+	AllowedCurrencies  []string
+	CorsEnabled        bool
+	CorsAllowedOrigins []string
 }
 
 func Load() Config {
@@ -26,6 +29,7 @@ func Load() Config {
 	port := getEnv("POSTGRES_PORT", "5432")
 	db := os.Getenv("POSTGRES_DB")
 	sslmode := getEnv("POSTGRES_SSLMODE", "disable")
+	allowedOrigins := getEnv("CWCLOCK_CORS_ALLOWED_ORIGINS", "*")
 
 	maxWorkers, err := strconv.Atoi(getEnv("MAX_WORKERS", "5"))
 	if err != nil {
@@ -38,12 +42,14 @@ func Load() Config {
 	}
 
 	return Config{
-		Port:              getEnv("PORT", "8080"),
-		DatabaseURL:       fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, pass, host, port, db, sslmode),
-		JWTSecret:         os.Getenv("JWT_SECRET"),
-		MaxWorkers:        maxWorkers,
-		PostgresPoolSize:  postgresPoolSize,
-		AllowedCurrencies: parseAllowedCurrencies(os.Getenv("CWCLOCK_ALLOWED_CURRENCIES")),
+		Port:               getEnv("PORT", "8080"),
+		DatabaseURL:        fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, pass, host, port, db, sslmode),
+		JWTSecret:          os.Getenv("JWT_SECRET"),
+		MaxWorkers:         maxWorkers,
+		PostgresPoolSize:   postgresPoolSize,
+		AllowedCurrencies:  parseAllowedCurrencies(os.Getenv("CWCLOCK_ALLOWED_CURRENCIES")),
+		CorsEnabled:        utils.IsTrue(os.Getenv("CWCLOCK_CORS_ENABLED")),
+		CorsAllowedOrigins: strings.Split(allowedOrigins, ","),
 	}
 }
 

@@ -5,7 +5,7 @@ services:
     env_file:
       - .env.cwclock.db
     command: >
-      -url=jdbc:postgresql://${POSGRES_HOST}:${POSGRES_PORT}/${POSTGRES_DB}
+      -url=jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       -user=${POSTGRES_USER}
       -password=${POSTGRES_PASSWORD}
       -connectRetries=10

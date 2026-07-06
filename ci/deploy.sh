@@ -8,6 +8,10 @@ env|grep "POSTGRES_"|while read; do
 done
 
 echo "" > .env.cwclock.api
+env|grep "CWCLOCK_"|while read; do
+  echo "${REPLY}" >> .env.cwclock.api
+done
+
 echo "API_URL=${API_URL}" > .env.cwclock.ui
 
 docker ps -a | grep -i cwclock | awk '{system ("docker rm -f "$1)}' || :
