@@ -7,13 +7,20 @@ It must be fixed by a list (dropdown autocomplete) of ISO 4217 currency codes (3
 * `EUR`
 * `USD`
 * `GBP`
+* `CAD`
 * `CHF`
 * `CNY`
+* `HKD`
 * `JPY`
-* `SAR`
-* `AED`
 * `TND`
 * `DZD`
+* `MAD`
+* `TRY`
+* `EGP`
+* `SAR`
+* `AED`
+* `QAR`
+* `AUD`
 
 By default it's `EUR` for every organization.
 
