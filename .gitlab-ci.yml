@@ -43,4 +43,4 @@ deploy:
   only:
     - /^main$/
   tags:
-    - imagesbuilder
+    - websites
