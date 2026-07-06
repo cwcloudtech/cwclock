@@ -2,7 +2,7 @@
 
 source ./ci/compute-env.sh
 
-for app in "${CWCLOCK_APPS[@]}"; do
+for app in "${CWCLOCK_APPS}"; do
   export IMAGE_NAME="cwclock-${app}"
 
   echo "Pulling recent built image"

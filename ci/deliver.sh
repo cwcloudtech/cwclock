@@ -9,7 +9,7 @@ echo '{"version":"'"${VERSION}"'", "env":"'"${ENV}"'", "sha":"'"${sha}"'", "deta
 
 docker login "${CI_REGISTRY}" --username "${CI_REGISTRY_USER}" --password "${CI_REGISTRY_PASSWORD}"
 
-for app in "${CWCLOCK_APPS[@]}"; do
+for app in "${CWCLOCK_APPS}"; do
   export IMAGE_NAME="cwclock-${app}"
   export SERVICE_NAME="${app}"
 
