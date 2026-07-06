@@ -9,9 +9,6 @@ It must be fixed by a list (dropdown autocomplete) of ISO 4217 currency codes (3
 * `GBP`
 * `CAD`
 * `CHF`
-* `CNY`
-* `HKD`
-* `JPY`
 * `TND`
 * `DZD`
 * `MAD`
@@ -20,6 +17,9 @@ It must be fixed by a list (dropdown autocomplete) of ISO 4217 currency codes (3
 * `SAR`
 * `AED`
 * `QAR`
+* `CNY`
+* `HKD`
+* `JPY`
 * `AUD`
 
 By default it's `EUR` for every organization.
