@@ -14,3 +14,11 @@ The user's avatar or organization logo is not really cropped. Keep the x and y v
 ### When there's no items
 
 Print the octopus.png image like time records when it's empty for clients, projects or organizations to fill a bit the empty space.
+
+### Favico
+
+`favico.ico` seems not displayed once the SPA is loaded, fix this.
+
+## Report summary
+
+In the summary pdf, we'd like also the graph to be printed in the PDF before the table as an image.
