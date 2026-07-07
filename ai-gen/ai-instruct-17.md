@@ -15,3 +15,9 @@ The tooltip on navbar should appear only on hovering, not staying displayed if w
 ## Imports
 
 The detected last name should be the first name and the other way arround.
+
+## Exports
+
+In the pdf exports if a value is too big inside the table, just add \n inside the cell. Do not overwrite on other cells.
+
+Do not change the CSV export columns, it has to remain compliant with clockify.
