@@ -1,5 +1,11 @@
 # AI instruction 14
 
+## Healthcheck endpoint
+
+Add a `/v1/health` which answer:
+
+
+
 ## Opentelemetry traces and logs 
 
 I want opentelemetry traces with span on every endpoint call on the backend.
