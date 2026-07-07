@@ -2,9 +2,11 @@
 
 ## Healthcheck endpoint
 
-Add a `/v1/health` which answer:
+Add a `GET /v1/health` which answer:
 
-
+```json
+{"status":"ok","alive":true}
+```
 
 ## Opentelemetry traces and logs 
 
@@ -23,4 +25,5 @@ It has to contain the default go metrics but also the current metrics:
 * average time of each endpoint calls
 * counter of users per roles
 * counter of clients, projects
-* tasks duration in the last 24h (like the summary report stat group by task name and sanitize metrics name replacing spaces with underscores, removing special chars, etc)
+* tasks duration in the last 24h (like the summary report stat group by task name and sanitize metrics name replacing spaces with underscores, removing special chars, etc) with id user in the labels and id organization, client and projects
+
