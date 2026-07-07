@@ -15,13 +15,20 @@
 }
 
 .colorHex {
+  width: 90px;
   padding: 4px 10px;
+  border: 1px solid var(--cw-border);
   border-radius: var(--cw-radius-sm);
   font-size: 0.85rem;
   font-weight: 600;
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
   text-transform: uppercase;
   letter-spacing: 0.02em;
+}
+
+.colorHex:focus {
+  outline: 2px solid var(--cw-primary);
+  outline-offset: 1px;
 }
 
 .actions {

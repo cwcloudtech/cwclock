@@ -35,6 +35,11 @@ func New(
 			AllowedOrigins: corsAllowedOrigins,
 			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowedHeaders: []string{"Authorization", "Content-Type"},
+			// Content-Disposition must be explicitly exposed, otherwise the
+			// browser hides it from JS on cross-origin responses (like report
+			// exports), so the frontend can't read the backend-provided
+			// filename and falls back to a generic one.
+			ExposedHeaders: []string{"Content-Disposition"},
 		}))
 	}
 

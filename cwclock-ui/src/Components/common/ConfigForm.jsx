@@ -79,23 +79,27 @@ const ConfigForm = ({
             required={field.required}
           />
         );
-      case "color":
+      case "color": {
+        const isValidHex = /^#[0-9a-f]{6}$/i.test(value);
         return (
           <div className={styles.colorField}>
             <input
               className={styles.colorInput}
               type="color"
-              value={value}
+              value={isValidHex ? value : "#000000"}
               onChange={(e) => onChange(field.name, e.target.value)}
             />
-            <span
+            <input
               className={styles.colorHex}
-              style={{ backgroundColor: value, color: contrastColor(value) }}
-            >
-              {value}
-            </span>
+              type="text"
+              value={value}
+              onChange={(e) => onChange(field.name, e.target.value)}
+              style={{ backgroundColor: isValidHex ? value : "transparent", color: contrastColor(value) }}
+              maxLength={7}
+            />
           </div>
         );
+      }
       case "email":
         return (
           <input
