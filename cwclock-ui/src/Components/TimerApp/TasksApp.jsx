@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import TaskInput from "./TaskInput";
 import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
@@ -6,6 +6,7 @@ import TaskComponent from "./TaskComponent";
 import Heading from "./Heading";
 import styles from "./Styles/TaskApp.module.css";
 import EmptyTask from "./EmptyTask";
+import ImportCSVModal from "./ImportCSVModal";
 import { useNavigate, Link } from "react-router-dom";
 import Spinner from "../spinner/Spinner";
 import { getTasksApi } from "../../Redux/Tasks/Task.actions";
@@ -18,9 +19,12 @@ const TasksApp = () => {
   const { t } = useI18n();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [showImport, setShowImport] = useState(false);
   const { tasks, isLoading } = useSelector((state) => state.tasks);
   const { user } = useSelector((state) => state.auth);
-  const { currentOrgId } = useSelector((state) => state.organizations);
+  const { currentOrgId, members } = useSelector((state) => state.organizations);
+  const myRole = members.find((m) => m.userId === user.id)?.role;
+  const isAdminOrOwner = myRole === "admin" || myRole === "owner";
 
   useEffect(() => {
     if (user.token) {
@@ -62,6 +66,18 @@ const TasksApp = () => {
 
   return (
     <div className={styles.Body1}>
+      {isAdminOrOwner && (
+        <div className={styles.toolbar}>
+          <button
+            type="button"
+            className={styles.importBtn}
+            onClick={() => setShowImport(true)}
+            title={t("timeTracker.importCsvTitle")}
+          >
+            {t("timeTracker.importCsv")}
+          </button>
+        </div>
+      )}
       <TaskInput />
       {tasks.length <= 0 ? (
         <div>
@@ -75,6 +91,7 @@ const TasksApp = () => {
           ))}
         </div>
       )}
+      <ImportCSVModal show={showImport} onClose={() => setShowImport(false)} />
     </div>
   );
 };

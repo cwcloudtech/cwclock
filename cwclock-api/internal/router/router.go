@@ -144,7 +144,7 @@ func New(
 				})
 
 				r.Route("/import", func(r chi.Router) {
-					r.With(middleware.RequireRole(models.RoleAdmin)).Post("/clockify", importHandler.ImportClockify)
+					r.With(middleware.RequireRole(models.RoleAdmin)).Post("/csv", importHandler.ImportCSV)
 				})
 			})
 		})

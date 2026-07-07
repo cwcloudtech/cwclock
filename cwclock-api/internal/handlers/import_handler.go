@@ -41,25 +41,25 @@ type importResult struct {
 }
 
 const (
-	clockifyDateLayout = "01/02/2006"  // MM/DD/YYYY
-	clockifyTimeLayout = "03:04:05 PM" // 12-hour with AM/PM
-	importDayLayout    = "2006-01-02"  // YYYY-MM-DD stored in time_entries
-	maxImportBodySize  = 4 << 20       // 4 MB
+	csvDateLayout     = "01/02/2006"  // MM/DD/YYYY
+	csvTimeLayout     = "03:04:05 PM" // 12-hour with AM/PM
+	importDayLayout   = "2006-01-02"  // YYYY-MM-DD stored in time_entries
+	maxImportBodySize = 4 << 20       // 4 MB
 )
 
-// parseClockifyTime converts a 12-hour "HH:MM:SS AM|PM" string to 24-hour
+// parseCSVTime converts a 12-hour "HH:MM:SS AM|PM" string to 24-hour
 // "HH:MM:SS".
-func parseClockifyTime(s string) (string, error) {
-	t, err := time.Parse(clockifyTimeLayout, strings.TrimSpace(s))
+func parseCSVTime(s string) (string, error) {
+	t, err := time.Parse(csvTimeLayout, strings.TrimSpace(s))
 	if err != nil {
 		return "", fmt.Errorf("invalid time %q: %w", s, err)
 	}
 	return t.Format("15:04:05"), nil
 }
 
-// parseClockifyDate converts "MM/DD/YYYY" to "YYYY-MM-DD".
-func parseClockifyDate(s string) (string, error) {
-	t, err := time.Parse(clockifyDateLayout, strings.TrimSpace(s))
+// parseCSVDate converts "MM/DD/YYYY" to "YYYY-MM-DD".
+func parseCSVDate(s string) (string, error) {
+	t, err := time.Parse(csvDateLayout, strings.TrimSpace(s))
 	if err != nil {
 		return "", fmt.Errorf("invalid date %q: %w", s, err)
 	}
@@ -71,9 +71,9 @@ func randomColor() string {
 	return fmt.Sprintf("#%06x", rand.Intn(0xFFFFFF+1)) //nolint:gosec
 }
 
-// parseClockifyUserName splits a Clockify "Lastname Firstname" display name
-// into (surname, name). If there is only one token it is used as the surname.
-func parseClockifyUserName(full string) (surname, name string) {
+// parseCSVUserName splits a "Lastname Firstname" display name into (surname,
+// name). If there is only one token it is used as the surname.
+func parseCSVUserName(full string) (surname, name string) {
 	full = strings.TrimSpace(full)
 	idx := strings.IndexByte(full, ' ')
 	if idx < 0 {
@@ -82,8 +82,11 @@ func parseClockifyUserName(full string) (surname, name string) {
 	return full[:idx], strings.TrimSpace(full[idx+1:])
 }
 
-// ImportClockify accepts a Clockify "Detailed report" CSV (sent as the raw
-// request body) and creates matching time entries in the organization.
+// ImportCSV accepts a "detailed report" CSV (sent as the raw request body)
+// and creates matching time entries in the organization. This column format
+// originated with Clockify but is also this app's own detailed report export
+// format (see report.DetailedCSV), so the same endpoint doubles as the way
+// to migrate data from another cwclock instance.
 // For each row the handler will:
 //   - find or create the client (by name, with a random colour)
 //   - find or create the project under that client (by name, with a random colour)
@@ -92,7 +95,7 @@ func parseClockifyUserName(full string) (surname, name string) {
 //   - otherwise create the time entry
 //
 // The response body is {"created": N, "skipped": M}.
-func (h *ImportHandler) ImportClockify(w http.ResponseWriter, r *http.Request) {
+func (h *ImportHandler) ImportCSV(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
 	ctx := r.Context()
 
@@ -145,17 +148,17 @@ func (h *ImportHandler) ImportClockify(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		day, err := parseClockifyDate(rec[colIdx["Start Date"]])
+		day, err := parseCSVDate(rec[colIdx["Start Date"]])
 		if err != nil {
 			skipped++
 			continue
 		}
-		startStr, err := parseClockifyTime(rec[colIdx["Start Time"]])
+		startStr, err := parseCSVTime(rec[colIdx["Start Time"]])
 		if err != nil {
 			skipped++
 			continue
 		}
-		endStr, err := parseClockifyTime(rec[colIdx["End Time"]])
+		endStr, err := parseCSVTime(rec[colIdx["End Time"]])
 		if err != nil {
 			skipped++
 			continue
@@ -184,7 +187,7 @@ func (h *ImportHandler) ImportClockify(w http.ResponseWriter, r *http.Request) {
 		// Get or create user (created as disabled, no password).
 		user, err := h.users.FindByEmail(ctx, email)
 		if errors.Is(err, store.ErrNotFound) {
-			surname, name := parseClockifyUserName(userFullName)
+			surname, name := parseCSVUserName(userFullName)
 			user, err = h.users.CreateDisabled(ctx, email, name, surname)
 		}
 		if err != nil {

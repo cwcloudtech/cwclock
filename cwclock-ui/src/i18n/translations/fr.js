@@ -9,6 +9,7 @@ const fr = {
     saveChanges: "Enregistrer les modifications",
     add: "AJOUTER",
     create: "Créer",
+    import: "Importer",
     email: "E-mail",
     firstName: "Prénom",
     lastName: "Nom",
@@ -127,6 +128,12 @@ const fr = {
     deleteRecordTitle: "Supprimer l'entrée de temps",
     deleteRecordBody: "Voulez-vous vraiment supprimer « {{text}} » ? Cette action est irréversible.",
     defaultTaskName: "Tâche",
+    importCsv: "Importer un CSV",
+    importCsvTitle: "Importer des entrées de temps depuis un CSV",
+    importCsvHint:
+      "Importez un CSV de rapport détaillé (depuis Clockify, ou exporté depuis une autre organisation cwclock). Les clients, projets et utilisateurs sont créés automatiquement s'ils n'existent pas ; les entrées déjà existantes sont ignorées.",
+    importCsvFile: "Fichier CSV",
+    importResult: "Import terminé : {{created}} entrées créées, {{skipped}} ignorées.",
   },
   profile: {
     editProfileTitle: "Modifier le profil",

@@ -9,6 +9,7 @@ const en = {
     saveChanges: "Save changes",
     add: "ADD",
     create: "Create",
+    import: "Import",
     email: "Email",
     firstName: "First name",
     lastName: "Last name",
@@ -127,6 +128,12 @@ const en = {
     deleteRecordTitle: "Delete time record",
     deleteRecordBody: 'Are you sure to delete "{{text}}"? This can\'t be undone.',
     defaultTaskName: "Task",
+    importCsv: "Import CSV",
+    importCsvTitle: "Import time entries from CSV",
+    importCsvHint:
+      "Upload a detailed report CSV (from Clockify, or exported from another cwclock organization). Clients, projects and users are created automatically if missing; entries that already exist are skipped.",
+    importCsvFile: "CSV file",
+    importResult: "Import complete: {{created}} entries created, {{skipped}} skipped.",
   },
   profile: {
     editProfileTitle: "Edit profile",

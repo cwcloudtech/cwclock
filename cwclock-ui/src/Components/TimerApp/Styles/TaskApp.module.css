@@ -3,3 +3,28 @@
   min-height: 100vh;
   padding: var(--cw-spacing-lg) 0;
 }
+
+.toolbar {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto var(--cw-spacing-sm);
+  padding: 0 var(--cw-spacing);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.importBtn {
+  padding: 8px 16px;
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-sm);
+  background-color: var(--cw-surface);
+  color: var(--cw-text);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color var(--cw-transition);
+}
+
+.importBtn:hover {
+  background-color: var(--cw-bg-alt);
+}
