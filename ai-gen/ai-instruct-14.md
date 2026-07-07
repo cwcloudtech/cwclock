@@ -24,7 +24,7 @@ I want opentelemetry traces with span on every endpoint call on the backend.
 
 All the logs must also be written in stdout/stderr but also send to opentelemetry with a proper logger and log level.
 
-The opentelemetry target is a single variable `OTEL_ENDPOINT` which can be otlp/grpc or otlp/http with a second variable `OTEL_PROTO`. It will be a single opentelemetry endpoint which will receive metrics, traces and logs.
+The opentelemetry target is a single variable `CWCLOCK_OTEL_ENDPOINT` which can be otlp/grpc or otlp/http with a second variable `CWCLOCK_OTEL_PROTO`. It will be a single opentelemetry endpoint which will receive metrics, traces and logs.
 
 ## Metrics
 

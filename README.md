@@ -2,6 +2,8 @@
 
 Opensource alternative to [Clockify](https://clockify.me) written in Go and react.
 
+A live version is available at [cwclock.me](https://www.cwclock.me).
+
 ## Features
 
 * Track time spent on tasks
@@ -11,6 +13,7 @@ Opensource alternative to [Clockify](https://clockify.me) written in Go and reac
 * Print invoices with daily rates and VAT (stored in object storage)
 * I18N (English and French for now)
 * Light/Dark mode
+* OpenTelemetry observability
 
 ## Technologies
 
