@@ -91,9 +91,9 @@ func (s *TimeEntryStore) FindByID(ctx context.Context, id string) (models.TimeEn
 	return scanTimeEntry(row)
 }
 
-// List returns time entries for an organization. When userID is non-empty,
-// results are restricted to that user's own entries (used to enforce that
-// members only see their own time records).
+// List returns time entries for an organization, most recent entry day/start
+// first. When userID is non-empty, results are restricted to that user's own
+// entries (used to enforce that members only see their own time records).
 func (s *TimeEntryStore) List(ctx context.Context, orgID, userID string) ([]models.TimeEntry, error) {
 	var rows pgx.Rows
 	var err error
@@ -101,13 +101,13 @@ func (s *TimeEntryStore) List(ctx context.Context, orgID, userID string) ([]mode
 		rows, err = s.pool.Query(ctx, `
 			SELECT id, organization_id, client_id, project_id, user_id, data, created_at, updated_at
 			FROM time_entries WHERE organization_id = $1
-			ORDER BY created_at DESC
+			ORDER BY data->>'day' DESC, data->>'start' DESC
 		`, orgID)
 	} else {
 		rows, err = s.pool.Query(ctx, `
 			SELECT id, organization_id, client_id, project_id, user_id, data, created_at, updated_at
 			FROM time_entries WHERE organization_id = $1 AND user_id = $2
-			ORDER BY created_at DESC
+			ORDER BY data->>'day' DESC, data->>'start' DESC
 		`, orgID, userID)
 	}
 	if err != nil {
@@ -165,8 +165,8 @@ type ReportFilter struct {
 }
 
 // ListForReport returns an organization's time entries within a date range,
-// optionally narrowed to specific clients/projects/members, oldest first
-// within a day so summary/detailed reports can present a stable order.
+// optionally narrowed to specific clients/projects/members, most recent
+// day/start first (same order as the time tracker's own entry list).
 func (s *TimeEntryStore) ListForReport(ctx context.Context, orgID string, f ReportFilter) ([]models.TimeEntry, error) {
 	query := `
 		SELECT id, organization_id, client_id, project_id, user_id, data, created_at, updated_at
@@ -188,7 +188,7 @@ func (s *TimeEntryStore) ListForReport(ctx context.Context, orgID string, f Repo
 	addFilter("project_id", f.ProjectIDs)
 	addFilter("user_id", f.UserIDs)
 
-	query += " ORDER BY data->>'day', data->>'start'"
+	query += " ORDER BY data->>'day' DESC, data->>'start' DESC"
 
 	rows, err := s.pool.Query(ctx, query, args...)
 	if err != nil {
