@@ -5,7 +5,7 @@ source ./ci/compute-env.sh
 sha="$(git rev-parse --short HEAD)"
 details="$(git log --pretty=format:"%an, %ar : %s" -1)"
 
-echo '{"version":"'"${VERSION}"'", "env":"'"${ENV}"'", "sha":"'"${sha}"'", "details":"'"${details}"'"}' > manifest.json
+echo '{"version":"'"${VERSION}"'", "sha":"'"${sha}"'", "details":"'"${details}"'"}' > manifest.json
 
 docker login "${CI_REGISTRY}" --username "${CI_REGISTRY_USER}" --password "${CI_REGISTRY_PASSWORD}"
 

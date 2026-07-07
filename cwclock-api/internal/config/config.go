@@ -54,11 +54,27 @@ func Load() Config {
 		AllowedCurrencies:  parseAllowedCurrencies(os.Getenv("CWCLOCK_ALLOWED_CURRENCIES")),
 		CorsEnabled:        utils.IsTrue(os.Getenv("CWCLOCK_CORS_ENABLED")),
 		CorsAllowedOrigins: strings.Split(allowedOrigins, ","),
-		Version:            getEnv("APP_VERSION", "1.0.0"),
+		Version:            versionFromManifest(getEnv("CWCLOCK_MANIFEST_PATH", "manifest.json"), getEnv("APP_VERSION", "1.0.0")),
 		ManifestPath:       getEnv("CWCLOCK_MANIFEST_PATH", "manifest.json"),
 		OtelEndpoint:       os.Getenv("CWCLOCK_OTEL_ENDPOINT"),
 		OtelProto:          getEnv("CWCLOCK_OTEL_PROTO", "otlp/grpc"),
 	}
+}
+
+// versionFromManifest reads the version field from the manifest JSON file at
+// path. Falls back to fallback if the file cannot be read or parsed.
+func versionFromManifest(path, fallback string) string {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fallback
+	}
+	var m struct {
+		Version string `json:"version"`
+	}
+	if err := json.Unmarshal(data, &m); err != nil || utils.IsBlank(m.Version) {
+		return fallback
+	}
+	return m.Version
 }
 
 func getEnv(key, fallback string) string {
