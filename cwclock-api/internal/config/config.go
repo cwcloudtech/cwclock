@@ -3,7 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -21,6 +21,9 @@ type Config struct {
 	CorsEnabled        bool
 	CorsAllowedOrigins []string
 	Version            string
+	ManifestPath       string
+	OtelEndpoint       string
+	OtelProto          string
 }
 
 func Load() Config {
@@ -52,6 +55,9 @@ func Load() Config {
 		CorsEnabled:        utils.IsTrue(os.Getenv("CWCLOCK_CORS_ENABLED")),
 		CorsAllowedOrigins: strings.Split(allowedOrigins, ","),
 		Version:            getEnv("APP_VERSION", "1.0.0"),
+		ManifestPath:       getEnv("CWCLOCK_MANIFEST_PATH", "manifest.json"),
+		OtelEndpoint:       os.Getenv("CWCLOCK_OTEL_ENDPOINT"),
+		OtelProto:          getEnv("CWCLOCK_OTEL_PROTO", "otlp/grpc"),
 	}
 }
 
@@ -69,7 +75,7 @@ func parseAllowedCurrencies(raw string) []string {
 	}
 	var codes []string
 	if err := json.Unmarshal([]byte(raw), &codes); err != nil {
-		log.Printf("invalid CWCLOCK_ALLOWED_CURRENCIES, ignoring: %v", err)
+		slog.Warn("invalid CWCLOCK_ALLOWED_CURRENCIES, ignoring", "error", err)
 		return nil
 	}
 	return codes

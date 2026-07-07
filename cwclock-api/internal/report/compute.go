@@ -64,11 +64,11 @@ func allDayWindow(client models.Client) (start, end string) {
 	return formatMinutesOfDay(allDayStartMinutes), formatMinutesOfDay(endMinutes)
 }
 
-// durationSecs computes an entry's duration: an all-day entry takes its
+// DurationSecs computes an entry's duration: an all-day entry takes its
 // client's HoursPerDay (falling back to 7h if unset), otherwise it's the
 // wall-clock gap between start and end, treating an end earlier than start
-// as crossing midnight.
-func durationSecs(entry models.TimeEntry, client models.Client) int {
+// as crossing midnight. Exported for reuse by the task-duration metric.
+func DurationSecs(entry models.TimeEntry, client models.Client) int {
 	if entry.AllDay {
 		return int(hoursPerDay(client) * 3600)
 	}
@@ -111,7 +111,7 @@ func Enrich(entries []models.TimeEntry, lk Lookups, canSeeAmount bool) []models.
 		client := lk.Clients[e.ClientID]
 		project := lk.Projects[e.ProjectID]
 		member := lk.Members[e.UserID]
-		dur := durationSecs(e, client)
+		dur := DurationSecs(e, client)
 
 		start, end := e.Start, e.End
 		if e.AllDay {

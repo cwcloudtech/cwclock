@@ -13,6 +13,7 @@ env|grep "CWCLOCK_"|while read; do
 done
 
 echo "API_URL=${API_URL}" > .env.cwclock.ui
+echo "IMAGE_SIZE=${IMAGE_SIZE}" >> .env.cwclock.ui
 
 docker ps -a | grep -i cwclock | awk '{system ("docker rm -f "$1)}' || :
 docker compose -f docker-compose-live.yml up -d --force-recreate

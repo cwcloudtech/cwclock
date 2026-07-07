@@ -326,6 +326,31 @@ func (s *OrgStore) SetMemberRate(ctx context.Context, orgID, userID string, dail
 	return scanMember(row)
 }
 
+// CountMembersByRole returns the number of organization memberships per
+// role (owner/admin/member/reader), for the "counter of users per role"
+// metric. A user belonging to several organizations counts once per role
+// held, since roles are per-membership rather than global to the user.
+func (s *OrgStore) CountMembersByRole(ctx context.Context) (map[string]int64, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT role, count(*) FROM organization_members GROUP BY role
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	counts := map[string]int64{}
+	for rows.Next() {
+		var role string
+		var count int64
+		if err := rows.Scan(&role, &count); err != nil {
+			return nil, err
+		}
+		counts[role] = count
+	}
+	return counts, rows.Err()
+}
+
 func (s *OrgStore) RemoveMember(ctx context.Context, orgID, userID string) error {
 	tag, err := s.pool.Exec(ctx, `
 		DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2

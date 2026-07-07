@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import Modal from "./Modal";
 import Button from "./Button";
+import ImagePicker from "./ImagePicker";
 import { updateProfileApi, updatePictureApi } from "../../Redux/Users/User.actions";
-import fileToBase64 from "./fileToBase64";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
 import styles from "./Styles/EditProfileModal.module.css";
@@ -26,13 +26,6 @@ const EditProfileModal = ({ show, onClose, user }) => {
       setError("");
     }
   }, [show, user.name, user.surname]);
-
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const picture = await fileToBase64(file);
-    dispatch(updatePictureApi(picture, user.token));
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,10 +53,14 @@ const EditProfileModal = ({ show, onClose, user }) => {
         ) : (
           <div className={styles.avatarPlaceholder} />
         )}
-        <label className={styles.avatarLabel} title={t("common.uploadNewPicture")}>
-          {t("common.updateAvatar")}
-          <input type="file" accept="image/*" hidden onChange={handleAvatarChange} />
-        </label>
+        <ImagePicker onChange={(picture) => dispatch(updatePictureApi(picture, user.token))}>
+          {({ onPick }) => (
+            <label className={styles.avatarLabel} title={t("common.uploadNewPicture")}>
+              {t("common.updateAvatar")}
+              <input type="file" accept="image/*" hidden onChange={onPick} />
+            </label>
+          )}
+        </ImagePicker>
       </div>
 
       <form onSubmit={handleSubmit}>

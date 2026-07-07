@@ -36,4 +36,3 @@ It has to contain the default go metrics but also the current metrics:
 * counter of users per roles
 * counter of clients, projects
 * tasks duration in the last 24h (like the summary report stat group by task name and sanitize metrics name replacing spaces with underscores, removing special chars, etc) with id user in the labels and id organization, client and projects
-

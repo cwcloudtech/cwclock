@@ -49,6 +49,8 @@ const en = {
     search: "Search...",
     noResults: "No results",
     clearFilter: "Clear",
+    cropImageTitle: "Adjust your image",
+    zoom: "Zoom",
   },
   days: {
     0: "Sunday",

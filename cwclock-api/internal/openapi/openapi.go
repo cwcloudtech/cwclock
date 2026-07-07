@@ -60,9 +60,12 @@ var pathParam = regexp.MustCompile(`\{([a-zA-Z0-9_]+)\}`)
 
 // publicRoutes don't require a bearer token, unlike the rest of the API.
 var publicRoutes = map[string]bool{
+	"GET /v1/health":       true,
+	"GET /v1/manifest":     true,
 	"GET /v1/currencies":   true,
 	"POST /v1/users/":      true,
 	"POST /v1/users/login": true,
+	"GET /metrics":         true,
 }
 
 // Generate walks every route currently registered on r and describes it as

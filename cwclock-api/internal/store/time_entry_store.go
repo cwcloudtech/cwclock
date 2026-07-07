@@ -207,6 +207,30 @@ func (s *TimeEntryStore) ListForReport(ctx context.Context, orgID string, f Repo
 	return entries, rows.Err()
 }
 
+// ListRecent returns time entries whose day falls within the last 24h,
+// across every organization, for the "task duration in the last 24h" metric.
+func (s *TimeEntryStore) ListRecent(ctx context.Context) ([]models.TimeEntry, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, organization_id, client_id, project_id, user_id, data, created_at, updated_at
+		FROM time_entries
+		WHERE (data->>'day')::date >= (now() - interval '24 hours')::date
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	entries := []models.TimeEntry{}
+	for rows.Next() {
+		t, err := scanTimeEntry(rows)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, t)
+	}
+	return entries, rows.Err()
+}
+
 func (s *TimeEntryStore) Delete(ctx context.Context, id string) error {
 	tag, err := s.pool.Exec(ctx, `DELETE FROM time_entries WHERE id = $1`, id)
 	if err != nil {

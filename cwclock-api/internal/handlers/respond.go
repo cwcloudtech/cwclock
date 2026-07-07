@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"cwclock-api/internal/store"
@@ -65,5 +66,6 @@ func writeStoreError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusBadRequest, "Email already in use", CodeDuplicateEmail)
 		return
 	}
+	slog.Error("unhandled store error", "error", err)
 	writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
 }

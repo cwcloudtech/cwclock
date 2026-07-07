@@ -1,7 +1,7 @@
 import React from "react";
 import Button from "./Button";
 import RequiredMark from "./RequiredMark";
-import fileToBase64 from "./fileToBase64";
+import ImagePicker from "./ImagePicker";
 import contrastColor from "./contrastColor";
 import { useI18n } from "../../i18n/I18nContext";
 import styles from "./Styles/ConfigForm.module.css";
@@ -21,12 +21,6 @@ const ConfigForm = ({
   const { t } = useI18n();
   const resolvedSubmitLabel = submitLabel ?? t("common.save");
   const resolvedCancelLabel = cancelLabel ?? t("common.cancel");
-
-  const setImageField = (field) => async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    onChange(field.name, await fileToBase64(file));
-  };
 
   const renderControl = (field) => {
     const value = values[field.name] ?? "";
@@ -61,10 +55,14 @@ const ConfigForm = ({
         );
       case "image":
         return (
-          <>
-            <input className="cw-input" type="file" accept="image/*" onChange={setImageField(field)} />
-            {value && <img src={value} alt="" className="cw-image-preview" />}
-          </>
+          <ImagePicker onChange={(base64) => onChange(field.name, base64)}>
+            {({ onPick }) => (
+              <>
+                <input className="cw-input" type="file" accept="image/*" onChange={onPick} />
+                {value && <img src={value} alt="" className="cw-image-preview" />}
+              </>
+            )}
+          </ImagePicker>
         );
       case "number":
         return (

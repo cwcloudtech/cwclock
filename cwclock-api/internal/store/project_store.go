@@ -120,3 +120,11 @@ func (s *ProjectStore) Delete(ctx context.Context, id string) error {
 	}
 	return nil
 }
+
+// Count returns the total number of projects across every organization, for
+// the "counter of projects" metric.
+func (s *ProjectStore) Count(ctx context.Context) (int64, error) {
+	var count int64
+	err := s.pool.QueryRow(ctx, `SELECT count(*) FROM projects`).Scan(&count)
+	return count, err
+}

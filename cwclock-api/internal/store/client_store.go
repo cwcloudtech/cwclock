@@ -161,3 +161,34 @@ func (s *ClientStore) Delete(ctx context.Context, id string) error {
 	}
 	return nil
 }
+
+// Count returns the total number of clients across every organization, for
+// the "counter of clients" metric.
+func (s *ClientStore) Count(ctx context.Context) (int64, error) {
+	var count int64
+	err := s.pool.QueryRow(ctx, `SELECT count(*) FROM clients`).Scan(&count)
+	return count, err
+}
+
+// ListAll returns every client across every organization, keyed lookups
+// (e.g. hoursPerDay for the task-duration metric) don't need one query per
+// client.
+func (s *ClientStore) ListAll(ctx context.Context) ([]models.Client, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, organization_id, data, created_at, updated_at FROM clients
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	clients := []models.Client{}
+	for rows.Next() {
+		c, err := scanClient(rows)
+		if err != nil {
+			return nil, err
+		}
+		clients = append(clients, c)
+	}
+	return clients, rows.Err()
+}

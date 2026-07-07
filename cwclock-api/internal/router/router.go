@@ -11,6 +11,7 @@ import (
 	"cwclock-api/internal/models"
 	"cwclock-api/internal/openapi"
 	"cwclock-api/internal/store"
+	"cwclock-api/internal/telemetry"
 )
 
 func New(
@@ -27,8 +28,15 @@ func New(
 	corsEnabled bool,
 	corsAllowedOrigins []string,
 	apiVersion string,
+	manifestPath string,
+	tel *telemetry.Providers,
+	observe middleware.EndpointObserver,
+	metricsHandler http.Handler,
 ) http.Handler {
 	r := chi.NewRouter()
+
+	// Spans + request logs (+ metrics, via observe) for every endpoint call.
+	r.Use(middleware.Instrument(tel.Tracer, tel.Logger, observe))
 
 	if corsEnabled {
 		r.Use(cors.Handler(cors.Options{
@@ -44,6 +52,8 @@ func New(
 	}
 
 	r.Route("/v1", func(r chi.Router) {
+		r.Get("/health", handlers.Health)
+		r.Get("/manifest", handlers.NewManifestHandler(manifestPath))
 		r.Get("/currencies", handlers.ListCurrencies)
 
 		r.Route("/users", func(r chi.Router) {
@@ -134,6 +144,10 @@ func New(
 			})
 		})
 	})
+
+	if metricsHandler != nil {
+		r.Get("/metrics", metricsHandler.ServeHTTP)
+	}
 
 	// Generated after every /v1 route above is registered, so it's always in
 	// sync with the router — never a hand-maintained spec file to go stale.
