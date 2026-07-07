@@ -9,3 +9,7 @@ const filename = filenameFromDisposition(response.headers["content-disposition"]
 ```
 
 Fix-it (reuse the backend provided filename).
+
+## UX-UI
+
+Color picker for project with the hex value printed should also allow to write the hex value.
