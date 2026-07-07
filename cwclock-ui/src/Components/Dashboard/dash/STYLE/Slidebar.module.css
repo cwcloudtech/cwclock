@@ -153,6 +153,7 @@
   border-radius: 999px;
   font-size: 0.7rem;
   font-weight: 600;
+  color: #ffffff;
   background-color: #3f51b5;
   color: var(--cw-text-muted);
 }
