@@ -142,6 +142,13 @@
   color: var(--cw-danger);
 }
 
+.versionLabel {
+  text-align: center;
+  color: var(--cw-text-muted);
+  font-size: 0.7rem;
+  margin-top: 2px;
+}
+
 .uploadLabel {
   color: var(--cw-primary-600);
   cursor: pointer;

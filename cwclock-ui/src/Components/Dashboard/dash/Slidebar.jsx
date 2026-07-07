@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import styles from "./STYLE/Slidebar.module.css";
 import { FaChevronLeft, FaChevronRight, FaUserCheck } from "react-icons/fa";
 import { FiLogOut, FiSun, FiMoon, FiGlobe } from "react-icons/fi";
@@ -27,6 +28,14 @@ import { listOrgsApi, selectOrg } from "../../../Redux/Organizations/Org.actions
 const Slidebar = () => {
   const [expanded, setExpanded] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [appVersion, setAppVersion] = useState(null);
+
+  useEffect(() => {
+    axios
+      .get(`${process.env.REACT_APP_APIURL}/v1/manifest`)
+      .then(({ data }) => setAppVersion(data.version))
+      .catch(() => {});
+  }, []);
   const handleclick = () => {
     setExpanded(!expanded);
   };
@@ -165,6 +174,9 @@ const Slidebar = () => {
                       <FiLogOut style={{ fontSize: "16px" }} />
                     </DropdownItem>
                   </Tooltip>
+                  {appVersion && (
+                    <DropdownText className={styles.versionLabel}>v{appVersion}</DropdownText>
+                  )}
                 </>
               )}
             </Dropdown>
