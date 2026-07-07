@@ -1,4 +1,4 @@
-# AI instruction 16
+# AI instruction 17
 
 ## Member of organization
 
@@ -11,3 +11,7 @@ I'd like to be able to drag and drop to upload buttons like user's avatar, organ
 ## Tooltips
 
 The tooltip on navbar should appear only on hovering, not staying displayed if we click on an item.
+
+## Imports
+
+The detected last name should be the first name and the other way arround.
