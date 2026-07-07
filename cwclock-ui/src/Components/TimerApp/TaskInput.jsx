@@ -77,16 +77,6 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
           ))}
         </datalist>
         <div className={styles.Timer}>
-          {isAdminOrOwner && (
-            <button
-              type="button"
-              className={styles.ImportBtn}
-              onClick={onImportClick}
-              title={t("timeTracker.importCsvTitle")}
-            >
-              {t("timeTracker.importCsv")}
-            </button>
-          )}
           <span className={styles.clock} title={t("timeTracker.elapsedTime")}>
             {hrs < 10 ? "0" + hrs : hrs}:{min < 10 ? "0" + min : min}:
             {sec < 10 ? "0" + sec : sec}
@@ -99,6 +89,16 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
           >
             {timerOn ? t("timeTracker.stop") : t("timeTracker.start")}
           </button>
+          {isAdminOrOwner && (
+            <button
+              type="button"
+              className={styles.ImportBtn}
+              onClick={onImportClick}
+              title={t("timeTracker.importCsvTitle")}
+            >
+              {t("timeTracker.importCsv")}
+            </button>
+          )}
         </div>
       </div>
     </div>

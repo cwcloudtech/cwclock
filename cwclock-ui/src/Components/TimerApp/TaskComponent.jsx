@@ -42,13 +42,18 @@ const TaskComponent = ({ item }) => {
   useEffect(() => {
     if (!isEditing) {
       setForm(fieldsFromItem(item));
-    } else {
-      const current = members.find((m) => m.userId === item.userId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item, isEditing]);
+
+  useEffect(() => {
+    if (isEditing) {
+      const current = members.find((m) => m.userId === form.userId);
       setReassignText(current ? memberLabel(current) : "");
       setProjectQuery(project ? projectLabel(project, clients) : "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item, isEditing, members]);
+  }, [isEditing]);
 
   const handleReassignInput = (text) => {
     setReassignText(text);

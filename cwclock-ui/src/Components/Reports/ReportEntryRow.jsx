@@ -34,6 +34,13 @@ const ReportEntryRow = ({ entry, orgId, currency, isAdminOrOwner, showAmount, on
   const [reassignText, setReassignText] = useState("");
 
   useEffect(() => {
+    if (!isEditing) {
+      setForm(fieldsFromEntry(entry));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entry, isEditing]);
+
+  useEffect(() => {
     if (isEditing) {
       const current = members.find((m) => m.userId === form.userId);
       setReassignText(current ? memberLabel(current) : "");
