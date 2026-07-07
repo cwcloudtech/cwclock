@@ -1,5 +1,11 @@
 # AI instruction 14
 
+## Frontend UX/UI
+
+All uploadabled images like user's avatar, organization or stamp must be resized to 256x256px and let the user choose the crop of the image.
+
+The `256x256px` must be set an environment variable `IMAGE_SIZE` (and this is the default value).
+
 ## Healthcheck endpoint
 
 Add a `GET /v1/health` which answer:
