@@ -14,6 +14,10 @@ Add a `GET /v1/health` which answer:
 {"status":"ok","alive":true}
 ```
 
+## Manifest endpoint
+
+Add a `GET /v1/manifest` which answer the content of the `manifest.json` file (it has to be included as an asset during the build and will be replaced dynamically by the cicd pipeline).
+
 ## Opentelemetry traces and logs 
 
 I want opentelemetry traces with span on every endpoint call on the backend.

@@ -31,6 +31,7 @@ ENTRYPOINT ["/usr/local/bin/cwclock-api"]
 # Stage ui run
 FROM nginx:${NGINX_IMAGE_TAG} AS ui
 COPY --from=ui-build /app/build /usr/share/nginx/html
+COPY --from=ui-build /app/manifest.json /usr/share/nginx/html/manifest.json
 COPY .docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY .docker/nginx/docker-entrypoint.sh /docker-entrypoint.sh
 
