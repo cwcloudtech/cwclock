@@ -8,7 +8,7 @@ import useTime from "./useTime";
 import projectLabel from "../common/projectLabel";
 import { useI18n } from "../../i18n/I18nContext";
 
-const TaskInput = () => {
+const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
   const { t } = useI18n();
   const { timerOn, sec, min, hrs, handleTimer } = useTimer();
   const { hours, minutes, seconds } = useDateHook();
@@ -77,6 +77,16 @@ const TaskInput = () => {
           ))}
         </datalist>
         <div className={styles.Timer}>
+          {isAdminOrOwner && (
+            <button
+              type="button"
+              className={styles.ImportBtn}
+              onClick={onImportClick}
+              title={t("timeTracker.importCsvTitle")}
+            >
+              {t("timeTracker.importCsv")}
+            </button>
+          )}
           <span className={styles.clock} title={t("timeTracker.elapsedTime")}>
             {hrs < 10 ? "0" + hrs : hrs}:{min < 10 ? "0" + min : min}:
             {sec < 10 ? "0" + sec : sec}

@@ -66,19 +66,10 @@ const TasksApp = () => {
 
   return (
     <div className={styles.Body1}>
-      {isAdminOrOwner && (
-        <div className={styles.toolbar}>
-          <button
-            type="button"
-            className={styles.importBtn}
-            onClick={() => setShowImport(true)}
-            title={t("timeTracker.importCsvTitle")}
-          >
-            {t("timeTracker.importCsv")}
-          </button>
-        </div>
-      )}
-      <TaskInput />
+      <TaskInput
+        isAdminOrOwner={isAdminOrOwner}
+        onImportClick={() => setShowImport(true)}
+      />
       {tasks.length <= 0 ? (
         <div>
           <EmptyTask />

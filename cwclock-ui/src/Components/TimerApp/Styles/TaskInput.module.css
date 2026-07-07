@@ -59,6 +59,23 @@
   text-align: center;
 }
 
+.ImportBtn {
+  padding: 9px 16px;
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-sm);
+  background-color: var(--cw-surface);
+  color: var(--cw-text);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--cw-transition);
+}
+
+.ImportBtn:hover {
+  background-color: var(--cw-bg-alt);
+}
+
 .Blue,
 .Red {
   padding: 9px 20px;
