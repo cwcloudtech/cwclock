@@ -33,13 +33,15 @@ type ReportTotals struct {
 	Currency     string   `json:"currency"`
 }
 
-// ReportSummaryRow aggregates entries sharing the same project+description
-// ("aggregated by redundant labels") into a single summary line.
+// ReportSummaryRow aggregates entries sharing the same project+description+
+// user into a single summary line. UserEmail identifies whose time it is,
+// since durations from different users are never merged into one row.
 type ReportSummaryRow struct {
 	ProjectID    string   `json:"projectId"`
 	ProjectName  string   `json:"projectName"`
 	ClientName   string   `json:"clientName"`
 	Description  string   `json:"description"`
+	UserEmail    string   `json:"userEmail"`
 	DurationSecs int      `json:"durationSecs"`
 	Amount       *float64 `json:"amount,omitempty"`
 }

@@ -58,45 +58,45 @@ func padHeader(label string, width int) string {
 }
 
 type summaryRowVM struct {
-	ProjectName, ClientName, Description string
-	DurationHMS, DurationDecimal         string
-	ShowAmount                           bool
-	AmountStr                            string
+	ProjectName, ClientName, Description, Email string
+	DurationHMS, DurationDecimal                string
+	ShowAmount                                  bool
+	AmountStr                                   string
 }
 
 const summaryTableMarkdownTpl = `
-| {{.ProjectHeader}} | {{.ClientHeader}} | {{.DescriptionHeader}} | Time (h) | Time (decimal) |{{if .ShowAmount}} Amount ({{.Currency}}) |{{end}}
-|---|---|---|---|---|{{if .ShowAmount}}---|{{end}}
-{{range .Rows}}| {{.ProjectName}} | {{.ClientName}} | {{.Description}} | {{.DurationHMS}} | {{.DurationDecimal}} |{{if $.ShowAmount}} {{.AmountStr}} |{{end}}
+| {{.ProjectHeader}} | {{.ClientHeader}} | {{.DescriptionHeader}} | {{.EmailHeader}} | Time (h) | Time (decimal) |{{if .ShowAmount}} Amount ({{.Currency}}) |{{end}}
+|---|---|---|---|---|---|{{if .ShowAmount}}---|{{end}}
+{{range .Rows}}| {{.ProjectName}} | {{.ClientName}} | {{.Description}} | {{.Email}} | {{.DurationHMS}} | {{.DurationDecimal}} |{{if $.ShowAmount}} {{.AmountStr}} |{{end}}
 {{end}}`
 
 type detailedRowVM struct {
-	Day, Description, ProjectClient, Time, DurationHMS, User string
-	ShowAmount                                               bool
-	AmountStr                                                string
+	Day, Description, ProjectClient, Time, DurationHMS, User, Email string
+	ShowAmount                                                      bool
+	AmountStr                                                       string
 }
 
 const detailedTableMarkdownTpl = `
-| {{.DateHeader}} | {{.DescriptionHeader}} | {{.ProjectClientHeader}} | {{.TimeHeader}} | Duration | {{.UserHeader}} |{{if .ShowAmount}} Amount |{{end}}
-|---|---|---|---|---|---|{{if .ShowAmount}}---|{{end}}
-{{range .Rows}}| {{.Day}} | {{.Description}} | {{.ProjectClient}} | {{.Time}} | {{.DurationHMS}} | {{.User}} |{{if $.ShowAmount}} {{.AmountStr}} |{{end}}
+| {{.DateHeader}} | {{.DescriptionHeader}} | {{.ProjectClientHeader}} | {{.TimeHeader}} | Duration | {{.UserHeader}} | {{.EmailHeader}} |{{if .ShowAmount}} Amount |{{end}}
+|---|---|---|---|---|---|---|{{if .ShowAmount}}---|{{end}}
+{{range .Rows}}| {{.Day}} | {{.Description}} | {{.ProjectClient}} | {{.Time}} | {{.DurationHMS}} | {{.User}} | {{.Email}} |{{if $.ShowAmount}} {{.AmountStr}} |{{end}}
 {{end}}`
 
 var headerTemplate = template.Must(template.New("header").Parse(headerMarkdownTpl))
 
 type summaryTableData struct {
-	ShowAmount                                     bool
-	Currency                                       string
-	ProjectHeader, ClientHeader, DescriptionHeader string
-	Rows                                           []summaryRowVM
+	ShowAmount                                                  bool
+	Currency                                                    string
+	ProjectHeader, ClientHeader, DescriptionHeader, EmailHeader string
+	Rows                                                        []summaryRowVM
 }
 
 var summaryTableTemplate = template.Must(template.New("summaryTable").Parse(summaryTableMarkdownTpl))
 
 type detailedTableData struct {
-	ShowAmount                                                                 bool
-	DateHeader, DescriptionHeader, ProjectClientHeader, TimeHeader, UserHeader string
-	Rows                                                                       []detailedRowVM
+	ShowAmount                                                                              bool
+	DateHeader, DescriptionHeader, ProjectClientHeader, TimeHeader, UserHeader, EmailHeader string
+	Rows                                                                                    []detailedRowVM
 }
 
 var detailedTableTemplate = template.Must(template.New("detailedTable").Parse(detailedTableMarkdownTpl))
@@ -118,6 +118,7 @@ func SummaryPDF(orgName, start, end string, report models.SummaryReport, logoDat
 			ProjectName:     r.ProjectName,
 			ClientName:      r.ClientName,
 			Description:     r.Description,
+			Email:           r.UserEmail,
 			DurationHMS:     formatHMS(r.DurationSecs),
 			DurationDecimal: formatDecimalHours(r.DurationSecs),
 			ShowAmount:      showAmount,
@@ -135,6 +136,7 @@ func SummaryPDF(orgName, start, end string, report models.SummaryReport, logoDat
 		ProjectHeader:     padHeader("Project", 18),
 		ClientHeader:      padHeader("Client", 14),
 		DescriptionHeader: padHeader("Description", 42),
+		EmailHeader:       padHeader("Email", 24),
 		Rows:              rows,
 	}); err != nil {
 		return nil, err
@@ -164,6 +166,7 @@ func DetailedPDF(orgName, start, end string, report models.DetailedReport, logoD
 			Time:          timeRange,
 			DurationHMS:   formatHMS(e.DurationSecs),
 			User:          e.UserName,
+			Email:         e.UserEmail,
 			ShowAmount:    showAmount,
 		}
 		if showAmount && e.Amount != nil {
@@ -179,6 +182,7 @@ func DetailedPDF(orgName, start, end string, report models.DetailedReport, logoD
 		ProjectClientHeader: padHeader("Project / Client", 30),
 		TimeHeader:          padHeader("Time", 27),
 		UserHeader:          padHeader("User", 16),
+		EmailHeader:         padHeader("Email", 24),
 		Rows:                rows,
 	}); err != nil {
 		return nil, err

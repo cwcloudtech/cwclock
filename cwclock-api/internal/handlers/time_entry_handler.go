@@ -59,17 +59,15 @@ func isAdminOrOwner(r *http.Request) bool {
 	return role == models.RoleAdmin || role == models.RoleOwner
 }
 
+// List returns the connected user's own time entries for the org - this is
+// the personal time tracker screen, not a management view, so it's scoped
+// to the caller regardless of role. Admins/owners see every member's entries
+// through the reports screen instead (see ReportHandler.Get/Export).
 func (h *TimeEntryHandler) List(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
 	userID, _ := middleware.UserIDFromContext(r.Context())
-	role, _ := middleware.OrgRoleFromContext(r.Context())
 
-	filterUserID := userID
-	if role == models.RoleAdmin || role == models.RoleOwner {
-		filterUserID = ""
-	}
-
-	entries, err := h.entries.List(r.Context(), orgID, filterUserID)
+	entries, err := h.entries.List(r.Context(), orgID, userID)
 	if err != nil {
 		writeStoreError(w, err)
 		return

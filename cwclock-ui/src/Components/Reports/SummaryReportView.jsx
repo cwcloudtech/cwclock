@@ -32,6 +32,7 @@ const SummaryReportView = ({ report }) => {
           <span>{t("projects.title")}</span>
           <span>{t("common.client")}</span>
           <span>{t("timeTracker.taskDescription")}</span>
+          <span>{t("common.email")}</span>
           <span>{t("reports.duration")}</span>
           {showAmount && <span>{t("reports.amount")}</span>}
         </div>
@@ -41,6 +42,7 @@ const SummaryReportView = ({ report }) => {
             <span>{row.projectName}</span>
             <span>{row.clientName}</span>
             <span>{row.description}</span>
+            <span>{row.userEmail}</span>
             <span>{formatHMS(row.durationSecs)}</span>
             {showAmount && (
               <span>

@@ -208,16 +208,25 @@ func DailyBuckets(entries []models.ReportEntry, start, end time.Time) []models.R
 	return buckets
 }
 
-// SummaryRows aggregates entries by task name/label: a "task" is one summary
-// line, and every time record sharing the same name — regardless of which
-// day or session it was logged in — is combined into that one line, summing
-// duration/amount. Ranked by duration, most time-consuming task first.
+// summaryKey groups entries into one summary line: same project, same task
+// label and same user (durations from different users are always kept on
+// separate rows, since each row carries a single UserEmail).
+type summaryKey struct {
+	ProjectID string
+	Text      string
+	UserID    string
+}
+
+// SummaryRows aggregates entries by (project, task label, user): every time
+// record sharing all three — regardless of which day or session it was
+// logged in — is combined into that one line, summing duration/amount.
+// Ranked by duration, most time-consuming task first.
 func SummaryRows(entries []models.ReportEntry, canSeeAmount bool) []models.ReportSummaryRow {
-	byKey := map[string]*models.ReportSummaryRow{}
-	order := []string{}
+	byKey := map[summaryKey]*models.ReportSummaryRow{}
+	order := []summaryKey{}
 
 	for _, e := range entries {
-		k := e.Text
+		k := summaryKey{ProjectID: e.ProjectID, Text: e.Text, UserID: e.UserID}
 		row, ok := byKey[k]
 		if !ok {
 			row = &models.ReportSummaryRow{
@@ -225,6 +234,7 @@ func SummaryRows(entries []models.ReportEntry, canSeeAmount bool) []models.Repor
 				ProjectName: e.ProjectName,
 				ClientName:  e.ClientName,
 				Description: e.Text,
+				UserEmail:   e.UserEmail,
 			}
 			if canSeeAmount {
 				zero := 0.0

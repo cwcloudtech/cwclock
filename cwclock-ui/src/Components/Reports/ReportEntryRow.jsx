@@ -172,6 +172,7 @@ const ReportEntryRow = ({ entry, orgId, currency, isAdminOrOwner, showAmount, on
       </span>
       <span>{formatHMS(entry.durationSecs)}</span>
       <span>{entry.userName}</span>
+      <span>{entry.userEmail}</span>
       {showAmount && (
         <span>
           {(entry.amount ?? 0).toFixed(2)} {currency}

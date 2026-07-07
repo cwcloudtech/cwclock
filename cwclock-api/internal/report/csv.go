@@ -55,13 +55,13 @@ func formatUSDate(day string) string {
 }
 
 // SummaryCSV renders the "Summary" export: one row per (project,
-// description) group. Amount columns are omitted entirely when the caller
-// isn't allowed to see billable amounts.
+// description, user) group. Amount columns are omitted entirely when the
+// caller isn't allowed to see billable amounts.
 func SummaryCSV(rows []models.ReportSummaryRow, canSeeAmount bool, currency string) ([]byte, error) {
 	var buf bytes.Buffer
 	w := csv.NewWriter(&buf)
 
-	header := []string{"Project", "Client", "Description", "Time (h)", "Time (decimal)"}
+	header := []string{"Project", "Client", "Description", "Email", "Time (h)", "Time (decimal)"}
 	if canSeeAmount {
 		header = append(header, fmt.Sprintf("Amount (%s)", currency))
 	}
@@ -70,7 +70,7 @@ func SummaryCSV(rows []models.ReportSummaryRow, canSeeAmount bool, currency stri
 	}
 
 	for _, r := range rows {
-		record := []string{r.ProjectName, r.ClientName, r.Description, formatHMS(r.DurationSecs), formatDecimalHours(r.DurationSecs)}
+		record := []string{r.ProjectName, r.ClientName, r.Description, r.UserEmail, formatHMS(r.DurationSecs), formatDecimalHours(r.DurationSecs)}
 		if canSeeAmount {
 			amt := 0.0
 			if r.Amount != nil {

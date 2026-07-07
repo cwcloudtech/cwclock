@@ -32,6 +32,7 @@ const DetailedReportView = ({ report, orgId, isAdminOrOwner, onChanged }) => {
           <span>{t("reports.time")}</span>
           <span>{t("reports.duration")}</span>
           <span>{t("nav.users")}</span>
+          <span>{t("common.email")}</span>
           {showAmount && <span>{t("reports.amount")}</span>}
           <span />
         </div>
