@@ -7,6 +7,7 @@ import { listMembersApi } from "../../Redux/Organizations/Org.actions";
 import ConfigForm from "../common/ConfigForm";
 import CollapsiblePanel from "../common/CollapsiblePanel";
 import Tooltip from "../common/Tooltip";
+import EmptyState from "../common/EmptyState";
 import EditClientModal from "./EditClientModal";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
@@ -97,6 +98,10 @@ const Clients = () => {
           error={error}
         />
       </CollapsiblePanel>
+
+      {clients.length === 0 && (
+        <EmptyState title={t("clients.emptyTitle")} body={t("clients.emptyBody")} />
+      )}
 
       <ul className="cw-list">
         {clients.map((client) => (

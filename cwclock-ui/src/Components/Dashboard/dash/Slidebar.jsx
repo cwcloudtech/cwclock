@@ -169,14 +169,16 @@ const Slidebar = () => {
                     </DropdownItem>
                   ))}
                   <DropdownDivider />
+                  {appVersion && (
+                    <DropdownText className={styles.versionLabelWrap}>
+                      <span className={styles.versionBadge}>v{appVersion}</span>
+                    </DropdownText>
+                  )}
                   <Tooltip label={t("nav.logout")} className={styles.menuItemTooltip}>
                     <DropdownItem onClick={handleLogout} className={styles.logoutItem}>
                       <FiLogOut style={{ fontSize: "16px" }} />
                     </DropdownItem>
                   </Tooltip>
-                  {appVersion && (
-                    <DropdownText className={styles.versionLabel}>v{appVersion}</DropdownText>
-                  )}
                 </>
               )}
             </Dropdown>

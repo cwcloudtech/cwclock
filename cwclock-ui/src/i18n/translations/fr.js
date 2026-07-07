@@ -167,6 +167,8 @@ const fr = {
     saveDailyRate: "Enregistrer le taux journalier",
     selectOrCreateFirst: "Sélectionnez ou créez d'abord une organisation",
     stamp: "Cachet",
+    emptyTitle: "Aucune organisation pour le moment",
+    emptyBody: "Créez votre première organisation ci-dessous pour commencer.",
   },
   clients: {
     title: "Clients",
@@ -177,12 +179,16 @@ const fr = {
     hoursPerDay: "Heures/jour (par défaut 7)",
     vatAndHours: " - TVA {{rate}}% - {{hours}}h/jour",
     editClientTitle: "Modifier {{name}}",
+    emptyTitle: "Aucun client pour le moment",
+    emptyBody: "Créez votre premier client ci-dessus pour commencer.",
   },
   projects: {
     title: "Projets",
     createProject: "Créer un projet",
     needClient: "Vous avez besoin d'un client avant de pouvoir créer un projet.",
     editProjectTitle: "Modifier {{name}}",
+    emptyTitle: "Aucun projet pour le moment",
+    emptyBody: "Créez votre premier projet ci-dessus pour commencer.",
   },
   admin: {
     usersTitle: "Utilisateurs",

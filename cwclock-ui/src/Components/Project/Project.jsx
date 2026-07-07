@@ -9,6 +9,7 @@ import { listMembersApi } from "../../Redux/Organizations/Org.actions";
 import ConfigForm from "../common/ConfigForm";
 import CollapsiblePanel from "../common/CollapsiblePanel";
 import Tooltip from "../common/Tooltip";
+import EmptyState from "../common/EmptyState";
 import EditProjectModal from "./EditProjectModal";
 import { useI18n } from "../../i18n/I18nContext";
 
@@ -89,6 +90,10 @@ const Project = () => {
           submitLabel={t("common.add")}
         />
       </CollapsiblePanel>
+
+      {projects.length === 0 && (
+        <EmptyState title={t("projects.emptyTitle")} body={t("projects.emptyBody")} />
+      )}
 
       <ul className="cw-list">
         {projects.map((project) => {

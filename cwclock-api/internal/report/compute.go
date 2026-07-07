@@ -18,6 +18,23 @@ import (
 // 00:00-23:59 span.
 const allDayStartMinutes = 9 * 60
 
+// DayLayout is the plain calendar-day format ("2006-01-02" in Go's reference
+// time, i.e. YYYY-MM-DD) used everywhere a report deals with a day as a bare
+// date with no time-of-day or timezone component: ReportEntry.Day, the
+// start/end query params reports are filtered by, and DailyBuckets' keys.
+// Sharing one constant keeps every parse/format of that string in sync.
+const DayLayout = "2006-01-02"
+
+// USDateLayout ("01/02/2006", i.e. MM/DD/YYYY) is how a day is displayed to
+// users in report output (CSV rows, the PDF header's period line): US date
+// order, matching this app's other user-facing date formatting (formatAMPM).
+const USDateLayout = "01/02/2006"
+
+// FilenameDateLayout ("01_02_2006", i.e. MM_DD_YYYY) is how a day is written
+// into exported filenames. Same field order as USDateLayout, but underscored
+// instead of slashed since "/" isn't a valid filename character.
+const FilenameDateLayout = "01_02_2006"
+
 // Lookups holds the related records a raw TimeEntry needs to be enriched
 // into a ReportEntry, keyed by ID.
 type Lookups struct {
@@ -185,7 +202,7 @@ func DailyBuckets(entries []models.ReportEntry, start, end time.Time) []models.R
 	}
 	buckets := []models.ReportDailyBucket{}
 	for d := start; !d.After(end); d = d.AddDate(0, 0, 1) {
-		day := d.Format("2006-01-02")
+		day := d.Format(DayLayout)
 		buckets = append(buckets, models.ReportDailyBucket{Day: day, DurationSecs: byDay[day]})
 	}
 	return buckets

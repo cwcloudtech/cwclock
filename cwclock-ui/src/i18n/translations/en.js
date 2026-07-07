@@ -167,6 +167,8 @@ const en = {
     saveDailyRate: "Save daily rate",
     selectOrCreateFirst: "Select or create an organization first",
     stamp: "Stamp",
+    emptyTitle: "No organizations yet",
+    emptyBody: "Create your first organization below to get started.",
   },
   clients: {
     title: "Clients",
@@ -177,12 +179,16 @@ const en = {
     hoursPerDay: "Hours/day (default 7)",
     vatAndHours: " - VAT {{rate}}% - {{hours}}h/day",
     editClientTitle: "Edit {{name}}",
+    emptyTitle: "No clients yet",
+    emptyBody: "Create your first client above to get started.",
   },
   projects: {
     title: "Projects",
     createProject: "Create a project",
     needClient: "You need a client before you can create a project.",
     editProjectTitle: "Edit {{name}}",
+    emptyTitle: "No projects yet",
+    emptyBody: "Create your first project above to get started.",
   },
   admin: {
     usersTitle: "Users",

@@ -101,12 +101,13 @@ type detailedTableData struct {
 
 var detailedTableTemplate = template.Must(template.New("detailedTable").Parse(detailedTableMarkdownTpl))
 
-// SummaryPDF renders the summary report as a PDF: a header with totals
-// followed by one table row per (project, description) group. logoData/
-// logoType (see ResolveLogo) are placed in the header's top-right corner.
+// SummaryPDF renders the summary report as a PDF: a header with totals, the
+// daily duration chart as an image, then one table row per (project,
+// description) group. logoData/logoType (see ResolveLogo) are placed in the
+// header's top-right corner.
 func SummaryPDF(orgName, start, end string, report models.SummaryReport, logoData []byte, logoType string) ([]byte, error) {
-	var buf strings.Builder
-	if err := headerTemplate.Execute(&buf, newReportHeader("Summary report", orgName, start, end, report.Totals)); err != nil {
+	var headerBuf strings.Builder
+	if err := headerTemplate.Execute(&headerBuf, newReportHeader("Summary report", orgName, start, end, report.Totals)); err != nil {
 		return nil, err
 	}
 
@@ -127,7 +128,8 @@ func SummaryPDF(orgName, start, end string, report models.SummaryReport, logoDat
 		rows = append(rows, vm)
 	}
 
-	if err := summaryTableTemplate.Execute(&buf, summaryTableData{
+	var tableBuf strings.Builder
+	if err := summaryTableTemplate.Execute(&tableBuf, summaryTableData{
 		ShowAmount:        showAmount,
 		Currency:          report.Totals.Currency,
 		ProjectHeader:     padHeader("Project", 18),
@@ -138,7 +140,8 @@ func SummaryPDF(orgName, start, end string, report models.SummaryReport, logoDat
 		return nil, err
 	}
 
-	return RenderMarkdownPDF(buf.String(), logoData, logoType)
+	chartPNG := DailyChartPNG(report.Daily)
+	return RenderSummaryPDF(headerBuf.String(), tableBuf.String(), chartPNG, logoData, logoType)
 }
 
 // DetailedPDF renders the detailed report as a PDF: a header with totals

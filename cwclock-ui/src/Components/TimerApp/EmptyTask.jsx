@@ -1,17 +1,10 @@
 import React from 'react';
-import styles from './Styles/TaskApp.module.css';
-import logo from '../../assets/images/octopus.png';
+import EmptyState from '../common/EmptyState';
 import { useI18n } from '../../i18n/I18nContext';
 
 const EmptyTask = () => {
   const { t } = useI18n();
-  return (
-    <div className={styles.Empty}>
-        <img src={logo} alt="" />
-        <h4>{t('timeTracker.emptyTitle')}</h4>
-        <p>{t('timeTracker.emptyBody')}</p>
-    </div>
-  )
+  return <EmptyState title={t('timeTracker.emptyTitle')} body={t('timeTracker.emptyBody')} />;
 }
 
 export default EmptyTask

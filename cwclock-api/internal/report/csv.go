@@ -47,11 +47,11 @@ func formatAMPM(hm *string) string {
 }
 
 func formatUSDate(day string) string {
-	d, err := time.Parse("2006-01-02", day)
+	d, err := time.Parse(DayLayout, day)
 	if err != nil {
 		return day
 	}
-	return d.Format("01/02/2006")
+	return d.Format(USDateLayout)
 }
 
 // SummaryCSV renders the "Summary" export: one row per (project,
@@ -126,7 +126,7 @@ func DetailedCSV(entries []models.ReportEntry, canSeeAmount bool, currency strin
 			}
 			record = append(record, formatAmount(rate), formatAmount(amt))
 		}
-		record = append(record, e.CreatedAt.Format("01/02/2006"))
+		record = append(record, e.CreatedAt.Format(USDateLayout))
 
 		if err := w.Write(record); err != nil {
 			return nil, err

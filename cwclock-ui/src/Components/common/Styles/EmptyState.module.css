@@ -1,0 +1,30 @@
+.Empty {
+  max-width: 360px;
+  padding: var(--cw-spacing-xl) var(--cw-spacing-lg);
+  margin: var(--cw-spacing-xl) auto 0;
+  background-color: var(--cw-surface);
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-lg);
+  box-shadow: var(--cw-shadow-sm);
+  text-align: center;
+}
+
+.Empty > h4 {
+  margin: var(--cw-spacing) 0 8px;
+}
+
+.Empty > p {
+  margin: 0;
+  color: var(--cw-text-muted);
+}
+
+.Empty > img {
+  width: 45%;
+  height: auto;
+}
+
+@media only screen and (max-width: 600px) {
+  .Empty {
+    max-width: calc(100% - 40px);
+  }
+}

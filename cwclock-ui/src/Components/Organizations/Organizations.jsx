@@ -15,6 +15,7 @@ import {
 import RequiredMark from "../common/RequiredMark";
 import ConfigForm from "../common/ConfigForm";
 import CollapsiblePanel from "../common/CollapsiblePanel";
+import EmptyState from "../common/EmptyState";
 import memberLabel from "../common/memberLabel";
 import useEmailAutocomplete from "../common/useEmailAutocomplete";
 import { useI18n } from "../../i18n/I18nContext";
@@ -252,6 +253,10 @@ const Organizations = () => {
   return (
     <div className={styles.main}>
       <h1 className="cw-title">{t("organizations.title")}</h1>
+
+      {organizations.length === 0 && (
+        <EmptyState title={t("organizations.emptyTitle")} body={t("organizations.emptyBody")} />
+      )}
 
       <ul className="cw-list">
         {organizations.map((org) => (

@@ -124,8 +124,8 @@ func (h *ReportHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	start, _ := time.Parse("2006-01-02", filter.Start)
-	end, _ := time.Parse("2006-01-02", filter.End)
+	start, _ := time.Parse(report.DayLayout, filter.Start)
+	end, _ := time.Parse(report.DayLayout, filter.End)
 	writeJSON(w, http.StatusOK, models.SummaryReport{
 		Totals: report.Totals(entries, canSeeAmount, org.Currency),
 		Daily:  report.DailyBuckets(entries, start, end),
@@ -134,11 +134,11 @@ func (h *ReportHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func exportFilenameDate(day string) string {
-	d, err := time.Parse("2006-01-02", day)
+	d, err := time.Parse(report.DayLayout, day)
 	if err != nil {
 		return day
 	}
-	return d.Format("01_02_2006")
+	return d.Format(report.FilenameDateLayout)
 }
 
 // Export streams the report as a downloadable CSV or PDF file, named per
@@ -181,8 +181,11 @@ func (h *ReportHandler) Export(w http.ResponseWriter, r *http.Request) {
 	case reportType == "summary" && format == "pdf":
 		contentType = "application/pdf"
 		logoData, logoType := report.ResolveLogo(org.Picture)
+		start, _ := time.Parse(report.DayLayout, filter.Start)
+		end, _ := time.Parse(report.DayLayout, filter.End)
 		data, err = report.SummaryPDF(org.Name, filter.Start, filter.End, models.SummaryReport{
 			Totals: report.Totals(entries, canSeeAmount, org.Currency),
+			Daily:  report.DailyBuckets(entries, start, end),
 			Rows:   report.SummaryRows(entries, canSeeAmount),
 		}, logoData, logoType)
 	default:
