@@ -22,6 +22,7 @@ func New(
 	timeEntryHandler *handlers.TimeEntryHandler,
 	reportHandler *handlers.ReportHandler,
 	adminHandler *handlers.AdminHandler,
+	importHandler *handlers.ImportHandler,
 	orgs *store.OrgStore,
 	users *store.UserStore,
 	jwtSecret string,
@@ -140,6 +141,10 @@ func New(
 					r.Use(middleware.RequireRole(models.RoleMember))
 					r.Get("/", reportHandler.Get)
 					r.Get("/export", reportHandler.Export)
+				})
+
+				r.Route("/import", func(r chi.Router) {
+					r.With(middleware.RequireRole(models.RoleAdmin)).Post("/clockify", importHandler.ImportClockify)
 				})
 			})
 		})

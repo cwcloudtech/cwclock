@@ -128,3 +128,14 @@ func (s *ProjectStore) Count(ctx context.Context) (int64, error) {
 	err := s.pool.QueryRow(ctx, `SELECT count(*) FROM projects`).Scan(&count)
 	return count, err
 }
+
+// FindByName returns the first project in orgID under clientID whose name
+// exactly matches name.
+func (s *ProjectStore) FindByName(ctx context.Context, orgID, clientID, name string) (models.Project, error) {
+	row := s.pool.QueryRow(ctx, `
+		SELECT id, organization_id, client_id, data, created_at, updated_at
+		FROM projects WHERE organization_id = $1 AND client_id = $2 AND data->>'name' = $3
+		LIMIT 1
+	`, orgID, clientID, name)
+	return scanProject(row)
+}

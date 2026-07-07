@@ -241,3 +241,15 @@ func (s *TimeEntryStore) Delete(ctx context.Context, id string) error {
 	}
 	return nil
 }
+
+// ExistsByKey reports whether a time entry already exists for the given user,
+// project, day, and start/end times, used to avoid duplicates during import.
+func (s *TimeEntryStore) ExistsByKey(ctx context.Context, orgID, userID, projectID, day, startTime, endTime string) (bool, error) {
+	var count int
+	err := s.pool.QueryRow(ctx, `
+		SELECT count(*) FROM time_entries
+		WHERE organization_id = $1 AND user_id = $2 AND project_id = $3
+		  AND data->>'day' = $4 AND data->>'start' = $5 AND data->>'end' = $6
+	`, orgID, userID, projectID, day, startTime, endTime).Scan(&count)
+	return count > 0, err
+}

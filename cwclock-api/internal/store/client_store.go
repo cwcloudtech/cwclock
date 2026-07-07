@@ -192,3 +192,13 @@ func (s *ClientStore) ListAll(ctx context.Context) ([]models.Client, error) {
 	}
 	return clients, rows.Err()
 }
+
+// FindByName returns the first client in orgID whose name exactly matches name.
+func (s *ClientStore) FindByName(ctx context.Context, orgID, name string) (models.Client, error) {
+	row := s.pool.QueryRow(ctx, `
+		SELECT id, organization_id, data, created_at, updated_at
+		FROM clients WHERE organization_id = $1 AND data->>'name' = $2
+		LIMIT 1
+	`, orgID, name)
+	return scanClient(row)
+}

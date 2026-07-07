@@ -255,3 +255,19 @@ func (s *UserStore) SearchByEmail(ctx context.Context, query string, limit int) 
 	}
 	return users, rows.Err()
 }
+
+// CreateDisabled registers a user directly as disabled with no password hash,
+// used when importing time entries for an unknown user so they exist in the
+// system but cannot log in until confirmed and given a password.
+func (s *UserStore) CreateDisabled(ctx context.Context, email, name, surname string) (models.User, error) {
+	data, err := json.Marshal(userData{Name: name, Surname: surname, Role: string(models.GlobalRoleDisabled)})
+	if err != nil {
+		return models.User{}, err
+	}
+	row := s.pool.QueryRow(ctx, `
+		INSERT INTO users (email, data)
+		VALUES ($1, $2)
+		RETURNING id, email, data, created_at, updated_at
+	`, email, data)
+	return scanUser(row)
+}

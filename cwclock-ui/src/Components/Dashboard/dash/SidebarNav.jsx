@@ -34,6 +34,7 @@ const SidebarNav = ({ expanded, isSuperuser }) => {
           <Tooltip key={to} label={expanded ? null : label} position="right" className={styles.tooltipWrapper}>
             <NavLink
               to={to}
+              end
               className={({ isActive }) => `${styles.link} ${isActive ? styles.linkActive : ""}`}
             >
               <Icon className={styles.icon} />
