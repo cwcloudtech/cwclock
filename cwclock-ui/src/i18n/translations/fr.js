@@ -111,7 +111,7 @@ const fr = {
     createAccount: "Créer un compte",
     createAccountTitle: "Créez votre compte",
     passwordsDontMatch: "Les mots de passe ne correspondent pas.",
-    openSourcePrefix: "Solution open source, les sources sont disponibles",
+    openSourcePrefix: "Solution open source par CWCloud, les sources sont disponibles",
     here: "ici",
   },
   timeTracker: {
