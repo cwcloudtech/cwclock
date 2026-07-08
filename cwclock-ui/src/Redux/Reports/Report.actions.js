@@ -4,16 +4,22 @@ import { ReportLOADING, ReportERROR, ReportSUCCESS } from "./Report.types";
 import toastOptions from "../toastOptions";
 import { apiErrorMessage, getStoredLocale } from "../../i18n/translate";
 
-const ENDPOINT = (orgId) => `${process.env.REACT_APP_APIURL}/v1/organizations/${orgId}/reports`;
+// filters.type ("summary"|"detailed") selects which endpoint to call, per
+// the Clockify-style contract the backend now speaks: separate URLs for
+// each report shape instead of a shared endpoint with a `type` query param.
+const ENDPOINT = (orgId, type) => `${process.env.REACT_APP_APIURL}/v1/organizations/${orgId}/reports/${type}`;
 
 const authConfig = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
 
-const toParams = ({ type, start, end, clientIds, projectIds, userIds }) => {
-  const params = { type, start, end };
-  if (clientIds?.length) params.clientIds = clientIds.join(",");
-  if (projectIds?.length) params.projectIds = projectIds.join(",");
-  if (userIds?.length) params.userIds = userIds.join(",");
-  return params;
+const toPayload = ({ start, end, clientIds, projectIds, userIds }) => {
+  const payload = {
+    dateRangeStart: `${start}T00:00:00.000Z`,
+    dateRangeEnd: `${end}T23:59:59.999Z`,
+  };
+  if (clientIds?.length) payload.clients = { ids: clientIds };
+  if (projectIds?.length) payload.projects = { ids: projectIds };
+  if (userIds?.length) payload.users = { ids: userIds };
+  return payload;
 };
 
 // A blob-response error carries the JSON error body as a Blob instead of a
@@ -33,7 +39,7 @@ const parseBlobError = async (e) => {
 export const fetchReportApi = (orgId, filters, token) => async (dispatch) => {
   dispatch({ type: ReportLOADING });
   try {
-    const { data } = await axios.get(ENDPOINT(orgId), { ...authConfig(token), params: toParams(filters) });
+    const { data } = await axios.post(ENDPOINT(orgId, filters.type), toPayload(filters), authConfig(token));
     dispatch({ type: ReportSUCCESS, payload: data });
     return data;
   } catch (e) {
@@ -50,11 +56,11 @@ const filenameFromDisposition = (disposition, fallback) => {
 
 export const exportReportApi = (orgId, filters, format, token) => async () => {
   try {
-    const response = await axios.get(`${ENDPOINT(orgId)}/export`, {
-      ...authConfig(token),
-      params: { ...toParams(filters), format },
-      responseType: "blob",
-    });
+    const response = await axios.post(
+      ENDPOINT(orgId, filters.type),
+      { ...toPayload(filters), exportType: format.toUpperCase() },
+      { ...authConfig(token), responseType: "blob" }
+    );
     const filename = filenameFromDisposition(response.headers["content-disposition"], `report.${format}`);
     const url = window.URL.createObjectURL(response.data);
     const link = document.createElement("a");

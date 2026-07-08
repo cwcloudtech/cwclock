@@ -44,6 +44,7 @@ func main() {
 	clientStore := store.NewClientStore(pool)
 	projectStore := store.NewProjectStore(pool)
 	timeEntryStore := store.NewTimeEntryStore(pool)
+	apiKeyStore := store.NewApiKeyStore(pool)
 
 	userHandler := handlers.NewUserHandler(userStore, cfg.JWTSecret)
 	orgHandler := handlers.NewOrganizationHandler(orgStore, userStore)
@@ -53,6 +54,7 @@ func main() {
 	adminHandler := handlers.NewAdminHandler(userStore)
 	importHandler := handlers.NewImportHandler(userStore, clientStore, projectStore, timeEntryStore)
 	reportHandler := handlers.NewReportHandler(orgStore, clientStore, projectStore, timeEntryStore)
+	apiKeyHandler := handlers.NewApiKeyHandler(apiKeyStore)
 
 	met, err := metrics.Setup(ctx, metrics.Config{
 		Endpoint: cfg.OtelEndpoint,
@@ -66,8 +68,8 @@ func main() {
 	defer func() { _ = met.Shutdown(context.Background()) }()
 
 	r := router.New(
-		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler, importHandler,
-		orgStore, userStore, cfg.JWTSecret, cfg.CorsEnabled, cfg.CorsAllowedOrigins, cfg.Version, cfg.ManifestPath,
+		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler, importHandler, apiKeyHandler,
+		orgStore, userStore, apiKeyStore, cfg.JWTSecret, cfg.CorsEnabled, cfg.CorsAllowedOrigins, cfg.Version, cfg.ManifestPath,
 		tel, met.Observe, met.Handler,
 	)
 

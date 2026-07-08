@@ -110,6 +110,17 @@ const ConfigForm = ({
             required={field.required}
           />
         );
+      case "date":
+        return (
+          <input
+            className="cw-input"
+            type="date"
+            min={field.min}
+            value={value}
+            onChange={(e) => onChange(field.name, e.target.value)}
+            required={field.required}
+          />
+        );
       default:
         return (
           <input

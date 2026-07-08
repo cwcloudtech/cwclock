@@ -91,27 +91,31 @@ func (s *TimeEntryStore) FindByID(ctx context.Context, id string) (models.TimeEn
 	return scanTimeEntry(row)
 }
 
-// List returns time entries for an organization, most recent entry day/start
-// first. When userID is non-empty, results are restricted to that user's own
+// List returns one page of an organization's time entries, most recent
+// entry day/start first, along with whether more entries exist beyond this
+// page. When userID is non-empty, results are restricted to that user's own
 // entries (used to enforce that members only see their own time records).
-func (s *TimeEntryStore) List(ctx context.Context, orgID, userID string) ([]models.TimeEntry, error) {
+func (s *TimeEntryStore) List(ctx context.Context, orgID, userID string, limit, offset int) ([]models.TimeEntry, bool, error) {
 	var rows pgx.Rows
 	var err error
+	// Fetch one extra row to know whether another page exists, trimmed below.
 	if utils.IsBlank(userID) {
 		rows, err = s.pool.Query(ctx, `
 			SELECT id, organization_id, client_id, project_id, user_id, data, created_at, updated_at
 			FROM time_entries WHERE organization_id = $1
 			ORDER BY data->>'day' DESC, data->>'start' DESC
-		`, orgID)
+			LIMIT $2 OFFSET $3
+		`, orgID, limit+1, offset)
 	} else {
 		rows, err = s.pool.Query(ctx, `
 			SELECT id, organization_id, client_id, project_id, user_id, data, created_at, updated_at
 			FROM time_entries WHERE organization_id = $1 AND user_id = $2
 			ORDER BY data->>'day' DESC, data->>'start' DESC
-		`, orgID, userID)
+			LIMIT $3 OFFSET $4
+		`, orgID, userID, limit+1, offset)
 	}
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	defer rows.Close()
 
@@ -119,11 +123,19 @@ func (s *TimeEntryStore) List(ctx context.Context, orgID, userID string) ([]mode
 	for rows.Next() {
 		t, err := scanTimeEntry(rows)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		entries = append(entries, t)
 	}
-	return entries, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, false, err
+	}
+
+	hasMore := len(entries) > limit
+	if hasMore {
+		entries = entries[:limit]
+	}
+	return entries, hasMore, nil
 }
 
 // TimeEntryReassignment holds the optional relational reassignments applied

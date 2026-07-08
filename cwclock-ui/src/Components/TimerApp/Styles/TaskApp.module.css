@@ -4,3 +4,27 @@
   padding: var(--cw-spacing-lg) 0;
 }
 
+.DaySeparator {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: var(--cw-spacing-lg) auto var(--cw-spacing);
+  padding: 6px 14px;
+  max-width: 900px;
+  background-color: var(--cw-bg-alt);
+  border-radius: var(--cw-radius-sm);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--cw-text-muted);
+}
+
+.Sentinel {
+  height: 1px;
+}
+
+.LoadMoreSpinner {
+  display: flex;
+  justify-content: center;
+  padding: var(--cw-spacing-lg) 0;
+}
+

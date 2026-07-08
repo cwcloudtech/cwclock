@@ -2,7 +2,9 @@ import {
   DeleteTasksSUCCESS,
   GetTasksERROR,
   GetTasksLOADING,
+  GetTasksLOADINGMORE,
   GetTasksSUCCESS,
+  GetTasksAppendSUCCESS,
   PostTasksSUCCESS,
   start,
   UpdateTasksSUCCESS,
@@ -12,7 +14,10 @@ const initialstate = {
   tasks: [],
   start: "",
   isLoading: false,
+  isLoadingMore: false,
   isError: false,
+  page: 1,
+  hasMore: false,
 };
 export const TaskReducer = (state = initialstate, { type, payload }) => {
   switch (type) {
@@ -22,11 +27,25 @@ export const TaskReducer = (state = initialstate, { type, payload }) => {
     case GetTasksLOADING: {
       return { ...state, isLoading: true };
     }
+    case GetTasksLOADINGMORE: {
+      return { ...state, isLoadingMore: true };
+    }
     case GetTasksERROR: {
-      return { ...state, isLoading: false, isError: true };
+      return { ...state, isLoading: false, isLoadingMore: false, isError: true };
     }
     case GetTasksSUCCESS: {
-      return { ...state, tasks: Array.isArray(payload) ? payload : [], isLoading: false };
+      const items = Array.isArray(payload?.items) ? payload.items : [];
+      return { ...state, tasks: items, isLoading: false, page: payload?.page ?? 1, hasMore: !!payload?.hasMore };
+    }
+    case GetTasksAppendSUCCESS: {
+      const items = Array.isArray(payload?.items) ? payload.items : [];
+      return {
+        ...state,
+        tasks: [...state.tasks, ...items],
+        isLoadingMore: false,
+        page: payload?.page ?? state.page,
+        hasMore: !!payload?.hasMore,
+      };
     }
     case PostTasksSUCCESS: {
       return { ...state, tasks: [...state.tasks, payload], isLoading: false };

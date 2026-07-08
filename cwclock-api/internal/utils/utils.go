@@ -1,6 +1,10 @@
 package utils
 
-import "strings"
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"strings"
+)
 
 // IsNotBlank reports whether str contains at least one non-whitespace
 // character.
@@ -37,4 +41,12 @@ func If[T any](cond bool, vtrue, vfalse T) T {
 		return vtrue
 	}
 	return vfalse
+}
+
+// HashToken returns the sha256 hex digest of a plaintext API key token, used
+// both when minting a new key and when verifying one presented via the
+// X-Api-Key header - only the hash is ever stored.
+func HashToken(token string) string {
+	sum := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(sum[:])
 }

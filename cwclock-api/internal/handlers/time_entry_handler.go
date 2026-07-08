@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 
@@ -11,6 +12,28 @@ import (
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/utils"
 )
+
+const (
+	defaultTimeEntryPageSize = 50
+	maxTimeEntryPageSize     = 200
+)
+
+// paginationParams reads page/pageSize query params, defaulting to page 1
+// and defaultTimeEntryPageSize, clamped to [1, maxTimeEntryPageSize].
+func paginationParams(r *http.Request) (page, pageSize int) {
+	page, _ = strconv.Atoi(r.URL.Query().Get("page"))
+	if page < 1 {
+		page = 1
+	}
+	pageSize, _ = strconv.Atoi(r.URL.Query().Get("pageSize"))
+	if pageSize < 1 {
+		pageSize = defaultTimeEntryPageSize
+	}
+	if pageSize > maxTimeEntryPageSize {
+		pageSize = maxTimeEntryPageSize
+	}
+	return page, pageSize
+}
 
 type TimeEntryHandler struct {
 	entries *store.TimeEntryStore
@@ -59,20 +82,27 @@ func isAdminOrOwner(r *http.Request) bool {
 	return role == models.RoleAdmin || role == models.RoleOwner
 }
 
-// List returns the connected user's own time entries for the org - this is
-// the personal time tracker screen, not a management view, so it's scoped
-// to the caller regardless of role. Admins/owners see every member's entries
-// through the reports screen instead (see ReportHandler.Get/Export).
+// List returns one page of the connected user's own time entries for the
+// org - this is the personal time tracker screen, not a management view, so
+// it's scoped to the caller regardless of role. Admins/owners see every
+// member's entries through the reports screen instead (see
+// ReportHandler.Detailed/Summary).
 func (h *TimeEntryHandler) List(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
 	userID, _ := middleware.UserIDFromContext(r.Context())
+	page, pageSize := paginationParams(r)
 
-	entries, err := h.entries.List(r.Context(), orgID, userID)
+	entries, hasMore, err := h.entries.List(r.Context(), orgID, userID, pageSize, (page-1)*pageSize)
 	if err != nil {
 		writeStoreError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, entries)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"items":    entries,
+		"page":     page,
+		"pageSize": pageSize,
+		"hasMore":  hasMore,
+	})
 }
 
 func (h *TimeEntryHandler) Create(w http.ResponseWriter, r *http.Request) {

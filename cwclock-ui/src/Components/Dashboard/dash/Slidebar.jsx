@@ -21,6 +21,7 @@ import Projectsdiv from "../pages/Projects";
 import Reportsdiv from "../pages/Reports";
 import Admindiv from "../pages/Admin";
 import AdminOrganizationsdiv from "../pages/AdminOrganizations";
+import ApiKeysdiv from "../pages/ApiKeys";
 import { useSelector, useDispatch } from "react-redux";
 import { meApi, logoutUser } from "../../../Redux/Auth/Auth.actions";
 import { listOrgsApi, selectOrg } from "../../../Redux/Organizations/Org.actions";
@@ -209,6 +210,7 @@ const Slidebar = () => {
             <Route path="/organizations" element={<Organizationsdiv />}></Route>
             <Route path="/clients" element={<Clientdiv />}></Route>
             <Route path="/projects" element={<Projectsdiv />}></Route>
+            <Route path="/api-keys" element={<ApiKeysdiv />}></Route>
             {isSuperuser && <Route path="/admin" element={<Admindiv />}></Route>}
             {isSuperuser && (
               <Route path="/admin/organizations" element={<AdminOrganizationsdiv />}></Route>

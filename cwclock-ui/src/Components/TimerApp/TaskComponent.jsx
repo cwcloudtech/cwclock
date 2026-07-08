@@ -8,6 +8,7 @@ import { deleteTasksApi, updateTasksApi } from "../../Redux/Tasks/Task.actions";
 import ConfirmModal from "../common/ConfirmModal";
 import memberLabel from "../common/memberLabel";
 import projectLabel from "../common/projectLabel";
+import ProjectBadge from "../common/ProjectBadge";
 import Tooltip from "../common/Tooltip";
 import toastOptions from "../../Redux/toastOptions";
 import { useI18n } from "../../i18n/I18nContext";
@@ -222,7 +223,7 @@ const TaskComponent = ({ item }) => {
               </div>
             </div>
             <div className={styles.Projects}>
-              <h6>{project ? projectLabel(project, clients) : ""}</h6>
+              <ProjectBadge project={project} clients={clients} />
             </div>
             <div className={styles.Time}>
               <span>{item.day}</span>

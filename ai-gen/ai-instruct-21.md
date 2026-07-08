@@ -14,7 +14,7 @@ A user should be able to set an API key to authenticate himself in scripts.
 
 The header will be `X-Api-Key` and will be prior to the JWT token if both are present.
 
-An API key can have an expiration date and a description (add a new table `api_key`).
+An API key can have an expiration date and a description (add a new table `api_keys`).
 
 ## Export API
 

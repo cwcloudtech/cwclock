@@ -2,7 +2,9 @@ import {
   DeleteTasksSUCCESS,
   GetTasksERROR,
   GetTasksLOADING,
+  GetTasksLOADINGMORE,
   GetTasksSUCCESS,
+  GetTasksAppendSUCCESS,
   PostTasksSUCCESS,
   start,
   UpdateTasksSUCCESS,
@@ -19,14 +21,15 @@ const authConfig = (token) => ({ headers: { Authorization: `Bearer ${token}` } }
 export const startTask = (payload) => (dispatch) => {
   dispatch({ type: start, payload: payload });
 };
-export const getTasksApi = (orgId, token) => async (dispatch) => {
-  dispatch({
-    type: GetTasksLOADING,
-  });
+// page 1 replaces the list (initial load or filter change); page > 1 appends
+// (infinite scroll), so each dispatches a different success type to keep
+// the reducer's replace/append logic explicit rather than inferred.
+export const getTasksApi = (orgId, token, page = 1, pageSize = 50) => async (dispatch) => {
+  dispatch({ type: page === 1 ? GetTasksLOADING : GetTasksLOADINGMORE });
   try {
-    const { data } = await axios.get(ENDPOINT(orgId), authConfig(token));
+    const { data } = await axios.get(ENDPOINT(orgId), { ...authConfig(token), params: { page, pageSize } });
     dispatch({
-      type: GetTasksSUCCESS,
+      type: page === 1 ? GetTasksSUCCESS : GetTasksAppendSUCCESS,
       payload: data,
     });
     return data;

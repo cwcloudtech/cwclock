@@ -23,8 +23,10 @@ func New(
 	reportHandler *handlers.ReportHandler,
 	adminHandler *handlers.AdminHandler,
 	importHandler *handlers.ImportHandler,
+	apiKeyHandler *handlers.ApiKeyHandler,
 	orgs *store.OrgStore,
 	users *store.UserStore,
+	apiKeys middleware.ApiKeyVerifier,
 	jwtSecret string,
 	corsEnabled bool,
 	corsAllowedOrigins []string,
@@ -43,7 +45,7 @@ func New(
 		r.Use(cors.Handler(cors.Options{
 			AllowedOrigins: corsAllowedOrigins,
 			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-			AllowedHeaders: []string{"Authorization", "Content-Type"},
+			AllowedHeaders: []string{"Authorization", "Content-Type", "X-Api-Key"},
 			// Content-Disposition must be explicitly exposed, otherwise the
 			// browser hides it from JS on cross-origin responses (like report
 			// exports), so the frontend can't read the backend-provided
@@ -62,7 +64,7 @@ func New(
 			r.Post("/login", userHandler.Login)
 
 			r.Group(func(r chi.Router) {
-				r.Use(middleware.Auth(jwtSecret))
+				r.Use(middleware.Auth(jwtSecret, apiKeys))
 				r.Get("/me", userHandler.Me)
 
 				r.Group(func(r chi.Router) {
@@ -70,12 +72,18 @@ func New(
 					r.Put("/me", userHandler.UpdateProfile)
 					r.Put("/me/picture", userHandler.UpdatePicture)
 					r.Get("/search", userHandler.Search)
+
+					r.Route("/me/api-keys", func(r chi.Router) {
+						r.Get("/", apiKeyHandler.List)
+						r.Post("/", apiKeyHandler.Create)
+						r.Delete("/{id}", apiKeyHandler.Delete)
+					})
 				})
 			})
 		})
 
 		r.Route("/admin/users", func(r chi.Router) {
-			r.Use(middleware.Auth(jwtSecret))
+			r.Use(middleware.Auth(jwtSecret, apiKeys))
 			r.Use(middleware.RequireActiveUser(users))
 			r.Use(middleware.RequireSuperuser(users))
 			r.Get("/", adminHandler.ListUsers)
@@ -84,14 +92,14 @@ func New(
 		})
 
 		r.Route("/admin/organizations", func(r chi.Router) {
-			r.Use(middleware.Auth(jwtSecret))
+			r.Use(middleware.Auth(jwtSecret, apiKeys))
 			r.Use(middleware.RequireActiveUser(users))
 			r.Use(middleware.RequireSuperuser(users))
 			r.Get("/", orgHandler.AdminList)
 		})
 
 		r.Route("/organizations", func(r chi.Router) {
-			r.Use(middleware.Auth(jwtSecret))
+			r.Use(middleware.Auth(jwtSecret, apiKeys))
 			r.Use(middleware.RequireActiveUser(users))
 			r.Post("/", orgHandler.Create)
 			r.Get("/", orgHandler.List)
@@ -139,8 +147,8 @@ func New(
 
 				r.Route("/reports", func(r chi.Router) {
 					r.Use(middleware.RequireRole(models.RoleMember))
-					r.Get("/", reportHandler.Get)
-					r.Get("/export", reportHandler.Export)
+					r.Post("/detailed", reportHandler.Detailed)
+					r.Post("/summary", reportHandler.Summary)
 				})
 
 				r.Route("/import", func(r chi.Router) {

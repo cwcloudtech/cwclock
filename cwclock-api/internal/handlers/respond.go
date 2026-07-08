@@ -41,6 +41,8 @@ const (
 	CodeReassignForbidden      = "errors.reassignForbidden"
 	CodeNameAndSurnameRequired = "errors.nameAndSurnameRequired"
 	CodePasswordsMismatch      = "errors.passwordsMismatch"
+	CodeApiKeyDescription      = "errors.apiKeyDescription"
+	CodeInvalidExpiration      = "errors.invalidExpiration"
 )
 
 func writeJSON(w http.ResponseWriter, status int, body any) {
