@@ -95,6 +95,10 @@ const TaskComponent = ({ item }) => {
 
   const timeLabel = item.allDay ? t("timeTracker.allDay") : `${item.start || "?"} - ${item.end || "?"}`;
 
+  const maxLabelLen = parseInt(process.env.REACT_APP_TASK_LABEL_MAX_LENGTH) || 50;
+  const isTextTruncated = maxLabelLen > 0 && item.text.length > maxLabelLen;
+  const truncatedText = isTextTruncated ? item.text.slice(0, maxLabelLen) + "..." : item.text;
+
   return (
     <div className={styles.Task}>
       <div className={styles.Desc}>
@@ -194,7 +198,9 @@ const TaskComponent = ({ item }) => {
         ) : (
           <>
             <div className={styles.Up}>
-              <h6>{item.text}</h6>
+              <Tooltip label={isTextTruncated ? item.text : null}>
+                <h6>{truncatedText}</h6>
+              </Tooltip>
             </div>
             <div className={styles.Projects}>
               <h6>{project ? projectLabel(project, clients) : ""}</h6>

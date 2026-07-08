@@ -47,6 +47,7 @@ func drawTable(pdf *fpdf.Fpdf, translate func(string) string, columns []tableCol
 
 	drawHeader := func() {
 		pdf.SetFont("", "B", tableFontSizePt)
+		pdf.SetFillColor(28, 185, 247)
 		y := pdf.GetY()
 		x := left
 		for i, c := range columns {
@@ -55,6 +56,7 @@ func drawTable(pdf *fpdf.Fpdf, translate func(string) string, columns []tableCol
 			x += widths[i]
 		}
 		pdf.SetXY(left, y+tableLineHeightPt)
+		pdf.SetFillColor(255, 255, 255)
 		pdf.SetFont("", "", tableFontSizePt)
 	}
 
