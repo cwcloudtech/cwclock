@@ -3,6 +3,7 @@ import Button from "./Button";
 import RequiredMark from "./RequiredMark";
 import ImagePicker from "./ImagePicker";
 import DropZone from "./DropZone";
+import TagsInput from "./TagsInput";
 import contrastColor from "./contrastColor";
 import { useI18n } from "../../i18n/I18nContext";
 import styles from "./Styles/ConfigForm.module.css";
@@ -24,9 +25,17 @@ const ConfigForm = ({
   const resolvedCancelLabel = cancelLabel ?? t("common.cancel");
 
   const renderControl = (field) => {
-    const value = values[field.name] ?? "";
+    const value = values[field.name] ?? (field.type === "tags" ? [] : "");
 
     switch (field.type) {
+      case "tags":
+        return (
+          <TagsInput
+            value={value}
+            onChange={(v) => onChange(field.name, v)}
+            placeholder={field.placeholder}
+          />
+        );
       case "checkbox":
         return (
           <label className="cw-checkbox">

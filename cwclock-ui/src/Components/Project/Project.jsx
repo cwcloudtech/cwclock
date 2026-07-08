@@ -12,7 +12,6 @@ import Tooltip from "../common/Tooltip";
 import EmptyState from "../common/EmptyState";
 import CopyIdButton from "../common/CopyIdButton";
 import EditProjectModal from "./EditProjectModal";
-import TagsInput from "../common/TagsInput";
 import { useI18n } from "../../i18n/I18nContext";
 
 const initialFields = { clientId: "", name: "", color: "#1cb9f7", dailyRate: "", subdivisions: [] };
@@ -55,6 +54,12 @@ const Project = () => {
       { name: "name", type: "text", label: t("common.name"), required: true },
       { name: "color", type: "color", label: t("common.color") },
       { name: "dailyRate", type: "number", label: t("projects.dailyRate"), step: "0.01", min: "0" },
+      {
+        name: "subdivisions",
+        type: "tags",
+        label: t("projects.subdivisions"),
+        placeholder: t("projects.subdivisionsPlaceholder"),
+      },
     ],
   };
 
@@ -93,14 +98,6 @@ const Project = () => {
           onSubmit={handleSubmit}
           submitLabel={t("common.add")}
         />
-        <div className="cw-field">
-          <label className="cw-label">{t("projects.subdivisions")}</label>
-          <TagsInput
-            value={fields.subdivisions}
-            onChange={(v) => setField("subdivisions", v)}
-            placeholder={t("projects.subdivisionsPlaceholder")}
-          />
-        </div>
       </CollapsiblePanel>
 
       {projects.length === 0 && (

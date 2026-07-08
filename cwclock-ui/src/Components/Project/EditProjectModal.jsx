@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import Modal from "../common/Modal";
 import ConfigForm from "../common/ConfigForm";
-import TagsInput from "../common/TagsInput";
 import { updateProjectApi } from "../../Redux/Projects/Project.actions";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
@@ -21,6 +20,12 @@ const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
       { name: "name", type: "text", label: t("common.name"), required: true },
       { name: "color", type: "color", label: t("common.color") },
       { name: "dailyRate", type: "number", label: t("projects.dailyRate"), step: "0.01", min: "0" },
+      {
+        name: "subdivisions",
+        type: "tags",
+        label: t("projects.subdivisions"),
+        placeholder: t("projects.subdivisionsPlaceholder"),
+      },
     ],
   };
 
@@ -63,14 +68,6 @@ const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
         onCancel={onClose}
         error={error}
       />
-      <div className="cw-field">
-        <label className="cw-label">{t("projects.subdivisions")}</label>
-        <TagsInput
-          value={fields.subdivisions}
-          onChange={(v) => setField("subdivisions", v)}
-          placeholder={t("projects.subdivisionsPlaceholder")}
-        />
-      </div>
     </Modal>
   );
 };
