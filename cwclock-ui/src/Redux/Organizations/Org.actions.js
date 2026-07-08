@@ -93,11 +93,11 @@ export const addMemberApi = (orgId, email, role, token) => async (dispatch) => {
   }
 };
 
-export const setMemberRateApi = (orgId, userId, dailyRate, currency, token) => async (dispatch) => {
+export const setMemberRateApi = (orgId, userId, dailyRate, token) => async (dispatch) => {
   try {
     await axios.put(
       `${ENDPOINT}${orgId}/members/${userId}/rate`,
-      { dailyRate, currency },
+      { dailyRate },
       authConfig(token)
     );
     dispatch(listMembersApi(orgId, token));

@@ -28,7 +28,7 @@
    a descendant selector here would make hovering anywhere inside an outer
    wrapper also reveal an inner Tooltip's bubble. */
 .wrapper:hover > .bubble,
-.wrapper:focus-within > .bubble {
+.wrapper:has(:focus-visible) > .bubble {
   opacity: 1;
   transform: translateY(0);
   transition-delay: 300ms;
@@ -41,7 +41,7 @@
 }
 
 .wrapper:hover > .bubble[data-position="top"],
-.wrapper:focus-within > .bubble[data-position="top"] {
+.wrapper:has(:focus-visible) > .bubble[data-position="top"] {
   transform: translate(-50%, 0);
 }
 
@@ -52,7 +52,7 @@
 }
 
 .wrapper:hover > .bubble[data-position="right"],
-.wrapper:focus-within > .bubble[data-position="right"] {
+.wrapper:has(:focus-visible) > .bubble[data-position="right"] {
   transform: translate(0, -50%);
 }
 
@@ -63,6 +63,6 @@
 }
 
 .wrapper:hover > .bubble[data-position="bottom"],
-.wrapper:focus-within > .bubble[data-position="bottom"] {
+.wrapper:has(:focus-visible) > .bubble[data-position="bottom"] {
   transform: translate(-50%, 0);
 }

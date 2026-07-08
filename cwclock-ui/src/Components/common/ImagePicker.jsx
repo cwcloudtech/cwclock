@@ -10,11 +10,15 @@ import fileToBase64 from "./fileToBase64";
 const ImagePicker = ({ onChange, children }) => {
   const [rawImage, setRawImage] = useState(null);
 
+  const loadFile = async (file) => {
+    if (!file) return;
+    setRawImage(await fileToBase64(file));
+  };
+
   const handlePick = async (e) => {
     const file = e.target.files[0];
     e.target.value = "";
-    if (!file) return;
-    setRawImage(await fileToBase64(file));
+    await loadFile(file);
   };
 
   const handleConfirm = (base64) => {
@@ -24,7 +28,7 @@ const ImagePicker = ({ onChange, children }) => {
 
   return (
     <>
-      {children({ onPick: handlePick })}
+      {children({ onPick: handlePick, onFile: loadFile })}
       <ImageCropModal
         show={!!rawImage}
         imageSrc={rawImage}

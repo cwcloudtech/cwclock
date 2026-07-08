@@ -41,65 +41,7 @@ const headerMarkdownTpl = `# {{.OrgName}} - {{.Title}}
 **Total:** {{.TotalDuration}}   **Billable:** {{.TotalDuration}}{{if .ShowAmount}}   **Amount:** {{.TotalAmount}} {{.Currency}}{{end}}
 `
 
-// nbsp is used (instead of a plain space) to pad table headers up to a
-// minimum width: mdtopdf sizes each column from its header cell alone (not
-// the widest body cell) and the markdown table parser trims plain trailing
-// spaces from cell text, but leaves non-breaking spaces alone.
-const nbsp = " "
-
-// padHeader widens a header label to approximately `width` runes so its
-// column has enough room for typical body content.
-func padHeader(label string, width int) string {
-	pad := width - len([]rune(label))
-	if pad <= 0 {
-		return label
-	}
-	return label + strings.Repeat(nbsp, pad)
-}
-
-type summaryRowVM struct {
-	ProjectName, ClientName, Description, Email string
-	DurationHMS, DurationDecimal                string
-	ShowAmount                                  bool
-	AmountStr                                   string
-}
-
-const summaryTableMarkdownTpl = `
-| {{.ProjectHeader}} | {{.ClientHeader}} | {{.DescriptionHeader}} | {{.EmailHeader}} | Time (h) | Time (decimal) |{{if .ShowAmount}} Amount ({{.Currency}}) |{{end}}
-|---|---|---|---|---|---|{{if .ShowAmount}}---|{{end}}
-{{range .Rows}}| {{.ProjectName}} | {{.ClientName}} | {{.Description}} | {{.Email}} | {{.DurationHMS}} | {{.DurationDecimal}} |{{if $.ShowAmount}} {{.AmountStr}} |{{end}}
-{{end}}`
-
-type detailedRowVM struct {
-	Day, Description, ProjectClient, Time, DurationHMS, User, Email string
-	ShowAmount                                                      bool
-	AmountStr                                                       string
-}
-
-const detailedTableMarkdownTpl = `
-| {{.DateHeader}} | {{.DescriptionHeader}} | {{.ProjectClientHeader}} | {{.TimeHeader}} | Duration | {{.UserHeader}} | {{.EmailHeader}} |{{if .ShowAmount}} Amount |{{end}}
-|---|---|---|---|---|---|---|{{if .ShowAmount}}---|{{end}}
-{{range .Rows}}| {{.Day}} | {{.Description}} | {{.ProjectClient}} | {{.Time}} | {{.DurationHMS}} | {{.User}} | {{.Email}} |{{if $.ShowAmount}} {{.AmountStr}} |{{end}}
-{{end}}`
-
 var headerTemplate = template.Must(template.New("header").Parse(headerMarkdownTpl))
-
-type summaryTableData struct {
-	ShowAmount                                                  bool
-	Currency                                                    string
-	ProjectHeader, ClientHeader, DescriptionHeader, EmailHeader string
-	Rows                                                        []summaryRowVM
-}
-
-var summaryTableTemplate = template.Must(template.New("summaryTable").Parse(summaryTableMarkdownTpl))
-
-type detailedTableData struct {
-	ShowAmount                                                                              bool
-	DateHeader, DescriptionHeader, ProjectClientHeader, TimeHeader, UserHeader, EmailHeader string
-	Rows                                                                                    []detailedRowVM
-}
-
-var detailedTableTemplate = template.Must(template.New("detailedTable").Parse(detailedTableMarkdownTpl))
 
 // SummaryPDF renders the summary report as a PDF: a header with totals, the
 // daily duration chart as an image, then one table row per (project,
@@ -112,81 +54,82 @@ func SummaryPDF(orgName, start, end string, report models.SummaryReport, logoDat
 	}
 
 	showAmount := report.Totals.Amount != nil
-	rows := make([]summaryRowVM, 0, len(report.Rows))
-	for _, r := range report.Rows {
-		vm := summaryRowVM{
-			ProjectName:     r.ProjectName,
-			ClientName:      r.ClientName,
-			Description:     r.Description,
-			Email:           r.UserEmail,
-			DurationHMS:     formatHMS(r.DurationSecs),
-			DurationDecimal: formatDecimalHours(r.DurationSecs),
-			ShowAmount:      showAmount,
-		}
-		if showAmount && r.Amount != nil {
-			vm.AmountStr = formatAmount(*r.Amount)
-		}
-		rows = append(rows, vm)
+	columns := []tableColumn{
+		{Header: "Project", Weight: 20},
+		{Header: "Client", Weight: 16},
+		{Header: "Description", Weight: 36},
+		{Header: "Email", Weight: 26},
+		{Header: "Time (h)", Weight: 12},
+		{Header: "Time (decimal)", Weight: 12},
+	}
+	if showAmount {
+		columns = append(columns, tableColumn{Header: "Amount (" + report.Totals.Currency + ")", Weight: 14})
 	}
 
-	var tableBuf strings.Builder
-	if err := summaryTableTemplate.Execute(&tableBuf, summaryTableData{
-		ShowAmount:        showAmount,
-		Currency:          report.Totals.Currency,
-		ProjectHeader:     padHeader("Project", 18),
-		ClientHeader:      padHeader("Client", 14),
-		DescriptionHeader: padHeader("Description", 42),
-		EmailHeader:       padHeader("Email", 24),
-		Rows:              rows,
-	}); err != nil {
-		return nil, err
+	rows := make([][]string, 0, len(report.Rows))
+	for _, r := range report.Rows {
+		row := []string{
+			r.ProjectName, r.ClientName, r.Description, r.UserEmail,
+			formatHMS(r.DurationSecs), formatDecimalHours(r.DurationSecs),
+		}
+		if showAmount {
+			amt := 0.0
+			if r.Amount != nil {
+				amt = *r.Amount
+			}
+			row = append(row, formatAmount(amt))
+		}
+		rows = append(rows, row)
 	}
 
 	chartPNG := DailyChartPNG(report.Daily)
-	return RenderSummaryPDF(headerBuf.String(), tableBuf.String(), chartPNG, logoData, logoType)
+	return RenderReportTablePDF(headerBuf.String(), chartPNG, columns, rows, logoData, logoType)
 }
 
 // DetailedPDF renders the detailed report as a PDF: a header with totals
 // followed by one table row per time entry. logoData/logoType (see
 // ResolveLogo) are placed in the header's top-right corner.
 func DetailedPDF(orgName, start, end string, report models.DetailedReport, logoData []byte, logoType string) ([]byte, error) {
-	var buf strings.Builder
-	if err := headerTemplate.Execute(&buf, newReportHeader("Detailed report", orgName, start, end, report.Totals)); err != nil {
+	var headerBuf strings.Builder
+	if err := headerTemplate.Execute(&headerBuf, newReportHeader("Detailed report", orgName, start, end, report.Totals)); err != nil {
 		return nil, err
 	}
 
 	showAmount := report.Totals.Amount != nil
-	rows := make([]detailedRowVM, 0, len(report.Entries))
+	columns := []tableColumn{
+		{Header: "Date", Weight: 10},
+		{Header: "Description", Weight: 26},
+		{Header: "Project / Client", Weight: 20},
+		{Header: "Time", Weight: 16},
+		{Header: "Duration", Weight: 10},
+		{Header: "User", Weight: 14},
+		{Header: "Email", Weight: 18},
+	}
+	if showAmount {
+		columns = append(columns, tableColumn{Header: "Amount", Weight: 10})
+	}
+
+	rows := make([][]string, 0, len(report.Entries))
 	for _, e := range report.Entries {
 		timeRange := formatAMPM(e.Start) + " - " + formatAMPM(e.End)
-		vm := detailedRowVM{
-			Day:           formatUSDate(e.Day),
-			Description:   e.Text,
-			ProjectClient: e.ProjectName + " - " + e.ClientName,
-			Time:          timeRange,
-			DurationHMS:   formatHMS(e.DurationSecs),
-			User:          e.UserName,
-			Email:         e.UserEmail,
-			ShowAmount:    showAmount,
+		row := []string{
+			formatUSDate(e.Day),
+			e.Text,
+			e.ProjectName + " - " + e.ClientName,
+			timeRange,
+			formatHMS(e.DurationSecs),
+			e.UserName,
+			e.UserEmail,
 		}
-		if showAmount && e.Amount != nil {
-			vm.AmountStr = formatAmount(*e.Amount)
+		if showAmount {
+			amt := 0.0
+			if e.Amount != nil {
+				amt = *e.Amount
+			}
+			row = append(row, formatAmount(amt))
 		}
-		rows = append(rows, vm)
+		rows = append(rows, row)
 	}
 
-	if err := detailedTableTemplate.Execute(&buf, detailedTableData{
-		ShowAmount:          showAmount,
-		DateHeader:          padHeader("Date", 12),
-		DescriptionHeader:   padHeader("Description", 42),
-		ProjectClientHeader: padHeader("Project / Client", 30),
-		TimeHeader:          padHeader("Time", 27),
-		UserHeader:          padHeader("User", 16),
-		EmailHeader:         padHeader("Email", 24),
-		Rows:                rows,
-	}); err != nil {
-		return nil, err
-	}
-
-	return RenderMarkdownPDF(buf.String(), logoData, logoType)
+	return RenderReportTablePDF(headerBuf.String(), nil, columns, rows, logoData, logoType)
 }

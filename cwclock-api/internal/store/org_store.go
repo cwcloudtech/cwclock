@@ -255,7 +255,6 @@ func (s *OrgStore) GetRole(ctx context.Context, orgID, userID string) (models.Ro
 
 type memberData struct {
 	DailyRate *float64 `json:"dailyRate,omitempty"`
-	Currency  string   `json:"currency,omitempty"`
 }
 
 func scanMember(row pgx.Row) (models.Member, error) {
@@ -272,7 +271,6 @@ func scanMember(row pgx.Row) (models.Member, error) {
 		return models.Member{}, err
 	}
 	m.DailyRate = d.DailyRate
-	m.Currency = d.Currency
 	return m, nil
 }
 
@@ -310,9 +308,10 @@ func (s *OrgStore) UpdateMemberRole(ctx context.Context, orgID, userID string, r
 	return scanMember(row)
 }
 
-// SetMemberRate sets a member's daily rate and currency.
-func (s *OrgStore) SetMemberRate(ctx context.Context, orgID, userID string, dailyRate float64, currency string) (models.Member, error) {
-	data, err := json.Marshal(memberData{DailyRate: &dailyRate, Currency: currency})
+// SetMemberRate sets a member's daily rate. Currency isn't stored per
+// member - it's always the organization's own currency.
+func (s *OrgStore) SetMemberRate(ctx context.Context, orgID, userID string, dailyRate float64) (models.Member, error) {
+	data, err := json.Marshal(memberData{DailyRate: &dailyRate})
 	if err != nil {
 		return models.Member{}, err
 	}

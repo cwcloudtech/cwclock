@@ -89,7 +89,6 @@ type Member struct {
 	Surname        string    `json:"surname"`
 	Role           Role      `json:"role"`
 	DailyRate      *float64  `json:"dailyRate,omitempty"`
-	Currency       string    `json:"currency,omitempty"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 }

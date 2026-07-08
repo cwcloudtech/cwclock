@@ -159,8 +159,8 @@ func validRole(role string) bool {
 	}
 }
 
-// redactRates hides daily rate/currency from the response unless the caller
-// is an admin or the owner, per "the daily rate must appear only for the
+// redactRates hides the daily rate from the response unless the caller is
+// an admin or the owner, per "the daily rate must appear only for the
 // admins and owner of the organization".
 func redactRates(r *http.Request, members []models.Member) []models.Member {
 	role, _ := middleware.OrgRoleFromContext(r.Context())
@@ -170,7 +170,6 @@ func redactRates(r *http.Request, members []models.Member) []models.Member {
 	redacted := make([]models.Member, len(members))
 	for i, m := range members {
 		m.DailyRate = nil
-		m.Currency = ""
 		redacted[i] = m
 	}
 	return redacted
@@ -234,7 +233,6 @@ func (h *OrganizationHandler) UpdateMember(w http.ResponseWriter, r *http.Reques
 
 type memberRatePayload struct {
 	DailyRate float64 `json:"dailyRate"`
-	Currency  string  `json:"currency"`
 }
 
 func (h *OrganizationHandler) SetMemberRate(w http.ResponseWriter, r *http.Request) {
@@ -246,9 +244,8 @@ func (h *OrganizationHandler) SetMemberRate(w http.ResponseWriter, r *http.Reque
 		writeError(w, http.StatusBadRequest, "Please add a valid dailyRate", CodeInvalidDailyRate)
 		return
 	}
-	currency := utils.If(utils.IsBlank(p.Currency), "euros", p.Currency)
 
-	member, err := h.orgs.SetMemberRate(r.Context(), orgID, userID, p.DailyRate, currency)
+	member, err := h.orgs.SetMemberRate(r.Context(), orgID, userID, p.DailyRate)
 	if err != nil {
 		writeStoreError(w, err)
 		return

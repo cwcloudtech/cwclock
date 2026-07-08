@@ -1,0 +1,12 @@
+.dropZone {
+  display: inline-block;
+  border-radius: var(--cw-radius-sm);
+  outline: 2px dashed transparent;
+  outline-offset: 3px;
+  transition: background-color var(--cw-transition), outline-color var(--cw-transition);
+}
+
+.active {
+  outline-color: var(--cw-primary);
+  background-color: var(--cw-bg-alt);
+}

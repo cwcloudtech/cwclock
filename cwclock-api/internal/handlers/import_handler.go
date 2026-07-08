@@ -71,9 +71,9 @@ func randomColor() string {
 	return fmt.Sprintf("#%06x", rand.Intn(0xFFFFFF+1)) //nolint:gosec
 }
 
-// parseCSVUserName splits a "Lastname Firstname" display name into (surname,
-// name). If there is only one token it is used as the surname.
-func parseCSVUserName(full string) (surname, name string) {
+// parseCSVUserName splits a "Firstname Lastname" display name into (name,
+// surname). If there is only one token it is used as the name.
+func parseCSVUserName(full string) (name, surname string) {
 	full = strings.TrimSpace(full)
 	idx := strings.IndexByte(full, ' ')
 	if idx < 0 {
@@ -187,7 +187,7 @@ func (h *ImportHandler) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		// Get or create user (created as disabled, no password).
 		user, err := h.users.FindByEmail(ctx, email)
 		if errors.Is(err, store.ErrNotFound) {
-			surname, name := parseCSVUserName(userFullName)
+			name, surname := parseCSVUserName(userFullName)
 			user, err = h.users.CreateDisabled(ctx, email, name, surname)
 		}
 		if err != nil {

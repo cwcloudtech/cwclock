@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
 import ImagePicker from "../common/ImagePicker";
+import DropZone from "../common/DropZone";
 import { updateUserApi } from "../../Redux/Admin/Admin.actions";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
@@ -63,11 +64,13 @@ const EditUserModal = ({ show, onClose, targetUser, token }) => {
           <div className={styles.avatarPlaceholder} />
         )}
         <ImagePicker onChange={setPicture}>
-          {({ onPick }) => (
-            <label className={styles.avatarLabel} title={t("common.uploadNewPicture")}>
-              {t("common.updateAvatar")}
-              <input type="file" accept="image/*" hidden onChange={onPick} />
-            </label>
+          {({ onPick, onFile }) => (
+            <DropZone onFile={onFile}>
+              <label className={styles.avatarLabel} title={t("common.uploadNewPicture")}>
+                {t("common.updateAvatar")}
+                <input type="file" accept="image/*" hidden onChange={onPick} />
+              </label>
+            </DropZone>
           )}
         </ImagePicker>
       </div>

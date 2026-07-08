@@ -2,6 +2,7 @@ import React from "react";
 import Button from "./Button";
 import RequiredMark from "./RequiredMark";
 import ImagePicker from "./ImagePicker";
+import DropZone from "./DropZone";
 import contrastColor from "./contrastColor";
 import { useI18n } from "../../i18n/I18nContext";
 import styles from "./Styles/ConfigForm.module.css";
@@ -56,11 +57,11 @@ const ConfigForm = ({
       case "image":
         return (
           <ImagePicker onChange={(base64) => onChange(field.name, base64)}>
-            {({ onPick }) => (
-              <>
+            {({ onPick, onFile }) => (
+              <DropZone onFile={onFile}>
                 <input className="cw-input" type="file" accept="image/*" onChange={onPick} />
                 {value && <img src={value} alt="" className="cw-image-preview" />}
-              </>
+              </DropZone>
             )}
           </ImagePicker>
         );

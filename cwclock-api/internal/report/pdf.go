@@ -14,7 +14,7 @@ const (
 )
 
 // newRenderer builds the shared mdtopdf renderer both RenderMarkdownPDF and
-// RenderSummaryPDF start from.
+// RenderReportTablePDF start from.
 //
 // Landscape, with a smaller table font than the library's default: report
 // tables have too many columns to fit readably in portrait at 12pt, and
@@ -67,13 +67,14 @@ func RenderMarkdownPDF(markdown string, logoData []byte, logoType string) ([]byt
 	return outputPDF(renderer.Pdf)
 }
 
-// RenderSummaryPDF is RenderMarkdownPDF plus a chart image (pass nil
-// chartPNG to omit it) placed between the header and table markdown. The
-// two markdown fragments have to be run separately - mdtopdf's Run() has no
-// hook to inject non-markdown content mid-document - so the chart is placed
-// with flow=true (which advances the cursor like the table's own content
-// would) right after the header's Run() call and before the table's.
-func RenderSummaryPDF(headerMarkdown, tableMarkdown string, chartPNG []byte, logoData []byte, logoType string) ([]byte, error) {
+// RenderReportTablePDF renders a report PDF: the header markdown, an
+// optional chart image (pass nil chartPNG to omit it, placed between the
+// header and the table), then the table itself. Unlike RenderMarkdownPDF,
+// the table is drawn directly with fpdf (see drawTable) rather than through
+// a markdown table: mdtopdf sizes columns from the header cell alone and
+// can't wrap body text, so a long value would overflow its column and get
+// clipped by the next one's background fill instead of wrapping.
+func RenderReportTablePDF(headerMarkdown string, chartPNG []byte, columns []tableColumn, rows [][]string, logoData []byte, logoType string) ([]byte, error) {
 	renderer := newRenderer()
 
 	if len(logoData) > 0 {
@@ -88,9 +89,9 @@ func RenderSummaryPDF(headerMarkdown, tableMarkdown string, chartPNG []byte, log
 		placeChart(renderer.Pdf, chartPNG)
 	}
 
-	if err := renderer.Run([]byte(tableMarkdown)); err != nil {
-		return nil, err
-	}
+	translate := renderer.Pdf.UnicodeTranslatorFromDescriptor("cp1252")
+	drawTable(renderer.Pdf, translate, columns, rows)
+
 	return outputPDF(renderer.Pdf)
 }
 

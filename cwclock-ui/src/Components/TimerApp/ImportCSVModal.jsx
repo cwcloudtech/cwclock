@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
+import DropZone from "../common/DropZone";
 import { importCSVApi } from "../../Redux/Import/Import.actions";
 import { getTasksApi } from "../../Redux/Tasks/Task.actions";
 import { useI18n } from "../../i18n/I18nContext";
@@ -53,12 +54,14 @@ const ImportCSVModal = ({ show, onClose }) => {
         <p className={styles.hint}>{t("timeTracker.importCsvHint")}</p>
         <div className="cw-field">
           <label className="cw-label">{t("timeTracker.importCsvFile")}</label>
-          <input
-            className="cw-input"
-            type="file"
-            accept=".csv,text/csv"
-            onChange={(e) => setFile(e.target.files[0] || null)}
-          />
+          <DropZone onFile={(f) => setFile(f)}>
+            <input
+              className="cw-input"
+              type="file"
+              accept=".csv,text/csv"
+              onChange={(e) => setFile(e.target.files[0] || null)}
+            />
+          </DropZone>
         </div>
         {error && <p className="cw-error">{error}</p>}
         <div className={styles.actions}>

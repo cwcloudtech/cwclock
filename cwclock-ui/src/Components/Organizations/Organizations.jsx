@@ -43,17 +43,16 @@ const roleLabelKey = {
   reader: "common.roleReader",
 };
 
-const MemberRow = ({ member, canSetRate, orgId, token }) => {
+const MemberRow = ({ member, canSetRate, orgId, orgCurrency, token }) => {
   const { t } = useI18n();
   const dispatch = useDispatch();
   const [editing, setEditing] = useState(false);
   const [dailyRate, setDailyRate] = useState(member.dailyRate || "");
-  const [currency, setCurrency] = useState(member.currency || "euros");
 
   const handleSave = (e) => {
     e.preventDefault();
     if (!dailyRate || dailyRate <= 0) return;
-    dispatch(setMemberRateApi(orgId, member.userId, Number(dailyRate), currency, token));
+    dispatch(setMemberRateApi(orgId, member.userId, Number(dailyRate), token));
     setEditing(false);
   };
 
@@ -67,7 +66,7 @@ const MemberRow = ({ member, canSetRate, orgId, token }) => {
         {canSetRate && !editing && (
           <span className={styles.rate}>
             {member.dailyRate
-              ? t("organizations.dailyRatePerDay", { rate: member.dailyRate, currency: member.currency })
+              ? t("organizations.dailyRatePerDay", { rate: member.dailyRate, currency: orgCurrency })
               : t("organizations.noDailyRateSet")}{" "}
             <Button size="sm" variant="ghost" onClick={() => setEditing(true)} title={t("organizations.editDailyRate")}>
               {t("common.edit")}
@@ -87,16 +86,6 @@ const MemberRow = ({ member, canSetRate, orgId, token }) => {
               value={dailyRate}
               onChange={(e) => setDailyRate(e.target.value)}
               title={t("organizations.dailyRate")}
-            />
-          </div>
-          <div className="cw-field">
-            <label className="cw-label">{t("organizations.currency")}</label>
-            <input
-              className="cw-input"
-              type="text"
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              title={t("organizations.currency")}
             />
           </div>
           <div className="cw-field">
@@ -324,6 +313,7 @@ const Organizations = () => {
                 member={m}
                 canSetRate={isAdminOrOwner}
                 orgId={currentOrgId}
+                orgCurrency={currentOrg.currency}
                 token={user.token}
               />
             ))}
