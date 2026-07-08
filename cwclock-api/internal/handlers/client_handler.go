@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"cwclock-api/internal/middleware"
+	"cwclock-api/internal/models"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/utils"
 )
@@ -20,16 +21,17 @@ func NewClientHandler(clients *store.ClientStore) *ClientHandler {
 }
 
 type clientPayload struct {
-	Name               string  `json:"name"`
-	Address            string  `json:"address"`
-	PostalCode         string  `json:"postalCode"`
-	City               string  `json:"city"`
-	Country            string  `json:"country"`
-	VATNumber          string  `json:"vatNumber"`
-	VATRate            float64 `json:"vatRate"`
-	VATDischargeMotive string  `json:"vatDischargeMotive"`
-	PurchaseOrder      string  `json:"purchaseOrder"`
-	HoursPerDay        float64 `json:"hoursPerDay"`
+	Name               string   `json:"name"`
+	Address            string   `json:"address"`
+	PostalCode         string   `json:"postalCode"`
+	City               string   `json:"city"`
+	Country            string   `json:"country"`
+	VATNumber          string   `json:"vatNumber"`
+	VATRate            float64  `json:"vatRate"`
+	VATDischargeMotive string   `json:"vatDischargeMotive"`
+	PurchaseOrder      string   `json:"purchaseOrder"`
+	HoursPerDay        float64  `json:"hoursPerDay"`
+	DailyRate          *float64 `json:"dailyRate"`
 }
 
 func (p clientPayload) valid() bool {
@@ -48,7 +50,25 @@ func (p clientPayload) toFields() store.ClientFields {
 		VATDischargeMotive: p.VATDischargeMotive,
 		PurchaseOrder:      p.PurchaseOrder,
 		HoursPerDay:        p.HoursPerDay,
+		DailyRate:          p.DailyRate,
 	}
+}
+
+// redactClientRates hides each client's daily rate from the response unless
+// the caller is an admin or the owner, matching redactRates for member
+// rates: readers/members can list clients to log time against, but the
+// billing rate stays admin/owner-only.
+func redactClientRates(r *http.Request, clients []models.Client) []models.Client {
+	role, _ := middleware.OrgRoleFromContext(r.Context())
+	if role == models.RoleAdmin || role == models.RoleOwner {
+		return clients
+	}
+	redacted := make([]models.Client, len(clients))
+	for i, c := range clients {
+		c.DailyRate = nil
+		redacted[i] = c
+	}
+	return redacted
 }
 
 func (h *ClientHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +79,7 @@ func (h *ClientHandler) List(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, clients)
+	writeJSON(w, http.StatusOK, redactClientRates(r, clients))
 }
 
 func (h *ClientHandler) Create(w http.ResponseWriter, r *http.Request) {

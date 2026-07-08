@@ -100,15 +100,30 @@ func DurationSecs(entry models.TimeEntry, client models.Client) int {
 	return endSec - startSec
 }
 
+// effectiveDailyRate resolves which daily rate bills an entry: the
+// project's own rate takes priority over the client's, which in turn takes
+// priority over the member's — project is the most specific level, member
+// the fallback (see ai-instruct-19).
+func effectiveDailyRate(client models.Client, project models.Project, member models.Member) *float64 {
+	if project.DailyRate != nil && *project.DailyRate != 0 {
+		return project.DailyRate
+	}
+	if client.DailyRate != nil && *client.DailyRate != 0 {
+		return client.DailyRate
+	}
+	return member.DailyRate
+}
+
 // amount converts a duration into a billable amount: hours worked, divided
 // by the client's HoursPerDay (a fraction of a full day), times the
-// member's daily rate.
-func amount(durationSecs int, client models.Client, member models.Member) float64 {
-	if member.DailyRate == nil || *member.DailyRate == 0 {
+// effective daily rate (see effectiveDailyRate).
+func amount(durationSecs int, client models.Client, project models.Project, member models.Member) float64 {
+	rate := effectiveDailyRate(client, project, member)
+	if rate == nil || *rate == 0 {
 		return 0
 	}
 	hours := float64(durationSecs) / 3600
-	return (hours / hoursPerDay(client)) * *member.DailyRate
+	return (hours / hoursPerDay(client)) * *rate
 }
 
 func memberName(m models.Member) string {
@@ -154,7 +169,7 @@ func Enrich(entries []models.TimeEntry, lk Lookups, canSeeAmount bool) []models.
 			CreatedAt:    e.CreatedAt,
 		}
 		if canSeeAmount {
-			amt := amount(dur, client, member)
+			amt := amount(dur, client, project, member)
 			re.Amount = &amt
 		}
 		out = append(out, re)

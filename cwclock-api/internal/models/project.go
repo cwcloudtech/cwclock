@@ -8,6 +8,7 @@ type Project struct {
 	ClientID       string    `json:"clientId"`
 	Name           string    `json:"name"`
 	Color          string    `json:"color"`
+	DailyRate      *float64  `json:"dailyRate,omitempty"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 }

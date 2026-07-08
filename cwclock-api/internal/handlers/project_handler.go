@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"cwclock-api/internal/middleware"
+	"cwclock-api/internal/models"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/utils"
 )
@@ -20,8 +21,26 @@ func NewProjectHandler(projects *store.ProjectStore) *ProjectHandler {
 }
 
 type projectPayload struct {
-	Name  string `json:"name"`
-	Color string `json:"color"`
+	Name      string   `json:"name"`
+	Color     string   `json:"color"`
+	DailyRate *float64 `json:"dailyRate"`
+}
+
+// redactProjectRates hides each project's daily rate from the response
+// unless the caller is an admin or the owner, matching redactRates for
+// member rates: readers/members can list projects to log time against, but
+// the billing rate stays admin/owner-only.
+func redactProjectRates(r *http.Request, projects []models.Project) []models.Project {
+	role, _ := middleware.OrgRoleFromContext(r.Context())
+	if role == models.RoleAdmin || role == models.RoleOwner {
+		return projects
+	}
+	redacted := make([]models.Project, len(projects))
+	for i, p := range projects {
+		p.DailyRate = nil
+		redacted[i] = p
+	}
+	return redacted
 }
 
 func (h *ProjectHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +53,7 @@ func (h *ProjectHandler) List(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, projects)
+	writeJSON(w, http.StatusOK, redactProjectRates(r, projects))
 }
 
 func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +66,7 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	project, err := h.projects.Create(r.Context(), orgID, clientID, p.Name, p.Color)
+	project, err := h.projects.Create(r.Context(), orgID, clientID, p.Name, p.Color, p.DailyRate)
 	if err != nil {
 		writeStoreError(w, err)
 		return
@@ -64,7 +83,7 @@ func (h *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	project, err := h.projects.Update(r.Context(), id, p.Name, p.Color)
+	project, err := h.projects.Update(r.Context(), id, p.Name, p.Color, p.DailyRate)
 	if err != nil {
 		writeStoreError(w, err)
 		return

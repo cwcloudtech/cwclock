@@ -17,6 +17,7 @@ const emptyFields = {
   vatDischargeMotive: "",
   purchaseOrder: "",
   hoursPerDay: "",
+  dailyRate: "",
 };
 
 const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
@@ -38,6 +39,7 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
       { name: "vatDischargeMotive", type: "text", label: t("clients.vatDischargeMotive") },
       { name: "purchaseOrder", type: "text", label: t("clients.purchaseOrder") },
       { name: "hoursPerDay", type: "number", label: t("clients.hoursPerDay"), step: "0.01" },
+      { name: "dailyRate", type: "number", label: t("clients.dailyRate"), step: "0.01", min: "0" },
     ],
   };
 
@@ -54,6 +56,7 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
         vatDischargeMotive: targetClient.vatDischargeMotive || "",
         purchaseOrder: targetClient.purchaseOrder || "",
         hoursPerDay: targetClient.hoursPerDay ?? "",
+        dailyRate: targetClient.dailyRate ?? "",
       });
       setError("");
     }
@@ -70,6 +73,7 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
       ...fields,
       vatRate: fields.vatRate === "" ? undefined : Number(fields.vatRate),
       hoursPerDay: fields.hoursPerDay === "" ? undefined : Number(fields.hoursPerDay),
+      dailyRate: fields.dailyRate === "" ? undefined : Number(fields.dailyRate),
     };
     try {
       await dispatch(updateClientApi(orgId, targetClient.id, payload, token));

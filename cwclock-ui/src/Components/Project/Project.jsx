@@ -13,7 +13,7 @@ import EmptyState from "../common/EmptyState";
 import EditProjectModal from "./EditProjectModal";
 import { useI18n } from "../../i18n/I18nContext";
 
-const initialFields = { clientId: "", name: "", color: "#1cb9f7" };
+const initialFields = { clientId: "", name: "", color: "#1cb9f7", dailyRate: "" };
 
 const Project = () => {
   const { t } = useI18n();
@@ -52,13 +52,15 @@ const Project = () => {
       },
       { name: "name", type: "text", label: t("common.name"), required: true },
       { name: "color", type: "color", label: t("common.color") },
+      { name: "dailyRate", type: "number", label: t("projects.dailyRate"), step: "0.01", min: "0" },
     ],
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!fields.name || !fields.clientId || !currentOrgId) return;
-    dispatch(createProjectApi(currentOrgId, fields.clientId, fields.name, fields.color, user.token));
+    const dailyRate = fields.dailyRate === "" ? undefined : Number(fields.dailyRate);
+    dispatch(createProjectApi(currentOrgId, fields.clientId, fields.name, fields.color, dailyRate, user.token));
     setField("name", "");
   };
 
@@ -103,6 +105,11 @@ const Project = () => {
               <span className={styles.swatch} style={{ backgroundColor: project.color }} />
               <strong>{project.name}</strong>
               {client && <span className={styles.clientName}>{client.name}</span>}
+              {isAdminOrOwner && project.dailyRate && (
+                <span className={styles.clientName}>
+                  {t("projects.dailyRateSet", { rate: project.dailyRate })}
+                </span>
+              )}
               {isAdminOrOwner && (
                 <div className={styles.rowActions}>
                   <Tooltip label={t("common.edit")}>

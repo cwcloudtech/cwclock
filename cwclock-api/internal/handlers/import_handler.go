@@ -177,7 +177,7 @@ func (h *ImportHandler) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		// Get or create project under the client.
 		project, err := h.projects.FindByName(ctx, orgID, client.ID, projectName)
 		if errors.Is(err, store.ErrNotFound) {
-			project, err = h.projects.Create(ctx, orgID, client.ID, projectName, randomColor())
+			project, err = h.projects.Create(ctx, orgID, client.ID, projectName, randomColor(), nil)
 		}
 		if err != nil {
 			skipped++

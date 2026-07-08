@@ -15,6 +15,7 @@ type Client struct {
 	VATDischargeMotive string    `json:"vatDischargeMotive"`
 	PurchaseOrder      string    `json:"purchaseOrder"`
 	HoursPerDay        float64   `json:"hoursPerDay"`
+	DailyRate          *float64  `json:"dailyRate,omitempty"`
 	CreatedAt          time.Time `json:"createdAt"`
 	UpdatedAt          time.Time `json:"updatedAt"`
 }

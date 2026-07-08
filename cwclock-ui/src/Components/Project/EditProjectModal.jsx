@@ -6,7 +6,7 @@ import { updateProjectApi } from "../../Redux/Projects/Project.actions";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
 
-const emptyFields = { name: "", color: "#1cb9f7" };
+const emptyFields = { name: "", color: "#1cb9f7", dailyRate: "" };
 
 const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
   const { t, locale } = useI18n();
@@ -19,6 +19,7 @@ const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
     fields: [
       { name: "name", type: "text", label: t("common.name"), required: true },
       { name: "color", type: "color", label: t("common.color") },
+      { name: "dailyRate", type: "number", label: t("projects.dailyRate"), step: "0.01", min: "0" },
     ],
   };
 
@@ -27,6 +28,7 @@ const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
       setFields({
         name: targetProject.name || "",
         color: targetProject.color || "#1cb9f7",
+        dailyRate: targetProject.dailyRate ?? "",
       });
       setError("");
     }
@@ -39,8 +41,9 @@ const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    const dailyRate = fields.dailyRate === "" ? undefined : Number(fields.dailyRate);
     try {
-      await dispatch(updateProjectApi(orgId, targetProject.id, fields.name, fields.color, token));
+      await dispatch(updateProjectApi(orgId, targetProject.id, fields.name, fields.color, dailyRate, token));
       onClose();
     } catch (err) {
       setError(apiErrorMessage(err, locale));

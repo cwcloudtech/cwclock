@@ -23,6 +23,7 @@ const initialFields = {
   vatDischargeMotive: "",
   purchaseOrder: "",
   hoursPerDay: "",
+  dailyRate: "",
 };
 
 const Clients = () => {
@@ -52,6 +53,7 @@ const Clients = () => {
       { name: "vatDischargeMotive", type: "text", label: t("clients.vatDischargeMotive") },
       { name: "purchaseOrder", type: "text", label: t("clients.purchaseOrder") },
       { name: "hoursPerDay", type: "number", label: t("clients.hoursPerDay"), step: "0.01" },
+      { name: "dailyRate", type: "number", label: t("clients.dailyRate"), step: "0.01", min: "0" },
     ],
   };
 
@@ -72,6 +74,7 @@ const Clients = () => {
       ...fields,
       vatRate: fields.vatRate === "" ? undefined : Number(fields.vatRate),
       hoursPerDay: fields.hoursPerDay === "" ? undefined : Number(fields.hoursPerDay),
+      dailyRate: fields.dailyRate === "" ? undefined : Number(fields.dailyRate),
     };
     try {
       await dispatch(createClientApi(currentOrgId, payload, user.token));
@@ -113,6 +116,9 @@ const Clients = () => {
               {client.city && ` ${client.city}`}
               {client.country && ` ${client.country}`}
               {t("clients.vatAndHours", { rate: client.vatRate, hours: client.hoursPerDay })}
+              {isAdminOrOwner && client.dailyRate
+                ? t("clients.dailyRateSet", { rate: client.dailyRate })
+                : ""}
             </span>
             {isAdminOrOwner && (
               <div className={styles.rowActions}>

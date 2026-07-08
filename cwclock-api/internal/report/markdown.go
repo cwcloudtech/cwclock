@@ -1,6 +1,7 @@
 package report
 
 import (
+	_ "embed"
 	"strings"
 	"text/template"
 
@@ -34,12 +35,12 @@ func newReportHeader(title, orgName string, start, end string, totals models.Rep
 	return h
 }
 
-const headerMarkdownTpl = `# {{.OrgName}} - {{.Title}}
-
-{{.Period}}
-
-**Total:** {{.TotalDuration}}   **Billable:** {{.TotalDuration}}{{if .ShowAmount}}   **Amount:** {{.TotalAmount}} {{.Currency}}{{end}}
-`
+// headerMarkdownTpl is the report header's markdown template, externalized
+// under templates/ (with a .tpl.md extension) so report markdown lives in
+// its own reviewable file instead of a Go string literal.
+//
+//go:embed templates/header.tpl.md
+var headerMarkdownTpl string
 
 var headerTemplate = template.Must(template.New("header").Parse(headerMarkdownTpl))
 

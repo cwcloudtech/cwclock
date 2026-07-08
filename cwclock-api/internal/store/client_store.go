@@ -20,16 +20,17 @@ func NewClientStore(pool *pgxpool.Pool) *ClientStore {
 }
 
 type clientData struct {
-	Name               string  `json:"name"`
-	Address            string  `json:"address"`
-	PostalCode         string  `json:"postalCode"`
-	City               string  `json:"city"`
-	Country            string  `json:"country"`
-	VATNumber          string  `json:"vatNumber"`
-	VATRate            float64 `json:"vatRate"`
-	VATDischargeMotive string  `json:"vatDischargeMotive"`
-	PurchaseOrder      string  `json:"purchaseOrder"`
-	HoursPerDay        float64 `json:"hoursPerDay"`
+	Name               string   `json:"name"`
+	Address            string   `json:"address"`
+	PostalCode         string   `json:"postalCode"`
+	City               string   `json:"city"`
+	Country            string   `json:"country"`
+	VATNumber          string   `json:"vatNumber"`
+	VATRate            float64  `json:"vatRate"`
+	VATDischargeMotive string   `json:"vatDischargeMotive"`
+	PurchaseOrder      string   `json:"purchaseOrder"`
+	HoursPerDay        float64  `json:"hoursPerDay"`
+	DailyRate          *float64 `json:"dailyRate,omitempty"`
 }
 
 // ClientFields holds the editable, non-identifying fields of a client.
@@ -44,6 +45,7 @@ type ClientFields struct {
 	VATDischargeMotive string
 	PurchaseOrder      string
 	HoursPerDay        float64
+	DailyRate          *float64
 }
 
 func toClientData(f ClientFields) clientData {
@@ -66,6 +68,7 @@ func toClientData(f ClientFields) clientData {
 		VATDischargeMotive: f.VATDischargeMotive,
 		PurchaseOrder:      f.PurchaseOrder,
 		HoursPerDay:        hoursPerDay,
+		DailyRate:          f.DailyRate,
 	}
 }
 
@@ -92,6 +95,7 @@ func scanClient(row pgx.Row) (models.Client, error) {
 	c.VATDischargeMotive = d.VATDischargeMotive
 	c.PurchaseOrder = d.PurchaseOrder
 	c.HoursPerDay = d.HoursPerDay
+	c.DailyRate = d.DailyRate
 	return c, nil
 }
 
