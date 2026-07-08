@@ -55,6 +55,12 @@ const en = {
     copy: "Copy",
     copied: "Copied to clipboard",
   },
+  cookieBanner: {
+    title: "Cookie notice",
+    message:
+      "CWClock is an open-source product. The cookies and local storage it uses are required only for the app to function (sign-in, your theme and language) - never for tracking or analytics.",
+    understand: "I understand",
+  },
   days: {
     0: "Sunday",
     1: "Monday",

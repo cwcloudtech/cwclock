@@ -6,6 +6,7 @@ import { ToastContainer } from "react-toastify";
 import Slidebar from "./Components/Dashboard/dash/Slidebar";
 import { ThemeProvider } from "./Components/common/ThemeContext";
 import { I18nProvider } from "./i18n/I18nContext";
+import CookieBanner from "./Components/common/CookieBanner";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           </Routes>
         </div>
         <ToastContainer position="top-right" />
+        <CookieBanner />
       </ThemeProvider>
     </I18nProvider>
   );

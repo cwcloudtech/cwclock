@@ -55,6 +55,12 @@ const fr = {
     copy: "Copier",
     copied: "Copié dans le presse-papiers",
   },
+  cookieBanner: {
+    title: "Avis relatif aux cookies",
+    message:
+      "CWClock est un produit open-source. Les cookies et le stockage local qu'il utilise sont nécessaires uniquement au fonctionnement de l'application (connexion, thème et langue) - jamais pour le suivi ou l'analyse.",
+    understand: "J'ai compris",
+  },
   days: {
     0: "Dimanche",
     1: "Lundi",
