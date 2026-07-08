@@ -154,8 +154,7 @@
   font-size: 0.7rem;
   font-weight: 600;
   color: #ffffff;
-  background-color: #3f51b5;
-  color: var(--cw-text-muted);
+  background-color: #1cb9f7;
 }
 
 .uploadLabel {
