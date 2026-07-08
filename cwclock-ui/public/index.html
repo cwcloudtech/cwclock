@@ -5,10 +5,28 @@
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
+    <title>%REACT_APP_SEO_TITLE%</title>
+
+    <meta itemprop="keywords" name="keywords" content="%REACT_APP_SEO_KEYWORDS%" />
+    <meta itemprop="description" name="description" content="%REACT_APP_SEO_DESCRIPTION%" />
+    <meta itemprop="name" name="name" content="%REACT_APP_SEO_TITLE" />
+
+    <meta property="og:image:width" content="300" />
+    <meta property="og:image:height" content="300" />
+    <meta property="og:site_name" content="%REACT_APP_SEO_TITLE%" />
+    <meta property="og:title" content="%REACT_APP_SEO_TITLE%" />
+    <meta property="og:type" content="%REACT_APP_SEO_DESCRIPTION%" />
+    <meta property="og:url" content="https://%REACT_APP_UIURL%" />
+    <meta property="og:description" content="%REACT_APP_SEO_DESCRIPTION%" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:description" content="%REACT_APP_SEO_DESCRIPTION%" />
+    <meta name="twitter:title" content="%REACT_APP_SEO_DESCRIPTION%" />
+
+    <meta http-equiv='cache-control' content='no-cache'>
+    <meta http-equiv='expires' content='0'>
+    <meta http-equiv='pragma' content='no-cache'>
+
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/octopus.png" />
     <!--
       manifest.json provides metadata used when your web app is installed on a
@@ -24,7 +42,6 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>cwclock</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
