@@ -15,5 +15,5 @@ discord_notif() {
 
 
 for app in $CWCLOCK_APPS; do
-  discord_notif "${DISCORD_TOKEN_PUBLIC}" "cwclock_${CWCLOCK_APP}"
+  discord_notif "${DISCORD_TOKEN_PUBLIC}" "cwclock_${app}"
 done
