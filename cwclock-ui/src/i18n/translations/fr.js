@@ -52,6 +52,8 @@ const fr = {
     clearFilter: "Effacer",
     cropImageTitle: "Ajustez votre image",
     zoom: "Zoom",
+    copy: "Copier",
+    copied: "Copié dans le presse-papiers",
   },
   days: {
     0: "Dimanche",

@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import styles from "./Styles/TaskComp.module.css";
 import { MdDeleteForever } from "react-icons/md";
-import { FaRegEdit } from "react-icons/fa";
+import { FaRegEdit, FaRegCopy } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import { deleteTasksApi, updateTasksApi } from "../../Redux/Tasks/Task.actions";
 import ConfirmModal from "../common/ConfirmModal";
 import memberLabel from "../common/memberLabel";
 import projectLabel from "../common/projectLabel";
 import Tooltip from "../common/Tooltip";
+import toastOptions from "../../Redux/toastOptions";
 import { useI18n } from "../../i18n/I18nContext";
 
 const fieldsFromItem = (item) => ({
@@ -69,6 +71,12 @@ const TaskComponent = ({ item }) => {
     if (match) {
       setForm((f) => ({ ...f, projectId: match.id }));
     }
+  };
+
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast.success(t("common.copied"), toastOptions);
+    });
   };
 
   const handleDelete = () => {
@@ -198,9 +206,20 @@ const TaskComponent = ({ item }) => {
         ) : (
           <>
             <div className={styles.Up}>
-              <Tooltip label={isTextTruncated ? item.text : null}>
-                <h6>{truncatedText}</h6>
-              </Tooltip>
+              <div className={styles.CopyLabel}>
+                <Tooltip label={isTextTruncated ? item.text : null}>
+                  <h6>{truncatedText}</h6>
+                </Tooltip>
+                <Tooltip label={t("common.copy")}>
+                  <button
+                    type="button"
+                    className={styles.CopyBtn}
+                    onClick={() => handleCopy(item.text)}
+                  >
+                    <FaRegCopy style={{ fontSize: "14px" }} />
+                  </button>
+                </Tooltip>
+              </div>
             </div>
             <div className={styles.Projects}>
               <h6>{project ? projectLabel(project, clients) : ""}</h6>

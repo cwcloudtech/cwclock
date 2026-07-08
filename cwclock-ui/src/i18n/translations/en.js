@@ -52,6 +52,8 @@ const en = {
     clearFilter: "Clear",
     cropImageTitle: "Adjust your image",
     zoom: "Zoom",
+    copy: "Copy",
+    copied: "Copied to clipboard",
   },
   days: {
     0: "Sunday",
