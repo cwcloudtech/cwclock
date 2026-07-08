@@ -4,6 +4,7 @@ import { FaRegEdit } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";
 import Tooltip from "../common/Tooltip";
 import ConfirmModal from "../common/ConfirmModal";
+import CopyIdButton from "../common/CopyIdButton";
 import memberLabel from "../common/memberLabel";
 import EditUserModal from "./EditUserModal";
 import { listAllUsersApi, deleteUserApi } from "../../Redux/Admin/Admin.actions";
@@ -66,6 +67,7 @@ const Admin = () => {
             <span className={styles.email}>{u.email}</span>
             <span className={`${styles.roleBadge} ${roleBadgeClass[u.role] || ""}`}>{roleLabel(u.role)}</span>
             <div className={styles.rowActions}>
+              <CopyIdButton id={u.id} className={styles.iconBtn} />
               <Tooltip label={t("common.edit")}>
                 <button type="button" className={styles.iconBtn} onClick={() => setEditingUser(u)}>
                   <FaRegEdit style={{ fontSize: "18px" }} />

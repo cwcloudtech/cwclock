@@ -54,6 +54,7 @@ const fr = {
     zoom: "Zoom",
     copy: "Copier",
     copied: "Copié dans le presse-papiers",
+    copyId: "Copier l'ID",
   },
   cookieBanner: {
     title: "Avis relatif aux cookies",

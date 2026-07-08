@@ -10,6 +10,7 @@ import ConfigForm from "../common/ConfigForm";
 import CollapsiblePanel from "../common/CollapsiblePanel";
 import Tooltip from "../common/Tooltip";
 import EmptyState from "../common/EmptyState";
+import CopyIdButton from "../common/CopyIdButton";
 import EditProjectModal from "./EditProjectModal";
 import TagsInput from "../common/TagsInput";
 import { useI18n } from "../../i18n/I18nContext";
@@ -119,8 +120,9 @@ const Project = () => {
                   {t("projects.dailyRateSet", { rate: project.dailyRate })}
                 </span>
               )}
-              {isAdminOrOwner && (
-                <div className={styles.rowActions}>
+              <div className={styles.rowActions}>
+                <CopyIdButton id={project.id} className={styles.iconBtn} />
+                {isAdminOrOwner && (
                   <Tooltip label={t("common.edit")}>
                     <button
                       type="button"
@@ -130,8 +132,8 @@ const Project = () => {
                       <FaRegEdit style={{ fontSize: "18px" }} />
                     </button>
                   </Tooltip>
-                </div>
-              )}
+                )}
+              </div>
             </li>
           );
         })}

@@ -8,11 +8,43 @@
   margin-top: var(--cw-spacing-lg);
 }
 
+.orgRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cw-spacing);
+}
+
 .orgOption {
   display: flex;
   align-items: center;
   gap: 10px;
   cursor: pointer;
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 6px 10px;
+  color: var(--cw-text-muted);
+  border-radius: var(--cw-radius-sm);
+  cursor: pointer;
+  transition: background-color var(--cw-transition), color var(--cw-transition);
+}
+
+.iconBtn:hover {
+  color: var(--cw-primary-700);
+  background-color: var(--cw-primary-tint);
 }
 
 .avatar {

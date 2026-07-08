@@ -8,6 +8,7 @@ import ConfigForm from "../common/ConfigForm";
 import CollapsiblePanel from "../common/CollapsiblePanel";
 import Tooltip from "../common/Tooltip";
 import EmptyState from "../common/EmptyState";
+import CopyIdButton from "../common/CopyIdButton";
 import EditClientModal from "./EditClientModal";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
@@ -120,8 +121,9 @@ const Clients = () => {
                 ? t("clients.dailyRateSet", { rate: client.dailyRate })
                 : ""}
             </span>
-            {isAdminOrOwner && (
-              <div className={styles.rowActions}>
+            <div className={styles.rowActions}>
+              <CopyIdButton id={client.id} className={styles.iconBtn} />
+              {isAdminOrOwner && (
                 <Tooltip label={t("common.edit")}>
                   <button
                     type="button"
@@ -131,8 +133,8 @@ const Clients = () => {
                     <FaRegEdit style={{ fontSize: "18px" }} />
                   </button>
                 </Tooltip>
-              </div>
-            )}
+              )}
+            </div>
           </li>
         ))}
       </ul>

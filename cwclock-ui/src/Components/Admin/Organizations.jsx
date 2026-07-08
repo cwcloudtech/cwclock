@@ -4,6 +4,7 @@ import { FaRegEdit, FaExchangeAlt } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";
 import Tooltip from "../common/Tooltip";
 import ConfirmModal from "../common/ConfirmModal";
+import CopyIdButton from "../common/CopyIdButton";
 import EditOrgModal from "./EditOrgModal";
 import TransferOwnershipModal from "./TransferOwnershipModal";
 import { listAllOrganizationsApi } from "../../Redux/Admin/Admin.actions";
@@ -42,6 +43,7 @@ const Organizations = () => {
             <span className={styles.email}>{org.ownerEmail}</span>
             <span />
             <div className={styles.rowActions}>
+              <CopyIdButton id={org.id} className={styles.iconBtn} />
               <Tooltip label={t("organizations.transferOwnership")}>
                 <button
                   type="button"

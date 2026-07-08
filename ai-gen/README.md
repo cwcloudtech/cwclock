@@ -22,3 +22,4 @@
 * [ai-instruct-20](./ai-instruct-20.md)
 * [ai-instruct-21](./ai-instruct-21.md)
 * [ai-instruct-22](./ai-instruct-22.md)
+* [ai-instruct-23](./ai-instruct-23.md)

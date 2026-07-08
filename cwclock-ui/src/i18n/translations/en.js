@@ -54,6 +54,7 @@ const en = {
     zoom: "Zoom",
     copy: "Copy",
     copied: "Copied to clipboard",
+    copyId: "Copy ID",
   },
   cookieBanner: {
     title: "Cookie notice",

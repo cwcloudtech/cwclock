@@ -52,8 +52,10 @@ type Components struct {
 
 type SecurityScheme struct {
 	Type         string `json:"type"`
-	Scheme       string `json:"scheme"`
+	Scheme       string `json:"scheme,omitempty"`
 	BearerFormat string `json:"bearerFormat,omitempty"`
+	In           string `json:"in,omitempty"`
+	Name         string `json:"name,omitempty"`
 }
 
 var pathParam = regexp.MustCompile(`\{([a-zA-Z0-9_]+)\}`)
@@ -70,7 +72,8 @@ var publicRoutes = map[string]bool{
 
 // Generate walks every route currently registered on r and describes it as
 // an OpenAPI operation: method, path, path parameters, a resource tag taken
-// from the first segment after /v1, and a bearer-auth requirement for every
+// from the first segment after /v1, and an auth requirement (bearer JWT or
+// X-Api-Key, either satisfies it - mirroring middleware.Auth) for every
 // route except the known-public ones (login/register/currencies).
 func Generate(r chi.Router, title, version string) Spec {
 	paths := map[string]PathItem{}
@@ -98,7 +101,7 @@ func Generate(r chi.Router, title, version string) Spec {
 			Responses:  map[string]Response{"200": {Description: "OK"}},
 		}
 		if !publicRoutes[method+" "+route] {
-			op.Security = []map[string][]string{{"bearerAuth": {}}}
+			op.Security = []map[string][]string{{"bearerAuth": {}}, {"apiKeyAuth": {}}}
 		}
 
 		item[strings.ToLower(method)] = op
@@ -116,6 +119,7 @@ func Generate(r chi.Router, title, version string) Spec {
 		Components: Components{
 			SecuritySchemes: map[string]SecurityScheme{
 				"bearerAuth": {Type: "http", Scheme: "bearer", BearerFormat: "JWT"},
+				"apiKeyAuth": {Type: "apiKey", In: "header", Name: "X-Api-Key"},
 			},
 		},
 	}

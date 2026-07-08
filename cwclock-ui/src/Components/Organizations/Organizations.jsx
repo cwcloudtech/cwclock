@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Button from "../common/Button";
+import CopyIdButton from "../common/CopyIdButton";
 import styles from "./Styles/Organizations.module.css";
 import {
   listOrgsApi,
@@ -249,7 +250,7 @@ const Organizations = () => {
 
       <ul className="cw-list">
         {organizations.map((org) => (
-          <li key={org.id} className="cw-list-item">
+          <li key={org.id} className={`cw-list-item ${styles.orgRow}`}>
             <label className={styles.orgOption} title={t("organizations.switchTo", { name: org.name })}>
               <input
                 type="radio"
@@ -260,6 +261,9 @@ const Organizations = () => {
               {org.picture && <img src={org.picture} alt="" className={styles.avatar} />}
               {org.name}
             </label>
+            <div className={styles.rowActions}>
+              <CopyIdButton id={org.id} className={styles.iconBtn} />
+            </div>
           </li>
         ))}
       </ul>
