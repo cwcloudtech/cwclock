@@ -25,12 +25,12 @@ export const listProjectsApi = (orgId, token) => async (dispatch) => {
   }
 };
 
-export const createProjectApi = (orgId, clientId, name, color, dailyRate, token) => async (dispatch) => {
+export const createProjectApi = (orgId, clientId, name, color, dailyRate, subdivisions, token) => async (dispatch) => {
   dispatch({ type: ProjectLOADING });
   try {
     const { data } = await axios.post(
       `${ENDPOINT}${orgId}/clients/${clientId}/projects/`,
-      { name, color, dailyRate },
+      { name, color, dailyRate, subdivisions },
       authConfig(token)
     );
     dispatch({ type: ProjectCreateSUCCESS, payload: data });
@@ -42,12 +42,12 @@ export const createProjectApi = (orgId, clientId, name, color, dailyRate, token)
   }
 };
 
-export const updateProjectApi = (orgId, projectId, name, color, dailyRate, token) => async (dispatch) => {
+export const updateProjectApi = (orgId, projectId, name, color, dailyRate, subdivisions, token) => async (dispatch) => {
   dispatch({ type: ProjectLOADING });
   try {
     const { data } = await axios.put(
       `${ENDPOINT}${orgId}/projects/${projectId}`,
-      { name, color, dailyRate },
+      { name, color, dailyRate, subdivisions },
       authConfig(token)
     );
     dispatch({ type: ProjectUpdateSUCCESS, payload: data });

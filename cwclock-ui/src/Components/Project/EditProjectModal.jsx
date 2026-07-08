@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import Modal from "../common/Modal";
 import ConfigForm from "../common/ConfigForm";
+import TagsInput from "../common/TagsInput";
 import { updateProjectApi } from "../../Redux/Projects/Project.actions";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
 
-const emptyFields = { name: "", color: "#1cb9f7", dailyRate: "" };
+const emptyFields = { name: "", color: "#1cb9f7", dailyRate: "", subdivisions: [] };
 
 const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
   const { t, locale } = useI18n();
@@ -29,6 +30,7 @@ const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
         name: targetProject.name || "",
         color: targetProject.color || "#1cb9f7",
         dailyRate: targetProject.dailyRate ?? "",
+        subdivisions: targetProject.subdivisions || [],
       });
       setError("");
     }
@@ -43,7 +45,7 @@ const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
     setError("");
     const dailyRate = fields.dailyRate === "" ? undefined : Number(fields.dailyRate);
     try {
-      await dispatch(updateProjectApi(orgId, targetProject.id, fields.name, fields.color, dailyRate, token));
+      await dispatch(updateProjectApi(orgId, targetProject.id, fields.name, fields.color, dailyRate, fields.subdivisions, token));
       onClose();
     } catch (err) {
       setError(apiErrorMessage(err, locale));
@@ -61,6 +63,14 @@ const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
         onCancel={onClose}
         error={error}
       />
+      <div className="cw-field">
+        <label className="cw-label">{t("projects.subdivisions")}</label>
+        <TagsInput
+          value={fields.subdivisions}
+          onChange={(v) => setField("subdivisions", v)}
+          placeholder={t("projects.subdivisionsPlaceholder")}
+        />
+      </div>
     </Modal>
   );
 };

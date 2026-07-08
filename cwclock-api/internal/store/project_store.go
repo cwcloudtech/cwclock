@@ -21,9 +21,10 @@ func NewProjectStore(pool *pgxpool.Pool) *ProjectStore {
 }
 
 type projectData struct {
-	Name      string   `json:"name"`
-	Color     string   `json:"color"`
-	DailyRate *float64 `json:"dailyRate,omitempty"`
+	Name         string   `json:"name"`
+	Color        string   `json:"color"`
+	DailyRate    *float64 `json:"dailyRate,omitempty"`
+	Subdivisions []string `json:"subdivisions,omitempty"`
 }
 
 func scanProject(row pgx.Row) (models.Project, error) {
@@ -42,11 +43,12 @@ func scanProject(row pgx.Row) (models.Project, error) {
 	p.Name = d.Name
 	p.Color = d.Color
 	p.DailyRate = d.DailyRate
+	p.Subdivisions = d.Subdivisions
 	return p, nil
 }
 
-func (s *ProjectStore) Create(ctx context.Context, orgID, clientID, name, color string, dailyRate *float64) (models.Project, error) {
-	data, err := json.Marshal(projectData{Name: name, Color: color, DailyRate: dailyRate})
+func (s *ProjectStore) Create(ctx context.Context, orgID, clientID, name, color string, dailyRate *float64, subdivisions []string) (models.Project, error) {
+	data, err := json.Marshal(projectData{Name: name, Color: color, DailyRate: dailyRate, Subdivisions: subdivisions})
 	if err != nil {
 		return models.Project{}, err
 	}
@@ -99,8 +101,8 @@ func (s *ProjectStore) List(ctx context.Context, orgID, clientID string) ([]mode
 	return projects, rows.Err()
 }
 
-func (s *ProjectStore) Update(ctx context.Context, id, name, color string, dailyRate *float64) (models.Project, error) {
-	data, err := json.Marshal(projectData{Name: name, Color: color, DailyRate: dailyRate})
+func (s *ProjectStore) Update(ctx context.Context, id, name, color string, dailyRate *float64, subdivisions []string) (models.Project, error) {
+	data, err := json.Marshal(projectData{Name: name, Color: color, DailyRate: dailyRate, Subdivisions: subdivisions})
 	if err != nil {
 		return models.Project{}, err
 	}

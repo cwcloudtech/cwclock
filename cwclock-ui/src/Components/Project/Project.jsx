@@ -11,9 +11,10 @@ import CollapsiblePanel from "../common/CollapsiblePanel";
 import Tooltip from "../common/Tooltip";
 import EmptyState from "../common/EmptyState";
 import EditProjectModal from "./EditProjectModal";
+import TagsInput from "../common/TagsInput";
 import { useI18n } from "../../i18n/I18nContext";
 
-const initialFields = { clientId: "", name: "", color: "#1cb9f7", dailyRate: "" };
+const initialFields = { clientId: "", name: "", color: "#1cb9f7", dailyRate: "", subdivisions: [] };
 
 const Project = () => {
   const { t } = useI18n();
@@ -60,7 +61,7 @@ const Project = () => {
     e.preventDefault();
     if (!fields.name || !fields.clientId || !currentOrgId) return;
     const dailyRate = fields.dailyRate === "" ? undefined : Number(fields.dailyRate);
-    dispatch(createProjectApi(currentOrgId, fields.clientId, fields.name, fields.color, dailyRate, user.token));
+    dispatch(createProjectApi(currentOrgId, fields.clientId, fields.name, fields.color, dailyRate, fields.subdivisions, user.token));
     setField("name", "");
   };
 
@@ -91,6 +92,14 @@ const Project = () => {
           onSubmit={handleSubmit}
           submitLabel={t("common.add")}
         />
+        <div className="cw-field">
+          <label className="cw-label">{t("projects.subdivisions")}</label>
+          <TagsInput
+            value={fields.subdivisions}
+            onChange={(v) => setField("subdivisions", v)}
+            placeholder={t("projects.subdivisionsPlaceholder")}
+          />
+        </div>
       </CollapsiblePanel>
 
       {projects.length === 0 && (

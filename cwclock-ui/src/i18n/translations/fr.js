@@ -209,6 +209,8 @@ const fr = {
     editProjectTitle: "Modifier {{name}}",
     emptyTitle: "Aucun projet pour le moment",
     emptyBody: "Créez votre premier projet ci-dessus pour commencer.",
+    subdivisions: "Subdivisions",
+    subdivisionsPlaceholder: "Ajouter une subdivision",
   },
   admin: {
     usersTitle: "Utilisateurs",

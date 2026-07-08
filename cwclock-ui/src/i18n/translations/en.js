@@ -209,6 +209,8 @@ const en = {
     editProjectTitle: "Edit {{name}}",
     emptyTitle: "No projects yet",
     emptyBody: "Create your first project above to get started.",
+    subdivisions: "Subdivisions",
+    subdivisionsPlaceholder: "Add a subdivision",
   },
   admin: {
     usersTitle: "Users",

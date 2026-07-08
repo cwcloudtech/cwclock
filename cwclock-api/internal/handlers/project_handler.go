@@ -21,9 +21,10 @@ func NewProjectHandler(projects *store.ProjectStore) *ProjectHandler {
 }
 
 type projectPayload struct {
-	Name      string   `json:"name"`
-	Color     string   `json:"color"`
-	DailyRate *float64 `json:"dailyRate"`
+	Name         string   `json:"name"`
+	Color        string   `json:"color"`
+	DailyRate    *float64 `json:"dailyRate"`
+	Subdivisions []string `json:"subdivisions"`
 }
 
 // redactProjectRates hides each project's daily rate from the response
@@ -66,7 +67,7 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	project, err := h.projects.Create(r.Context(), orgID, clientID, p.Name, p.Color, p.DailyRate)
+	project, err := h.projects.Create(r.Context(), orgID, clientID, p.Name, p.Color, p.DailyRate, p.Subdivisions)
 	if err != nil {
 		writeStoreError(w, err)
 		return
@@ -83,7 +84,7 @@ func (h *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	project, err := h.projects.Update(r.Context(), id, p.Name, p.Color, p.DailyRate)
+	project, err := h.projects.Update(r.Context(), id, p.Name, p.Color, p.DailyRate, p.Subdivisions)
 	if err != nil {
 		writeStoreError(w, err)
 		return

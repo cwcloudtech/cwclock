@@ -3,7 +3,6 @@ import TaskInput from "./TaskInput";
 import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import TaskComponent from "./TaskComponent";
-import Heading from "./Heading";
 import styles from "./Styles/TaskApp.module.css";
 import EmptyTask from "./EmptyTask";
 import ImportCSVModal from "./ImportCSVModal";
@@ -127,7 +126,6 @@ const TasksApp = () => {
         </div>
       ) : (
         <div>
-          <Heading />
           {dayGroups.map((group) => (
             <React.Fragment key={group.day}>
               <div className={styles.DaySeparator}>
