@@ -46,7 +46,7 @@ ls -l "${pdf_report}"
 
 I want a similar endpoint but with this url instead:
 
-```shell
+```
 https://{api}/v1/organizations/${organization_id}/reports/detailed
 https://{api}/v1/organizations/${organization_id}/reports/summary
 ```
