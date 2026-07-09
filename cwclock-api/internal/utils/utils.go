@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"regexp"
+	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -19,19 +21,22 @@ func IsBlank(str string) bool {
 	return !IsNotBlank(str)
 }
 
-// IsTrue return whether str is a true value.
-// True values are: true, yes, on, ok, 1, and any non-zero number.
+// IsTrue return whether str is not a false value.
 // False values are: false, no, off, ko, 0, and empty string.
 func IsTrue(str string) bool {
-	if IsNotBlank(str) {
+	if IsBlank(str) {
 		return false
 	}
 
-	values := []string{"false", "ko", "no", "off", "1"}
-	for _, v := range values {
-		if strings.TrimSpace(strings.ToLower(str)) == v {
-			return false
-		}
+	normalized := strings.TrimSpace(strings.ToLower(str))
+
+	falseValues := []string{"false", "ko", "no", "off", "0"}
+	if slices.Contains(falseValues, normalized) {
+		return false
+	}
+
+	if num, err := strconv.ParseFloat(normalized, 64); err == nil {
+		return num > 0
 	}
 
 	return true
