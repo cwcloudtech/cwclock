@@ -178,7 +178,7 @@ func lineItemRows(items []InvoiceLineItem) [][]string {
 func totalsRows(client models.Client, totalHT, totalVAT, totalTTC, vatRate float64, currency string) [][]string {
 	return [][]string{
 		{"Total HT (without taxes)", fmt.Sprintf("%s %s", formatAmount(totalHT), currency)},
-		{"TVA (VAT)", formatVAT(client, totalVAT, currency)},
+		{"VAT / TVA", formatVAT(client, totalVAT, currency)},
 		{"Total TTC (with taxes)", fmt.Sprintf("%s %s", formatAmount(totalTTC), currency)},
 	}
 }
