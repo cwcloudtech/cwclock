@@ -42,6 +42,7 @@ const Clients = () => {
   const [error, setError] = useState("");
   const [editingClient, setEditingClient] = useState(null);
   const [deletingClient, setDeletingClient] = useState(null);
+  const [search, setSearch] = useState("");
 
   const isAdminOrOwner = computeIsAdminOrOwner(user, members);
 
@@ -96,6 +97,10 @@ const Clients = () => {
     await dispatch(deleteClientApi(currentOrgId, clientId, user.token));
   };
 
+  const visibleClients = clients
+    .filter((c) => c.name.toLowerCase().includes(search.trim().toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   if (!currentOrgId) {
     return <h1 className="cw-title">{t("organizations.selectOrCreateFirst")}</h1>;
   }
@@ -118,8 +123,20 @@ const Clients = () => {
         <EmptyState title={t("clients.emptyTitle")} body={t("clients.emptyBody")} />
       )}
 
+      {clients.length > 0 && (
+        <div className={styles.filters}>
+          <input
+            className={`cw-input ${styles.search}`}
+            type="text"
+            placeholder={t("common.search")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      )}
+
       <ul className="cw-list">
-        {clients.map((client) => (
+        {visibleClients.map((client) => (
           <li className={`cw-list-item ${styles.clientRow}`} key={client.id}>
             <span>
               <strong>{client.name}</strong>

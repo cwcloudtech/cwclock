@@ -4,6 +4,17 @@
   margin: 0 auto;
 }
 
+.filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: var(--cw-spacing);
+}
+
+.search {
+  min-width: 220px;
+}
+
 .projectItem {
   display: flex;
   align-items: center;

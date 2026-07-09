@@ -136,7 +136,10 @@ const Invoices = () => {
 
   const isAdminOrOwner = computeIsAdminOrOwner(user, members);
   const setRange = (start, end) => setRangeState({ start, end });
-  const clientProjects = projects.filter((p) => p.clientId === clientId);
+  const sortedClients = [...clients].sort((a, b) => a.name.localeCompare(b.name));
+  const clientProjects = projects
+    .filter((p) => p.clientId === clientId)
+    .sort((a, b) => a.name.localeCompare(b.name));
   const visibleInvoices = statusFilter.length
     ? invoices.filter((i) => statusFilter.includes(i.status))
     : invoices;
@@ -212,7 +215,7 @@ const Invoices = () => {
           title={t("invoices.selectAClient")}
         >
           <option value="">{t("invoices.selectAClient")}</option>
-          {clients.map((c) => (
+          {sortedClients.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>

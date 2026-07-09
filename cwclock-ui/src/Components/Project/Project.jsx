@@ -9,6 +9,7 @@ import { listProjectsApi, createProjectApi, deleteProjectApi } from "../../Redux
 import { listMembersApi } from "../../Redux/Organizations/Org.actions";
 import ConfigForm from "../common/ConfigForm";
 import CollapsiblePanel from "../common/CollapsiblePanel";
+import MultiSelect from "../common/MultiSelect";
 import Tooltip from "../common/Tooltip";
 import ConfirmModal from "../common/ConfirmModal";
 import EmptyState from "../common/EmptyState";
@@ -30,6 +31,8 @@ const Project = () => {
   const [fields, setFields] = useState(initialFields);
   const [editingProject, setEditingProject] = useState(null);
   const [deletingProject, setDeletingProject] = useState(null);
+  const [clientFilter, setClientFilter] = useState([]);
+  const [search, setSearch] = useState("");
 
   const isAdminOrOwner = computeIsAdminOrOwner(user, members);
 
@@ -80,6 +83,15 @@ const Project = () => {
     await dispatch(deleteProjectApi(currentOrgId, projectId, user.token));
   };
 
+  const clientFilterOptions = [...clients]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((c) => ({ value: c.id, label: c.name }));
+
+  const visibleProjects = projects
+    .filter((p) => clientFilter.length === 0 || clientFilter.includes(p.clientId))
+    .filter((p) => p.name.toLowerCase().includes(search.trim().toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   if (!currentOrgId) {
     return <h1 className="cw-title">{t("organizations.selectOrCreateFirst")}</h1>;
   }
@@ -113,8 +125,26 @@ const Project = () => {
         <EmptyState title={t("projects.emptyTitle")} body={t("projects.emptyBody")} />
       )}
 
+      {projects.length > 0 && (
+        <div className={styles.filters}>
+          <MultiSelect
+            label={t("common.client")}
+            options={clientFilterOptions}
+            selected={clientFilter}
+            onChange={setClientFilter}
+          />
+          <input
+            className={`cw-input ${styles.search}`}
+            type="text"
+            placeholder={t("common.search")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      )}
+
       <ul className="cw-list">
-        {projects.map((project) => {
+        {visibleProjects.map((project) => {
           const client = clients.find((c) => c.id === project.clientId);
           return (
             <li className={`cw-list-item ${styles.projectItem}`} key={project.id}>

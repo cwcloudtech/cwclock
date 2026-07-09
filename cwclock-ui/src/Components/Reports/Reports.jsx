@@ -52,6 +52,17 @@ const Reports = () => {
     }
   }, [dispatch, currentOrgId, user.token]);
 
+  // Narrowing the client filter narrows which projects make sense too, so
+  // drop any already-selected project that no longer belongs to one of the
+  // selected clients.
+  useEffect(() => {
+    if (clientIds.length === 0) return;
+    setProjectIds((prev) =>
+      prev.filter((id) => clientIds.includes(projects.find((p) => p.id === id)?.clientId))
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientIds, projects]);
+
   const filters = { type: tab, start: range.start, end: range.end, clientIds, projectIds, userIds };
   const isSummaryReport = report && Array.isArray(report.rows);
   const isDetailedReport = report && Array.isArray(report.entries);
@@ -76,7 +87,9 @@ const Reports = () => {
   }
 
   const clientOptions = clients.map((c) => ({ value: c.id, label: c.name }));
-  const projectOptions = projects.map((p) => ({ value: p.id, label: p.name }));
+  const projectOptions = projects
+    .filter((p) => clientIds.length === 0 || clientIds.includes(p.clientId))
+    .map((p) => ({ value: p.id, label: p.name }));
   const memberOptions = members.map((m) => ({ value: m.userId, label: memberLabel(m) }));
 
   const handleExport = (format) => {
