@@ -370,7 +370,22 @@ func (s *OrgStore) CountMembersByRole(ctx context.Context) (map[string]int64, er
 	return counts, rows.Err()
 }
 
+// ErrCannotRemoveOwner is returned by RemoveMember when asked to remove the
+// organization's own owner - see ai-instruct-32: doing so used to leave
+// owner_id pointing at a user with no organization_members row at all,
+// which then dropped the owner out of every members-derived list (the
+// report/invoice user filter, the entry-reassignment picker, ...).
+var ErrCannotRemoveOwner = errors.New("cannot remove the organization owner")
+
 func (s *OrgStore) RemoveMember(ctx context.Context, orgID, userID string) error {
+	org, err := s.FindByID(ctx, orgID)
+	if err != nil {
+		return err
+	}
+	if org.OwnerID == userID {
+		return ErrCannotRemoveOwner
+	}
+
 	tag, err := s.pool.Exec(ctx, `
 		DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2
 	`, orgID, userID)
@@ -383,9 +398,23 @@ func (s *OrgStore) RemoveMember(ctx context.Context, orgID, userID string) error
 	return nil
 }
 
-// ListMembers returns the organization's members, owner included since the
-// owner always has an explicit "owner" membership row.
+// ListMembers returns the organization's members. The owner's own
+// membership row is healed back in first if it's ever missing (see
+// ErrCannotRemoveOwner - this covers data predating that guard), so the
+// owner is always present here and in everything this list feeds.
 func (s *OrgStore) ListMembers(ctx context.Context, orgID string) ([]models.Member, error) {
+	org, err := s.FindByID(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := s.pool.Exec(ctx, `
+		INSERT INTO organization_members (organization_id, user_id, role)
+		VALUES ($1, $2, 'owner')
+		ON CONFLICT (organization_id, user_id) DO NOTHING
+	`, orgID, org.OwnerID); err != nil {
+		return nil, err
+	}
+
 	rows, err := s.pool.Query(ctx, `
 		SELECT `+memberColumns+`
 		FROM organization_members m

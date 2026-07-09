@@ -54,7 +54,7 @@ func main() {
 	timeEntryHandler := handlers.NewTimeEntryHandler(timeEntryStore)
 	adminHandler := handlers.NewAdminHandler(userStore, cfg.MaxImageSize)
 	importHandler := handlers.NewImportHandler(userStore, clientStore, projectStore, timeEntryStore)
-	reportHandler := handlers.NewReportHandler(orgStore, clientStore, projectStore, timeEntryStore, cfg.MaxReportSize)
+	reportHandler := handlers.NewReportHandler(orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize)
 	apiKeyHandler := handlers.NewApiKeyHandler(apiKeyStore)
 	invoiceHandler := handlers.NewInvoiceHandler(invoiceStore, orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize)
 

@@ -47,6 +47,7 @@ const (
 	CodeInvalidInvoiceStatus   = "errors.invalidInvoiceStatus"
 	CodeInvalidInvoiceRequest  = "errors.invalidInvoiceRequest"
 	CodeExportLimitExceeded    = "errors.exportLimitExceeded"
+	CodeCantRemoveOwner        = "errors.cantRemoveOwner"
 )
 
 func writeJSON(w http.ResponseWriter, status int, body any) {
@@ -74,6 +75,10 @@ func writeStoreError(w http.ResponseWriter, err error) {
 	}
 	if errors.Is(err, store.ErrExportLimitExceeded) {
 		writeError(w, http.StatusBadRequest, "Too many entries for a single export", CodeExportLimitExceeded)
+		return
+	}
+	if errors.Is(err, store.ErrCannotRemoveOwner) {
+		writeError(w, http.StatusBadRequest, "The organization owner cannot be removed", CodeCantRemoveOwner)
 		return
 	}
 	slog.Error("unhandled store error", "error", err)

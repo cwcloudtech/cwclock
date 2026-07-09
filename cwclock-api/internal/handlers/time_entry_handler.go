@@ -155,6 +155,10 @@ func (h *TimeEntryHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	reassign := store.TimeEntryReassignment{}
+	if (p.ClientID != entry.ClientID || p.ProjectID != entry.ProjectID) && !isAdminOrOwner(r) {
+		writeError(w, http.StatusForbidden, "Only an admin or the owner can reassign a time entry to another client or project", CodeReassignForbidden)
+		return
+	}
 	if p.ClientID != entry.ClientID {
 		reassign.ClientID = p.ClientID
 	}

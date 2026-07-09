@@ -310,6 +310,7 @@ const fr = {
     invalidInvoiceRequest: "Veuillez choisir un client et une période.",
     exportLimitExceeded: "Cette période contient trop d'entrées à exporter. Veuillez restreindre vos filtres ou la période.",
     invalidDateRange: "La date de fin doit être postérieure ou égale à la date de début.",
+    cantRemoveOwner: "Le propriétaire de l'organisation ne peut pas être retiré.",
   },
   reports: {
     summary: "Résumé",

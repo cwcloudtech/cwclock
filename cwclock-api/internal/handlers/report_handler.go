@@ -20,11 +20,12 @@ type ReportHandler struct {
 	clients  *store.ClientStore
 	projects *store.ProjectStore
 	entries  *store.TimeEntryStore
+	users    *store.UserStore
 	maxSize  int
 }
 
-func NewReportHandler(orgs *store.OrgStore, clients *store.ClientStore, projects *store.ProjectStore, entries *store.TimeEntryStore, maxSize int) *ReportHandler {
-	return &ReportHandler{orgs: orgs, clients: clients, projects: projects, entries: entries, maxSize: maxSize}
+func NewReportHandler(orgs *store.OrgStore, clients *store.ClientStore, projects *store.ProjectStore, entries *store.TimeEntryStore, users *store.UserStore, maxSize int) *ReportHandler {
+	return &ReportHandler{orgs: orgs, clients: clients, projects: projects, entries: entries, users: users, maxSize: maxSize}
 }
 
 // checkReportSize rejects a report/export whose entry count exceeds
@@ -149,8 +150,33 @@ func (h *ReportHandler) loadEnrichedEntries(ctx context.Context, orgID string, f
 	for _, m := range members {
 		lk.Members[m.UserID] = m
 	}
+	if err := h.fillMissingMembers(ctx, rawEntries, lk.Members); err != nil {
+		return models.Organization{}, nil, err
+	}
 
 	return org, report.Enrich(rawEntries, lk, canSeeAmount), nil
+}
+
+// fillMissingMembers resolves entries' UserID directly against the users
+// table for any user not found in lk.Members - a member excluded from the
+// organization after logging time still has a user_id column on their old
+// entries, but no organization_members row anymore (see ai-instruct-32:
+// their hours must still be counted and identifiable in the report/invoice,
+// not shown with a blank name).
+func (h *ReportHandler) fillMissingMembers(ctx context.Context, entries []models.TimeEntry, members map[string]models.Member) error {
+	seen := map[string]bool{}
+	for _, e := range entries {
+		if _, ok := members[e.UserID]; ok || seen[e.UserID] {
+			continue
+		}
+		seen[e.UserID] = true
+		u, err := h.users.FindByID(ctx, e.UserID)
+		if err != nil {
+			return err
+		}
+		members[e.UserID] = models.Member{UserID: u.ID, Email: u.Email, Name: u.Name, Surname: u.Surname}
+	}
+	return nil
 }
 
 func exportFilenameDate(day string) string {

@@ -16,6 +16,7 @@ const fieldsFromEntry = (e) => ({
   start: e.start || "",
   end: e.end || "",
   allDay: e.allDay,
+  clientId: e.clientId,
   projectId: e.projectId,
   userId: e.userId,
 });
@@ -28,6 +29,8 @@ const ReportEntryRow = ({ entry, orgId, currency, isAdminOrOwner, showAmount, on
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { members } = useSelector((state) => state.organizations);
+  const { clients } = useSelector((state) => state.clients);
+  const { projects } = useSelector((state) => state.projects);
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [form, setForm] = useState(fieldsFromEntry(entry));
@@ -56,12 +59,22 @@ const ReportEntryRow = ({ entry, orgId, currency, isAdminOrOwner, showAmount, on
     if (match) setForm((f) => ({ ...f, userId: match.userId }));
   };
 
+  // Switching client narrows the project list to that client's own
+  // projects, so the previously selected project is kept only if it still
+  // belongs to the newly picked client - otherwise default to that
+  // client's first project (a time entry always needs both).
+  const handleClientChange = (clientId) => {
+    const clientProjects = projects.filter((p) => p.clientId === clientId);
+    const projectId = clientProjects.some((p) => p.id === form.projectId) ? form.projectId : clientProjects[0]?.id || "";
+    setForm((f) => ({ ...f, clientId, projectId }));
+  };
+
   const handleSave = () => {
     dispatch(
       updateTasksApi(
         {
           id: entry.id,
-          clientId: entry.clientId,
+          clientId: form.clientId,
           projectId: form.projectId,
           userId: form.userId,
           text: form.text,
@@ -132,6 +145,32 @@ const ReportEntryRow = ({ entry, orgId, currency, isAdminOrOwner, showAmount, on
         )}
         {isAdminOrOwner && (
           <>
+            <select
+              className="cw-select"
+              value={form.clientId}
+              onChange={(e) => handleClientChange(e.target.value)}
+              title={t("common.client")}
+            >
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <select
+              className="cw-select"
+              value={form.projectId}
+              onChange={(e) => setForm({ ...form, projectId: e.target.value })}
+              title={t("projects.title")}
+            >
+              {projects
+                .filter((p) => p.clientId === form.clientId)
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+            </select>
             <input
               className="cw-input"
               list={`reassign-report-${entry.id}`}
