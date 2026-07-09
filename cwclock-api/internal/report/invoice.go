@@ -102,9 +102,9 @@ func cell(s string) string {
 func clientVATLine(client models.Client) string {
 	if client.VATRate <= 0 {
 		if utils.IsNotBlank(client.VATDischargeMotive) {
-			return "no tva - " + cell(client.VATDischargeMotive)
+			return "no vat - " + cell(client.VATDischargeMotive)
 		}
-		return "no tva"
+		return "no vat"
 	}
 	return cell(client.VATNumber)
 }
@@ -205,7 +205,7 @@ func RenderInvoicePDF(org models.Organization, client models.Client, owner model
 	ownerContact := cell(fmt.Sprintf("%s %s: %s", owner.Surname, owner.Name, owner.Email))
 
 	intro := fmt.Sprintf(
-		"# Invoice N°%s\n\n%s, the %s\n\nPeriod: %s - %s\n\n\n",
+		"# Invoice N°%s\n\n%s, the %s\n\nPeriod: %s - %s\n\n\n\n",
 		cell(invoiceNumber), cell(org.City), invoiceDate, formatUSDate(startDay), formatUSDate(endDay),
 	)
 	if err := renderer.Run([]byte(intro)); err != nil {
