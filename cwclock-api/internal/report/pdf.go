@@ -11,6 +11,7 @@ const (
 	logoMaxHeight   = 36.0  // pt
 	logoMargin      = 24.0  // pt, from the page's right/top edge
 	chartMaxWidthPt = 500.0 // pt, capped so a wide chart doesn't dwarf the table below it
+	stampMaxWidthPt = 120.0 // pt, invoice stamp width cap
 )
 
 // newRenderer builds the shared mdtopdf renderer both RenderMarkdownPDF and
@@ -41,16 +42,17 @@ func outputPDF(pdf *fpdf.Fpdf) ([]byte, error) {
 }
 
 // RenderMarkdownPDF converts markdown content into PDF bytes, optionally
-// placing a logo in the header's top-right corner (pass nil logoData to
-// omit it). Past the logo, it has no report-specific knowledge on purpose:
-// it's the generic building block the invoicing feature is meant to reuse.
+// placing a logo in the header's top-right corner and a stamp below the
+// content (pass nil logoData/stampData to omit either) — this is invoicing's
+// reuse of the generic building block described below, the stamp being the
+// one piece of invoice-specific placement added on top.
 //
 // Note: markdown image syntax is deliberately not fed into this renderer.
 // mdtopdf shells out to a headless-Chrome-based SVG rasterizer for any SVG
 // image it encounters, which this app avoids entirely, so report/invoice
-// markdown should stick to text and tables — the logo is placed directly
-// via fpdf instead of through markdown.
-func RenderMarkdownPDF(markdown string, logoData []byte, logoType string) ([]byte, error) {
+// markdown should stick to text and tables — the logo/stamp are placed
+// directly via fpdf instead of through markdown.
+func RenderMarkdownPDF(markdown string, logoData []byte, logoType string, stampData []byte, stampType string) ([]byte, error) {
 	renderer := newRenderer()
 
 	// Placed before Run() writes any markdown: fpdf can't add content to an
@@ -64,6 +66,11 @@ func RenderMarkdownPDF(markdown string, logoData []byte, logoType string) ([]byt
 	if err := renderer.Run([]byte(markdown)); err != nil {
 		return nil, err
 	}
+
+	if len(stampData) > 0 {
+		placeStamp(renderer.Pdf, stampData, stampType)
+	}
+
 	return outputPDF(renderer.Pdf)
 }
 
@@ -129,4 +136,23 @@ func placeChart(pdf *fpdf.Fpdf, data []byte) {
 	pdf.Ln(6)
 	pdf.ImageOptions("report-daily-chart", left, pdf.GetY(), width, height, true, options, 0, "")
 	pdf.Ln(6)
+}
+
+// placeStamp embeds an organization's stamp image below the current cursor
+// position (i.e. below the invoice content already written), scaled to
+// stampMaxWidthPt and right-aligned within the page margins.
+func placeStamp(pdf *fpdf.Fpdf, data []byte, imgType string) {
+	options := fpdf.ImageOptions{ImageType: imgType, ReadDpi: true}
+	info := pdf.RegisterImageOptionsReader("invoice-stamp", options, bytes.NewReader(data))
+	if info == nil || info.Width() <= 0 || info.Height() <= 0 {
+		return
+	}
+
+	width := stampMaxWidthPt
+	height := width * (info.Height() / info.Width())
+	_, _, right, _ := pdf.GetMargins()
+	pageWidth, _ := pdf.GetPageSize()
+
+	pdf.Ln(10)
+	pdf.ImageOptions("invoice-stamp", pageWidth-right-width, pdf.GetY(), width, height, true, options, 0, "")
 }

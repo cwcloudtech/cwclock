@@ -34,6 +34,7 @@ const emptyFields = {
   vatNumber: "",
   siren: "",
   siret: "",
+  naf: "",
   picture: "",
   pictureX: 50,
   pictureY: 50,
@@ -138,6 +139,7 @@ const Organizations = () => {
       { name: "vatNumber", type: "text", label: t("common.vatNumber") },
       { name: "siren", type: "text", label: "SIREN" },
       { name: "siret", type: "text", label: "SIRET" },
+      { name: "naf", type: "text", label: t("organizations.naf") },
       {
         name: "currency",
         type: "select",
@@ -201,6 +203,7 @@ const Organizations = () => {
       vatNumber: currentOrg.vatNumber || "",
       siren: currentOrg.siren || "",
       siret: currentOrg.siret || "",
+      naf: currentOrg.naf || "",
       currency: currentOrg.currency || currencies[0] || "",
       picture: currentOrg.picture || "",
       pictureX: currentOrg.pictureX ?? 50,

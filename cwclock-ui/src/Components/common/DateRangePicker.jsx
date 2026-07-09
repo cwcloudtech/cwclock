@@ -6,10 +6,14 @@ import { dateRangeShortcuts, toISODate } from "./dateRangeShortcuts";
 import styles from "./Styles/DateRangePicker.module.css";
 
 // Grafana-style time selector: two date pickers plus a shortcuts dropdown
-// that sets both at once.
-const DateRangePicker = ({ start, end, onChange }) => {
+// that sets both at once. shortcutKeys optionally narrows which shortcuts
+// are offered (e.g. invoices only want "this month"/"last month"); omit it
+// to show the full report shortcut list.
+const DateRangePicker = ({ start, end, onChange, shortcutKeys }) => {
   const { t } = useI18n();
-  const shortcuts = dateRangeShortcuts(t);
+  const shortcuts = shortcutKeys
+    ? dateRangeShortcuts(t).filter((s) => shortcutKeys.includes(s.key))
+    : dateRangeShortcuts(t);
 
   const applyShortcut = (range, close) => {
     const [s, e] = range();

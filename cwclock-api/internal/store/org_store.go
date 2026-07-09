@@ -29,6 +29,7 @@ type orgData struct {
 	VATNumber  string   `json:"vatNumber"`
 	SIREN      string   `json:"siren"`
 	SIRET      string   `json:"siret"`
+	NAF        string   `json:"naf,omitempty"`
 	Picture    string   `json:"picture,omitempty"`
 	PictureX   *float64 `json:"pictureX,omitempty"`
 	PictureY   *float64 `json:"pictureY,omitempty"`
@@ -49,6 +50,7 @@ type OrganizationFields struct {
 	VATNumber  string
 	SIREN      string
 	SIRET      string
+	NAF        string
 	Picture    string
 	PictureX   float64
 	PictureY   float64
@@ -73,6 +75,7 @@ func applyOrgData(o *models.Organization, raw []byte) error {
 	o.VATNumber = d.VATNumber
 	o.SIREN = d.SIREN
 	o.SIRET = d.SIRET
+	o.NAF = d.NAF
 	o.Picture = d.Picture
 	o.PictureX = resolveImagePosition(d.PictureX)
 	o.PictureY = resolveImagePosition(d.PictureY)
@@ -108,6 +111,7 @@ func toOrgData(f OrganizationFields) orgData {
 		VATNumber:  f.VATNumber,
 		SIREN:      f.SIREN,
 		SIRET:      f.SIRET,
+		NAF:        f.NAF,
 		Picture:    f.Picture,
 		PictureX:   &f.PictureX,
 		PictureY:   &f.PictureY,

@@ -24,6 +24,7 @@ func New(
 	adminHandler *handlers.AdminHandler,
 	importHandler *handlers.ImportHandler,
 	apiKeyHandler *handlers.ApiKeyHandler,
+	invoiceHandler *handlers.InvoiceHandler,
 	orgs *store.OrgStore,
 	users *store.UserStore,
 	apiKeys middleware.ApiKeyVerifier,
@@ -153,6 +154,18 @@ func New(
 
 				r.Route("/import", func(r chi.Router) {
 					r.With(middleware.RequireRole(models.RoleAdmin)).Post("/csv", importHandler.ImportCSV)
+				})
+
+				// Invoices are owner/admin-only end to end: generating one
+				// exposes billing amounts the same way the report PDF/CSV
+				// exports already do for that role pair.
+				r.Route("/invoices", func(r chi.Router) {
+					r.Use(middleware.RequireRole(models.RoleAdmin))
+					r.Get("/", invoiceHandler.List)
+					r.Post("/preview", invoiceHandler.Preview)
+					r.Post("/", invoiceHandler.Generate)
+					r.Get("/{invoiceId}/pdf", invoiceHandler.DownloadPDF)
+					r.Put("/{invoiceId}", invoiceHandler.UpdateStatus)
 				})
 			})
 		})

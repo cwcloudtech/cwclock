@@ -18,6 +18,7 @@ import { apiErrorMessage } from "../../i18n/translate";
 
 const initialFields = {
   name: "",
+  email: "",
   address: "",
   postalCode: "",
   city: "",
@@ -48,6 +49,7 @@ const Clients = () => {
     name: "Client",
     fields: [
       { name: "name", type: "text", label: t("common.name"), required: true },
+      { name: "email", type: "email", label: t("common.email") },
       { name: "address", type: "text", label: t("common.address") },
       { name: "postalCode", type: "text", label: t("common.postalCode") },
       { name: "city", type: "text", label: t("common.city") },

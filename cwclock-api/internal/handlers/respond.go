@@ -44,6 +44,8 @@ const (
 	CodeApiKeyDescription      = "errors.apiKeyDescription"
 	CodeInvalidExpiration      = "errors.invalidExpiration"
 	CodeImageTooLarge          = "errors.imageTooLarge"
+	CodeInvalidInvoiceStatus   = "errors.invalidInvoiceStatus"
+	CodeInvalidInvoiceRequest  = "errors.invalidInvoiceRequest"
 )
 
 func writeJSON(w http.ResponseWriter, status int, body any) {

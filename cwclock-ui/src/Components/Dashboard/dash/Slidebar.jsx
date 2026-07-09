@@ -19,12 +19,14 @@ import Clientdiv from "../pages/Client";
 import Organizationsdiv from "../pages/Organizations";
 import Projectsdiv from "../pages/Projects";
 import Reportsdiv from "../pages/Reports";
+import Invoicesdiv from "../pages/Invoices";
 import Admindiv from "../pages/Admin";
 import AdminOrganizationsdiv from "../pages/AdminOrganizations";
 import ApiKeysdiv from "../pages/ApiKeys";
 import { useSelector, useDispatch } from "react-redux";
 import { meApi, logoutUser } from "../../../Redux/Auth/Auth.actions";
-import { listOrgsApi, selectOrg } from "../../../Redux/Organizations/Org.actions";
+import { listOrgsApi, selectOrg, listMembersApi } from "../../../Redux/Organizations/Org.actions";
+import { isAdminOrOwner as computeIsAdminOrOwner } from "../../common/permissions";
 
 const Slidebar = () => {
   const [expanded, setExpanded] = useState(false);
@@ -46,9 +48,16 @@ const Slidebar = () => {
   const { theme, toggleTheme } = useTheme();
   const { locale, setLocale, t } = useI18n();
   const { user } = useSelector((state) => state.auth);
-  const { organizations, currentOrgId } = useSelector((state) => state.organizations);
+  const { organizations, currentOrgId, members } = useSelector((state) => state.organizations);
   const currentOrg = organizations.find((o) => o.id === currentOrgId);
   const isSuperuser = user.role === "superuser";
+  const showInvoices = computeIsAdminOrOwner(user, members);
+
+  useEffect(() => {
+    if (currentOrgId) {
+      dispatch(listMembersApi(currentOrgId, user.token));
+    }
+  }, [dispatch, currentOrgId, user.token]);
 
   useEffect(() => {
     if (!user.token) {
@@ -213,7 +222,7 @@ const Slidebar = () => {
 
       <div className={styles.Slideflex}>
         <div className={`${styles.sidebarCol} ${expanded ? styles.sidebarColExpanded : ""}`}>
-          <SidebarNav expanded={expanded} isSuperuser={isSuperuser} />
+          <SidebarNav expanded={expanded} isSuperuser={isSuperuser} showInvoices={showInvoices} />
           <Tooltip label={expanded ? t("nav.collapseSidebar") : t("nav.expandSidebar")} position="right" className={styles.toggleTooltip}>
             <button className={styles.sidebarToggle} onClick={handleclick}>
               {expanded ? <FaChevronLeft /> : <FaChevronRight />}
@@ -228,6 +237,7 @@ const Slidebar = () => {
             <Route path="/clients" element={<Clientdiv />}></Route>
             <Route path="/projects" element={<Projectsdiv />}></Route>
             <Route path="/api-keys" element={<ApiKeysdiv />}></Route>
+            {showInvoices && <Route path="/invoices" element={<Invoicesdiv />}></Route>}
             {isSuperuser && <Route path="/admin" element={<Admindiv />}></Route>}
             {isSuperuser && (
               <Route path="/admin/organizations" element={<AdminOrganizationsdiv />}></Route>

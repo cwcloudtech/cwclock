@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"regexp"
 	"strings"
 )
 
@@ -50,6 +51,15 @@ func If[T any](cond bool, vtrue, vfalse T) T {
 func HashToken(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])
+}
+
+// emailPattern is a permissive local@domain.tld shape check, not full RFC
+// 5322 validation - just enough to catch obvious typos in an optional field.
+var emailPattern = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
+
+// IsValidEmail reports whether str looks like a plausible email address.
+func IsValidEmail(str string) bool {
+	return emailPattern.MatchString(str)
 }
 
 // ImageSizeExceeds reports whether a base64 (optionally data-URI prefixed)

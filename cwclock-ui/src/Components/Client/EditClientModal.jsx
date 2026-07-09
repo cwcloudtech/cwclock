@@ -8,6 +8,7 @@ import { apiErrorMessage } from "../../i18n/translate";
 
 const emptyFields = {
   name: "",
+  email: "",
   address: "",
   postalCode: "",
   city: "",
@@ -30,6 +31,7 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
     name: "Client",
     fields: [
       { name: "name", type: "text", label: t("common.name"), required: true },
+      { name: "email", type: "email", label: t("common.email") },
       { name: "address", type: "text", label: t("common.address") },
       { name: "postalCode", type: "text", label: t("common.postalCode") },
       { name: "city", type: "text", label: t("common.city") },
@@ -47,6 +49,7 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
     if (show && targetClient) {
       setFields({
         name: targetClient.name || "",
+        email: targetClient.email || "",
         address: targetClient.address || "",
         postalCode: targetClient.postalCode || "",
         city: targetClient.city || "",

@@ -18,6 +18,7 @@ const emptyFields = {
   vatNumber: "",
   siren: "",
   siret: "",
+  naf: "",
   picture: "",
   pictureX: 50,
   pictureY: 50,
@@ -45,6 +46,7 @@ const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
       { name: "vatNumber", type: "text", label: t("common.vatNumber") },
       { name: "siren", type: "text", label: "SIREN" },
       { name: "siret", type: "text", label: "SIRET" },
+      { name: "naf", type: "text", label: t("organizations.naf") },
       {
         name: "currency",
         type: "select",
@@ -68,6 +70,7 @@ const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
         vatNumber: targetOrg.vatNumber || "",
         siren: targetOrg.siren || "",
         siret: targetOrg.siret || "",
+        naf: targetOrg.naf || "",
         currency: targetOrg.currency || currencies[0] || "",
         picture: targetOrg.picture || "",
         pictureX: targetOrg.pictureX ?? 50,

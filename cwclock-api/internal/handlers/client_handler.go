@@ -22,6 +22,7 @@ func NewClientHandler(clients *store.ClientStore) *ClientHandler {
 
 type clientPayload struct {
 	Name               string   `json:"name"`
+	Email              string   `json:"email"`
 	Address            string   `json:"address"`
 	PostalCode         string   `json:"postalCode"`
 	City               string   `json:"city"`
@@ -38,9 +39,16 @@ func (p clientPayload) valid() bool {
 	return utils.IsNotBlank(p.Name)
 }
 
+// validEmail lets the field stay blank (it's optional) but requires a
+// plausible email shape when it's set.
+func (p clientPayload) validEmail() bool {
+	return utils.IsBlank(p.Email) || utils.IsValidEmail(p.Email)
+}
+
 func (p clientPayload) toFields() store.ClientFields {
 	return store.ClientFields{
 		Name:               p.Name,
+		Email:              p.Email,
 		Address:            p.Address,
 		PostalCode:         p.PostalCode,
 		City:               p.City,
@@ -90,6 +98,10 @@ func (h *ClientHandler) Create(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "Please add a name field", CodeNameRequired)
 		return
 	}
+	if !p.validEmail() {
+		writeError(w, http.StatusBadRequest, "Please add a valid email", CodeInvalidEmail)
+		return
+	}
 
 	client, err := h.clients.Create(r.Context(), orgID, p.toFields())
 	if err != nil {
@@ -105,6 +117,10 @@ func (h *ClientHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var p clientPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !p.valid() {
 		writeError(w, http.StatusBadRequest, "Please add a name field", CodeNameRequired)
+		return
+	}
+	if !p.validEmail() {
+		writeError(w, http.StatusBadRequest, "Please add a valid email", CodeInvalidEmail)
 		return
 	}
 
