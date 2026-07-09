@@ -10,24 +10,24 @@ Purchase Order: {{.ClientPurchaseOrder}}
 | Adress     | {{.OrgAddress}}   |
 | SIREN      | {{.OrgSIREN}}     |
 | SIRET      | {{.OrgSIRET}}     |
-| TVA/VAT IC | {{.OrgVATNumber}} |
+| VAT/TVA IC | {{.OrgVATNumber}} |
 | Code NAF   | {{.OrgNAF}}       |
 | Date       | {{.InvoiceDate}}  |
 | Contact    | {{.OwnerContact}} |
 
-| Customer | Details            |
-| -------- | ------------------ |
-| Name     | {{.ClientName}}    |
-| Adress   | {{.ClientAddress}} |
-| Contact  | {{.ClientEmail}}   |
-| TVA IC   | {{.ClientVATLine}} |
+| Customer   | Details            |
+| ---------- | ------------------ |
+| Name       | {{.ClientName}}    |
+| Adress     | {{.ClientAddress}} |
+| Contact    | {{.ClientEmail}}   |
+| VAT/TVA IC | {{.ClientVATLine}} |
 
 ## Object
 
 {{.LineItemsMarkdown}}
 
-| Totals                      | Amount  |
-| --------------------------- | ------- |
-| Total without taxes (HT)    | {{.TotalHT}} {{.Currency}} |
-| TVA/VAT | {{.TotalVATLine}} |
-| Total with taxes (TTC)      | {{.TotalTTC}} {{.Currency}} |
+| Totals                   | Amount  |
+| -------------------------| ------- |
+| Total without taxes (HT) | {{.TotalHT}} {{.Currency}} |
+| VAT/TVA  | {{.TotalVATLine}} |
+| Total with taxes (TTC) | {{.TotalTTC}} {{.Currency}} |
