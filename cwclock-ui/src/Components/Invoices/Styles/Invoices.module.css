@@ -18,6 +18,13 @@
   margin-bottom: var(--cw-spacing);
 }
 
+.filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: var(--cw-spacing);
+}
+
 .actions {
   display: flex;
   gap: 8px;

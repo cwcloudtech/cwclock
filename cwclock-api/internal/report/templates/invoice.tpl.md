@@ -1,30 +1,33 @@
-# Facture N°{{.InvoiceNumber}}
+# Invoice N°{{.InvoiceNumber}}
 
-{{.OrgCity}}, le {{.InvoiceDate}}
+{{.OrgCity}}, the {{.InvoiceDate}}
 
-Référence bon de commande (purchase order) : {{.ClientPurchaseOrder}}
+Purchase Order: {{.ClientPurchaseOrder}}
 
-| Emetteur | {{.OrgName}} |
-| -------- | ------------ |
-| Adresse  | {{.OrgAddress}} |
-| N°SIREN  | {{.OrgSIREN}} |
-| N°SIRET  | {{.OrgSIRET}} |
-| TVA IC   | {{.OrgVATNumber}} |
-| Code NAF | {{.OrgNAF}} |
-| Date     | {{.InvoiceDate}} |
-| Contact  | {{.OwnerContact}} |
+| Issuer     | Details           |
+| ---------- | ----------------- |
+| Name       | {{.OrgName}}      |
+| Adress     | {{.OrgAddress}}   |
+| SIREN      | {{.OrgSIREN}}     |
+| SIRET      | {{.OrgSIRET}}     |
+| TVA/VAT IC | {{.OrgVATNumber}} |
+| Code NAF   | {{.OrgNAF}}       |
+| Date       | {{.InvoiceDate}}  |
+| Contact    | {{.OwnerContact}} |
 
-| Client   | {{.ClientName}} |
-| -------- | ---------------- |
-| Adresse  | {{.ClientAddress}} |
-| Contact  | {{.ClientEmail}} |
+| Customer | Details            |
+| -------- | ------------------ |
+| Name     | {{.ClientName}}    |
+| Adress   | {{.ClientAddress}} |
+| Contact  | {{.ClientEmail}}   |
 | TVA IC   | {{.ClientVATLine}} |
 
-## Objet
+## Object
 
 {{.LineItemsMarkdown}}
-| Totaux                    |                             |
-| -------------------------- | --------------------------- |
-| Total HT (without taxes)  | {{.TotalHT}} {{.Currency}} |
-| TVA (VAT)                 | {{.TotalVATLine}} |
-| Total TTC (with taxes)    | {{.TotalTTC}} {{.Currency}} |
+
+| Totals                      | Amount  |
+| --------------------------- | ------- |
+| Total without taxes (HT)    | {{.TotalHT}} {{.Currency}} |
+| TVA/VAT | {{.TotalVATLine}} |
+| Total with taxes (TTC)      | {{.TotalTTC}} {{.Currency}} |

@@ -39,9 +39,10 @@ func NewInvoiceHandler(
 // exportRequest's date shape so the frontend can reuse the same
 // dateRangeStart/dateRangeEnd payload convention as reports.
 type invoiceRequest struct {
-	ClientID       string `json:"clientId"`
-	DateRangeStart string `json:"dateRangeStart"`
-	DateRangeEnd   string `json:"dateRangeEnd"`
+	ClientID       string   `json:"clientId"`
+	DateRangeStart string   `json:"dateRangeStart"`
+	DateRangeEnd   string   `json:"dateRangeEnd"`
+	ProjectIDs     []string `json:"projectIds"`
 }
 
 func decodeInvoiceRequest(w http.ResponseWriter, r *http.Request) (invoiceRequest, bool) {
@@ -97,7 +98,11 @@ func (h *InvoiceHandler) load(ctx context.Context, orgID string, req invoiceRequ
 	}
 
 	start, end := dayPart(req.DateRangeStart), dayPart(req.DateRangeEnd)
-	entries, err := h.entries.ListForReport(ctx, orgID, store.ReportFilter{Start: start, End: end, ClientIDs: []string{req.ClientID}})
+	entries, err := h.entries.ListForReport(ctx, orgID, store.ReportFilter{
+		Start: start, End: end,
+		ClientIDs:  []string{req.ClientID},
+		ProjectIDs: req.ProjectIDs,
+	})
 	if err != nil {
 		return invoiceContext{}, err
 	}

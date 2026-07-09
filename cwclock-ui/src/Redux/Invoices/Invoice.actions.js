@@ -8,11 +8,15 @@ const ENDPOINT = (orgId) => `${process.env.REACT_APP_APIURL}/v1/organizations/${
 
 const authConfig = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
 
-const toPayload = (clientId, start, end) => ({
-  clientId,
-  dateRangeStart: `${start}T00:00:00.000Z`,
-  dateRangeEnd: `${end}T23:59:59.999Z`,
-});
+const toPayload = (clientId, start, end, projectIds) => {
+  const payload = {
+    clientId,
+    dateRangeStart: `${start}T00:00:00.000Z`,
+    dateRangeEnd: `${end}T23:59:59.999Z`,
+  };
+  if (projectIds?.length) payload.projectIds = projectIds;
+  return payload;
+};
 
 // A blob-response error carries the JSON error body as a Blob instead of a
 // parsed object, so apiErrorMessage can't read it directly; this recovers
@@ -61,9 +65,9 @@ export const listInvoicesApi = (orgId, clientId, start, end, token) => async (di
 
 // Preview only renders the PDF and downloads it - nothing is saved, so
 // there's no list state to update afterward.
-export const previewInvoiceApi = (orgId, clientId, start, end, token) => async () => {
+export const previewInvoiceApi = (orgId, clientId, start, end, projectIds, token) => async () => {
   try {
-    const response = await axios.post(`${ENDPOINT(orgId)}preview`, toPayload(clientId, start, end), {
+    const response = await axios.post(`${ENDPOINT(orgId)}preview`, toPayload(clientId, start, end, projectIds), {
       ...authConfig(token),
       responseType: "blob",
     });
@@ -77,9 +81,9 @@ export const previewInvoiceApi = (orgId, clientId, start, end, token) => async (
 // Generate saves the invoice and downloads its PDF. The caller is
 // responsible for re-dispatching listInvoicesApi afterward to refresh the
 // table, since this endpoint streams a PDF rather than the saved invoice.
-export const generateInvoiceApi = (orgId, clientId, start, end, token) => async () => {
+export const generateInvoiceApi = (orgId, clientId, start, end, projectIds, token) => async () => {
   try {
-    const response = await axios.post(ENDPOINT(orgId), toPayload(clientId, start, end), {
+    const response = await axios.post(ENDPOINT(orgId), toPayload(clientId, start, end, projectIds), {
       ...authConfig(token),
       responseType: "blob",
     });

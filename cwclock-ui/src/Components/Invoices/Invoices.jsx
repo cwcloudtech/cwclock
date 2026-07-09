@@ -4,11 +4,13 @@ import { FaFileInvoiceDollar, FaRegEdit } from "react-icons/fa";
 import { FiDownload } from "react-icons/fi";
 import { useI18n } from "../../i18n/I18nContext";
 import DateRangePicker from "../common/DateRangePicker";
+import MultiSelect from "../common/MultiSelect";
 import Spinner from "../spinner/Spinner";
 import EmptyState from "../common/EmptyState";
 import Button from "../common/Button";
 import Tooltip from "../common/Tooltip";
 import { listClientsApi } from "../../Redux/Clients/Client.actions";
+import { listProjectsApi } from "../../Redux/Projects/Project.actions";
 import { listMembersApi } from "../../Redux/Organizations/Org.actions";
 import {
   listInvoicesApi,
@@ -101,22 +103,33 @@ const Invoices = () => {
   const { user } = useSelector((state) => state.auth);
   const { currentOrgId, members } = useSelector((state) => state.organizations);
   const { clients } = useSelector((state) => state.clients);
+  const { projects } = useSelector((state) => state.projects);
   const { invoices, isLoading } = useSelector((state) => state.invoices);
 
   const [range, setRangeState] = useState(() => defaultRange(t));
   const [clientId, setClientId] = useState("");
+  const [projectIds, setProjectIds] = useState([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   const isAdminOrOwner = computeIsAdminOrOwner(user, members);
   const setRange = (start, end) => setRangeState({ start, end });
+  const clientProjects = projects.filter((p) => p.clientId === clientId);
 
   useEffect(() => {
     if (currentOrgId) {
       dispatch(listClientsApi(currentOrgId, user.token));
+      dispatch(listProjectsApi(currentOrgId, user.token));
       dispatch(listMembersApi(currentOrgId, user.token));
     }
   }, [dispatch, currentOrgId, user.token]);
+
+  // All of the client's projects are included by default when switching
+  // clients, matching "optional filter, everything selected until narrowed".
+  useEffect(() => {
+    setProjectIds(projects.filter((p) => p.clientId === clientId).map((p) => p.id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId, projects]);
 
   const refreshInvoices = () => {
     if (currentOrgId && clientId && isAdminOrOwner) {
@@ -145,7 +158,7 @@ const Invoices = () => {
     }
     setBusy(true);
     try {
-      await dispatch(apiThunk(currentOrgId, clientId, range.start, range.end, user.token));
+      await dispatch(apiThunk(currentOrgId, clientId, range.start, range.end, projectIds, user.token));
       refreshInvoices();
     } catch (err) {
       setError(apiErrorMessage(err, locale));
@@ -178,6 +191,15 @@ const Invoices = () => {
         <DateRangePicker start={range.start} end={range.end} onChange={setRange} shortcutKeys={INVOICE_SHORTCUT_KEYS} />
       </div>
 
+      <div className={styles.filters}>
+        <MultiSelect
+          label={t("projects.title")}
+          options={clientProjects.map((p) => ({ value: p.id, label: p.name }))}
+          selected={projectIds}
+          onChange={setProjectIds}
+        />
+      </div>
+
       <div className={styles.actions}>
         <Button variant="secondary" disabled={busy} onClick={() => runAction(previewInvoiceApi)} title={t("invoices.previewHint")}>
           {t("invoices.preview")}
@@ -190,7 +212,7 @@ const Invoices = () => {
 
       <h2 className="cw-subtitle">{t("invoices.listTitle")}</h2>
       {isLoading && <Spinner />}
-      {!isLoading && clientId && invoices.length === 0 && (
+      {!isLoading && invoices.length === 0 && (
         <EmptyState title={t("invoices.emptyTitle")} body={t("invoices.emptyBody")} />
       )}
       {!isLoading && invoices.length > 0 && (
