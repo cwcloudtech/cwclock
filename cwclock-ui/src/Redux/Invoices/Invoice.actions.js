@@ -55,6 +55,10 @@ const downloadBlob = (response, fallbackFilename) => {
   window.URL.revokeObjectURL(url);
 };
 
+// clearInvoices empties the invoice list, used when the requested date
+// range is invalid so the page shows no stale result.
+export const clearInvoices = () => (dispatch) => dispatch({ type: InvoiceListSUCCESS, payload: [] });
+
 export const listInvoicesApi = (orgId, clientId, start, end, token) => async (dispatch) => {
   dispatch({ type: InvoiceLOADING });
   try {

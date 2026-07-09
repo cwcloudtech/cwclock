@@ -20,10 +20,24 @@ type ReportHandler struct {
 	clients  *store.ClientStore
 	projects *store.ProjectStore
 	entries  *store.TimeEntryStore
+	maxSize  int
 }
 
-func NewReportHandler(orgs *store.OrgStore, clients *store.ClientStore, projects *store.ProjectStore, entries *store.TimeEntryStore) *ReportHandler {
-	return &ReportHandler{orgs: orgs, clients: clients, projects: projects, entries: entries}
+func NewReportHandler(orgs *store.OrgStore, clients *store.ClientStore, projects *store.ProjectStore, entries *store.TimeEntryStore, maxSize int) *ReportHandler {
+	return &ReportHandler{orgs: orgs, clients: clients, projects: projects, entries: entries, maxSize: maxSize}
+}
+
+// checkReportSize rejects a report/export whose entry count exceeds
+// CWCLOCK_MAX_REPORT_SIZE, before any entries are fetched or enriched.
+func (h *ReportHandler) checkReportSize(ctx context.Context, orgID string, filter store.ReportFilter) error {
+	count, err := h.entries.CountForReport(ctx, orgID, filter)
+	if err != nil {
+		return err
+	}
+	if count > h.maxSize {
+		return store.ErrExportLimitExceeded
+	}
+	return nil
 }
 
 // idFilter mirrors the {ids, contains, status} shape of a Clockify-style
@@ -175,6 +189,11 @@ func (h *ReportHandler) Detailed(w http.ResponseWriter, r *http.Request) {
 	}
 	filter := req.filter()
 
+	if err := h.checkReportSize(r.Context(), orgID, filter); err != nil {
+		writeStoreError(w, err)
+		return
+	}
+
 	org, entries, err := h.loadEnrichedEntries(r.Context(), orgID, filter, canSeeAmount)
 	if err != nil {
 		writeStoreError(w, err)
@@ -217,6 +236,11 @@ func (h *ReportHandler) Summary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	filter := req.filter()
+
+	if err := h.checkReportSize(r.Context(), orgID, filter); err != nil {
+		writeStoreError(w, err)
+		return
+	}
 
 	org, entries, err := h.loadEnrichedEntries(r.Context(), orgID, filter, canSeeAmount)
 	if err != nil {

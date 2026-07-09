@@ -46,6 +46,7 @@ const (
 	CodeImageTooLarge          = "errors.imageTooLarge"
 	CodeInvalidInvoiceStatus   = "errors.invalidInvoiceStatus"
 	CodeInvalidInvoiceRequest  = "errors.invalidInvoiceRequest"
+	CodeExportLimitExceeded    = "errors.exportLimitExceeded"
 )
 
 func writeJSON(w http.ResponseWriter, status int, body any) {
@@ -69,6 +70,10 @@ func writeStoreError(w http.ResponseWriter, err error) {
 	}
 	if errors.Is(err, store.ErrDuplicateEmail) {
 		writeError(w, http.StatusBadRequest, "Email already in use", CodeDuplicateEmail)
+		return
+	}
+	if errors.Is(err, store.ErrExportLimitExceeded) {
+		writeError(w, http.StatusBadRequest, "Too many entries for a single export", CodeExportLimitExceeded)
 		return
 	}
 	slog.Error("unhandled store error", "error", err)

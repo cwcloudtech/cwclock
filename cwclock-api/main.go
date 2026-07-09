@@ -54,9 +54,9 @@ func main() {
 	timeEntryHandler := handlers.NewTimeEntryHandler(timeEntryStore)
 	adminHandler := handlers.NewAdminHandler(userStore, cfg.MaxImageSize)
 	importHandler := handlers.NewImportHandler(userStore, clientStore, projectStore, timeEntryStore)
-	reportHandler := handlers.NewReportHandler(orgStore, clientStore, projectStore, timeEntryStore)
+	reportHandler := handlers.NewReportHandler(orgStore, clientStore, projectStore, timeEntryStore, cfg.MaxReportSize)
 	apiKeyHandler := handlers.NewApiKeyHandler(apiKeyStore)
-	invoiceHandler := handlers.NewInvoiceHandler(invoiceStore, orgStore, clientStore, projectStore, timeEntryStore, userStore)
+	invoiceHandler := handlers.NewInvoiceHandler(invoiceStore, orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize)
 
 	met, err := metrics.Setup(ctx, metrics.Config{
 		Endpoint: cfg.OtelEndpoint,

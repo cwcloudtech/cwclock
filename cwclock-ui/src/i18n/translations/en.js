@@ -308,6 +308,8 @@ const en = {
     imageTooLarge: "This image is too large.",
     invalidInvoiceStatus: "Please pick a valid invoice status.",
     invalidInvoiceRequest: "Please pick a client and a date range.",
+    exportLimitExceeded: "This period has too many entries to export. Please narrow your filters or date range.",
+    invalidDateRange: "The end date must be on or after the start date.",
   },
   reports: {
     summary: "Summary",

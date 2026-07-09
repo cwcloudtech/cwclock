@@ -25,11 +25,17 @@ type Config struct {
 	OtelEndpoint       string
 	OtelProto          string
 	MaxImageSize       int64
+	MaxReportSize      int
 }
 
 // defaultMaxImageSize is applied when CWCLOCK_MAX_IMAGE_SIZE is unset or
 // isn't a parsable number of bytes.
 const defaultMaxImageSize int64 = 2 * 1024 * 1024
+
+// defaultMaxReportSize is applied when CWCLOCK_MAX_REPORT_SIZE is unset or
+// isn't a parsable number of entries; it caps how many time entries a single
+// report/export or invoice generation may cover.
+const defaultMaxReportSize int = 5000
 
 func Load() Config {
 	user := os.Getenv("POSTGRES_USER")
@@ -41,18 +47,23 @@ func Load() Config {
 	allowedOrigins := getEnv("CWCLOCK_CORS_ALLOWED_ORIGINS", "*")
 
 	maxWorkers, err := strconv.Atoi(getEnv("MAX_WORKERS", "5"))
-	if err != nil {
+	if err != nil || maxWorkers <= 0 {
 		maxWorkers = 5
 	}
 
 	postgresPoolSize, err := strconv.Atoi(getEnv("POSTGRES_POOL_SIZE", "5"))
-	if err != nil {
+	if err != nil || postgresPoolSize <= 0 {
 		postgresPoolSize = 5
 	}
 
 	maxImageSize, err := strconv.ParseInt(os.Getenv("CWCLOCK_MAX_IMAGE_SIZE"), 10, 64)
 	if err != nil || maxImageSize <= 0 {
 		maxImageSize = defaultMaxImageSize
+	}
+
+	maxReportSize, err := strconv.Atoi(os.Getenv("CWCLOCK_MAX_REPORT_SIZE"))
+	if err != nil || maxReportSize <= 0 {
+		maxReportSize = defaultMaxReportSize
 	}
 
 	return Config{
@@ -69,6 +80,7 @@ func Load() Config {
 		OtelEndpoint:       os.Getenv("CWCLOCK_OTEL_ENDPOINT"),
 		OtelProto:          getEnv("CWCLOCK_OTEL_PROTO", "otlp/grpc"),
 		MaxImageSize:       maxImageSize,
+		MaxReportSize:      maxReportSize,
 	}
 }
 

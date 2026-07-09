@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import { FaChartBar } from "react-icons/fa";
 import { useI18n } from "../../i18n/I18nContext";
 import DateRangePicker from "../common/DateRangePicker";
@@ -7,10 +8,11 @@ import MultiSelect from "../common/MultiSelect";
 import Dropdown, { DropdownItem } from "../common/Dropdown";
 import Spinner from "../spinner/Spinner";
 import memberLabel from "../common/memberLabel";
+import toastOptions from "../../Redux/toastOptions";
 import { listClientsApi } from "../../Redux/Clients/Client.actions";
 import { listProjectsApi } from "../../Redux/Projects/Project.actions";
 import { listMembersApi } from "../../Redux/Organizations/Org.actions";
-import { fetchReportApi, exportReportApi } from "../../Redux/Reports/Report.actions";
+import { fetchReportApi, exportReportApi, clearReport } from "../../Redux/Reports/Report.actions";
 import { dateRangeShortcuts, toISODate } from "../common/dateRangeShortcuts";
 import { isAdminOrOwner as computeIsAdminOrOwner, isSuperadmin, memberRole } from "../common/permissions";
 import SummaryReportView from "./SummaryReportView";
@@ -66,11 +68,16 @@ const Reports = () => {
   const filters = { type: tab, start: range.start, end: range.end, clientIds, projectIds, userIds };
   const isSummaryReport = report && Array.isArray(report.rows);
   const isDetailedReport = report && Array.isArray(report.entries);
+  const isValidRange = range.start <= range.end;
 
   const refresh = () => {
-    if (currentOrgId && canAccess) {
-      dispatch(fetchReportApi(currentOrgId, filters, user.token));
+    if (!currentOrgId || !canAccess) return;
+    if (!isValidRange) {
+      toast.error(t("errors.invalidDateRange"), toastOptions);
+      dispatch(clearReport());
+      return;
     }
+    dispatch(fetchReportApi(currentOrgId, filters, user.token));
   };
 
   useEffect(() => {
@@ -93,6 +100,10 @@ const Reports = () => {
   const memberOptions = members.map((m) => ({ value: m.userId, label: memberLabel(m) }));
 
   const handleExport = (format) => {
+    if (!isValidRange) {
+      toast.error(t("errors.invalidDateRange"), toastOptions);
+      return;
+    }
     dispatch(exportReportApi(currentOrgId, filters, format, user.token));
   };
 

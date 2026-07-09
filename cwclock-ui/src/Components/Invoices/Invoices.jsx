@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import { FaFileInvoiceDollar, FaRegEdit } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";
 import { FiDownload } from "react-icons/fi";
 import { useI18n } from "../../i18n/I18nContext";
 import DateRangePicker from "../common/DateRangePicker";
 import MultiSelect from "../common/MultiSelect";
+import AutocompleteSelect from "../common/AutocompleteSelect";
 import Spinner from "../spinner/Spinner";
 import EmptyState from "../common/EmptyState";
 import Button from "../common/Button";
 import Tooltip from "../common/Tooltip";
 import ConfirmModal from "../common/ConfirmModal";
+import toastOptions from "../../Redux/toastOptions";
 import { listClientsApi } from "../../Redux/Clients/Client.actions";
 import { listProjectsApi } from "../../Redux/Projects/Project.actions";
 import { listMembersApi } from "../../Redux/Organizations/Org.actions";
@@ -21,6 +24,7 @@ import {
   downloadInvoicePdfApi,
   updateInvoiceStatusApi,
   deleteInvoiceApi,
+  clearInvoices,
 } from "../../Redux/Invoices/Invoice.actions";
 import { dateRangeShortcuts, toISODate } from "../common/dateRangeShortcuts";
 import { isAdminOrOwner as computeIsAdminOrOwner } from "../common/permissions";
@@ -159,10 +163,16 @@ const Invoices = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId, projects]);
 
+  const isValidRange = range.start <= range.end;
+
   const refreshInvoices = () => {
-    if (currentOrgId && clientId && isAdminOrOwner) {
-      dispatch(listInvoicesApi(currentOrgId, clientId, range.start, range.end, user.token));
+    if (!currentOrgId || !clientId || !isAdminOrOwner) return;
+    if (!isValidRange) {
+      toast.error(t("errors.invalidDateRange"), toastOptions);
+      dispatch(clearInvoices());
+      return;
     }
+    dispatch(listInvoicesApi(currentOrgId, clientId, range.start, range.end, user.token));
   };
 
   useEffect(() => {
@@ -182,6 +192,10 @@ const Invoices = () => {
     setError("");
     if (!clientId) {
       setError(t("invoices.clientRequired"));
+      return;
+    }
+    if (!isValidRange) {
+      toast.error(t("errors.invalidDateRange"), toastOptions);
       return;
     }
     setBusy(true);
@@ -208,19 +222,13 @@ const Invoices = () => {
       </h1>
 
       <div className={styles.toolbar}>
-        <select
-          className="cw-select"
+        <AutocompleteSelect
+          label={t("common.client")}
+          placeholder={t("invoices.selectAClient")}
+          options={sortedClients.map((c) => ({ value: c.id, label: c.name }))}
           value={clientId}
-          onChange={(e) => setClientId(e.target.value)}
-          title={t("invoices.selectAClient")}
-        >
-          <option value="">{t("invoices.selectAClient")}</option>
-          {sortedClients.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+          onChange={setClientId}
+        />
 
         <MultiSelect
           label={t("projects.title")}

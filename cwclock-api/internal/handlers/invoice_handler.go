@@ -21,6 +21,7 @@ type InvoiceHandler struct {
 	projects *store.ProjectStore
 	entries  *store.TimeEntryStore
 	users    *store.UserStore
+	maxSize  int
 }
 
 func NewInvoiceHandler(
@@ -30,8 +31,9 @@ func NewInvoiceHandler(
 	projects *store.ProjectStore,
 	entries *store.TimeEntryStore,
 	users *store.UserStore,
+	maxSize int,
 ) *InvoiceHandler {
-	return &InvoiceHandler{invoices: invoices, orgs: orgs, clients: clients, projects: projects, entries: entries, users: users}
+	return &InvoiceHandler{invoices: invoices, orgs: orgs, clients: clients, projects: projects, entries: entries, users: users, maxSize: maxSize}
 }
 
 // invoiceRequest is the JSON body accepted by the preview/generate
@@ -98,11 +100,21 @@ func (h *InvoiceHandler) load(ctx context.Context, orgID string, req invoiceRequ
 	}
 
 	start, end := dayPart(req.DateRangeStart), dayPart(req.DateRangeEnd)
-	entries, err := h.entries.ListForReport(ctx, orgID, store.ReportFilter{
+	filter := store.ReportFilter{
 		Start: start, End: end,
 		ClientIDs:  []string{req.ClientID},
 		ProjectIDs: req.ProjectIDs,
-	})
+	}
+
+	count, err := h.entries.CountForReport(ctx, orgID, filter)
+	if err != nil {
+		return invoiceContext{}, err
+	}
+	if count > h.maxSize {
+		return invoiceContext{}, store.ErrExportLimitExceeded
+	}
+
+	entries, err := h.entries.ListForReport(ctx, orgID, filter)
 	if err != nil {
 		return invoiceContext{}, err
 	}

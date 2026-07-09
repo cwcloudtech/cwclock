@@ -36,6 +36,10 @@ const parseBlobError = async (e) => {
   return e;
 };
 
+// clearReport wipes out any previously fetched report, used when the
+// requested date range is invalid so the page shows no stale result.
+export const clearReport = () => (dispatch) => dispatch({ type: ReportSUCCESS, payload: null });
+
 export const fetchReportApi = (orgId, filters, token) => async (dispatch) => {
   dispatch({ type: ReportLOADING });
   try {

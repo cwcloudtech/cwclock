@@ -308,6 +308,8 @@ const fr = {
     imageTooLarge: "Cette image est trop volumineuse.",
     invalidInvoiceStatus: "Veuillez choisir un statut de facture valide.",
     invalidInvoiceRequest: "Veuillez choisir un client et une période.",
+    exportLimitExceeded: "Cette période contient trop d'entrées à exporter. Veuillez restreindre vos filtres ou la période.",
+    invalidDateRange: "La date de fin doit être postérieure ou égale à la date de début.",
   },
   reports: {
     summary: "Résumé",

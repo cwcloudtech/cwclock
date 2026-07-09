@@ -17,6 +17,11 @@ type TimeEntryStore struct {
 	pool *pgxpool.Pool
 }
 
+// ErrExportLimitExceeded is returned by CountForReport's callers when a
+// report/export or invoice generation would cover more entries than
+// CWCLOCK_MAX_REPORT_SIZE allows.
+var ErrExportLimitExceeded = errors.New("export limit exceeded")
+
 func NewTimeEntryStore(pool *pgxpool.Pool) *TimeEntryStore {
 	return &TimeEntryStore{pool: pool}
 }
@@ -176,13 +181,12 @@ type ReportFilter struct {
 	UserIDs    []string
 }
 
-// ListForReport returns an organization's time entries within a date range,
-// optionally narrowed to specific clients/projects/members, most recent
-// day/start first (same order as the time tracker's own entry list).
-func (s *TimeEntryStore) ListForReport(ctx context.Context, orgID string, f ReportFilter) ([]models.TimeEntry, error) {
-	query := `
-		SELECT id, organization_id, client_id, project_id, user_id, data, created_at, updated_at
-		FROM time_entries
+// reportWhereClause builds the WHERE clause (and matching args) shared by
+// ListForReport and CountForReport, so the entry-count check enforcing
+// CWCLOCK_MAX_REPORT_SIZE stays in sync with what ListForReport actually
+// returns.
+func reportWhereClause(orgID string, f ReportFilter) (string, []any) {
+	clause := `
 		WHERE organization_id = $1
 		  AND data->>'day' >= $2
 		  AND data->>'day' <= $3
@@ -194,13 +198,26 @@ func (s *TimeEntryStore) ListForReport(ctx context.Context, orgID string, f Repo
 			return
 		}
 		args = append(args, ids)
-		query += fmt.Sprintf(" AND %s::text = ANY($%d)", column, len(args))
+		clause += fmt.Sprintf(" AND %s::text = ANY($%d)", column, len(args))
 	}
 	addFilter("client_id", f.ClientIDs)
 	addFilter("project_id", f.ProjectIDs)
 	addFilter("user_id", f.UserIDs)
 
-	query += " ORDER BY data->>'day' DESC, data->>'start' DESC"
+	return clause, args
+}
+
+// ListForReport returns an organization's time entries within a date range,
+// optionally narrowed to specific clients/projects/members, most recent
+// day/start first (same order as the time tracker's own entry list).
+func (s *TimeEntryStore) ListForReport(ctx context.Context, orgID string, f ReportFilter) ([]models.TimeEntry, error) {
+	clause, args := reportWhereClause(orgID, f)
+	query := `
+		SELECT id, organization_id, client_id, project_id, user_id, data, created_at, updated_at
+		FROM time_entries
+	` + clause + `
+		ORDER BY data->>'day' DESC, data->>'start' DESC
+	`
 
 	rows, err := s.pool.Query(ctx, query, args...)
 	if err != nil {
@@ -217,6 +234,17 @@ func (s *TimeEntryStore) ListForReport(ctx context.Context, orgID string, f Repo
 		entries = append(entries, t)
 	}
 	return entries, rows.Err()
+}
+
+// CountForReport returns how many time entries match filter without
+// fetching them, so callers can enforce CWCLOCK_MAX_REPORT_SIZE before
+// paying the cost of loading (and rendering/exporting) an over-limit report.
+func (s *TimeEntryStore) CountForReport(ctx context.Context, orgID string, f ReportFilter) (int, error) {
+	clause, args := reportWhereClause(orgID, f)
+	query := `SELECT count(*) FROM time_entries ` + clause
+	var count int
+	err := s.pool.QueryRow(ctx, query, args...).Scan(&count)
+	return count, err
 }
 
 // ListRecent returns time entries whose day falls within the last 24h,
