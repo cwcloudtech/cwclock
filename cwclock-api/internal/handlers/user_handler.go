@@ -16,12 +16,13 @@ import (
 )
 
 type UserHandler struct {
-	users     *store.UserStore
-	jwtSecret string
+	users        *store.UserStore
+	jwtSecret    string
+	maxImageSize int64
 }
 
-func NewUserHandler(users *store.UserStore, jwtSecret string) *UserHandler {
-	return &UserHandler{users: users, jwtSecret: jwtSecret}
+func NewUserHandler(users *store.UserStore, jwtSecret string, maxImageSize int64) *UserHandler {
+	return &UserHandler{users: users, jwtSecret: jwtSecret, maxImageSize: maxImageSize}
 }
 
 type credentials struct {
@@ -85,6 +86,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, models.UserResponse{
 		ID: user.ID, Email: user.Email, Name: user.Name, Surname: user.Surname,
 		Role: user.Role, Token: token, Picture: user.Picture,
+		PictureX: user.PictureX, PictureY: user.PictureY,
 	})
 }
 
@@ -115,6 +117,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, models.UserResponse{
 		ID: user.ID, Email: user.Email, Name: user.Name, Surname: user.Surname,
 		Role: user.Role, Token: token, Picture: user.Picture,
+		PictureX: user.PictureX, PictureY: user.PictureY,
 	})
 }
 
@@ -134,17 +137,22 @@ func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
 		Surname:   user.Surname,
 		Role:      user.Role,
 		Picture:   user.Picture,
+		PictureX:  user.PictureX,
+		PictureY:  user.PictureY,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	})
 }
 
 type updatePicturePayload struct {
-	Picture string `json:"picture"`
+	Picture string  `json:"picture"`
+	X       float64 `json:"x"`
+	Y       float64 `json:"y"`
 }
 
 // UpdatePicture lets the connected user set their own avatar picture
-// (base64), shown in the profile dropdown.
+// (base64, stored uncropped) along with the x/y position used to display it,
+// shown in the profile dropdown.
 func (h *UserHandler) UpdatePicture(w http.ResponseWriter, r *http.Request) {
 	userID, _ := middleware.UserIDFromContext(r.Context())
 
@@ -153,8 +161,12 @@ func (h *UserHandler) UpdatePicture(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "Invalid request body", CodeInvalidRequestBody)
 		return
 	}
+	if utils.ImageSizeExceeds(p.Picture, h.maxImageSize) {
+		writeError(w, http.StatusBadRequest, "Image is too large", CodeImageTooLarge)
+		return
+	}
 
-	user, err := h.users.UpdatePicture(r.Context(), userID, p.Picture)
+	user, err := h.users.UpdatePicture(r.Context(), userID, p.Picture, p.X, p.Y)
 	if err != nil {
 		writeStoreError(w, err)
 		return
@@ -167,6 +179,8 @@ func (h *UserHandler) UpdatePicture(w http.ResponseWriter, r *http.Request) {
 		Surname:   user.Surname,
 		Role:      user.Role,
 		Picture:   user.Picture,
+		PictureX:  user.PictureX,
+		PictureY:  user.PictureY,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	})
@@ -222,6 +236,8 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		Surname:   user.Surname,
 		Role:      user.Role,
 		Picture:   user.Picture,
+		PictureX:  user.PictureX,
+		PictureY:  user.PictureY,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	})

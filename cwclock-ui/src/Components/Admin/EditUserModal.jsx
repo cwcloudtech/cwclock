@@ -46,7 +46,11 @@ const EditUserModal = ({ show, onClose, targetUser, token }) => {
     }
     const fields = { email, name, surname, role };
     if (password) fields.password = password;
-    if (picture !== undefined) fields.picture = picture;
+    if (picture !== undefined) {
+      fields.picture = picture.image;
+      fields.pictureX = picture.x;
+      fields.pictureY = picture.y;
+    }
     try {
       await dispatch(updateUserApi(targetUser.id, fields, token));
       onClose();
@@ -58,11 +62,23 @@ const EditUserModal = ({ show, onClose, targetUser, token }) => {
   return (
     <Modal show={show} title={t("admin.editUserTitle", { email: targetUser.email })} onClose={onClose}>
       <div className={styles.avatarRow}>
-        {(picture ?? targetUser.picture) ? (
-          <img src={picture ?? targetUser.picture} alt="" className={styles.avatar} />
-        ) : (
-          <div className={styles.avatarPlaceholder} />
-        )}
+        {(() => {
+          const shown = picture ?? {
+            image: targetUser.picture,
+            x: targetUser.pictureX ?? 50,
+            y: targetUser.pictureY ?? 50,
+          };
+          return shown.image ? (
+            <img
+              src={shown.image}
+              alt=""
+              className={styles.avatar}
+              style={{ objectPosition: `${shown.x}% ${shown.y}%` }}
+            />
+          ) : (
+            <div className={styles.avatarPlaceholder} />
+          );
+        })()}
         <ImagePicker onChange={setPicture}>
           {({ onPick, onFile }) => (
             <DropZone onFile={onFile}>

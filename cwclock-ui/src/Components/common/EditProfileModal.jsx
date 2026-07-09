@@ -50,11 +50,18 @@ const EditProfileModal = ({ show, onClose, user }) => {
     <Modal show={show} title={t("profile.editProfileTitle")} onClose={onClose}>
       <div className={styles.avatarRow}>
         {user.picture ? (
-          <img src={user.picture} alt="" className={styles.avatar} />
+          <img
+            src={user.picture}
+            alt=""
+            className={styles.avatar}
+            style={{ objectPosition: `${user.pictureX ?? 50}% ${user.pictureY ?? 50}%` }}
+          />
         ) : (
           <div className={styles.avatarPlaceholder} />
         )}
-        <ImagePicker onChange={(picture) => dispatch(updatePictureApi(picture, user.token))}>
+        <ImagePicker
+          onChange={({ image, x, y }) => dispatch(updatePictureApi(image, x, y, user.token))}
+        >
           {({ onPick, onFile }) => (
             <DropZone onFile={onFile}>
               <label className={styles.avatarLabel} title={t("common.uploadNewPicture")}>

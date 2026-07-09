@@ -35,3 +35,8 @@
   color: var(--cw-primary-700);
   background-color: var(--cw-primary-tint);
 }
+
+.iconBtnDanger:hover {
+  color: var(--cw-danger);
+  background-color: var(--cw-danger-light);
+}

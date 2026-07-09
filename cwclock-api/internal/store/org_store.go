@@ -21,17 +21,21 @@ func NewOrgStore(pool *pgxpool.Pool) *OrgStore {
 }
 
 type orgData struct {
-	Name       string `json:"name"`
-	Address    string `json:"address"`
-	PostalCode string `json:"postalCode"`
-	City       string `json:"city"`
-	Country    string `json:"country"`
-	VATNumber  string `json:"vatNumber"`
-	SIREN      string `json:"siren"`
-	SIRET      string `json:"siret"`
-	Picture    string `json:"picture,omitempty"`
-	Stamp      string `json:"stamp,omitempty"`
-	Currency   string `json:"currency,omitempty"`
+	Name       string   `json:"name"`
+	Address    string   `json:"address"`
+	PostalCode string   `json:"postalCode"`
+	City       string   `json:"city"`
+	Country    string   `json:"country"`
+	VATNumber  string   `json:"vatNumber"`
+	SIREN      string   `json:"siren"`
+	SIRET      string   `json:"siret"`
+	Picture    string   `json:"picture,omitempty"`
+	PictureX   *float64 `json:"pictureX,omitempty"`
+	PictureY   *float64 `json:"pictureY,omitempty"`
+	Stamp      string   `json:"stamp,omitempty"`
+	StampX     *float64 `json:"stampX,omitempty"`
+	StampY     *float64 `json:"stampY,omitempty"`
+	Currency   string   `json:"currency,omitempty"`
 }
 
 // OrganizationFields holds the editable, non-identifying fields of an
@@ -46,7 +50,11 @@ type OrganizationFields struct {
 	SIREN      string
 	SIRET      string
 	Picture    string
+	PictureX   float64
+	PictureY   float64
 	Stamp      string
+	StampX     float64
+	StampY     float64
 	Currency   string
 }
 
@@ -66,7 +74,11 @@ func applyOrgData(o *models.Organization, raw []byte) error {
 	o.SIREN = d.SIREN
 	o.SIRET = d.SIRET
 	o.Picture = d.Picture
+	o.PictureX = resolveImagePosition(d.PictureX)
+	o.PictureY = resolveImagePosition(d.PictureY)
 	o.Stamp = d.Stamp
+	o.StampX = resolveImagePosition(d.StampX)
+	o.StampY = resolveImagePosition(d.StampY)
 	o.Currency = utils.If(utils.IsBlank(d.Currency), models.DefaultCurrency(), d.Currency)
 	return nil
 }
@@ -97,7 +109,11 @@ func toOrgData(f OrganizationFields) orgData {
 		SIREN:      f.SIREN,
 		SIRET:      f.SIRET,
 		Picture:    f.Picture,
+		PictureX:   &f.PictureX,
+		PictureY:   &f.PictureY,
 		Stamp:      f.Stamp,
+		StampX:     &f.StampX,
+		StampY:     &f.StampY,
 		Currency:   utils.If(utils.IsBlank(f.Currency), models.DefaultCurrency(), f.Currency),
 	}
 }

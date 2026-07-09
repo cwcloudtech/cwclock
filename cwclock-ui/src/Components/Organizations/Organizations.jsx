@@ -15,6 +15,8 @@ import {
 } from "../../Redux/Organizations/Org.actions";
 import RequiredMark from "../common/RequiredMark";
 import ConfigForm from "../common/ConfigForm";
+import applyImageField from "../common/applyImageField";
+import { isAdminOrOwner as computeIsAdminOrOwner, isOrgOwner } from "../common/permissions";
 import CollapsiblePanel from "../common/CollapsiblePanel";
 import EmptyState from "../common/EmptyState";
 import memberLabel from "../common/memberLabel";
@@ -33,7 +35,11 @@ const emptyFields = {
   siren: "",
   siret: "",
   picture: "",
+  pictureX: 50,
+  pictureY: 50,
   stamp: "",
+  stampX: 50,
+  stampY: 50,
   currency: "",
 };
 
@@ -164,15 +170,14 @@ const Organizations = () => {
   }, [dispatch, currentOrgId, user.token]);
 
   const currentOrg = organizations.find((o) => o.id === currentOrgId);
-  const myRole = members.find((m) => m.userId === user.id)?.role;
-  const isOwner = currentOrg && currentOrg.ownerId === user.id;
-  const isAdminOrOwner = isOwner || myRole === "admin";
+  const isOwner = isOrgOwner(user, currentOrg);
+  const isAdminOrOwner = computeIsAdminOrOwner(user, members);
 
   const memberSuggestions = useEmailAutocomplete(memberEmail, isOwner, user.token);
   const transferSuggestions = useEmailAutocomplete(transferEmail, isOwner, user.token);
 
-  const setField = (key, value) => setFields({ ...fields, [key]: value });
-  const setEditField = (key, value) => setEditFields({ ...editFields, [key]: value });
+  const setField = (key, value) => setFields((f) => applyImageField(f, key, value));
+  const setEditField = (key, value) => setEditFields((f) => applyImageField(f, key, value));
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -198,7 +203,11 @@ const Organizations = () => {
       siret: currentOrg.siret || "",
       currency: currentOrg.currency || currencies[0] || "",
       picture: currentOrg.picture || "",
+      pictureX: currentOrg.pictureX ?? 50,
+      pictureY: currentOrg.pictureY ?? 50,
       stamp: currentOrg.stamp || "",
+      stampX: currentOrg.stampX ?? 50,
+      stampY: currentOrg.stampY ?? 50,
     });
   };
 
@@ -258,7 +267,14 @@ const Organizations = () => {
                 checked={org.id === currentOrgId}
                 onChange={() => dispatch(selectOrg(org.id))}
               />
-              {org.picture && <img src={org.picture} alt="" className={styles.avatar} />}
+              {org.picture && (
+                <img
+                  src={org.picture}
+                  alt=""
+                  className={styles.avatar}
+                  style={{ objectPosition: `${org.pictureX ?? 50}% ${org.pictureY ?? 50}%` }}
+                />
+              )}
               {org.name}
             </label>
             <div className={styles.rowActions}>

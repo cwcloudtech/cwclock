@@ -4,6 +4,7 @@ import {
   ProjectListSUCCESS,
   ProjectCreateSUCCESS,
   ProjectUpdateSUCCESS,
+  ProjectDeleteSUCCESS,
 } from "./Project.types";
 
 const initialstate = {
@@ -28,6 +29,10 @@ export const ProjectReducer = (state = initialstate, { type, payload }) => {
     }
     case ProjectUpdateSUCCESS: {
       const projects = state.projects.map((p) => (p.id === payload.id ? payload : p));
+      return { ...state, projects, isLoading: false };
+    }
+    case ProjectDeleteSUCCESS: {
+      const projects = state.projects.filter((p) => p.id !== payload);
       return { ...state, projects, isLoading: false };
     }
     default: {

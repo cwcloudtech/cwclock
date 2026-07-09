@@ -14,26 +14,31 @@ import (
 )
 
 type OrganizationHandler struct {
-	orgs  *store.OrgStore
-	users *store.UserStore
+	orgs         *store.OrgStore
+	users        *store.UserStore
+	maxImageSize int64
 }
 
-func NewOrganizationHandler(orgs *store.OrgStore, users *store.UserStore) *OrganizationHandler {
-	return &OrganizationHandler{orgs: orgs, users: users}
+func NewOrganizationHandler(orgs *store.OrgStore, users *store.UserStore, maxImageSize int64) *OrganizationHandler {
+	return &OrganizationHandler{orgs: orgs, users: users, maxImageSize: maxImageSize}
 }
 
 type organizationPayload struct {
-	Name       string `json:"name"`
-	Address    string `json:"address"`
-	PostalCode string `json:"postalCode"`
-	City       string `json:"city"`
-	Country    string `json:"country"`
-	VATNumber  string `json:"vatNumber"`
-	SIREN      string `json:"siren"`
-	SIRET      string `json:"siret"`
-	Picture    string `json:"picture"`
-	Stamp      string `json:"stamp"`
-	Currency   string `json:"currency"`
+	Name       string  `json:"name"`
+	Address    string  `json:"address"`
+	PostalCode string  `json:"postalCode"`
+	City       string  `json:"city"`
+	Country    string  `json:"country"`
+	VATNumber  string  `json:"vatNumber"`
+	SIREN      string  `json:"siren"`
+	SIRET      string  `json:"siret"`
+	Picture    string  `json:"picture"`
+	PictureX   float64 `json:"pictureX"`
+	PictureY   float64 `json:"pictureY"`
+	Stamp      string  `json:"stamp"`
+	StampX     float64 `json:"stampX"`
+	StampY     float64 `json:"stampY"`
+	Currency   string  `json:"currency"`
 }
 
 func (p organizationPayload) valid() bool {
@@ -42,6 +47,10 @@ func (p organizationPayload) valid() bool {
 
 func (p organizationPayload) validCurrency() bool {
 	return utils.IsBlank(p.Currency) || models.IsAllowedCurrency(p.Currency)
+}
+
+func (p organizationPayload) imageTooLarge(maxImageSize int64) bool {
+	return utils.ImageSizeExceeds(p.Picture, maxImageSize) || utils.ImageSizeExceeds(p.Stamp, maxImageSize)
 }
 
 func (p organizationPayload) toFields() store.OrganizationFields {
@@ -55,7 +64,11 @@ func (p organizationPayload) toFields() store.OrganizationFields {
 		SIREN:      p.SIREN,
 		SIRET:      p.SIRET,
 		Picture:    p.Picture,
+		PictureX:   p.PictureX,
+		PictureY:   p.PictureY,
 		Stamp:      p.Stamp,
+		StampX:     p.StampX,
+		StampY:     p.StampY,
 		Currency:   p.Currency,
 	}
 }
@@ -70,6 +83,10 @@ func (h *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	if !p.validCurrency() {
 		writeError(w, http.StatusBadRequest, "Please use a supported currency code", CodeInvalidCurrency)
+		return
+	}
+	if p.imageTooLarge(h.maxImageSize) {
+		writeError(w, http.StatusBadRequest, "Image is too large", CodeImageTooLarge)
 		return
 	}
 
@@ -124,6 +141,10 @@ func (h *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	if !p.validCurrency() {
 		writeError(w, http.StatusBadRequest, "Please use a supported currency code", CodeInvalidCurrency)
+		return
+	}
+	if p.imageTooLarge(h.maxImageSize) {
+		writeError(w, http.StatusBadRequest, "Image is too large", CodeImageTooLarge)
 		return
 	}
 

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"strings"
 )
@@ -49,4 +50,24 @@ func If[T any](cond bool, vtrue, vfalse T) T {
 func HashToken(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])
+}
+
+// ImageSizeExceeds reports whether a base64 (optionally data-URI prefixed)
+// image string decodes to more than maxBytes. A blank image never exceeds,
+// so clearing a picture/stamp is always allowed regardless of the limit.
+func ImageSizeExceeds(image string, maxBytes int64) bool {
+	if IsBlank(image) {
+		return false
+	}
+	payload := image
+	if strings.HasPrefix(image, "data:") {
+		if comma := strings.IndexByte(image, ','); comma >= 0 {
+			payload = image[comma+1:]
+		}
+	}
+	decoded, err := base64.StdEncoding.DecodeString(payload)
+	if err != nil {
+		return false
+	}
+	return int64(len(decoded)) > maxBytes
 }

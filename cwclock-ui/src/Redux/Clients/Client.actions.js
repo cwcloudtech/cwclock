@@ -6,6 +6,7 @@ import {
   ClientListSUCCESS,
   ClientCreateSUCCESS,
   ClientUpdateSUCCESS,
+  ClientDeleteSUCCESS,
 } from "./Client.types";
 import toastOptions from "../toastOptions";
 import { translate, getStoredLocale } from "../../i18n/translate";
@@ -53,6 +54,18 @@ export const updateClientApi = (orgId, clientId, fields, token) => async (dispat
     dispatch({ type: ClientUpdateSUCCESS, payload: data });
     toast.success(translate(getStoredLocale(), "toasts.clientUpdated"), toastOptions);
     return data;
+  } catch (e) {
+    dispatch({ type: ClientERROR });
+    throw e;
+  }
+};
+
+export const deleteClientApi = (orgId, clientId, token) => async (dispatch) => {
+  dispatch({ type: ClientLOADING });
+  try {
+    await axios.delete(`${ENDPOINT}${orgId}/clients/${clientId}`, authConfig(token));
+    dispatch({ type: ClientDeleteSUCCESS, payload: clientId });
+    toast.success(translate(getStoredLocale(), "toasts.clientDeleted"), toastOptions);
   } catch (e) {
     dispatch({ type: ClientERROR });
     throw e;

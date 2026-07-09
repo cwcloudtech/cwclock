@@ -43,6 +43,7 @@ const (
 	CodePasswordsMismatch      = "errors.passwordsMismatch"
 	CodeApiKeyDescription      = "errors.apiKeyDescription"
 	CodeInvalidExpiration      = "errors.invalidExpiration"
+	CodeImageTooLarge          = "errors.imageTooLarge"
 )
 
 func writeJSON(w http.ResponseWriter, status int, body any) {

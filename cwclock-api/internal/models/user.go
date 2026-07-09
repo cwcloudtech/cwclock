@@ -20,18 +20,22 @@ type User struct {
 	Role         GlobalRole `json:"role"`
 	PasswordHash string     `json:"-"`
 	Picture      string     `json:"picture,omitempty"`
+	PictureX     float64    `json:"pictureX"`
+	PictureY     float64    `json:"pictureY"`
 	CreatedAt    time.Time  `json:"createdAt"`
 	UpdatedAt    time.Time  `json:"updatedAt"`
 }
 
 type UserResponse struct {
-	ID      string     `json:"id"`
-	Email   string     `json:"email"`
-	Name    string     `json:"name"`
-	Surname string     `json:"surname"`
-	Role    GlobalRole `json:"role"`
-	Token   string     `json:"token"`
-	Picture string     `json:"picture,omitempty"`
+	ID       string     `json:"id"`
+	Email    string     `json:"email"`
+	Name     string     `json:"name"`
+	Surname  string     `json:"surname"`
+	Role     GlobalRole `json:"role"`
+	Token    string     `json:"token"`
+	Picture  string     `json:"picture,omitempty"`
+	PictureX float64    `json:"pictureX"`
+	PictureY float64    `json:"pictureY"`
 }
 
 type UserMeResponse struct {
@@ -41,6 +45,8 @@ type UserMeResponse struct {
 	Surname   string     `json:"surname"`
 	Role      GlobalRole `json:"role"`
 	Picture   string     `json:"picture,omitempty"`
+	PictureX  float64    `json:"pictureX"`
+	PictureY  float64    `json:"pictureY"`
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt time.Time  `json:"updatedAt"`
 }

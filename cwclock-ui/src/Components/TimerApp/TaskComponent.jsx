@@ -11,6 +11,7 @@ import projectLabel from "../common/projectLabel";
 import ProjectBadge from "../common/ProjectBadge";
 import Tooltip from "../common/Tooltip";
 import toastOptions from "../../Redux/toastOptions";
+import { isAdminOrOwner as computeIsAdminOrOwner, memberRole } from "../common/permissions";
 import { useI18n } from "../../i18n/I18nContext";
 
 const fieldsFromItem = (item) => ({
@@ -37,9 +38,9 @@ const TaskComponent = ({ item }) => {
   const dispatch = useDispatch();
 
   const project = projects.find((p) => p.id === item.projectId);
-  const myRole = members.find((m) => m.userId === user.id)?.role;
-  const isAdminOrOwner = myRole === "admin" || myRole === "owner";
-  const canEdit = myRole && myRole !== "reader";
+  const myRole = memberRole(user, members);
+  const isAdminOrOwner = computeIsAdminOrOwner(user, members);
+  const canEdit = isAdminOrOwner || (myRole && myRole !== "reader");
   const assignee = members.find((m) => m.userId === item.userId);
 
   useEffect(() => {

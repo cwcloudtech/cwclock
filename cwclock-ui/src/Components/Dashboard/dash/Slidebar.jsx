@@ -85,7 +85,12 @@ const Slidebar = () => {
               trigger={
                 <>
                   {currentOrg?.picture && (
-                    <img src={currentOrg.picture} alt="" className={styles.orgAvatar} />
+                    <img
+                      src={currentOrg.picture}
+                      alt=""
+                      className={styles.orgAvatar}
+                      style={{ objectPosition: `${currentOrg.pictureX ?? 50}% ${currentOrg.pictureY ?? 50}%` }}
+                    />
                   )}
                   {currentOrg?.name}
                 </>
@@ -101,7 +106,14 @@ const Slidebar = () => {
                       close();
                     }}
                   >
-                    {org.picture && <img src={org.picture} alt="" className={styles.orgAvatar} />}
+                    {org.picture && (
+                      <img
+                        src={org.picture}
+                        alt=""
+                        className={styles.orgAvatar}
+                        style={{ objectPosition: `${org.pictureX ?? 50}% ${org.pictureY ?? 50}%` }}
+                      />
+                    )}
                     {org.name}
                   </DropdownItem>
                 ))
@@ -122,7 +134,12 @@ const Slidebar = () => {
               triggerClassName={styles.profileTrigger}
               trigger={
                 user.picture ? (
-                  <img src={user.picture} alt="" className={styles.profileAvatar} />
+                  <img
+                    src={user.picture}
+                    alt=""
+                    className={styles.profileAvatar}
+                    style={{ objectPosition: `${user.pictureX ?? 50}% ${user.pictureY ?? 50}%` }}
+                  />
                 ) : (
                   <FaUserCheck fontSize="18px" />
                 )

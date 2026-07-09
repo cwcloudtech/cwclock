@@ -14,11 +14,12 @@ import (
 )
 
 type AdminHandler struct {
-	users *store.UserStore
+	users        *store.UserStore
+	maxImageSize int64
 }
 
-func NewAdminHandler(users *store.UserStore) *AdminHandler {
-	return &AdminHandler{users: users}
+func NewAdminHandler(users *store.UserStore, maxImageSize int64) *AdminHandler {
+	return &AdminHandler{users: users, maxImageSize: maxImageSize}
 }
 
 func toUserMeResponse(u models.User) models.UserMeResponse {
@@ -29,6 +30,8 @@ func toUserMeResponse(u models.User) models.UserMeResponse {
 		Surname:   u.Surname,
 		Role:      u.Role,
 		Picture:   u.Picture,
+		PictureX:  u.PictureX,
+		PictureY:  u.PictureY,
 		CreatedAt: u.CreatedAt,
 		UpdatedAt: u.UpdatedAt,
 	}
@@ -59,12 +62,14 @@ func validGlobalRole(role string) bool {
 }
 
 type adminUpdateUserPayload struct {
-	Email    string  `json:"email"`
-	Name     string  `json:"name"`
-	Surname  string  `json:"surname"`
-	Role     string  `json:"role"`
-	Password *string `json:"password"`
-	Picture  *string `json:"picture"`
+	Email    string   `json:"email"`
+	Name     string   `json:"name"`
+	Surname  string   `json:"surname"`
+	Role     string   `json:"role"`
+	Password *string  `json:"password"`
+	Picture  *string  `json:"picture"`
+	PictureX *float64 `json:"pictureX"`
+	PictureY *float64 `json:"pictureY"`
 }
 
 // UpdateUser lets the superuser edit any account: email, profile, role,
@@ -77,6 +82,11 @@ func (h *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil ||
 		utils.IsBlank(p.Email) || utils.IsBlank(p.Name) || utils.IsBlank(p.Surname) || !validGlobalRole(p.Role) {
 		writeError(w, http.StatusBadRequest, "Please add valid email, name, surname and role fields", CodeInvalidAdminUserEdit)
+		return
+	}
+
+	if p.Picture != nil && utils.ImageSizeExceeds(*p.Picture, h.maxImageSize) {
+		writeError(w, http.StatusBadRequest, "Image is too large", CodeImageTooLarge)
 		return
 	}
 
@@ -93,6 +103,8 @@ func (h *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	if p.Picture != nil {
 		fields.Picture = p.Picture
+		fields.PictureX = p.PictureX
+		fields.PictureY = p.PictureY
 	}
 
 	user, err := h.users.AdminUpdate(r.Context(), id, fields)

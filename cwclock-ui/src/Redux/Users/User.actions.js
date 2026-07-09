@@ -6,11 +6,11 @@ import { translate, getStoredLocale } from "../../i18n/translate";
 
 const ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/users/`;
 
-export const updatePictureApi = (picture, token) => async (dispatch) => {
+export const updatePictureApi = (picture, x, y, token) => async (dispatch) => {
   try {
     const { data } = await axios.put(
       `${ENDPOINT}me/picture`,
-      { picture },
+      { picture, x, y },
       { headers: { Authorization: `Bearer ${token}` } }
     );
     dispatch({ type: updatePicture, payload: data });

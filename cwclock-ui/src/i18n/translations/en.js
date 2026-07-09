@@ -51,7 +51,6 @@ const en = {
     noResults: "No results",
     clearFilter: "Clear",
     cropImageTitle: "Adjust your image",
-    zoom: "Zoom",
     copy: "Copy",
     copied: "Copied to clipboard",
     copyId: "Copy ID",
@@ -200,6 +199,8 @@ const en = {
     editClientTitle: "Edit {{name}}",
     emptyTitle: "No clients yet",
     emptyBody: "Create your first client above to get started.",
+    deleteClientTitle: "Delete client",
+    deleteClientBody: 'Delete "{{name}}"? This cannot be undone.',
   },
   projects: {
     title: "Projects",
@@ -212,6 +213,8 @@ const en = {
     emptyBody: "Create your first project above to get started.",
     subdivisions: "Subdivisions",
     subdivisionsPlaceholder: "Add a subdivision",
+    deleteProjectTitle: "Delete project",
+    deleteProjectBody: 'Delete "{{name}}"? This cannot be undone.',
   },
   admin: {
     usersTitle: "Users",
@@ -258,6 +261,8 @@ const en = {
     clientCreated: "Client created.",
     projectUpdated: "Project updated.",
     clientUpdated: "Client updated.",
+    clientDeleted: "Client deleted.",
+    projectDeleted: "Project deleted.",
     userUpdated: "User updated.",
     userDeleted: "User deleted.",
     timeRecordDeleted: "Time record deleted.",
@@ -295,6 +300,7 @@ const en = {
     passwordsMismatch: "Passwords do not match.",
     apiKeyDescription: "Please add a description.",
     invalidExpiration: "Please add a valid expiration date.",
+    imageTooLarge: "This image is too large.",
   },
   reports: {
     summary: "Summary",

@@ -13,6 +13,7 @@ import { listOrgsApi, listMembersApi } from "../../Redux/Organizations/Org.actio
 import { listClientsApi } from "../../Redux/Clients/Client.actions";
 import { listProjectsApi } from "../../Redux/Projects/Project.actions";
 import { formatHMS } from "../Reports/reportFormat";
+import { isAdminOrOwner as computeIsAdminOrOwner } from "../common/permissions";
 import { useI18n } from "../../i18n/I18nContext";
 
 // Duration math lives here rather than reusing the reports package's
@@ -39,8 +40,7 @@ const TasksApp = () => {
   const { tasks, isLoading, isLoadingMore, hasMore, page } = useSelector((state) => state.tasks);
   const { user } = useSelector((state) => state.auth);
   const { currentOrgId, members } = useSelector((state) => state.organizations);
-  const myRole = members.find((m) => m.userId === user.id)?.role;
-  const isAdminOrOwner = myRole === "admin" || myRole === "owner";
+  const isAdminOrOwner = computeIsAdminOrOwner(user, members);
   const sentinelRef = useRef(null);
 
   useEffect(() => {

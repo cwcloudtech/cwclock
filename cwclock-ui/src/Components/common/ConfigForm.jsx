@@ -63,17 +63,27 @@ const ConfigForm = ({
             ))}
           </select>
         );
-      case "image":
+      case "image": {
+        const x = values[`${field.name}X`] ?? 50;
+        const y = values[`${field.name}Y`] ?? 50;
         return (
-          <ImagePicker onChange={(base64) => onChange(field.name, base64)}>
+          <ImagePicker onChange={(result) => onChange(field.name, result)}>
             {({ onPick, onFile }) => (
               <DropZone onFile={onFile}>
                 <input className="cw-input" type="file" accept="image/*" onChange={onPick} />
-                {value && <img src={value} alt="" className="cw-image-preview" />}
+                {value && (
+                  <img
+                    src={value}
+                    alt=""
+                    className="cw-image-preview"
+                    style={{ objectPosition: `${x}% ${y}%` }}
+                  />
+                )}
               </DropZone>
             )}
           </ImagePicker>
         );
+      }
       case "number":
         return (
           <input

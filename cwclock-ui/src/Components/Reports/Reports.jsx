@@ -12,6 +12,7 @@ import { listProjectsApi } from "../../Redux/Projects/Project.actions";
 import { listMembersApi } from "../../Redux/Organizations/Org.actions";
 import { fetchReportApi, exportReportApi } from "../../Redux/Reports/Report.actions";
 import { dateRangeShortcuts, toISODate } from "../common/dateRangeShortcuts";
+import { isAdminOrOwner as computeIsAdminOrOwner, isSuperadmin, memberRole } from "../common/permissions";
 import SummaryReportView from "./SummaryReportView";
 import DetailedReportView from "./DetailedReportView";
 import styles from "./Styles/Reports.module.css";
@@ -37,9 +38,9 @@ const Reports = () => {
   const [projectIds, setProjectIds] = useState([]);
   const [userIds, setUserIds] = useState([]);
 
-  const myRole = members.find((m) => m.userId === user.id)?.role;
-  const canAccess = myRole && myRole !== "reader";
-  const isAdminOrOwner = myRole === "admin" || myRole === "owner";
+  const myRole = memberRole(user, members);
+  const canAccess = isSuperadmin(user) || (myRole && myRole !== "reader");
+  const isAdminOrOwner = computeIsAdminOrOwner(user, members);
 
   const setRange = (start, end) => setRangeState({ start, end });
 

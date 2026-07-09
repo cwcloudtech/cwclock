@@ -51,7 +51,6 @@ const fr = {
     noResults: "Aucun résultat",
     clearFilter: "Effacer",
     cropImageTitle: "Ajustez votre image",
-    zoom: "Zoom",
     copy: "Copier",
     copied: "Copié dans le presse-papiers",
     copyId: "Copier l'ID",
@@ -200,6 +199,8 @@ const fr = {
     editClientTitle: "Modifier {{name}}",
     emptyTitle: "Aucun client pour le moment",
     emptyBody: "Créez votre premier client ci-dessus pour commencer.",
+    deleteClientTitle: "Supprimer le client",
+    deleteClientBody: "Supprimer « {{name}} » ? Cette action est irréversible.",
   },
   projects: {
     title: "Projets",
@@ -212,6 +213,8 @@ const fr = {
     emptyBody: "Créez votre premier projet ci-dessus pour commencer.",
     subdivisions: "Subdivisions",
     subdivisionsPlaceholder: "Ajouter une subdivision",
+    deleteProjectTitle: "Supprimer le projet",
+    deleteProjectBody: "Supprimer « {{name}} » ? Cette action est irréversible.",
   },
   admin: {
     usersTitle: "Utilisateurs",
@@ -258,6 +261,8 @@ const fr = {
     clientCreated: "Client créé.",
     projectUpdated: "Projet mis à jour.",
     clientUpdated: "Client mis à jour.",
+    clientDeleted: "Client supprimé.",
+    projectDeleted: "Projet supprimé.",
     userUpdated: "Utilisateur mis à jour.",
     userDeleted: "Utilisateur supprimé.",
     timeRecordDeleted: "Entrée de temps supprimée.",
@@ -295,6 +300,7 @@ const fr = {
     passwordsMismatch: "Les mots de passe ne correspondent pas.",
     apiKeyDescription: "Veuillez renseigner une description.",
     invalidExpiration: "Veuillez renseigner une date d'expiration valide.",
+    imageTooLarge: "Cette image est trop volumineuse.",
   },
   reports: {
     summary: "Résumé",

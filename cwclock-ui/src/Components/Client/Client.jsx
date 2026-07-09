@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FaRegEdit } from "react-icons/fa";
+import { MdDeleteForever } from "react-icons/md";
 import styles from "./Styles/Client.module.css";
-import { listClientsApi, createClientApi } from "../../Redux/Clients/Client.actions";
+import { listClientsApi, createClientApi, deleteClientApi } from "../../Redux/Clients/Client.actions";
 import { listMembersApi } from "../../Redux/Organizations/Org.actions";
 import ConfigForm from "../common/ConfigForm";
 import CollapsiblePanel from "../common/CollapsiblePanel";
 import Tooltip from "../common/Tooltip";
+import ConfirmModal from "../common/ConfirmModal";
 import EmptyState from "../common/EmptyState";
 import CopyIdButton from "../common/CopyIdButton";
 import EditClientModal from "./EditClientModal";
+import { isAdminOrOwner as computeIsAdminOrOwner } from "../common/permissions";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
 
@@ -37,9 +40,9 @@ const Clients = () => {
   const [fields, setFields] = useState(initialFields);
   const [error, setError] = useState("");
   const [editingClient, setEditingClient] = useState(null);
+  const [deletingClient, setDeletingClient] = useState(null);
 
-  const myRole = members.find((m) => m.userId === user.id)?.role;
-  const isAdminOrOwner = myRole === "admin" || myRole === "owner";
+  const isAdminOrOwner = computeIsAdminOrOwner(user, members);
 
   const clientFormConfig = {
     name: "Client",
@@ -83,6 +86,12 @@ const Clients = () => {
     } catch (err) {
       setError(apiErrorMessage(err, locale));
     }
+  };
+
+  const handleDelete = async () => {
+    const clientId = deletingClient.id;
+    setDeletingClient(null);
+    await dispatch(deleteClientApi(currentOrgId, clientId, user.token));
   };
 
   if (!currentOrgId) {
@@ -134,6 +143,17 @@ const Clients = () => {
                   </button>
                 </Tooltip>
               )}
+              {isAdminOrOwner && (
+                <Tooltip label={t("common.delete")}>
+                  <button
+                    type="button"
+                    className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                    onClick={() => setDeletingClient(client)}
+                  >
+                    <MdDeleteForever style={{ fontSize: "20px" }} />
+                  </button>
+                </Tooltip>
+              )}
             </div>
           </li>
         ))}
@@ -145,6 +165,15 @@ const Clients = () => {
         targetClient={editingClient}
         orgId={currentOrgId}
         token={user.token}
+      />
+
+      <ConfirmModal
+        show={!!deletingClient}
+        title={t("clients.deleteClientTitle")}
+        body={deletingClient ? t("clients.deleteClientBody", { name: deletingClient.name }) : ""}
+        confirmLabel={t("common.delete")}
+        onConfirm={handleDelete}
+        onCancel={() => setDeletingClient(null)}
       />
     </div>
   );

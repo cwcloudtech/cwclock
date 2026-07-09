@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import Modal from "../common/Modal";
 import ConfigForm from "../common/ConfigForm";
+import applyImageField from "../common/applyImageField";
 import { updateOrgApi } from "../../Redux/Organizations/Org.actions";
 import { listAllOrganizationsApi } from "../../Redux/Admin/Admin.actions";
 import { useI18n } from "../../i18n/I18nContext";
@@ -18,7 +19,11 @@ const emptyFields = {
   siren: "",
   siret: "",
   picture: "",
+  pictureX: 50,
+  pictureY: 50,
   stamp: "",
+  stampX: 50,
+  stampY: 50,
   currency: "",
 };
 
@@ -65,7 +70,11 @@ const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
         siret: targetOrg.siret || "",
         currency: targetOrg.currency || currencies[0] || "",
         picture: targetOrg.picture || "",
+        pictureX: targetOrg.pictureX ?? 50,
+        pictureY: targetOrg.pictureY ?? 50,
         stamp: targetOrg.stamp || "",
+        stampX: targetOrg.stampX ?? 50,
+        stampY: targetOrg.stampY ?? 50,
       });
       setError("");
     }
@@ -73,7 +82,7 @@ const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
 
   if (!targetOrg) return null;
 
-  const setField = (key, value) => setFields({ ...fields, [key]: value });
+  const setField = (key, value) => setFields((f) => applyImageField(f, key, value));
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -2,16 +2,19 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { FaRegEdit } from "react-icons/fa";
+import { MdDeleteForever } from "react-icons/md";
 import styles from "./Styles/Project.module.css";
 import { listClientsApi } from "../../Redux/Clients/Client.actions";
-import { listProjectsApi, createProjectApi } from "../../Redux/Projects/Project.actions";
+import { listProjectsApi, createProjectApi, deleteProjectApi } from "../../Redux/Projects/Project.actions";
 import { listMembersApi } from "../../Redux/Organizations/Org.actions";
 import ConfigForm from "../common/ConfigForm";
 import CollapsiblePanel from "../common/CollapsiblePanel";
 import Tooltip from "../common/Tooltip";
+import ConfirmModal from "../common/ConfirmModal";
 import EmptyState from "../common/EmptyState";
 import CopyIdButton from "../common/CopyIdButton";
 import EditProjectModal from "./EditProjectModal";
+import { isAdminOrOwner as computeIsAdminOrOwner } from "../common/permissions";
 import { useI18n } from "../../i18n/I18nContext";
 
 const initialFields = { clientId: "", name: "", color: "#1cb9f7", dailyRate: "", subdivisions: [] };
@@ -26,9 +29,9 @@ const Project = () => {
   const { members } = useSelector((state) => state.organizations);
   const [fields, setFields] = useState(initialFields);
   const [editingProject, setEditingProject] = useState(null);
+  const [deletingProject, setDeletingProject] = useState(null);
 
-  const myRole = members.find((m) => m.userId === user.id)?.role;
-  const isAdminOrOwner = myRole === "admin" || myRole === "owner";
+  const isAdminOrOwner = computeIsAdminOrOwner(user, members);
 
   useEffect(() => {
     if (currentOrgId) {
@@ -69,6 +72,12 @@ const Project = () => {
     const dailyRate = fields.dailyRate === "" ? undefined : Number(fields.dailyRate);
     dispatch(createProjectApi(currentOrgId, fields.clientId, fields.name, fields.color, dailyRate, fields.subdivisions, user.token));
     setField("name", "");
+  };
+
+  const handleDelete = async () => {
+    const projectId = deletingProject.id;
+    setDeletingProject(null);
+    await dispatch(deleteProjectApi(currentOrgId, projectId, user.token));
   };
 
   if (!currentOrgId) {
@@ -130,6 +139,17 @@ const Project = () => {
                     </button>
                   </Tooltip>
                 )}
+                {isAdminOrOwner && (
+                  <Tooltip label={t("common.delete")}>
+                    <button
+                      type="button"
+                      className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                      onClick={() => setDeletingProject(project)}
+                    >
+                      <MdDeleteForever style={{ fontSize: "20px" }} />
+                    </button>
+                  </Tooltip>
+                )}
               </div>
             </li>
           );
@@ -142,6 +162,15 @@ const Project = () => {
         targetProject={editingProject}
         orgId={currentOrgId}
         token={user.token}
+      />
+
+      <ConfirmModal
+        show={!!deletingProject}
+        title={t("projects.deleteProjectTitle")}
+        body={deletingProject ? t("projects.deleteProjectBody", { name: deletingProject.name }) : ""}
+        confirmLabel={t("common.delete")}
+        onConfirm={handleDelete}
+        onCancel={() => setDeletingProject(null)}
       />
     </div>
   );

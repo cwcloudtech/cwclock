@@ -24,7 +24,12 @@ type Config struct {
 	ManifestPath       string
 	OtelEndpoint       string
 	OtelProto          string
+	MaxImageSize       int64
 }
+
+// defaultMaxImageSize is applied when CWCLOCK_MAX_IMAGE_SIZE is unset or
+// isn't a parsable number of bytes.
+const defaultMaxImageSize int64 = 2 * 1024 * 1024
 
 func Load() Config {
 	user := os.Getenv("POSTGRES_USER")
@@ -45,6 +50,11 @@ func Load() Config {
 		postgresPoolSize = 5
 	}
 
+	maxImageSize, err := strconv.ParseInt(os.Getenv("CWCLOCK_MAX_IMAGE_SIZE"), 10, 64)
+	if err != nil || maxImageSize <= 0 {
+		maxImageSize = defaultMaxImageSize
+	}
+
 	return Config{
 		Port:               getEnv("PORT", "8080"),
 		DatabaseURL:        fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, pass, host, port, db, sslmode),
@@ -58,6 +68,7 @@ func Load() Config {
 		ManifestPath:       getEnv("CWCLOCK_MANIFEST_PATH", "manifest.json"),
 		OtelEndpoint:       os.Getenv("CWCLOCK_OTEL_ENDPOINT"),
 		OtelProto:          getEnv("CWCLOCK_OTEL_PROTO", "otlp/grpc"),
+		MaxImageSize:       maxImageSize,
 	}
 }
 

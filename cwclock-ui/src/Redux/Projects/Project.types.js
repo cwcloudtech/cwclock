@@ -3,3 +3,4 @@ export const ProjectERROR = "project/Error";
 export const ProjectListSUCCESS = "project/ListSuccess";
 export const ProjectCreateSUCCESS = "project/CreateSuccess";
 export const ProjectUpdateSUCCESS = "project/UpdateSuccess";
+export const ProjectDeleteSUCCESS = "project/DeleteSuccess";

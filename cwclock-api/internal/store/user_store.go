@@ -24,11 +24,25 @@ func NewUserStore(pool *pgxpool.Pool) *UserStore {
 }
 
 type userData struct {
-	Password string `json:"password"`
-	Name     string `json:"name,omitempty"`
-	Surname  string `json:"surname,omitempty"`
-	Role     string `json:"role,omitempty"`
-	Picture  string `json:"picture,omitempty"`
+	Password string   `json:"password"`
+	Name     string   `json:"name,omitempty"`
+	Surname  string   `json:"surname,omitempty"`
+	Role     string   `json:"role,omitempty"`
+	Picture  string   `json:"picture,omitempty"`
+	PictureX *float64 `json:"pictureX,omitempty"`
+	PictureY *float64 `json:"pictureY,omitempty"`
+}
+
+// defaultImagePosition centers a picture/stamp when no position was ever
+// stored for it (a never-repositioned image, or one saved before this field
+// existed).
+const defaultImagePosition = 50.0
+
+func resolveImagePosition(v *float64) float64 {
+	if v == nil {
+		return defaultImagePosition
+	}
+	return *v
 }
 
 func scanUser(row pgx.Row) (models.User, error) {
@@ -49,6 +63,8 @@ func scanUser(row pgx.Row) (models.User, error) {
 	u.Surname = d.Surname
 	u.Role = models.GlobalRole(d.Role)
 	u.Picture = d.Picture
+	u.PictureX = resolveImagePosition(d.PictureX)
+	u.PictureY = resolveImagePosition(d.PictureY)
 	return u, nil
 }
 
@@ -133,14 +149,19 @@ func (s *UserStore) List(ctx context.Context) ([]models.User, error) {
 	return users, rows.Err()
 }
 
-// UpdatePicture sets the user's avatar picture (base64) via jsonb_set, so it
-// can't clobber the password hash stored alongside it in the same column.
-func (s *UserStore) UpdatePicture(ctx context.Context, id, picture string) (models.User, error) {
+// UpdatePicture sets the user's avatar picture (base64) and its x/y display
+// position via a shallow merge, so it can't clobber the password hash and
+// other fields stored alongside it in the same column.
+func (s *UserStore) UpdatePicture(ctx context.Context, id, picture string, x, y float64) (models.User, error) {
+	patch, err := json.Marshal(map[string]any{"picture": picture, "pictureX": x, "pictureY": y})
+	if err != nil {
+		return models.User{}, err
+	}
 	row := s.pool.QueryRow(ctx, `
-		UPDATE users SET data = jsonb_set(data, '{picture}', to_jsonb($2::text), true), updated_at = now()
+		UPDATE users SET data = data || $2::jsonb, updated_at = now()
 		WHERE id = $1
 		RETURNING id, email, data, created_at, updated_at
-	`, id, picture)
+	`, id, patch)
 	return scanUser(row)
 }
 
@@ -179,6 +200,8 @@ type AdminUserFields struct {
 	Role         string
 	PasswordHash *string
 	Picture      *string
+	PictureX     *float64
+	PictureY     *float64
 }
 
 // AdminUpdate lets the superuser edit any account's email, profile, role,
@@ -195,6 +218,12 @@ func (s *UserStore) AdminUpdate(ctx context.Context, id string, f AdminUserField
 	}
 	if f.Picture != nil {
 		patch["picture"] = *f.Picture
+	}
+	if f.PictureX != nil {
+		patch["pictureX"] = *f.PictureX
+	}
+	if f.PictureY != nil {
+		patch["pictureY"] = *f.PictureY
 	}
 	data, err := json.Marshal(patch)
 	if err != nil {

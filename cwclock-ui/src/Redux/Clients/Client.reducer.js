@@ -4,6 +4,7 @@ import {
   ClientListSUCCESS,
   ClientCreateSUCCESS,
   ClientUpdateSUCCESS,
+  ClientDeleteSUCCESS,
 } from "./Client.types";
 
 const initialstate = {
@@ -28,6 +29,10 @@ export const ClientReducer = (state = initialstate, { type, payload }) => {
     }
     case ClientUpdateSUCCESS: {
       const clients = state.clients.map((c) => (c.id === payload.id ? payload : c));
+      return { ...state, clients, isLoading: false };
+    }
+    case ClientDeleteSUCCESS: {
+      const clients = state.clients.filter((c) => c.id !== payload);
       return { ...state, clients, isLoading: false };
     }
     default: {

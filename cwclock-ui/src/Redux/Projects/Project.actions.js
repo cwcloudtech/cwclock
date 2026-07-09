@@ -6,6 +6,7 @@ import {
   ProjectListSUCCESS,
   ProjectCreateSUCCESS,
   ProjectUpdateSUCCESS,
+  ProjectDeleteSUCCESS,
 } from "./Project.types";
 import toastOptions from "../toastOptions";
 import { translate, getStoredLocale } from "../../i18n/translate";
@@ -53,6 +54,18 @@ export const updateProjectApi = (orgId, projectId, name, color, dailyRate, subdi
     dispatch({ type: ProjectUpdateSUCCESS, payload: data });
     toast.success(translate(getStoredLocale(), "toasts.projectUpdated"), toastOptions);
     return data;
+  } catch (e) {
+    dispatch({ type: ProjectERROR });
+    throw e;
+  }
+};
+
+export const deleteProjectApi = (orgId, projectId, token) => async (dispatch) => {
+  dispatch({ type: ProjectLOADING });
+  try {
+    await axios.delete(`${ENDPOINT}${orgId}/projects/${projectId}`, authConfig(token));
+    dispatch({ type: ProjectDeleteSUCCESS, payload: projectId });
+    toast.success(translate(getStoredLocale(), "toasts.projectDeleted"), toastOptions);
   } catch (e) {
     dispatch({ type: ProjectERROR });
     throw e;

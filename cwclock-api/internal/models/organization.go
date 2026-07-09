@@ -15,6 +15,7 @@ type Organization struct {
 	ID         string    `json:"id"`
 	OwnerID    string    `json:"ownerId"`
 	Name       string    `json:"name"`
+	Email      string    `json:"email"`
 	Address    string    `json:"address"`
 	PostalCode string    `json:"postalCode"`
 	City       string    `json:"city"`
@@ -22,8 +23,13 @@ type Organization struct {
 	VATNumber  string    `json:"vatNumber"`
 	SIREN      string    `json:"siren"`
 	SIRET      string    `json:"siret"`
+	NAF        string    `json:"naf"`
 	Picture    string    `json:"picture,omitempty"`
+	PictureX   float64   `json:"pictureX"`
+	PictureY   float64   `json:"pictureY"`
 	Stamp      string    `json:"stamp,omitempty"`
+	StampX     float64   `json:"stampX"`
+	StampY     float64   `json:"stampY"`
 	Currency   string    `json:"currency"`
 	CreatedAt  time.Time `json:"createdAt"`
 	UpdatedAt  time.Time `json:"updatedAt"`
