@@ -194,6 +194,7 @@ func totalsRows(totalHT, totalVAT, totalTTC, vatRate float64, currency string) [
 // placed below everything.
 func RenderInvoicePDF(org models.Organization, client models.Client, owner models.User, invoiceNumber string, items []InvoiceLineItem, totalHT, totalVAT, totalTTC float64, startDay, endDay string) ([]byte, error) {
 	renderer := newRenderer()
+	addFooter(renderer.Pdf)
 
 	logoData, logoType := ResolveLogo(org.Picture)
 	if len(logoData) > 0 {
@@ -204,7 +205,7 @@ func RenderInvoicePDF(org models.Organization, client models.Client, owner model
 	ownerContact := cell(fmt.Sprintf("%s %s: %s", owner.Surname, owner.Name, owner.Email))
 
 	intro := fmt.Sprintf(
-		"# Invoice N°%s\n\n%s, the %s\nPeriod: %s - %s\n\n",
+		"# Invoice N°%s\n\n%s, the %s\n\nPeriod: %s - %s\n\n\n",
 		cell(invoiceNumber), cell(org.City), invoiceDate, formatUSDate(startDay), formatUSDate(endDay),
 	)
 	if err := renderer.Run([]byte(intro)); err != nil {

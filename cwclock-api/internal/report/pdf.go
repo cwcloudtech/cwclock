@@ -12,6 +12,9 @@ const (
 	logoMargin      = 24.0  // pt, from the page's right/top edge
 	chartMaxWidthPt = 500.0 // pt, capped so a wide chart doesn't dwarf the table below it
 	stampMaxWidthPt = 120.0 // pt, invoice stamp width cap
+
+	footerText = "Generated with cwcloud.me"
+	footerURL  = "https://www.cwcloud.me"
 )
 
 // newRenderer builds the shared mdtopdf renderer both RenderMarkdownPDF and
@@ -31,6 +34,19 @@ func newRenderer() *mdtopdf.PdfRenderer {
 	renderer.THeader.Size = 9
 	renderer.TBody.Size = 9
 	return renderer
+}
+
+// addFooter registers a footer drawing function on the fpdf instance that
+// prints a small, italic, light-grey attribution line at the bottom of every
+// page. Must be called before the first page is closed (i.e. before
+// outputPDF).
+func addFooter(pdf *fpdf.Fpdf) {
+	pdf.SetFooterFunc(func() {
+		pdf.SetY(-12)
+		pdf.SetFont("Helvetica", "I", 7)
+		pdf.SetTextColor(170, 170, 170)
+		pdf.CellFormat(0, 5, footerText, "", 0, "C", false, 0, footerURL)
+	})
 }
 
 func outputPDF(pdf *fpdf.Fpdf) ([]byte, error) {
@@ -56,6 +72,7 @@ func outputPDF(pdf *fpdf.Fpdf) ([]byte, error) {
 // cell (see drawTable's doc comment).
 func RenderMarkdownPDF(markdown string, logoData []byte, logoType string) ([]byte, error) {
 	renderer := newRenderer()
+	addFooter(renderer.Pdf)
 
 	// Placed before Run() writes any markdown: fpdf can't add content to an
 	// earlier page once a later one exists, so the logo has to land on page
@@ -81,6 +98,7 @@ func RenderMarkdownPDF(markdown string, logoData []byte, logoType string) ([]byt
 // clipped by the next one's background fill instead of wrapping.
 func RenderReportTablePDF(headerMarkdown string, chartPNG []byte, columns []tableColumn, rows [][]string, logoData []byte, logoType string) ([]byte, error) {
 	renderer := newRenderer()
+	addFooter(renderer.Pdf)
 
 	if len(logoData) > 0 {
 		placeLogo(renderer.Pdf, logoData, logoType)
