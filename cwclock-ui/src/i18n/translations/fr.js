@@ -223,6 +223,11 @@ const fr = {
     subdivisionsPlaceholder: "Ajouter une subdivision",
     deleteProjectTitle: "Supprimer le projet",
     deleteProjectBody: "Supprimer « {{name}} » ? Cette action est irréversible.",
+    transferHint: "Déplace ce projet vers un autre client au sein de cette organisation.",
+    transferTargetClient: "Client cible",
+    transferButton: "Transférer",
+    transferConfirmBody: "Transférer « {{name}} » vers « {{clientName}} » ? Cette action est irréversible.",
+    noOtherClients: "Il n'y a aucun autre client dans cette organisation vers lequel transférer ce projet.",
   },
   admin: {
     usersTitle: "Utilisateurs",

@@ -129,24 +129,27 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
       />
 
       {canTransfer && ownedOrgOptions.length > 0 && (
-        <div className="cw-field" style={{ marginTop: "2rem" }}>
-          <AutocompleteSelect
-            label={t("clients.transferTargetOrg")}
-            placeholder={t("clients.transferTargetOrg")}
-            options={ownedOrgOptions}
-            value={targetOrgId}
-            onChange={setTargetOrgId}
-          />
-          <Button
-            variant="danger"
-            disabled={!targetOrgId}
-            onClick={handleTransfer}
-            title={t("clients.transferHint")}
-          >
-            {t("clients.transferButton")}
-          </Button>
-          {transferError && <p className="cw-error">{transferError}</p>}
-        </div>
+        <>
+          <hr className="cw-hr" />
+          <div className="cw-field">
+            <AutocompleteSelect
+              label={t("clients.transferTargetOrg")}
+              placeholder={t("clients.transferTargetOrg")}
+              options={ownedOrgOptions}
+              value={targetOrgId}
+              onChange={setTargetOrgId}
+            />
+            <Button
+              variant="danger"
+              disabled={!targetOrgId}
+              onClick={handleTransfer}
+              title={t("clients.transferHint")}
+            >
+              {t("clients.transferButton")}
+            </Button>
+            {transferError && <p className="cw-error">{transferError}</p>}
+          </div>
+        </>
       )}
     </Modal>
   );

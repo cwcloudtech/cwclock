@@ -223,6 +223,11 @@ const en = {
     subdivisionsPlaceholder: "Add a subdivision",
     deleteProjectTitle: "Delete project",
     deleteProjectBody: 'Delete "{{name}}"? This cannot be undone.',
+    transferHint: "Moves this project to a different client within this organization.",
+    transferTargetClient: "Target client",
+    transferButton: "Transfer",
+    transferConfirmBody: 'Transfer "{{name}}" to "{{clientName}}"? This cannot be undone.',
+    noOtherClients: "There's no other client in this organization to transfer this project to.",
   },
   admin: {
     usersTitle: "Users",
