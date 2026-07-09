@@ -21,3 +21,7 @@ And for each project the price amount should be the daily rate multiply by the `
 And for each subdivision if there's subdivision it's `amount of project / number of subdivision`
 
 And finally apply the VAT if it's greater than 0.
+
+## Invoice UX/UI
+
+Keep the same color of report for table headers (bold with `#1cb9f7`).
