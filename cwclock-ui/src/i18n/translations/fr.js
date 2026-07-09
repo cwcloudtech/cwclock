@@ -203,7 +203,6 @@ const fr = {
     emptyBody: "Créez votre premier client ci-dessus pour commencer.",
     deleteClientTitle: "Supprimer le client",
     deleteClientBody: "Supprimer « {{name}} » ? Cette action est irréversible.",
-    transferTitle: "Transférer vers une autre organisation",
     transferHint: "Déplace ce client, ses projets et son temps enregistré vers une organisation que vous possédez.",
     transferTargetOrg: "Organisation cible",
     transferButton: "Transférer",

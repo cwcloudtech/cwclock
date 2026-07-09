@@ -12,10 +12,13 @@
 .dialog {
   width: 100%;
   max-width: 420px;
+  max-height: 90vh;
   background-color: var(--cw-surface);
   border-radius: var(--cw-radius);
   box-shadow: var(--cw-shadow-lg);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .header {
@@ -24,6 +27,7 @@
   justify-content: space-between;
   padding: var(--cw-spacing) var(--cw-spacing-lg);
   border-bottom: 1px solid var(--cw-border);
+  flex-shrink: 0;
 }
 
 .title {
@@ -48,6 +52,9 @@
 .body {
   padding: var(--cw-spacing-lg);
   color: var(--cw-text);
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .footer {
@@ -57,4 +64,5 @@
   padding: var(--cw-spacing) var(--cw-spacing-lg);
   border-top: 1px solid var(--cw-border);
   background-color: var(--cw-bg-alt);
+  flex-shrink: 0;
 }

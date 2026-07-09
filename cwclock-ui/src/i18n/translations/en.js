@@ -203,7 +203,6 @@ const en = {
     emptyBody: "Create your first client above to get started.",
     deleteClientTitle: "Delete client",
     deleteClientBody: 'Delete "{{name}}"? This cannot be undone.',
-    transferTitle: "Transfer to another organization",
     transferHint: "Moves this client, its projects and its logged time to an organization you own.",
     transferTargetOrg: "Target organization",
     transferButton: "Transfer",

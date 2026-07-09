@@ -64,7 +64,6 @@ const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
 
   return (
     <Modal show={show} title={t("projects.editProjectTitle", { name: targetProject.name })} onClose={onClose}>
-      <label className="cw-label">{t("common.client")}</label>
       <AutocompleteSelect
         label={t("common.client")}
         placeholder={t("common.selectAClient")}

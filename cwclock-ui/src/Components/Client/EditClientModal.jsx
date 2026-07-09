@@ -129,8 +129,7 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
       />
 
       {canTransfer && ownedOrgOptions.length > 0 && (
-        <div className="cw-field">
-          <label className="cw-label">{t("clients.transferTitle")}</label>
+        <div className="cw-field" style={{ marginTop: "2rem" }}>
           <AutocompleteSelect
             label={t("clients.transferTargetOrg")}
             placeholder={t("clients.transferTargetOrg")}
