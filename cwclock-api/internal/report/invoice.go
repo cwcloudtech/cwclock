@@ -150,8 +150,8 @@ func issuerRows(org models.Organization, invoiceDate, ownerContact string) [][]s
 	rows = addRow(rows, "Address", formatAddress(org.Address, org.PostalCode, org.City, org.Country))
 	rows = addRow(rows, "SIREN", cell(org.SIREN))
 	rows = addRow(rows, "SIRET", cell(org.SIRET))
-	rows = addRow(rows, "TVA/VAT IC", cell(org.VATNumber))
-	rows = addRow(rows, "Code NAF", cell(org.NAF))
+	rows = addRow(rows, "VAT / TVA IC", cell(org.VATNumber))
+	rows = addRow(rows, "NAF", cell(org.NAF))
 	rows = addRow(rows, "Date", invoiceDate)
 	rows = addRow(rows, "Contact", ownerContact)
 	return rows
@@ -162,7 +162,7 @@ func clientRows(client models.Client) [][]string {
 	rows = addRow(rows, "Name", cell(client.Name))
 	rows = addRow(rows, "Address", formatAddress(client.Address, client.PostalCode, client.City, client.Country))
 	rows = addRow(rows, "Contact", cell(client.Email))
-	rows = addRow(rows, "TVA IC", clientVATLine(client))
+	rows = addRow(rows, "VAT / TVA IC", clientVATLine(client))
 	return rows
 }
 
@@ -216,7 +216,7 @@ func RenderInvoicePDF(org models.Organization, client models.Client, owner model
 	drawTable(renderer.Pdf, translate, clientColumns, clientRows(client))
 	renderer.Pdf.Ln(8)
 
-	if err := renderer.Run([]byte("## Objet\n")); err != nil {
+	if err := renderer.Run([]byte("## Object\n")); err != nil {
 		return nil, err
 	}
 	drawTable(renderer.Pdf, translate, lineItemColumns, lineItemRows(items))
