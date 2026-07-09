@@ -28,7 +28,7 @@ type clientPayload struct {
 	City               string   `json:"city"`
 	Country            string   `json:"country"`
 	VATNumber          string   `json:"vatNumber"`
-	VATRate            float64  `json:"vatRate"`
+	VATRate            *float64 `json:"vatRate"`
 	VATDischargeMotive string   `json:"vatDischargeMotive"`
 	PurchaseOrder      string   `json:"purchaseOrder"`
 	HoursPerDay        float64  `json:"hoursPerDay"`

@@ -43,10 +43,38 @@
 }
 
 .period,
-.status,
 .total {
   color: var(--cw-text-muted);
   font-size: 0.9rem;
+}
+
+.statusBadge {
+  justify-self: start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.statusUnpaid {
+  background-color: var(--cw-danger-light);
+  color: var(--cw-danger);
+}
+
+.statusPaid {
+  background-color: var(--cw-success-tint);
+  color: var(--cw-success);
+}
+
+.statusCanceled {
+  background-color: var(--cw-bg-alt);
+  color: var(--cw-text-muted);
+}
+
+.statusRefunded {
+  background-color: var(--cw-warning-tint);
+  color: var(--cw-warning);
 }
 
 .rowActions {

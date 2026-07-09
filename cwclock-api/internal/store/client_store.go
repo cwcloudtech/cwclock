@@ -43,17 +43,21 @@ type ClientFields struct {
 	City               string
 	Country            string
 	VATNumber          string
-	VATRate            float64
+	VATRate            *float64
 	VATDischargeMotive string
 	PurchaseOrder      string
 	HoursPerDay        float64
 	DailyRate          *float64
 }
 
+// defaultVATRate is applied when the client has no VAT rate set at all, or
+// when it's negative; an explicit 0 (VAT-exempt) is kept as-is.
+const defaultVATRate float64 = 20
+
 func toClientData(f ClientFields) clientData {
-	vatRate := f.VATRate
-	if vatRate == 0 {
-		vatRate = 20
+	vatRate := defaultVATRate
+	if f.VATRate != nil && *f.VATRate >= 0 {
+		vatRate = *f.VATRate
 	}
 	hoursPerDay := f.HoursPerDay
 	if hoursPerDay == 0 {

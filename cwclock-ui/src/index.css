@@ -34,6 +34,8 @@
   --cw-danger-light: #fee2e2;
   --cw-success: #16a34a;
   --cw-success-tint: #dcfce7;
+  --cw-warning: #d97706;
+  --cw-warning-tint: #fef3c7;
   /* Backdrop behind avatar/logo images so transparent PNGs (often designed
      for a light background) stay legible; a no-op in light mode. */
   --cw-avatar-bg: transparent;
@@ -73,6 +75,7 @@
     --cw-text-muted: #94a3b8;
     --cw-danger-light: rgba(220, 38, 38, 0.18);
     --cw-success-tint: rgba(22, 163, 74, 0.16);
+    --cw-warning-tint: rgba(217, 119, 6, 0.18);
     --cw-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
     --cw-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
     --cw-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
@@ -108,6 +111,7 @@
   --cw-text-muted: #94a3b8;
   --cw-danger-light: rgba(220, 38, 38, 0.18);
   --cw-success-tint: rgba(22, 163, 74, 0.16);
+  --cw-warning-tint: rgba(217, 119, 6, 0.18);
   --cw-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --cw-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
   --cw-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);

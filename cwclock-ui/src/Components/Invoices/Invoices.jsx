@@ -38,6 +38,12 @@ const STATUS_LABEL_KEY = {
   canceled: "invoices.statusCanceled",
   refunded: "invoices.statusRefunded",
 };
+const STATUS_BADGE_CLASS = {
+  unpaid: "statusUnpaid",
+  paid: "statusPaid",
+  canceled: "statusCanceled",
+  refunded: "statusRefunded",
+};
 
 const defaultRange = (t) => {
   const thisMonth = dateRangeShortcuts(t).find((s) => s.key === "thisMonth");
@@ -71,7 +77,9 @@ const InvoiceRow = ({ invoice, orgId, token, onDelete }) => {
           ))}
         </select>
       ) : (
-        <span className={styles.status}>{t(STATUS_LABEL_KEY[invoice.status])}</span>
+        <span className={`${styles.statusBadge} ${styles[STATUS_BADGE_CLASS[invoice.status]] || ""}`}>
+          {t(STATUS_LABEL_KEY[invoice.status])}
+        </span>
       )}
       <span className={styles.total}>{invoice.totalTTC.toFixed(2)}</span>
       <div className={styles.rowActions}>
@@ -121,6 +129,7 @@ const Invoices = () => {
   const [range, setRangeState] = useState(() => defaultRange(t));
   const [clientId, setClientId] = useState("");
   const [projectIds, setProjectIds] = useState([]);
+  const [statusFilter, setStatusFilter] = useState([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [deletingInvoice, setDeletingInvoice] = useState(null);
@@ -128,6 +137,9 @@ const Invoices = () => {
   const isAdminOrOwner = computeIsAdminOrOwner(user, members);
   const setRange = (start, end) => setRangeState({ start, end });
   const clientProjects = projects.filter((p) => p.clientId === clientId);
+  const visibleInvoices = statusFilter.length
+    ? invoices.filter((i) => statusFilter.includes(i.status))
+    : invoices;
 
   useEffect(() => {
     if (currentOrgId) {
@@ -214,6 +226,13 @@ const Invoices = () => {
           onChange={setProjectIds}
         />
 
+        <MultiSelect
+          label={t("invoices.status")}
+          options={STATUSES.map((s) => ({ value: s, label: t(STATUS_LABEL_KEY[s]) }))}
+          selected={statusFilter}
+          onChange={setStatusFilter}
+        />
+
         <DateRangePicker start={range.start} end={range.end} onChange={setRange} shortcutKeys={INVOICE_SHORTCUT_KEYS} />
       </div>
 
@@ -235,7 +254,7 @@ const Invoices = () => {
       )}
       {!isLoading && invoices.length > 0 && (
         <ul className="cw-list">
-          {invoices.map((invoice) => (
+          {visibleInvoices.map((invoice) => (
             <InvoiceRow
               key={invoice.id}
               invoice={invoice}

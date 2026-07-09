@@ -116,7 +116,7 @@ func formatAddress(address, postalCode, city, country string) string {
 	if utils.IsNotBlank(address) {
 		parts = append(parts, address)
 	}
-	if line := strings.TrimSpace(postalCode + " " + city); line != "" {
+	if line := strings.TrimSpace(postalCode + " " + city); utils.IsNotBlank(line) {
 		parts = append(parts, line)
 	}
 	if utils.IsNotBlank(country) {
@@ -135,8 +135,8 @@ func addRow(rows [][]string, label, value string) [][]string {
 	return append(rows, []string{label, value})
 }
 
-var issuerColumns = []tableColumn{{Header: "Issuer", Weight: 30}, {Header: "Details", Weight: 70}}
-var clientColumns = []tableColumn{{Header: "Customer", Weight: 30}, {Header: "Details", Weight: 70}}
+var issuerColumns = []tableColumn{{Header: "Issuer", Weight: 30}, {Header: "Details", Weight: 35}}
+var clientColumns = []tableColumn{{Header: "Customer", Weight: 30}, {Header: "Details", Weight: 35}}
 var lineItemColumns = []tableColumn{
 	{Header: "Description", Weight: 50},
 	{Header: "Quantity", Weight: 20},
@@ -202,12 +202,21 @@ func RenderInvoicePDF(org models.Organization, client models.Client, owner model
 	invoiceDate := time.Now().Format(InvoiceDateLayout)
 	ownerContact := cell(fmt.Sprintf("%s %s: %s", owner.Surname, owner.Name, owner.Email))
 
-	intro := fmt.Sprintf(
-		"# Invoice N°%s\n\n%s, the %s\n\nPurchase Order: %s\n",
-		cell(invoiceNumber), cell(org.City), invoiceDate, cell(client.PurchaseOrder),
-	)
+	intro := fmt.Sprintf("# Invoice N°%s\n\n%s, the %s\n", cell(invoiceNumber), cell(org.City), invoiceDate)
 	if err := renderer.Run([]byte(intro)); err != nil {
 		return nil, err
+	}
+
+	// Dropped entirely when blank, rather than printing a dangling "Purchase
+	// Order:" line with nothing after it; an explicit Ln (not just a blank
+	// markdown line, which mdtopdf collapses) adds real breathing room below
+	// it when it is printed.
+	if utils.IsNotBlank(client.PurchaseOrder) {
+		poLine := fmt.Sprintf("\nPurchase Order: %s\n", cell(client.PurchaseOrder))
+		if err := renderer.Run([]byte(poLine)); err != nil {
+			return nil, err
+		}
+		renderer.Pdf.Ln(8)
 	}
 
 	translate := renderer.Pdf.UnicodeTranslatorFromDescriptor("cp1252")
