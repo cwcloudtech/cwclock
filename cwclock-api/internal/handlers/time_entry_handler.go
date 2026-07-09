@@ -154,11 +154,12 @@ func (h *TimeEntryHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Changing which client/project an entry belongs to is allowed for
+	// whoever can already manage the entry (its own owner, or an
+	// admin/owner) - same bar as the rest of its fields. Only reassigning it
+	// to a *different member* needs the stricter admin/owner-only check
+	// below, since that moves the entry out from under its current owner.
 	reassign := store.TimeEntryReassignment{}
-	if (p.ClientID != entry.ClientID || p.ProjectID != entry.ProjectID) && !isAdminOrOwner(r) {
-		writeError(w, http.StatusForbidden, "Only an admin or the owner can reassign a time entry to another client or project", CodeReassignForbidden)
-		return
-	}
 	if p.ClientID != entry.ClientID {
 		reassign.ClientID = p.ClientID
 	}

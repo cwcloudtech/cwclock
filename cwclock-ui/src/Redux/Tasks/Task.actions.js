@@ -12,7 +12,7 @@ import {
 import axios from "axios";
 import { toast } from "react-toastify";
 import toastOptions from "../toastOptions";
-import { translate, getStoredLocale } from "../../i18n/translate";
+import { translate, getStoredLocale, apiErrorMessage } from "../../i18n/translate";
 
 const ENDPOINT = (orgId) => `${process.env.REACT_APP_APIURL}/v1/organizations/${orgId}/time-entries/`;
 
@@ -49,6 +49,7 @@ export const postTasksApi = (item, orgId, token) => async (dispatch) => {
     return data;
   } catch (e) {
     dispatch({ type: GetTasksERROR });
+    toast.error(apiErrorMessage(e, getStoredLocale()), toastOptions);
   }
 };
 export const deleteTasksApi = (id, orgId, token) => async (dispatch) => {
@@ -63,6 +64,7 @@ export const deleteTasksApi = (id, orgId, token) => async (dispatch) => {
     dispatch({
       type: GetTasksERROR,
     });
+    toast.error(apiErrorMessage(e, getStoredLocale()), toastOptions);
   }
 };
 export const updateTasksApi = (task, orgId, token) => async (dispatch) => {
@@ -78,5 +80,6 @@ export const updateTasksApi = (task, orgId, token) => async (dispatch) => {
     dispatch({
       type: GetTasksERROR,
     });
+    toast.error(apiErrorMessage(e, getStoredLocale()), toastOptions);
   }
 };
