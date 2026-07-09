@@ -27,3 +27,4 @@
 * [ai-instruct-25](./ai-instruct-25.md)
 * [ai-instruct-26](./ai-instruct-26.md)
 * [ai-instruct-27](./ai-instruct-27.md)
+* [ai-instruct-28](./ai-instruct-28.md)
