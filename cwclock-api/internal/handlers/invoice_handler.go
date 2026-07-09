@@ -154,7 +154,7 @@ func (h *InvoiceHandler) Preview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pdf, err := report.RenderInvoicePDF(ic.org, ic.client, ic.owner, number, ic.items, ic.totalHT, ic.totalVAT, ic.totalTTC)
+	pdf, err := report.RenderInvoicePDF(ic.org, ic.client, ic.owner, number, ic.items, ic.totalHT, ic.totalVAT, ic.totalTTC, ic.startDay, ic.endDay)
 	writeExportFile(w, "application/pdf", number+".pdf", pdf, err)
 }
 
@@ -178,7 +178,7 @@ func (h *InvoiceHandler) Generate(w http.ResponseWriter, r *http.Request) {
 	var pdf []byte
 	var renderErr error
 	inv, err := h.invoices.Create(r.Context(), orgID, req.ClientID, ic.client.Name, func(number string) (store.InvoiceFields, error) {
-		pdf, renderErr = report.RenderInvoicePDF(ic.org, ic.client, ic.owner, number, ic.items, ic.totalHT, ic.totalVAT, ic.totalTTC)
+		pdf, renderErr = report.RenderInvoicePDF(ic.org, ic.client, ic.owner, number, ic.items, ic.totalHT, ic.totalVAT, ic.totalTTC, ic.startDay, ic.endDay)
 		if renderErr != nil {
 			return store.InvoiceFields{}, renderErr
 		}

@@ -183,15 +183,16 @@ func totalsRows(totalHT, totalVAT, totalTTC, vatRate float64, currency string) [
 }
 
 // RenderInvoicePDF renders a generated invoice as a PDF: the organization's
-// logo top-right (see ResolveLogo), an intro (title/date/purchase order),
-// issuer/client info tables, the billable line items, and a totals table -
+// logo top-right (see ResolveLogo), an intro (title/location/date/billed
+// period/purchase order), issuer/client info tables, the billable line
+// items, and a totals table -
 // every table drawn directly with fpdf (see drawTable), exactly like report
 // PDFs, rather than through a markdown table, so a long value wraps onto a
 // second line inside its cell instead of overflowing it, and a blank
 // row/cell can never crash the renderer. Rows with a blank value (e.g. no
 // SIRET set) are dropped entirely. When set, the organization's stamp is
 // placed below everything.
-func RenderInvoicePDF(org models.Organization, client models.Client, owner models.User, invoiceNumber string, items []InvoiceLineItem, totalHT, totalVAT, totalTTC float64) ([]byte, error) {
+func RenderInvoicePDF(org models.Organization, client models.Client, owner models.User, invoiceNumber string, items []InvoiceLineItem, totalHT, totalVAT, totalTTC float64, startDay, endDay string) ([]byte, error) {
 	renderer := newRenderer()
 
 	logoData, logoType := ResolveLogo(org.Picture)
@@ -202,7 +203,10 @@ func RenderInvoicePDF(org models.Organization, client models.Client, owner model
 	invoiceDate := time.Now().Format(InvoiceDateLayout)
 	ownerContact := cell(fmt.Sprintf("%s %s: %s", owner.Surname, owner.Name, owner.Email))
 
-	intro := fmt.Sprintf("# Invoice N°%s\n\n%s, the %s\n", cell(invoiceNumber), cell(org.City), invoiceDate)
+	intro := fmt.Sprintf(
+		"# Invoice N°%s\n\n%s, the %s\n\nPeriod: %s - %s\n",
+		cell(invoiceNumber), cell(org.City), invoiceDate, formatUSDate(startDay), formatUSDate(endDay),
+	)
 	if err := renderer.Run([]byte(intro)); err != nil {
 		return nil, err
 	}
