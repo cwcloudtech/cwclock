@@ -31,3 +31,4 @@
 * [ai-instruct-29](./ai-instruct-29.md)
 * [ai-instruct-30](./ai-instruct-30.md)
 * [ai-instruct-31](./ai-instruct-31.md)
+* [ai-instruct-32](./ai-instruct-32.md)
