@@ -272,6 +272,7 @@ const fr = {
     apiKeyDeleted: "Clé API révoquée.",
     invoiceGenerated: "Facture générée.",
     invoiceUpdated: "Facture mise à jour.",
+    invoiceDeleted: "Facture supprimée.",
     profilePictureUpdated: "Photo de profil mise à jour.",
     profileUpdated: "Profil mis à jour avec succès.",
     accountCreated: "Compte créé avec succès.",
@@ -360,6 +361,8 @@ const fr = {
     statusCanceled: "Annulée",
     statusRefunded: "Remboursée",
     noAccess: "Vous n'avez pas accès aux factures de cette organisation.",
+    deleteInvoiceTitle: "Supprimer la facture",
+    deleteInvoiceBody: "Supprimer la facture « {{number}} » ? Cette action est irréversible.",
   },
 };
 

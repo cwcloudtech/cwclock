@@ -1,6 +1,12 @@
 import axios from "axios";
 import { toast } from "react-toastify";
-import { InvoiceLOADING, InvoiceERROR, InvoiceListSUCCESS, InvoiceUpdateSUCCESS } from "./Invoice.types";
+import {
+  InvoiceLOADING,
+  InvoiceERROR,
+  InvoiceListSUCCESS,
+  InvoiceUpdateSUCCESS,
+  InvoiceDeleteSUCCESS,
+} from "./Invoice.types";
 import toastOptions from "../toastOptions";
 import { apiErrorMessage, translate, getStoredLocale } from "../../i18n/translate";
 
@@ -114,6 +120,17 @@ export const updateInvoiceStatusApi = (orgId, invoiceId, status, token) => async
     dispatch({ type: InvoiceUpdateSUCCESS, payload: data });
     toast.success(translate(getStoredLocale(), "toasts.invoiceUpdated"), toastOptions);
     return data;
+  } catch (e) {
+    toast.error(apiErrorMessage(await parseBlobError(e), getStoredLocale()), toastOptions);
+    throw e;
+  }
+};
+
+export const deleteInvoiceApi = (orgId, invoiceId, token) => async (dispatch) => {
+  try {
+    await axios.delete(`${ENDPOINT(orgId)}${invoiceId}`, authConfig(token));
+    dispatch({ type: InvoiceDeleteSUCCESS, payload: invoiceId });
+    toast.success(translate(getStoredLocale(), "toasts.invoiceDeleted"), toastOptions);
   } catch (e) {
     toast.error(apiErrorMessage(await parseBlobError(e), getStoredLocale()), toastOptions);
     throw e;

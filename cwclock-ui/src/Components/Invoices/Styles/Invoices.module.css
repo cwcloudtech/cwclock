@@ -74,6 +74,11 @@
   background-color: var(--cw-primary-tint);
 }
 
+.iconBtnDanger:hover {
+  color: var(--cw-danger);
+  background-color: var(--cw-danger-light);
+}
+
 @media (max-width: 700px) {
   .invoiceRow {
     grid-template-columns: 1fr 1fr;

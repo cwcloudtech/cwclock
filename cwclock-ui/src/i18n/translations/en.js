@@ -272,6 +272,7 @@ const en = {
     apiKeyDeleted: "API key revoked.",
     invoiceGenerated: "Invoice generated.",
     invoiceUpdated: "Invoice updated.",
+    invoiceDeleted: "Invoice deleted.",
     profilePictureUpdated: "Profile picture updated.",
     profileUpdated: "Profile updated successfully.",
     accountCreated: "Account created successfully.",
@@ -360,6 +361,8 @@ const en = {
     statusCanceled: "Canceled",
     statusRefunded: "Refunded",
     noAccess: "You don't have access to invoices in this organization.",
+    deleteInvoiceTitle: "Delete invoice",
+    deleteInvoiceBody: 'Delete invoice "{{number}}"? This cannot be undone.',
   },
 };
 

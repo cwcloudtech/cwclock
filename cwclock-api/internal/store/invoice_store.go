@@ -206,3 +206,14 @@ func (s *InvoiceStore) UpdateStatus(ctx context.Context, id, status string) (mod
 	`, id, status)
 	return scanInvoice(row)
 }
+
+func (s *InvoiceStore) Delete(ctx context.Context, id string) error {
+	tag, err := s.pool.Exec(ctx, `DELETE FROM invoices WHERE id = $1`, id)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}

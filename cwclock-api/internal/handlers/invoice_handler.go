@@ -265,3 +265,25 @@ func (h *InvoiceHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, updated)
 }
+
+// Delete removes an invoice (and its stored PDF) entirely.
+func (h *InvoiceHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	orgID, _ := middleware.OrgIDFromContext(r.Context())
+	invoiceID := chi.URLParam(r, "invoiceId")
+
+	inv, err := h.invoices.FindByID(r.Context(), invoiceID)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	if inv.OrganizationID != orgID {
+		writeError(w, http.StatusNotFound, "Resource not found", CodeNotFound)
+		return
+	}
+
+	if err := h.invoices.Delete(r.Context(), invoiceID); err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"id": invoiceID})
+}

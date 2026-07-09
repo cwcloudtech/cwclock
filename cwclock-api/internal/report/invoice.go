@@ -1,11 +1,9 @@
 package report
 
 import (
-	_ "embed"
 	"fmt"
 	"sort"
 	"strings"
-	"text/template"
 	"time"
 
 	"cwclock-api/internal/models"
@@ -23,13 +21,14 @@ type InvoiceLineItem struct {
 
 // BuildInvoiceLineItems groups entries by project, computing each project's
 // billable quantity (hours worked divided by the client's HoursPerDay) and
-// amount (quantity * effective daily rate, project rate taking priority
-// over the client's - see effectiveDailyRate) exactly as reports do. A
-// project with subdivisions contributes one line per subdivision instead of
-// one line for the whole project, each getting an even share of that
-// project's quantity/amount - entries aren't tagged with a subdivision, so
-// this is a deliberate even split rather than a per-subdivision breakdown.
-// Lines are ordered by project name for a stable, readable invoice.
+// amount (daily rate * quantity, project rate taking priority over the
+// client's - see effectiveDailyRate) exactly as reports do. A project with
+// subdivisions contributes one line per subdivision instead of one line for
+// the whole project, each getting an even share of that project's
+// quantity/amount (the project's amount divided by its number of
+// subdivisions) - entries aren't tagged with a subdivision, so this is a
+// deliberate even split rather than a per-subdivision breakdown. Lines are
+// ordered by project name for a stable, readable invoice.
 func BuildInvoiceLineItems(entries []models.TimeEntry, projects map[string]models.Project, client models.Client) []InvoiceLineItem {
 	durationByProject := map[string]int{}
 	for _, e := range entries {
@@ -74,8 +73,10 @@ func BuildInvoiceLineItems(entries []models.TimeEntry, projects map[string]model
 	return items
 }
 
-// InvoiceVATTotals sums an invoice's line items and applies the client's
-// VAT rate (0 when the client is VAT-exempt, i.e. VATRate <= 0).
+// InvoiceVATTotals sums an invoice's line items - the total without taxes
+// is the sum of every line's amount, project or subdivision alike - and
+// applies the client's VAT rate on top (0 when the client is VAT-exempt,
+// i.e. VATRate <= 0).
 func InvoiceVATTotals(items []InvoiceLineItem, client models.Client) (totalHT, totalVAT, totalTTC float64) {
 	for _, it := range items {
 		totalHT += it.TotalHT
@@ -86,17 +87,17 @@ func InvoiceVATTotals(items []InvoiceLineItem, client models.Client) (totalHT, t
 	return totalHT, totalVAT, totalHT + totalVAT
 }
 
-// tableUnsafe strips characters that would corrupt a markdown table cell -
-// notably "|", which would otherwise split a name/address/description
-// containing one into extra columns.
-var tableUnsafe = strings.NewReplacer("|", "/", "\n", " ", "\r", " ")
+// tableUnsafe strips embedded newlines from a cell value - drawTable wraps
+// long text on its own (see pdftable.go), so a literal newline would only
+// ever be redundant, and body-cell splitting doesn't treat it specially.
+var tableUnsafe = strings.NewReplacer("\n", " ", "\r", " ")
 
 func cell(s string) string {
 	return tableUnsafe.Replace(s)
 }
 
-// clientVATLine is the Client table's "TVA IC" cell: the client's VAT
-// number when they're charged VAT, or an exemption note (plus the discharge
+// clientVATLine is the Client table's "TVA IC" row: the client's VAT number
+// when they're charged VAT, or an exemption note (plus the discharge
 // motive, when given) when VATRate is 0 or negative.
 func clientVATLine(client models.Client) string {
 	if client.VATRate <= 0 {
@@ -108,97 +109,125 @@ func clientVATLine(client models.Client) string {
 	return cell(client.VATNumber)
 }
 
-func lineItemsMarkdown(items []InvoiceLineItem) string {
-	var b strings.Builder
-	b.WriteString("| Description | Quantité (Quantity) | Montant HT (Amount without taxes) |\n")
-	b.WriteString("| ------------ | -------------------- | ---------------------------------- |\n")
-	for _, it := range items {
-		fmt.Fprintf(&b, "| %s | %s | %s |\n", cell(it.Description), formatAmount(it.Quantity), formatAmount(it.TotalHT))
-	}
-	return b.String()
-}
-
+// formatAddress joins the non-blank parts of an address into one line,
+// returning "" (dropped entirely by addRow) when nothing is set.
 func formatAddress(address, postalCode, city, country string) string {
-	return cell(fmt.Sprintf("%s, %s %s, %s", address, postalCode, city, country))
+	parts := make([]string, 0, 3)
+	if utils.IsNotBlank(address) {
+		parts = append(parts, address)
+	}
+	if line := strings.TrimSpace(postalCode + " " + city); line != "" {
+		parts = append(parts, line)
+	}
+	if utils.IsNotBlank(country) {
+		parts = append(parts, country)
+	}
+	return cell(strings.Join(parts, ", "))
 }
 
-// invoiceMarkdownTpl is the invoice's markdown template, externalized under
-// templates/ (with a .tpl.md extension) like the report header, so invoice
-// markdown lives in its own reviewable file instead of a Go string literal.
-//
-//go:embed templates/invoice.tpl.md
-var invoiceMarkdownTpl string
+// addRow appends a {label, value} row, or drops it entirely when value is
+// blank, so an organization/client with e.g. no SIRET set doesn't get a
+// dangling empty row on its invoice.
+func addRow(rows [][]string, label, value string) [][]string {
+	if utils.IsBlank(value) {
+		return rows
+	}
+	return append(rows, []string{label, value})
+}
 
-var invoiceTemplate = template.Must(template.New("invoice").Parse(invoiceMarkdownTpl))
+var issuerColumns = []tableColumn{{Header: "Issuer", Weight: 30}, {Header: "Details", Weight: 70}}
+var clientColumns = []tableColumn{{Header: "Customer", Weight: 30}, {Header: "Details", Weight: 70}}
+var lineItemColumns = []tableColumn{
+	{Header: "Description", Weight: 50},
+	{Header: "Quantity", Weight: 20},
+	{Header: "Amount (without taxes)", Weight: 30},
+}
+var totalsColumns = []tableColumn{{Header: "Totals", Weight: 60}, {Header: "Amount", Weight: 40}}
 
-// invoiceTemplateData is entirely precomputed, sanitized plain strings
-// (rather than raw model structs) so every value going into a markdown
-// table cell has already been through cell() - matching how reportHeader
-// works for the report templates.
-type invoiceTemplateData struct {
-	InvoiceNumber       string
-	InvoiceDate         string
-	OrgCity             string
-	OrgName             string
-	OrgAddress          string
-	OrgSIREN            string
-	OrgSIRET            string
-	OrgVATNumber        string
-	OrgNAF              string
-	OwnerContact        string
-	ClientPurchaseOrder string
-	ClientName          string
-	ClientAddress       string
-	ClientEmail         string
-	ClientVATLine       string
-	LineItemsMarkdown   string
-	TotalHT             string
-	TotalVATLine        string
-	TotalTTC            string
-	Currency            string
+func issuerRows(org models.Organization, invoiceDate, ownerContact string) [][]string {
+	rows := [][]string{}
+	rows = addRow(rows, "Name", cell(org.Name))
+	rows = addRow(rows, "Address", formatAddress(org.Address, org.PostalCode, org.City, org.Country))
+	rows = addRow(rows, "SIREN", cell(org.SIREN))
+	rows = addRow(rows, "SIRET", cell(org.SIRET))
+	rows = addRow(rows, "TVA/VAT IC", cell(org.VATNumber))
+	rows = addRow(rows, "Code NAF", cell(org.NAF))
+	rows = addRow(rows, "Date", invoiceDate)
+	rows = addRow(rows, "Contact", ownerContact)
+	return rows
+}
+
+func clientRows(client models.Client) [][]string {
+	rows := [][]string{}
+	rows = addRow(rows, "Name", cell(client.Name))
+	rows = addRow(rows, "Address", formatAddress(client.Address, client.PostalCode, client.City, client.Country))
+	rows = addRow(rows, "Contact", cell(client.Email))
+	rows = addRow(rows, "TVA IC", clientVATLine(client))
+	return rows
+}
+
+func lineItemRows(items []InvoiceLineItem) [][]string {
+	rows := make([][]string, 0, len(items))
+	for _, it := range items {
+		rows = append(rows, []string{cell(it.Description), formatAmount(it.Quantity), formatAmount(it.TotalHT)})
+	}
+	return rows
+}
+
+func totalsRows(totalHT, totalVAT, totalTTC, vatRate float64, currency string) [][]string {
+	return [][]string{
+		{"Total HT (without taxes)", fmt.Sprintf("%s %s", formatAmount(totalHT), currency)},
+		{"TVA (VAT)", fmt.Sprintf("%s %s (%.0f%%)", formatAmount(totalVAT), currency, vatRate)},
+		{"Total TTC (with taxes)", fmt.Sprintf("%s %s", formatAmount(totalTTC), currency)},
+	}
 }
 
 // RenderInvoicePDF renders a generated invoice as a PDF: the organization's
-// logo top-right (see ResolveLogo) and, when set, its stamp image placed
-// below the content.
+// logo top-right (see ResolveLogo), an intro (title/date/purchase order),
+// issuer/client info tables, the billable line items, and a totals table -
+// every table drawn directly with fpdf (see drawTable), exactly like report
+// PDFs, rather than through a markdown table, so a long value wraps onto a
+// second line inside its cell instead of overflowing it, and a blank
+// row/cell can never crash the renderer. Rows with a blank value (e.g. no
+// SIRET set) are dropped entirely. When set, the organization's stamp is
+// placed below everything.
 func RenderInvoicePDF(org models.Organization, client models.Client, owner models.User, invoiceNumber string, items []InvoiceLineItem, totalHT, totalVAT, totalTTC float64) ([]byte, error) {
-	ownerContact := cell(fmt.Sprintf("%s %s: %s", owner.Surname, owner.Name, owner.Email))
-	data := invoiceTemplateData{
-		InvoiceNumber:       cell(invoiceNumber),
-		InvoiceDate:         time.Now().Format("02/01/2006"),
-		OrgCity:             cell(org.City),
-		OrgName:             cell(org.Name),
-		OrgAddress:          formatAddress(org.Address, org.PostalCode, org.City, org.Country),
-		OrgSIREN:            cell(org.SIREN),
-		OrgSIRET:            cell(org.SIRET),
-		OrgVATNumber:        cell(org.VATNumber),
-		OrgNAF:              cell(org.NAF),
-		OwnerContact:        ownerContact,
-		ClientPurchaseOrder: cell(client.PurchaseOrder),
-		ClientName:          cell(client.Name),
-		ClientAddress:       formatAddress(client.Address, client.PostalCode, client.City, client.Country),
-		ClientEmail:         cell(client.Email),
-		ClientVATLine:       clientVATLine(client),
-		LineItemsMarkdown:   lineItemsMarkdown(items),
-		TotalHT:             formatAmount(totalHT),
-		TotalVATLine:        fmt.Sprintf("%s %s (%.0f%%)", formatAmount(totalVAT), org.Currency, client.VATRate),
-		TotalTTC:            formatAmount(totalTTC),
-		Currency:            org.Currency,
+	renderer := newRenderer()
+
+	logoData, logoType := ResolveLogo(org.Picture)
+	if len(logoData) > 0 {
+		placeLogo(renderer.Pdf, logoData, logoType)
 	}
 
-	var buf strings.Builder
-	if err := invoiceTemplate.Execute(&buf, data); err != nil {
+	invoiceDate := time.Now().Format(InvoiceDateLayout)
+	ownerContact := cell(fmt.Sprintf("%s %s: %s", owner.Surname, owner.Name, owner.Email))
+
+	intro := fmt.Sprintf(
+		"# Invoice N°%s\n\n%s, the %s\n\nPurchase Order: %s\n",
+		cell(invoiceNumber), cell(org.City), invoiceDate, cell(client.PurchaseOrder),
+	)
+	if err := renderer.Run([]byte(intro)); err != nil {
 		return nil, err
 	}
 
-	logoData, logoType := ResolveLogo(org.Picture)
-	var stampData []byte
-	var stampType string
+	translate := renderer.Pdf.UnicodeTranslatorFromDescriptor("cp1252")
+	drawTable(renderer.Pdf, translate, issuerColumns, issuerRows(org, invoiceDate, ownerContact))
+	renderer.Pdf.Ln(8)
+	drawTable(renderer.Pdf, translate, clientColumns, clientRows(client))
+	renderer.Pdf.Ln(8)
+
+	if err := renderer.Run([]byte("## Objet\n")); err != nil {
+		return nil, err
+	}
+	drawTable(renderer.Pdf, translate, lineItemColumns, lineItemRows(items))
+	renderer.Pdf.Ln(8)
+	drawTable(renderer.Pdf, translate, totalsColumns, totalsRows(totalHT, totalVAT, totalTTC, client.VATRate, org.Currency))
+
 	if org.Stamp != "" {
 		if decoded, dt, ok := decodeDataURI(org.Stamp); ok {
-			stampData, stampType = decoded, dt
+			placeStamp(renderer.Pdf, decoded, dt)
 		}
 	}
 
-	return RenderMarkdownPDF(buf.String(), logoData, logoType, stampData, stampType)
+	return outputPDF(renderer.Pdf)
 }

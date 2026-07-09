@@ -166,6 +166,7 @@ func New(
 					r.Post("/", invoiceHandler.Generate)
 					r.Get("/{invoiceId}/pdf", invoiceHandler.DownloadPDF)
 					r.Put("/{invoiceId}", invoiceHandler.UpdateStatus)
+					r.Delete("/{invoiceId}", invoiceHandler.Delete)
 				})
 			})
 		})

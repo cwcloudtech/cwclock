@@ -42,17 +42,19 @@ func outputPDF(pdf *fpdf.Fpdf) ([]byte, error) {
 }
 
 // RenderMarkdownPDF converts markdown content into PDF bytes, optionally
-// placing a logo in the header's top-right corner and a stamp below the
-// content (pass nil logoData/stampData to omit either) — this is invoicing's
-// reuse of the generic building block described below, the stamp being the
-// one piece of invoice-specific placement added on top.
+// placing a logo in the header's top-right corner (pass nil logoData to
+// omit it). Past the logo, it has no report-specific knowledge on purpose:
+// it's the generic building block simple (tableless) markdown documents are
+// rendered through.
 //
 // Note: markdown image syntax is deliberately not fed into this renderer.
 // mdtopdf shells out to a headless-Chrome-based SVG rasterizer for any SVG
-// image it encounters, which this app avoids entirely, so report/invoice
-// markdown should stick to text and tables — the logo/stamp are placed
-// directly via fpdf instead of through markdown.
-func RenderMarkdownPDF(markdown string, logoData []byte, logoType string, stampData []byte, stampType string) ([]byte, error) {
+// image it encounters, which this app avoids entirely, so markdown fed to
+// it should stick to text — tables go through drawTable instead (see
+// RenderReportTablePDF and RenderInvoicePDF), since mdtopdf's own table
+// rendering can neither wrap long cell text nor tolerate a blank header
+// cell (see drawTable's doc comment).
+func RenderMarkdownPDF(markdown string, logoData []byte, logoType string) ([]byte, error) {
 	renderer := newRenderer()
 
 	// Placed before Run() writes any markdown: fpdf can't add content to an
@@ -65,10 +67,6 @@ func RenderMarkdownPDF(markdown string, logoData []byte, logoType string, stampD
 
 	if err := renderer.Run([]byte(markdown)); err != nil {
 		return nil, err
-	}
-
-	if len(stampData) > 0 {
-		placeStamp(renderer.Pdf, stampData, stampType)
 	}
 
 	return outputPDF(renderer.Pdf)

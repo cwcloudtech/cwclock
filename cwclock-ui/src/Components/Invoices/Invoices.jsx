@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FaFileInvoiceDollar, FaRegEdit } from "react-icons/fa";
+import { MdDeleteForever } from "react-icons/md";
 import { FiDownload } from "react-icons/fi";
 import { useI18n } from "../../i18n/I18nContext";
 import DateRangePicker from "../common/DateRangePicker";
@@ -9,6 +10,7 @@ import Spinner from "../spinner/Spinner";
 import EmptyState from "../common/EmptyState";
 import Button from "../common/Button";
 import Tooltip from "../common/Tooltip";
+import ConfirmModal from "../common/ConfirmModal";
 import { listClientsApi } from "../../Redux/Clients/Client.actions";
 import { listProjectsApi } from "../../Redux/Projects/Project.actions";
 import { listMembersApi } from "../../Redux/Organizations/Org.actions";
@@ -18,6 +20,7 @@ import {
   generateInvoiceApi,
   downloadInvoicePdfApi,
   updateInvoiceStatusApi,
+  deleteInvoiceApi,
 } from "../../Redux/Invoices/Invoice.actions";
 import { dateRangeShortcuts, toISODate } from "../common/dateRangeShortcuts";
 import { isAdminOrOwner as computeIsAdminOrOwner } from "../common/permissions";
@@ -42,7 +45,7 @@ const defaultRange = (t) => {
   return { start: toISODate(s), end: toISODate(e) };
 };
 
-const InvoiceRow = ({ invoice, orgId, token }) => {
+const InvoiceRow = ({ invoice, orgId, token, onDelete }) => {
   const { t } = useI18n();
   const dispatch = useDispatch();
   const [editing, setEditing] = useState(false);
@@ -92,6 +95,15 @@ const InvoiceRow = ({ invoice, orgId, token }) => {
             </button>
           </Tooltip>
         )}
+        <Tooltip label={t("common.delete")}>
+          <button
+            type="button"
+            className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+            onClick={() => onDelete(invoice)}
+          >
+            <MdDeleteForever style={{ fontSize: "18px" }} />
+          </button>
+        </Tooltip>
       </div>
     </li>
   );
@@ -111,6 +123,7 @@ const Invoices = () => {
   const [projectIds, setProjectIds] = useState([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [deletingInvoice, setDeletingInvoice] = useState(null);
 
   const isAdminOrOwner = computeIsAdminOrOwner(user, members);
   const setRange = (start, end) => setRangeState({ start, end });
@@ -167,6 +180,12 @@ const Invoices = () => {
     }
   };
 
+  const handleDelete = async () => {
+    const invoiceId = deletingInvoice.id;
+    setDeletingInvoice(null);
+    await dispatch(deleteInvoiceApi(currentOrgId, invoiceId, user.token));
+  };
+
   return (
     <div className={styles.main}>
       <h1 className="cw-title">
@@ -188,16 +207,14 @@ const Invoices = () => {
           ))}
         </select>
 
-        <DateRangePicker start={range.start} end={range.end} onChange={setRange} shortcutKeys={INVOICE_SHORTCUT_KEYS} />
-      </div>
-
-      <div className={styles.filters}>
         <MultiSelect
           label={t("projects.title")}
           options={clientProjects.map((p) => ({ value: p.id, label: p.name }))}
           selected={projectIds}
           onChange={setProjectIds}
         />
+
+        <DateRangePicker start={range.start} end={range.end} onChange={setRange} shortcutKeys={INVOICE_SHORTCUT_KEYS} />
       </div>
 
       <div className={styles.actions}>
@@ -208,6 +225,7 @@ const Invoices = () => {
           {t("invoices.generate")}
         </Button>
       </div>
+
       {error && <p className="cw-error">{error}</p>}
 
       <h2 className="cw-subtitle">{t("invoices.listTitle")}</h2>
@@ -218,10 +236,25 @@ const Invoices = () => {
       {!isLoading && invoices.length > 0 && (
         <ul className="cw-list">
           {invoices.map((invoice) => (
-            <InvoiceRow key={invoice.id} invoice={invoice} orgId={currentOrgId} token={user.token} />
+            <InvoiceRow
+              key={invoice.id}
+              invoice={invoice}
+              orgId={currentOrgId}
+              token={user.token}
+              onDelete={setDeletingInvoice}
+            />
           ))}
         </ul>
       )}
+
+      <ConfirmModal
+        show={!!deletingInvoice}
+        title={t("invoices.deleteInvoiceTitle")}
+        body={deletingInvoice ? t("invoices.deleteInvoiceBody", { number: deletingInvoice.number }) : ""}
+        confirmLabel={t("common.delete")}
+        onConfirm={handleDelete}
+        onCancel={() => setDeletingInvoice(null)}
+      />
     </div>
   );
 };

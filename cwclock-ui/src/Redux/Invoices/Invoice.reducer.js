@@ -1,4 +1,10 @@
-import { InvoiceLOADING, InvoiceERROR, InvoiceListSUCCESS, InvoiceUpdateSUCCESS } from "./Invoice.types";
+import {
+  InvoiceLOADING,
+  InvoiceERROR,
+  InvoiceListSUCCESS,
+  InvoiceUpdateSUCCESS,
+  InvoiceDeleteSUCCESS,
+} from "./Invoice.types";
 
 const initialState = {
   invoices: [],
@@ -19,6 +25,10 @@ export const InvoiceReducer = (state = initialState, { type, payload }) => {
     }
     case InvoiceUpdateSUCCESS: {
       const invoices = state.invoices.map((i) => (i.id === payload.id ? payload : i));
+      return { ...state, invoices };
+    }
+    case InvoiceDeleteSUCCESS: {
+      const invoices = state.invoices.filter((i) => i.id !== payload);
       return { ...state, invoices };
     }
     default: {
