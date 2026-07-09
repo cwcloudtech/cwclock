@@ -96,17 +96,18 @@ func cell(s string) string {
 	return tableUnsafe.Replace(s)
 }
 
-// clientVATLine is the Client table's "TVA IC" row: the client's VAT number
-// when they're charged VAT, or an exemption note (plus the discharge
-// motive, when given) when VATRate is 0 or negative.
-func clientVATLine(client models.Client) string {
+// formatVAT formats the VAT rate and total as a string, or "no vat" when the
+// client is VAT-exempt (VATRate <= 0). When the client is VAT-exempt, the
+// VAT discharge motive is appended when set.
+func formatVAT(client models.Client, totalVAT float64, currency string) string {
 	if client.VATRate <= 0 {
 		if utils.IsNotBlank(client.VATDischargeMotive) {
 			return "no vat - " + cell(client.VATDischargeMotive)
 		}
 		return "no vat"
 	}
-	return cell(client.VATNumber)
+
+	return fmt.Sprintf("%s %s (%.0f%%)", formatAmount(totalVAT), currency, client.VATRate)
 }
 
 // formatAddress joins the non-blank parts of an address into one line,
@@ -162,7 +163,7 @@ func clientRows(client models.Client) [][]string {
 	rows = addRow(rows, "Name", cell(client.Name))
 	rows = addRow(rows, "Address", formatAddress(client.Address, client.PostalCode, client.City, client.Country))
 	rows = addRow(rows, "Contact", cell(client.Email))
-	rows = addRow(rows, "VAT / TVA IC", clientVATLine(client))
+	rows = addRow(rows, "VAT / TVA IC", cell(client.VATNumber))
 	return rows
 }
 
@@ -174,10 +175,10 @@ func lineItemRows(items []InvoiceLineItem) [][]string {
 	return rows
 }
 
-func totalsRows(totalHT, totalVAT, totalTTC, vatRate float64, currency string) [][]string {
+func totalsRows(client models.Client, totalHT, totalVAT, totalTTC, vatRate float64, currency string) [][]string {
 	return [][]string{
 		{"Total HT (without taxes)", fmt.Sprintf("%s %s", formatAmount(totalHT), currency)},
-		{"TVA (VAT)", fmt.Sprintf("%s %s (%.0f%%)", formatAmount(totalVAT), currency, vatRate)},
+		{"TVA (VAT)", formatVAT(client, totalVAT, currency)},
 		{"Total TTC (with taxes)", fmt.Sprintf("%s %s", formatAmount(totalTTC), currency)},
 	}
 }
@@ -235,7 +236,7 @@ func RenderInvoicePDF(org models.Organization, client models.Client, owner model
 	}
 	drawTable(renderer.Pdf, translate, lineItemColumns, lineItemRows(items))
 	renderer.Pdf.Ln(8)
-	drawTable(renderer.Pdf, translate, totalsColumns, totalsRows(totalHT, totalVAT, totalTTC, client.VATRate, org.Currency))
+	drawTable(renderer.Pdf, translate, totalsColumns, totalsRows(client, totalHT, totalVAT, totalTTC, client.VATRate, org.Currency))
 
 	if org.Stamp != "" {
 		if decoded, dt, ok := decodeDataURI(org.Stamp); ok {
