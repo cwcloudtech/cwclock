@@ -200,11 +200,11 @@ func RenderInvoicePDF(org models.Organization, client models.Client, owner model
 		placeLogo(renderer.Pdf, logoData, logoType)
 	}
 
-	invoiceDate := time.Now().Format(InvoiceDateLayout)
+	invoiceDate := time.Now().Format(USDateLayout)
 	ownerContact := cell(fmt.Sprintf("%s %s: %s", owner.Surname, owner.Name, owner.Email))
 
 	intro := fmt.Sprintf(
-		"# Invoice N°%s\n\n%s, the %s\n\nPeriod: %s - %s\n",
+		"# Invoice N°%s\n\n%s, the %s\nPeriod: %s - %s\n\n",
 		cell(invoiceNumber), cell(org.City), invoiceDate, formatUSDate(startDay), formatUSDate(endDay),
 	)
 	if err := renderer.Run([]byte(intro)); err != nil {

@@ -35,10 +35,6 @@ const USDateLayout = "01/02/2006"
 // instead of slashed since "/" isn't a valid filename character.
 const FilenameDateLayout = "01_02_2006"
 
-// InvoiceDateLayout is the format used for the invoice date in the PDF
-// header.
-const InvoiceDateLayout = "2006/01/02"
-
 // Lookups holds the related records a raw TimeEntry needs to be enriched
 // into a ReportEntry, keyed by ID.
 type Lookups struct {
