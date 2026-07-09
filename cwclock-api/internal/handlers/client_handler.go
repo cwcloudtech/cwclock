@@ -14,10 +14,11 @@ import (
 
 type ClientHandler struct {
 	clients *store.ClientStore
+	orgs    *store.OrgStore
 }
 
-func NewClientHandler(clients *store.ClientStore) *ClientHandler {
-	return &ClientHandler{clients: clients}
+func NewClientHandler(clients *store.ClientStore, orgs *store.OrgStore) *ClientHandler {
+	return &ClientHandler{clients: clients, orgs: orgs}
 }
 
 type clientPayload struct {
@@ -130,6 +131,58 @@ func (h *ClientHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, client)
+}
+
+type transferClientPayload struct {
+	TargetOrgID string `json:"targetOrgId"`
+}
+
+// Transfer moves a client (and its projects/time entries) to a different
+// organization the acting user owns. Restricted to owners (see the
+// RequireRole(RoleOwner) route gate) since it's a cross-organization data
+// move - ai-instruct-34's "an owner should be able to transfer... to
+// another organization he's owner as well".
+func (h *ClientHandler) Transfer(w http.ResponseWriter, r *http.Request) {
+	orgID, _ := middleware.OrgIDFromContext(r.Context())
+	userID, _ := middleware.UserIDFromContext(r.Context())
+	id := chi.URLParam(r, "clientId")
+
+	var p transferClientPayload
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || utils.IsBlank(p.TargetOrgID) {
+		writeError(w, http.StatusBadRequest, "Please add a targetOrgId", CodeInvalidRequestBody)
+		return
+	}
+	if p.TargetOrgID == orgID {
+		writeError(w, http.StatusBadRequest, "Please pick a different organization", CodeInvalidRequestBody)
+		return
+	}
+
+	client, err := h.clients.FindByID(r.Context(), id)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	if client.OrganizationID != orgID {
+		writeError(w, http.StatusNotFound, "Resource not found", CodeNotFound)
+		return
+	}
+
+	targetOrg, err := h.orgs.FindByID(r.Context(), p.TargetOrgID)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	if targetOrg.OwnerID != userID {
+		writeError(w, http.StatusForbidden, "You must own the target organization", CodeMustOwnTargetOrg)
+		return
+	}
+
+	updated, err := h.clients.Transfer(r.Context(), id, p.TargetOrgID)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, updated)
 }
 
 func (h *ClientHandler) Delete(w http.ResponseWriter, r *http.Request) {

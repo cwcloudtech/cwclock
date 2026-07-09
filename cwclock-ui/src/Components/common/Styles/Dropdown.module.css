@@ -1,6 +1,8 @@
 .dropdown {
   position: relative;
   display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .trigger {
@@ -15,6 +17,7 @@
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 500;
+  max-width: 100%;
   transition: border-color var(--cw-transition), background-color var(--cw-transition);
 }
 
@@ -33,6 +36,7 @@
   top: calc(100% + 6px);
   left: 0;
   min-width: 200px;
+  max-width: calc(100vw - 32px);
   background-color: var(--cw-surface);
   border: 1px solid var(--cw-border);
   border-radius: var(--cw-radius-sm);
@@ -59,6 +63,9 @@
   font-size: 0.9rem;
   text-align: left;
   cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .item:hover {

@@ -14,13 +14,15 @@ import (
 
 type ProjectHandler struct {
 	projects *store.ProjectStore
+	clients  *store.ClientStore
 }
 
-func NewProjectHandler(projects *store.ProjectStore) *ProjectHandler {
-	return &ProjectHandler{projects: projects}
+func NewProjectHandler(projects *store.ProjectStore, clients *store.ClientStore) *ProjectHandler {
+	return &ProjectHandler{projects: projects, clients: clients}
 }
 
 type projectPayload struct {
+	ClientID     string   `json:"clientId"`
 	Name         string   `json:"name"`
 	Color        string   `json:"color"`
 	DailyRate    *float64 `json:"dailyRate"`
@@ -76,6 +78,7 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) {
+	orgID, _ := middleware.OrgIDFromContext(r.Context())
 	id := chi.URLParam(r, "projectId")
 
 	var p projectPayload
@@ -84,7 +87,19 @@ func (h *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	project, err := h.projects.Update(r.Context(), id, p.Name, p.Color, p.DailyRate, p.Subdivisions)
+	if utils.IsNotBlank(p.ClientID) {
+		client, err := h.clients.FindByID(r.Context(), p.ClientID)
+		if err != nil {
+			writeStoreError(w, err)
+			return
+		}
+		if client.OrganizationID != orgID {
+			writeError(w, http.StatusBadRequest, "That client does not belong to this organization", CodeInvalidClientForOrg)
+			return
+		}
+	}
+
+	project, err := h.projects.Update(r.Context(), id, p.ClientID, p.Name, p.Color, p.DailyRate, p.Subdivisions)
 	if err != nil {
 		writeStoreError(w, err)
 		return

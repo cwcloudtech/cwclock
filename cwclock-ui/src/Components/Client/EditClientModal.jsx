@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Modal from "../common/Modal";
 import ConfigForm from "../common/ConfigForm";
-import { updateClientApi } from "../../Redux/Clients/Client.actions";
+import AutocompleteSelect from "../common/AutocompleteSelect";
+import Button from "../common/Button";
+import { updateClientApi, transferClientApi } from "../../Redux/Clients/Client.actions";
+import { isOrgOwner } from "../common/permissions";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
 
@@ -24,8 +27,19 @@ const emptyFields = {
 const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
   const { t, locale } = useI18n();
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  const { organizations } = useSelector((state) => state.organizations);
   const [fields, setFields] = useState(emptyFields);
   const [error, setError] = useState("");
+  const [targetOrgId, setTargetOrgId] = useState("");
+  const [transferError, setTransferError] = useState("");
+
+  const currentOrg = organizations.find((o) => o.id === orgId);
+  const canTransfer = isOrgOwner(user, currentOrg);
+  const ownedOrgOptions = organizations
+    .filter((o) => o.ownerId === user.id && o.id !== orgId)
+    .map((o) => ({ value: o.id, label: o.name }));
+  const targetOrg = organizations.find((o) => o.id === targetOrgId);
 
   const clientFormConfig = {
     name: "Client",
@@ -62,6 +76,8 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
         dailyRate: targetClient.dailyRate ?? "",
       });
       setError("");
+      setTargetOrgId("");
+      setTransferError("");
     }
   }, [show, targetClient]);
 
@@ -86,6 +102,20 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
     }
   };
 
+  const handleTransfer = async () => {
+    setTransferError("");
+    if (!targetOrgId) return;
+    if (!window.confirm(t("clients.transferConfirmBody", { name: targetClient.name, orgName: targetOrg?.name || "" }))) {
+      return;
+    }
+    try {
+      await dispatch(transferClientApi(orgId, targetClient.id, targetOrgId, token));
+      onClose();
+    } catch (err) {
+      setTransferError(apiErrorMessage(err, locale));
+    }
+  };
+
   return (
     <Modal show={show} title={t("clients.editClientTitle", { name: targetClient.name })} onClose={onClose}>
       <ConfigForm
@@ -97,6 +127,28 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
         onCancel={onClose}
         error={error}
       />
+
+      {canTransfer && ownedOrgOptions.length > 0 && (
+        <div className="cw-field">
+          <label className="cw-label">{t("clients.transferTitle")}</label>
+          <AutocompleteSelect
+            label={t("clients.transferTargetOrg")}
+            placeholder={t("clients.transferTargetOrg")}
+            options={ownedOrgOptions}
+            value={targetOrgId}
+            onChange={setTargetOrgId}
+          />
+          <Button
+            variant="danger"
+            disabled={!targetOrgId}
+            onClick={handleTransfer}
+            title={t("clients.transferHint")}
+          >
+            {t("clients.transferButton")}
+          </Button>
+          {transferError && <p className="cw-error">{transferError}</p>}
+        </div>
+      )}
     </Modal>
   );
 };

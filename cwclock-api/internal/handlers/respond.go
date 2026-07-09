@@ -48,6 +48,8 @@ const (
 	CodeInvalidInvoiceRequest  = "errors.invalidInvoiceRequest"
 	CodeExportLimitExceeded    = "errors.exportLimitExceeded"
 	CodeCantRemoveOwner        = "errors.cantRemoveOwner"
+	CodeMustOwnTargetOrg       = "errors.mustOwnTargetOrg"
+	CodeInvalidClientForOrg    = "errors.invalidClientForOrg"
 )
 
 func writeJSON(w http.ResponseWriter, status int, body any) {

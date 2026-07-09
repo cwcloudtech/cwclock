@@ -34,6 +34,7 @@
 }
 
 .Projects {
+  min-width: 0;
   max-width: 240px;
 }
 

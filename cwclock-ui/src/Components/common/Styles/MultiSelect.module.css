@@ -1,5 +1,6 @@
 .trigger {
   min-width: 140px;
+  max-width: 100%;
   justify-content: space-between;
   /* Matches the cw-input fields (e.g. the report date pickers) it sits
      beside in a filter toolbar, which are taller than Dropdown's default
@@ -11,10 +12,18 @@
 .triggerLabel {
   color: var(--cw-text-muted);
   font-size: 0.8rem;
+  flex-shrink: 0;
 }
 
+/* A long client/project name (or member email) must ellipsize instead of
+   growing the button - unlike a plain <input>, this trigger is a button+span
+   with no built-in clipping, so it needs it declared explicitly (ai-instruct-34). */
 .triggerSummary {
   font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .panel {
@@ -43,6 +52,9 @@
   border-radius: var(--cw-radius-sm);
   font-size: 0.9rem;
   cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .option:hover {

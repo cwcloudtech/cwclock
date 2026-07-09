@@ -5,6 +5,8 @@ import { MdDeleteForever } from "react-icons/md";
 import { updateTasksApi, deleteTasksApi } from "../../Redux/Tasks/Task.actions";
 import ConfirmModal from "../common/ConfirmModal";
 import memberLabel from "../common/memberLabel";
+import projectLabel from "../common/projectLabel";
+import AutocompleteSelect from "../common/AutocompleteSelect";
 import Tooltip from "../common/Tooltip";
 import { useI18n } from "../../i18n/I18nContext";
 import { formatHMS } from "./reportFormat";
@@ -34,7 +36,6 @@ const ReportEntryRow = ({ entry, orgId, currency, isAdminOrOwner, showAmount, on
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [form, setForm] = useState(fieldsFromEntry(entry));
-  const [reassignText, setReassignText] = useState("");
 
   useEffect(() => {
     if (!isEditing) {
@@ -43,30 +44,13 @@ const ReportEntryRow = ({ entry, orgId, currency, isAdminOrOwner, showAmount, on
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entry, isEditing]);
 
-  useEffect(() => {
-    if (isEditing) {
-      const current = members.find((m) => m.userId === form.userId);
-      setReassignText(current ? memberLabel(current) : "");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditing]);
-
   const canEditRow = isAdminOrOwner || entry.userId === user.id;
 
-  const handleReassignInput = (text) => {
-    setReassignText(text);
-    const match = members.find((m) => memberLabel(m) === text || m.email === text);
-    if (match) setForm((f) => ({ ...f, userId: match.userId }));
-  };
-
-  // Switching client narrows the project list to that client's own
-  // projects, so the previously selected project is kept only if it still
-  // belongs to the newly picked client - otherwise default to that
-  // client's first project (a time entry always needs both).
-  const handleClientChange = (clientId) => {
-    const clientProjects = projects.filter((p) => p.clientId === clientId);
-    const projectId = clientProjects.some((p) => p.id === form.projectId) ? form.projectId : clientProjects[0]?.id || "";
-    setForm((f) => ({ ...f, clientId, projectId }));
+  // A single project/client picker (like the time record webview's) since
+  // picking a project already determines its client.
+  const handleProjectChange = (projectId) => {
+    const project = projects.find((p) => p.id === projectId);
+    setForm((f) => ({ ...f, projectId, clientId: project ? project.clientId : f.clientId }));
   };
 
   const handleSave = () => {
@@ -145,45 +129,20 @@ const ReportEntryRow = ({ entry, orgId, currency, isAdminOrOwner, showAmount, on
         )}
         {isAdminOrOwner && (
           <>
-            <select
-              className="cw-select"
-              value={form.clientId}
-              onChange={(e) => handleClientChange(e.target.value)}
-              title={t("common.client")}
-            >
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <select
-              className="cw-select"
+            <AutocompleteSelect
+              label={t("projects.title")}
+              placeholder={t("timeTracker.project")}
+              options={projects.map((p) => ({ value: p.id, label: projectLabel(p, clients) }))}
               value={form.projectId}
-              onChange={(e) => setForm({ ...form, projectId: e.target.value })}
-              title={t("projects.title")}
-            >
-              {projects
-                .filter((p) => p.clientId === form.clientId)
-                .map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-            </select>
-            <input
-              className="cw-input"
-              list={`reassign-report-${entry.id}`}
-              value={reassignText}
-              onChange={(e) => handleReassignInput(e.target.value)}
-              placeholder={t("timeTracker.searchMember")}
-              title={t("timeTracker.reassignToMember")}
+              onChange={handleProjectChange}
             />
-            <datalist id={`reassign-report-${entry.id}`}>
-              {members.map((m) => (
-                <option key={m.userId} value={memberLabel(m)} />
-              ))}
-            </datalist>
+            <AutocompleteSelect
+              label={t("nav.users")}
+              placeholder={t("timeTracker.searchMember")}
+              options={members.map((m) => ({ value: m.userId, label: memberLabel(m) }))}
+              value={form.userId}
+              onChange={(userId) => setForm((f) => ({ ...f, userId }))}
+            />
           </>
         )}
         <div className={styles.editRowActions}>

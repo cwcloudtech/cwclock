@@ -10,6 +10,18 @@ import {
   UpdateTasksSUCCESS,
 } from "./Task.types";
 
+// Matches the API's own ORDER BY data->>'day' DESC, data->>'start' DESC, so
+// a task inserted/edited client-side (rather than re-fetched) lands in the
+// same slot the server would put it in - TasksApp's day-grouping assumes
+// the list is already in this order and just walks it once.
+const compareEntries = (a, b) => {
+  if (a.day !== b.day) return a.day > b.day ? -1 : 1;
+  const aStart = a.start || "";
+  const bStart = b.start || "";
+  if (aStart === bStart) return 0;
+  return aStart > bStart ? -1 : 1;
+};
+
 const initialstate = {
   tasks: [],
   start: "",
@@ -48,7 +60,7 @@ export const TaskReducer = (state = initialstate, { type, payload }) => {
       };
     }
     case PostTasksSUCCESS: {
-      return { ...state, tasks: [...state.tasks, payload], isLoading: false };
+      return { ...state, tasks: [...state.tasks, payload].sort(compareEntries), isLoading: false };
     }
     case DeleteTasksSUCCESS: {
       let filtered = state.tasks.filter((item) => {
@@ -57,14 +69,8 @@ export const TaskReducer = (state = initialstate, { type, payload }) => {
       return { ...state, tasks: [...filtered], isLoading: false };
     }
     case UpdateTasksSUCCESS: {
-      let updated = state.tasks.map((task) => {
-        if (task.id === payload.id) {
-          return { ...payload };
-        } else {
-          return task;
-        }
-      });
-      return { ...state, tasks: [...updated], isLoading: false };
+      const updated = state.tasks.map((task) => (task.id === payload.id ? { ...payload } : task));
+      return { ...state, tasks: updated.sort(compareEntries), isLoading: false };
     }
     default: {
       return state;

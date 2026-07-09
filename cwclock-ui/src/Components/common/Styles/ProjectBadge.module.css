@@ -1,5 +1,10 @@
 .badge {
   display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
   padding: 2px 8px;
   border-radius: 20px;
   font-weight: 400;

@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Modal from "../common/Modal";
 import ConfigForm from "../common/ConfigForm";
+import AutocompleteSelect from "../common/AutocompleteSelect";
 import { updateProjectApi } from "../../Redux/Projects/Project.actions";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
 
-const emptyFields = { name: "", color: "#1cb9f7", dailyRate: "", subdivisions: [] };
+const emptyFields = { clientId: "", name: "", color: "#1cb9f7", dailyRate: "", subdivisions: [] };
 
 const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
   const { t, locale } = useI18n();
   const dispatch = useDispatch();
+  const { clients } = useSelector((state) => state.clients);
   const [fields, setFields] = useState(emptyFields);
   const [error, setError] = useState("");
 
@@ -32,6 +34,7 @@ const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
   useEffect(() => {
     if (show && targetProject) {
       setFields({
+        clientId: targetProject.clientId || "",
         name: targetProject.name || "",
         color: targetProject.color || "#1cb9f7",
         dailyRate: targetProject.dailyRate ?? "",
@@ -50,7 +53,9 @@ const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
     setError("");
     const dailyRate = fields.dailyRate === "" ? undefined : Number(fields.dailyRate);
     try {
-      await dispatch(updateProjectApi(orgId, targetProject.id, fields.name, fields.color, dailyRate, fields.subdivisions, token));
+      await dispatch(
+        updateProjectApi(orgId, targetProject.id, fields.clientId, fields.name, fields.color, dailyRate, fields.subdivisions, token)
+      );
       onClose();
     } catch (err) {
       setError(apiErrorMessage(err, locale));
@@ -59,6 +64,14 @@ const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
 
   return (
     <Modal show={show} title={t("projects.editProjectTitle", { name: targetProject.name })} onClose={onClose}>
+      <label className="cw-label">{t("common.client")}</label>
+      <AutocompleteSelect
+        label={t("common.client")}
+        placeholder={t("common.selectAClient")}
+        options={clients.map((c) => ({ value: c.id, label: c.name }))}
+        value={fields.clientId}
+        onChange={(clientId) => setField("clientId", clientId)}
+      />
       <ConfigForm
         config={projectFormConfig}
         values={fields}

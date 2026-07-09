@@ -126,6 +126,7 @@ func New(
 					r.With(middleware.RequireRole(models.RoleAdmin)).Post("/", clientHandler.Create)
 					r.With(middleware.RequireRole(models.RoleAdmin)).Put("/{clientId}", clientHandler.Update)
 					r.With(middleware.RequireRole(models.RoleAdmin)).Delete("/{clientId}", clientHandler.Delete)
+					r.With(middleware.RequireRole(models.RoleOwner)).Put("/{clientId}/transfer", clientHandler.Transfer)
 
 					r.Route("/{clientId}/projects", func(r chi.Router) {
 						r.Get("/", projectHandler.List)

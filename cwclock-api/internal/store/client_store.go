@@ -163,6 +163,45 @@ func (s *ClientStore) Update(ctx context.Context, id string, f ClientFields) (mo
 	return scanClient(row)
 }
 
+// Transfer moves a client - and, to keep every table's own denormalized
+// organization_id column consistent with it, all of its projects and time
+// entries too - to a different organization. The caller is responsible for
+// verifying the acting user owns both organizations (see ai-instruct-34).
+func (s *ClientStore) Transfer(ctx context.Context, id, targetOrgID string) (models.Client, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return models.Client{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	tag, err := tx.Exec(ctx, `
+		UPDATE clients SET organization_id = $2, updated_at = now() WHERE id = $1
+	`, id, targetOrgID)
+	if err != nil {
+		return models.Client{}, err
+	}
+	if tag.RowsAffected() == 0 {
+		return models.Client{}, ErrNotFound
+	}
+
+	if _, err := tx.Exec(ctx, `
+		UPDATE projects SET organization_id = $2, updated_at = now() WHERE client_id = $1
+	`, id, targetOrgID); err != nil {
+		return models.Client{}, err
+	}
+
+	if _, err := tx.Exec(ctx, `
+		UPDATE time_entries SET organization_id = $2, updated_at = now() WHERE client_id = $1
+	`, id, targetOrgID); err != nil {
+		return models.Client{}, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return models.Client{}, err
+	}
+	return s.FindByID(ctx, id)
+}
+
 func (s *ClientStore) Delete(ctx context.Context, id string) error {
 	tag, err := s.pool.Exec(ctx, `DELETE FROM clients WHERE id = $1`, id)
 	if err != nil {

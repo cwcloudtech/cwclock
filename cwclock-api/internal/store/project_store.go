@@ -101,16 +101,22 @@ func (s *ProjectStore) List(ctx context.Context, orgID, clientID string) ([]mode
 	return projects, rows.Err()
 }
 
-func (s *ProjectStore) Update(ctx context.Context, id, name, color string, dailyRate *float64, subdivisions []string) (models.Project, error) {
+// Update edits a project's fields, optionally reassigning it to a different
+// client (an empty clientID leaves it unchanged) - see ai-instruct-34: an
+// owner/admin can move a project to another client within the same
+// organization (crossing organizations is a client-level transfer instead,
+// see ClientStore.Transfer).
+func (s *ProjectStore) Update(ctx context.Context, id, clientID, name, color string, dailyRate *float64, subdivisions []string) (models.Project, error) {
 	data, err := json.Marshal(projectData{Name: name, Color: color, DailyRate: dailyRate, Subdivisions: subdivisions})
 	if err != nil {
 		return models.Project{}, err
 	}
 	row := s.pool.QueryRow(ctx, `
-		UPDATE projects SET data = $2, updated_at = now()
+		UPDATE projects
+		SET client_id = COALESCE(NULLIF($2, '')::uuid, client_id), data = $3, updated_at = now()
 		WHERE id = $1
 		RETURNING id, organization_id, client_id, data, created_at, updated_at
-	`, id, data)
+	`, id, clientID, data)
 	return scanProject(row)
 }
 

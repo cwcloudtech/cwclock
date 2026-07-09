@@ -43,12 +43,12 @@ export const createProjectApi = (orgId, clientId, name, color, dailyRate, subdiv
   }
 };
 
-export const updateProjectApi = (orgId, projectId, name, color, dailyRate, subdivisions, token) => async (dispatch) => {
+export const updateProjectApi = (orgId, projectId, clientId, name, color, dailyRate, subdivisions, token) => async (dispatch) => {
   dispatch({ type: ProjectLOADING });
   try {
     const { data } = await axios.put(
       `${ENDPOINT}${orgId}/projects/${projectId}`,
-      { name, color, dailyRate, subdivisions },
+      { clientId, name, color, dailyRate, subdivisions },
       authConfig(token)
     );
     dispatch({ type: ProjectUpdateSUCCESS, payload: data });

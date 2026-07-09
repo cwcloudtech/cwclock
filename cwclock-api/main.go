@@ -49,8 +49,8 @@ func main() {
 
 	userHandler := handlers.NewUserHandler(userStore, cfg.JWTSecret, cfg.MaxImageSize)
 	orgHandler := handlers.NewOrganizationHandler(orgStore, userStore, cfg.MaxImageSize)
-	clientHandler := handlers.NewClientHandler(clientStore)
-	projectHandler := handlers.NewProjectHandler(projectStore)
+	clientHandler := handlers.NewClientHandler(clientStore, orgStore)
+	projectHandler := handlers.NewProjectHandler(projectStore, clientStore)
 	timeEntryHandler := handlers.NewTimeEntryHandler(timeEntryStore)
 	adminHandler := handlers.NewAdminHandler(userStore, cfg.MaxImageSize)
 	importHandler := handlers.NewImportHandler(userStore, clientStore, projectStore, timeEntryStore)

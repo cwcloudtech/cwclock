@@ -60,6 +60,21 @@ export const updateClientApi = (orgId, clientId, fields, token) => async (dispat
   }
 };
 
+// A transferred client no longer belongs to this organization, so it's
+// dropped from the current list the same way a delete would - the caller
+// still owns it, just under a different organization now.
+export const transferClientApi = (orgId, clientId, targetOrgId, token) => async (dispatch) => {
+  dispatch({ type: ClientLOADING });
+  try {
+    await axios.put(`${ENDPOINT}${orgId}/clients/${clientId}/transfer`, { targetOrgId }, authConfig(token));
+    dispatch({ type: ClientDeleteSUCCESS, payload: clientId });
+    toast.success(translate(getStoredLocale(), "toasts.clientTransferred"), toastOptions);
+  } catch (e) {
+    dispatch({ type: ClientERROR });
+    throw e;
+  }
+};
+
 export const deleteClientApi = (orgId, clientId, token) => async (dispatch) => {
   dispatch({ type: ClientLOADING });
   try {
