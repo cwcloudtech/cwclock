@@ -6,11 +6,15 @@ In the timerecord webview manage the overflow of the project/client select dropd
 
 Also when we add a record, I'd like it to appear directly without having to refresh the page.
 
-## Project transfer
+## client transfer
 
-A owner of an organization should be able to transfer the project to another organization he's owner as well (in the edit popin with a dropdown select autocomplete).
+A owner of an organization should be able to transfer the client to another organization he's owner as well (in the edit popin with a dropdown select autocomplete).
 
 This feature is only for owner not for admin.
+
+## project transfer
+
+Implement the transfert for project to another client belonging to the same organization (only for the owner).
 
 ## Reaffecting user/project/client in detailed report
 
