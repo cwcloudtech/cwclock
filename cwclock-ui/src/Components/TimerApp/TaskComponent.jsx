@@ -9,6 +9,7 @@ import ConfirmModal from "../common/ConfirmModal";
 import memberLabel from "../common/memberLabel";
 import projectLabel from "../common/projectLabel";
 import ProjectBadge from "../common/ProjectBadge";
+import AutocompleteSelect from "../common/AutocompleteSelect";
 import Tooltip from "../common/Tooltip";
 import toastOptions from "../../Redux/toastOptions";
 import { isAdminOrOwner as computeIsAdminOrOwner, memberRole } from "../common/permissions";
@@ -29,8 +30,6 @@ const TaskComponent = ({ item }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [form, setForm] = useState(fieldsFromItem(item));
-  const [reassignText, setReassignText] = useState("");
-  const [projectQuery, setProjectQuery] = useState("");
   const { user } = useSelector((state) => state.auth);
   const { currentOrgId, members } = useSelector((state) => state.organizations);
   const { projects } = useSelector((state) => state.projects);
@@ -49,31 +48,6 @@ const TaskComponent = ({ item }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item, isEditing]);
-
-  useEffect(() => {
-    if (isEditing) {
-      const current = members.find((m) => m.userId === form.userId);
-      setReassignText(current ? memberLabel(current) : "");
-      setProjectQuery(project ? projectLabel(project, clients) : "");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditing]);
-
-  const handleReassignInput = (text) => {
-    setReassignText(text);
-    const match = members.find((m) => memberLabel(m) === text || m.email === text);
-    if (match) {
-      setForm((f) => ({ ...f, userId: match.userId }));
-    }
-  };
-
-  const handleProjectInput = (text) => {
-    setProjectQuery(text);
-    const match = projects.find((p) => projectLabel(p, clients) === text);
-    if (match) {
-      setForm((f) => ({ ...f, projectId: match.id }));
-    }
-  };
 
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -125,19 +99,13 @@ const TaskComponent = ({ item }) => {
               />
             </div>
             <div className={styles.Projects}>
-              <input
-                className="cw-input"
-                list={`project-options-${item.id}`}
-                title={t("timeTracker.searchByCustomerOrProject")}
+              <AutocompleteSelect
+                label={t("timeTracker.project")}
                 placeholder={t("timeTracker.project")}
-                value={projectQuery}
-                onChange={(e) => handleProjectInput(e.target.value)}
+                options={projects.map((p) => ({ value: p.id, label: projectLabel(p, clients) }))}
+                value={form.projectId}
+                onChange={(projectId) => setForm((f) => ({ ...f, projectId }))}
               />
-              <datalist id={`project-options-${item.id}`}>
-                {projects.map((p) => (
-                  <option key={p.id} value={projectLabel(p, clients)} />
-                ))}
-              </datalist>
             </div>
             <div className={styles.Time}>
               <input
@@ -176,21 +144,13 @@ const TaskComponent = ({ item }) => {
                 </>
               )}
               {isAdminOrOwner && (
-                <>
-                  <input
-                    className="cw-input"
-                    list={`reassign-options-${item.id}`}
-                    title={t("timeTracker.reassignToMember")}
-                    placeholder={t("timeTracker.searchMember")}
-                    value={reassignText}
-                    onChange={(e) => handleReassignInput(e.target.value)}
-                  />
-                  <datalist id={`reassign-options-${item.id}`}>
-                    {members.map((m) => (
-                      <option key={m.userId} value={memberLabel(m)} />
-                    ))}
-                  </datalist>
-                </>
+                <AutocompleteSelect
+                  label={t("nav.users")}
+                  placeholder={t("timeTracker.searchMember")}
+                  options={members.map((m) => ({ value: m.userId, label: memberLabel(m) }))}
+                  value={form.userId}
+                  onChange={(userId) => setForm((f) => ({ ...f, userId }))}
+                />
               )}
             </div>
             <button type="button" className={styles.Tags3} onClick={handleSave} title={t("common.saveChanges")}>

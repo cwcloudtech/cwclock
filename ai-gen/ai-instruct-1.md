@@ -18,7 +18,7 @@ The edit button does not work. I want:
 
 I want tooltips on every icons and buttons.
 
-Login and signup form : I want the logo on top and bigger.£
+Login and signup form : I want the logo on top and bigger.
 The _Doesn't have an account? Sign Up_ and _Already have an account? Log In_ must be below the logo and centered.
 
 Fix all english typo.

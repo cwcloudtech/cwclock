@@ -34,12 +34,6 @@
 }
 
 .Projects {
-  padding: 10px 12px;
-  border: 1px solid var(--cw-border);
-  border-radius: var(--cw-radius-sm);
-  background-color: var(--cw-bg-alt);
-  color: var(--cw-text);
-  font-size: 0.9rem;
   max-width: 240px;
 }
 

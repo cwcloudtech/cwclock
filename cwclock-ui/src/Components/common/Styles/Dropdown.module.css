@@ -23,6 +23,11 @@
   background-color: var(--cw-bg-alt);
 }
 
+.trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .menu {
   position: absolute;
   top: calc(100% + 6px);

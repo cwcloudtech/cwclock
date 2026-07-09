@@ -3,7 +3,7 @@ import styles from "./Styles/Dropdown.module.css";
 
 // Minimal replacement for react-bootstrap's Dropdown: a trigger button that
 // opens an absolutely-positioned menu, closed on outside click or Escape.
-const Dropdown = ({ trigger, align = "start", className = "", triggerClassName = "", title, children }) => {
+const Dropdown = ({ trigger, align = "start", className = "", triggerClassName = "", title, disabled, children }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -28,10 +28,11 @@ const Dropdown = ({ trigger, align = "start", className = "", triggerClassName =
         className={`${styles.trigger} ${triggerClassName}`}
         onClick={() => setOpen(!open)}
         title={title}
+        disabled={disabled}
       >
         {trigger}
       </button>
-      {open && (
+      {!disabled && open && (
         <div className={`${styles.menu} ${align === "end" ? styles.alignEnd : ""}`}>
           {typeof children === "function" ? children(() => setOpen(false)) : children}
         </div>

@@ -6,7 +6,7 @@ import styles from "./Styles/MultiSelect.module.css";
 // Single-select autocomplete dropdown, styled like MultiSelect (search box
 // narrows the option list) but picking an option selects it and closes the
 // panel right away, instead of staying open for picking several.
-const AutocompleteSelect = ({ label, placeholder, options, value, onChange }) => {
+const AutocompleteSelect = ({ label, placeholder, options, value, onChange, disabled, className = "" }) => {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
 
@@ -21,7 +21,9 @@ const AutocompleteSelect = ({ label, placeholder, options, value, onChange }) =>
   return (
     <Dropdown
       title={label}
+      className={className}
       triggerClassName={styles.trigger}
+      disabled={disabled}
       trigger={
         <>
           <span className={styles.triggerLabel}>{label}</span>

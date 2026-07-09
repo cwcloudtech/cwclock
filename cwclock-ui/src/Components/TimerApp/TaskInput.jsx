@@ -6,6 +6,7 @@ import useDateHook from "./useDateHook";
 import { postTasksApi, startTask } from "../../Redux/Tasks/Task.actions";
 import useTime from "./useTime";
 import projectLabel from "../common/projectLabel";
+import AutocompleteSelect from "../common/AutocompleteSelect";
 import { useI18n } from "../../i18n/I18nContext";
 
 const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
@@ -15,19 +16,12 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
   const { hours2, minutes2, seconds2 } = useTime();
   const [name, setName] = useState("");
   const [projectId, setProjectId] = useState("");
-  const [projectQuery, setProjectQuery] = useState("");
   const { start } = useSelector((state) => state.tasks);
   const { user } = useSelector((state) => state.auth);
   const { currentOrgId } = useSelector((state) => state.organizations);
   const { projects } = useSelector((state) => state.projects);
   const { clients } = useSelector((state) => state.clients);
   const dispatch = useDispatch();
-
-  const handleProjectInput = (text) => {
-    setProjectQuery(text);
-    const match = projects.find((p) => projectLabel(p, clients) === text);
-    setProjectId(match ? match.id : "");
-  };
 
   const handleSubmit = () => {
     if (timerOn) {
@@ -62,20 +56,15 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
           title={t("timeTracker.whatAreYouWorkingOn")}
           onChange={(e) => setName(e.target.value)}
         />
-        <input
-          list="task-input-project-options"
+        <AutocompleteSelect
           className={styles.Projects}
-          value={projectQuery}
-          disabled={timerOn}
-          onChange={(e) => handleProjectInput(e.target.value)}
+          label={t("timeTracker.project")}
           placeholder={t("timeTracker.project")}
-          title={t("timeTracker.searchByCustomerOrProject")}
+          options={projects.map((p) => ({ value: p.id, label: projectLabel(p, clients) }))}
+          value={projectId}
+          onChange={setProjectId}
+          disabled={timerOn}
         />
-        <datalist id="task-input-project-options">
-          {projects.map((p) => (
-            <option key={p.id} value={projectLabel(p, clients)} />
-          ))}
-        </datalist>
         <div className={styles.Timer}>
           <span className={styles.clock} title={t("timeTracker.elapsedTime")}>
             {hrs < 10 ? "0" + hrs : hrs}:{min < 10 ? "0" + min : min}:
