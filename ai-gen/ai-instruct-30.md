@@ -15,3 +15,8 @@ Sort the result by alphabetical order as well.
 
 Add a search engine on the client name.
 Sort the result by alphabetical order as well.
+
+## Report UX/UI
+
+When clients are selected in the multiselect filter, automatically filter the projects that are linked to the selected clients in the project multiselect.
+
