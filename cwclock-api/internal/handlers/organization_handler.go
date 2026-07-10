@@ -47,8 +47,12 @@ type organizationPayload struct {
 	Currency             string  `json:"currency"`
 }
 
-func (p organizationPayload) valid() bool {
-	return utils.IsNotBlank(p.Name) && utils.IsNotBlank(p.Country)
+// nameValid and Country's own blank check (see Create/Update) are kept
+// separate rather than one combined "valid" bool, so a blank name and a
+// blank country produce their own specific error message instead of both
+// being reported as "Please fill in the Name field" (ai-instruct-37).
+func (p organizationPayload) nameValid() bool {
+	return utils.IsNotBlank(p.Name)
 }
 
 func (h *OrganizationHandler) validCountry(ctx context.Context, p organizationPayload) (bool, error) {
@@ -93,8 +97,12 @@ func (h *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 	userID, _ := middleware.UserIDFromContext(r.Context())
 
 	var p organizationPayload
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !p.valid() {
-		writeError(w, http.StatusBadRequest, "Please add a name and country field", CodeNameRequired)
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !p.nameValid() {
+		writeError(w, http.StatusBadRequest, "Please fill in the Name field", CodeNameRequired)
+		return
+	}
+	if utils.IsBlank(p.Country) {
+		writeError(w, http.StatusBadRequest, "Please select a country", CodeCountryRequired)
 		return
 	}
 	if ok, err := h.validCountry(r.Context(), p); err != nil {
@@ -161,8 +169,12 @@ func (h *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
 
 	var p organizationPayload
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !p.valid() {
-		writeError(w, http.StatusBadRequest, "Please add a name and country field", CodeNameRequired)
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !p.nameValid() {
+		writeError(w, http.StatusBadRequest, "Please fill in the Name field", CodeNameRequired)
+		return
+	}
+	if utils.IsBlank(p.Country) {
+		writeError(w, http.StatusBadRequest, "Please select a country", CodeCountryRequired)
 		return
 	}
 	if ok, err := h.validCountry(r.Context(), p); err != nil {

@@ -26,6 +26,7 @@ func NewClientHandler(clients *store.ClientStore, orgs *store.OrgStore, countrie
 type clientPayload struct {
 	Name                 string   `json:"name"`
 	Email                string   `json:"email"`
+	ContactName          string   `json:"contactName"`
 	Address              string   `json:"address"`
 	PostalCode           string   `json:"postalCode"`
 	City                 string   `json:"city"`
@@ -43,8 +44,12 @@ type clientPayload struct {
 	DailyRate            *float64 `json:"dailyRate"`
 }
 
-func (p clientPayload) valid() bool {
-	return utils.IsNotBlank(p.Name) && utils.IsNotBlank(p.Country)
+// nameValid and Country's own blank check (see Create/Update) are kept
+// separate rather than one combined "valid" bool, so a blank name and a
+// blank country produce their own specific error message instead of both
+// being reported as "Please fill in the Name field" (ai-instruct-37).
+func (p clientPayload) nameValid() bool {
+	return utils.IsNotBlank(p.Name)
 }
 
 // validEmail lets the field stay blank (it's optional) but requires a
@@ -61,6 +66,7 @@ func (p clientPayload) toFields() store.ClientFields {
 	return store.ClientFields{
 		Name:                 p.Name,
 		Email:                p.Email,
+		ContactName:          p.ContactName,
 		Address:              p.Address,
 		PostalCode:           p.PostalCode,
 		City:                 p.City,
@@ -111,12 +117,16 @@ func (h *ClientHandler) Create(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
 
 	var p clientPayload
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !p.valid() {
-		writeError(w, http.StatusBadRequest, "Please add a name and country field", CodeNameRequired)
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !p.nameValid() {
+		writeError(w, http.StatusBadRequest, "Please fill in the Name field", CodeNameRequired)
 		return
 	}
 	if !p.validEmail() {
 		writeError(w, http.StatusBadRequest, "Please add a valid email", CodeInvalidEmail)
+		return
+	}
+	if utils.IsBlank(p.Country) {
+		writeError(w, http.StatusBadRequest, "Please select a country", CodeCountryRequired)
 		return
 	}
 	if ok, err := h.validCountry(r.Context(), p); err != nil {
@@ -139,12 +149,16 @@ func (h *ClientHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "clientId")
 
 	var p clientPayload
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !p.valid() {
-		writeError(w, http.StatusBadRequest, "Please add a name and country field", CodeNameRequired)
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !p.nameValid() {
+		writeError(w, http.StatusBadRequest, "Please fill in the Name field", CodeNameRequired)
 		return
 	}
 	if !p.validEmail() {
 		writeError(w, http.StatusBadRequest, "Please add a valid email", CodeInvalidEmail)
+		return
+	}
+	if utils.IsBlank(p.Country) {
+		writeError(w, http.StatusBadRequest, "Please select a country", CodeCountryRequired)
 		return
 	}
 	if ok, err := h.validCountry(r.Context(), p); err != nil {

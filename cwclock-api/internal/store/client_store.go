@@ -22,6 +22,7 @@ func NewClientStore(pool *pgxpool.Pool) *ClientStore {
 type clientData struct {
 	Name                 string   `json:"name"`
 	Email                string   `json:"email,omitempty"`
+	ContactName          string   `json:"contactName,omitempty"`
 	Address              string   `json:"address"`
 	PostalCode           string   `json:"postalCode"`
 	City                 string   `json:"city"`
@@ -43,6 +44,7 @@ type clientData struct {
 type ClientFields struct {
 	Name                 string
 	Email                string
+	ContactName          string
 	Address              string
 	PostalCode           string
 	City                 string
@@ -76,6 +78,7 @@ func toClientData(f ClientFields) clientData {
 	return clientData{
 		Name:                 f.Name,
 		Email:                f.Email,
+		ContactName:          f.ContactName,
 		Address:              f.Address,
 		PostalCode:           f.PostalCode,
 		City:                 f.City,
@@ -109,6 +112,7 @@ func scanClient(row pgx.Row) (models.Client, error) {
 	}
 	c.Name = d.Name
 	c.Email = d.Email
+	c.ContactName = d.ContactName
 	c.Address = d.Address
 	c.PostalCode = d.PostalCode
 	c.City = d.City

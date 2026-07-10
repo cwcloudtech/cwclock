@@ -7,6 +7,7 @@ type Client struct {
 	OrganizationID       string    `json:"organizationId"`
 	Name                 string    `json:"name"`
 	Email                string    `json:"email,omitempty"`
+	ContactName          string    `json:"contactName"`
 	Address              string    `json:"address"`
 	PostalCode           string    `json:"postalCode"`
 	City                 string    `json:"city"`

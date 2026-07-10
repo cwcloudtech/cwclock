@@ -24,6 +24,7 @@ const (
 	CodeUserNotFound           = "errors.userNotFound"
 	CodeInvalidCredentials     = "errors.invalidCredentials"
 	CodeNameRequired           = "errors.nameRequired"
+	CodeCountryRequired        = "errors.countryRequired"
 	CodeAllFieldsRequired      = "errors.allFieldsRequired"
 	CodeInvalidUserData        = "errors.invalidUserData"
 	CodeInvalidRequestBody     = "errors.invalidRequestBody"

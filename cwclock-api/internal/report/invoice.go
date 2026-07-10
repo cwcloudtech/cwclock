@@ -110,6 +110,19 @@ func formatVAT(client models.Client, totalVAT float64, currency string) string {
 	return fmt.Sprintf("%s %s (%.0f%%)", formatAmount(totalVAT), currency, client.VATRate)
 }
 
+// formatContact formats a "Contact" row as "name: email" (ai-instruct-37),
+// falling back to a bare email when name is blank, and to "" (dropped
+// entirely by addRow) when email itself is blank.
+func formatContact(name, email string) string {
+	if utils.IsBlank(email) {
+		return ""
+	}
+	if utils.IsBlank(name) {
+		return cell(email)
+	}
+	return cell(fmt.Sprintf("%s: %s", name, email))
+}
+
 // formatAddress joins the non-blank parts of an address into one line,
 // returning "" (dropped entirely by addRow) when nothing is set.
 func formatAddress(address, postalCode, city, country string) string {
@@ -162,7 +175,7 @@ func clientRows(client models.Client) [][]string {
 	rows := [][]string{}
 	rows = addRow(rows, "Name", cell(client.Name))
 	rows = addRow(rows, "Address", formatAddress(client.Address, client.PostalCode, client.City, client.Country))
-	rows = addRow(rows, "Contact", cell(client.Email))
+	rows = addRow(rows, "Contact", formatContact(client.ContactName, client.Email))
 	rows = addRow(rows, "VAT / TVA IC", cell(client.VATNumber))
 	return rows
 }
@@ -203,7 +216,8 @@ func RenderInvoicePDF(org models.Organization, client models.Client, owner model
 	}
 
 	invoiceDate := time.Now().Format(USDateLayout)
-	ownerContact := cell(fmt.Sprintf("%s %s: %s", owner.Surname, owner.Name, owner.Email))
+	ownerName := strings.TrimSpace(owner.Name + " " + owner.Surname)
+	ownerContact := formatContact(ownerName, owner.Email)
 
 	intro := fmt.Sprintf(
 		"# Invoice N°%s\n\n%s, the %s\n\nPeriod: %s - %s\n\n\n\n",
