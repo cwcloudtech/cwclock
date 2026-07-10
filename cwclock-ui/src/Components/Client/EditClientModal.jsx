@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Modal from "../common/Modal";
+import ConfirmModal from "../common/ConfirmModal";
 import ConfigForm from "../common/ConfigForm";
 import AutocompleteSelect from "../common/AutocompleteSelect";
 import Button from "../common/Button";
@@ -42,6 +43,7 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
   const [error, setError] = useState("");
   const [targetOrgId, setTargetOrgId] = useState("");
   const [transferError, setTransferError] = useState("");
+  const [confirmingTransfer, setConfirmingTransfer] = useState(false);
 
   const currentOrg = organizations.find((o) => o.id === orgId);
   const canTransfer = isOrgOwner(user, currentOrg);
@@ -103,6 +105,7 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
       setError("");
       setTargetOrgId("");
       setTransferError("");
+      setConfirmingTransfer(false);
     }
   }, [show, targetClient]);
 
@@ -127,12 +130,14 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
     }
   };
 
-  const handleTransfer = async () => {
+  const handleTransferClick = () => {
     setTransferError("");
     if (!targetOrgId) return;
-    if (!window.confirm(t("clients.transferConfirmBody", { name: targetClient.name, orgName: targetOrg?.name || "" }))) {
-      return;
-    }
+    setConfirmingTransfer(true);
+  };
+
+  const handleTransferConfirm = async () => {
+    setConfirmingTransfer(false);
     try {
       await dispatch(transferClientApi(orgId, targetClient.id, targetOrgId, token));
       onClose();
@@ -167,7 +172,7 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
             <Button
               variant="danger"
               disabled={!targetOrgId}
-              onClick={handleTransfer}
+              onClick={handleTransferClick}
               title={t("clients.transferHint")}
             >
               {t("clients.transferButton")}
@@ -176,6 +181,15 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
           </div>
         </>
       )}
+
+      <ConfirmModal
+        show={confirmingTransfer}
+        title={t("clients.transferButton")}
+        body={t("clients.transferConfirmBody", { name: targetClient.name, orgName: targetOrg?.name || "" })}
+        confirmLabel={t("clients.transferButton")}
+        onConfirm={handleTransferConfirm}
+        onCancel={() => setConfirmingTransfer(false)}
+      />
     </Modal>
   );
 };
