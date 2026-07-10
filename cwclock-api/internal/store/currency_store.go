@@ -19,8 +19,11 @@ func NewCurrencyStore(pool *pgxpool.Pool) *CurrencyStore {
 	return &CurrencyStore{pool: pool}
 }
 
+// List returns every currency ordered by its curated sort_order
+// (ai-instruct-36), falling back to iso_code to break ties between
+// currencies sharing the same rank (e.g. the unranked default).
 func (s *CurrencyStore) List(ctx context.Context) ([]models.Currency, error) {
-	rows, err := s.pool.Query(ctx, `SELECT iso_code, name FROM currencies ORDER BY iso_code`)
+	rows, err := s.pool.Query(ctx, `SELECT iso_code, name FROM currencies ORDER BY sort_order, iso_code`)
 	if err != nil {
 		return nil, err
 	}

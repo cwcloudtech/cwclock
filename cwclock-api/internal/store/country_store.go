@@ -22,9 +22,12 @@ func NewCountryStore(pool *pgxpool.Pool) *CountryStore {
 	return &CountryStore{pool: pool}
 }
 
+// List returns every country ordered by its curated sort_order
+// (ai-instruct-36), falling back to name to break ties between countries
+// sharing the same rank (e.g. every country billed in the same currency).
 func (s *CountryStore) List(ctx context.Context) ([]models.Country, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT iso_code, name, currency_iso_code FROM countries ORDER BY name
+		SELECT iso_code, name, currency_iso_code FROM countries ORDER BY sort_order, name
 	`)
 	if err != nil {
 		return nil, err
