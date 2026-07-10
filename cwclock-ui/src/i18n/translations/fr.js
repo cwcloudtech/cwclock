@@ -174,7 +174,7 @@ const fr = {
     transferOwnership: "Transférer la propriété",
     newOwnerEmail: "E-mail du nouveau propriétaire",
     transferOwnershipTooltip: "Transférer la propriété à ce membre",
-    confirmTransfer: 'Transférer la propriété de "{{name}}" à {{email}} ?',
+    confirmTransfer: 'Transférer la propriété de "{{name}}" à {{email}} ? Cette action est irréversible.',
     couldNotTransfer: "Impossible de transférer la propriété. Vérifiez l'e-mail et réessayez.",
     nameRequired: "Le nom est requis.",
     noDailyRateSet: "Aucun taux journalier défini",

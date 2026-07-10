@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Button from "../common/Button";
+import ConfirmModal from "../common/ConfirmModal";
 import CopyIdButton from "../common/CopyIdButton";
 import styles from "./Styles/Organizations.module.css";
 import {
@@ -131,6 +132,7 @@ const Organizations = () => {
   const [memberError, setMemberError] = useState("");
   const [transferEmail, setTransferEmail] = useState("");
   const [transferError, setTransferError] = useState("");
+  const [confirmingTransfer, setConfirmingTransfer] = useState(false);
   const currencies = useCurrencies();
   const countries = useCountries();
   const createIdentificationFields = useCountryFields(fields.country);
@@ -266,13 +268,15 @@ const Organizations = () => {
     }
   };
 
-  const handleTransferOwnership = async (e) => {
+  const handleTransferClick = (e) => {
     e.preventDefault();
     setTransferError("");
     if (!transferEmail) return;
-    if (!window.confirm(t("organizations.confirmTransfer", { name: currentOrg.name, email: transferEmail }))) {
-      return;
-    }
+    setConfirmingTransfer(true);
+  };
+
+  const handleTransferConfirm = async () => {
+    setConfirmingTransfer(false);
     try {
       await dispatch(transferOwnershipApi(currentOrgId, transferEmail, user.token));
       setTransferEmail("");
@@ -416,7 +420,7 @@ const Organizations = () => {
               </CollapsiblePanel>
 
               <CollapsiblePanel title={t("organizations.transferOwnership")}>
-                <form onSubmit={handleTransferOwnership}>
+                <form onSubmit={handleTransferClick}>
                   <div className="cw-field">
                     <label className="cw-label">
                       {t("organizations.newOwnerEmail")}
@@ -443,6 +447,15 @@ const Organizations = () => {
                   {transferError && <p className="cw-error">{transferError}</p>}
                 </form>
               </CollapsiblePanel>
+
+              <ConfirmModal
+                show={confirmingTransfer}
+                title={t("organizations.transferOwnership")}
+                body={t("organizations.confirmTransfer", { name: currentOrg.name, email: transferEmail })}
+                confirmLabel={t("organizations.transferOwnership")}
+                onConfirm={handleTransferConfirm}
+                onCancel={() => setConfirmingTransfer(false)}
+              />
             </>
           )}
         </div>

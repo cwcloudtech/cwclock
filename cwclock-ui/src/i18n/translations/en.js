@@ -174,7 +174,7 @@ const en = {
     transferOwnership: "Transfer ownership",
     newOwnerEmail: "New owner's email",
     transferOwnershipTooltip: "Transfer ownership to this member",
-    confirmTransfer: 'Transfer ownership of "{{name}}" to {{email}}?',
+    confirmTransfer: 'Transfer ownership of "{{name}}" to {{email}}? This cannot be undone.',
     couldNotTransfer: "Could not transfer ownership. Check the email and try again.",
     nameRequired: "Name is required.",
     noDailyRateSet: "No daily rate set",

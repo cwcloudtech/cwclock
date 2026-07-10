@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import Modal from "../common/Modal";
+import ConfirmModal from "../common/ConfirmModal";
 import Button from "../common/Button";
 import RequiredMark from "../common/RequiredMark";
 import useEmailAutocomplete from "../common/useEmailAutocomplete";
@@ -14,24 +15,28 @@ const TransferOwnershipModal = ({ show, onClose, targetOrg, token }) => {
   const dispatch = useDispatch();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [confirmingTransfer, setConfirmingTransfer] = useState(false);
   const suggestions = useEmailAutocomplete(email, show, token);
 
   useEffect(() => {
     if (show) {
       setEmail("");
       setError("");
+      setConfirmingTransfer(false);
     }
   }, [show, targetOrg]);
 
   if (!targetOrg) return null;
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (!email) return;
-    if (!window.confirm(t("organizations.confirmTransfer", { name: targetOrg.name, email }))) {
-      return;
-    }
     setError("");
+    if (!email) return;
+    setConfirmingTransfer(true);
+  };
+
+  const handleTransferConfirm = async () => {
+    setConfirmingTransfer(false);
     try {
       await dispatch(transferOwnershipApi(targetOrg.id, email, token));
       await dispatch(listAllOrganizationsApi(token));
@@ -75,6 +80,15 @@ const TransferOwnershipModal = ({ show, onClose, targetOrg, token }) => {
           </Button>
         </div>
       </form>
+
+      <ConfirmModal
+        show={confirmingTransfer}
+        title={t("admin.transfer")}
+        body={t("organizations.confirmTransfer", { name: targetOrg.name, email })}
+        confirmLabel={t("admin.transfer")}
+        onConfirm={handleTransferConfirm}
+        onCancel={() => setConfirmingTransfer(false)}
+      />
     </Modal>
   );
 };
