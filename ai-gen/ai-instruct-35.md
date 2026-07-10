@@ -67,11 +67,20 @@ I want a desision table to know which field to display with an API:
 }
 ```
 
+## Currencies
+
+I want you to replace the current `CWCLOCK_ALLOWED_CURRENCIES` by a currencies table.
+
+The default currency should be selected according to the country but let the user decide (i.e: France is EUR but the user can select USD).
+
+## Database model
+
 Here's the database model I'm expecting
 
 ```
-countries(iso_code varchar(3) primary key, name varchar(255) not null);
-fields(uuid, is_code varchar(3) references countries(iso_code), name varchar(255));
+currencies(is_code varchar(3) primary key, name varchar(255))
+countries(iso_code varchar(2) primary key, name varchar(255) not null, currency_iso_code varchar(3) references currencies(is_code));
+fields(uuid, is_code varchar(2) references countries(iso_code), name varchar(255));
 ```
 
 Indexes on iso codes.
