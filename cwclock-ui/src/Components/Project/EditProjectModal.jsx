@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import Modal from "../common/Modal";
 import ConfigForm from "../common/ConfigForm";
 import AutocompleteSelect from "../common/AutocompleteSelect";
+import ConfirmModal from "../common/ConfirmModal";
 import Button from "../common/Button";
 import { updateProjectApi } from "../../Redux/Projects/Project.actions";
 import { useI18n } from "../../i18n/I18nContext";
@@ -18,6 +19,7 @@ const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
   const [error, setError] = useState("");
   const [targetClientId, setTargetClientId] = useState("");
   const [transferError, setTransferError] = useState("");
+  const [confirmingTransfer, setConfirmingTransfer] = useState(false);
 
   const otherClientOptions = clients
     .filter((c) => c.id !== targetProject?.clientId)
@@ -50,6 +52,7 @@ const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
       setError("");
       setTargetClientId("");
       setTransferError("");
+      setConfirmingTransfer(false);
     }
   }, [show, targetProject]);
 
@@ -71,16 +74,14 @@ const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
     }
   };
 
-  const handleTransfer = async () => {
+  const handleTransferClick = () => {
     setTransferError("");
     if (!targetClientId) return;
-    if (
-      !window.confirm(
-        t("projects.transferConfirmBody", { name: targetProject.name, clientName: targetClient?.name || "" })
-      )
-    ) {
-      return;
-    }
+    setConfirmingTransfer(true);
+  };
+
+  const handleTransferConfirm = async () => {
+    setConfirmingTransfer(false);
     try {
       await dispatch(
         updateProjectApi(
@@ -123,13 +124,22 @@ const EditProjectModal = ({ show, onClose, targetProject, orgId, token }) => {
               value={targetClientId}
               onChange={setTargetClientId}
             />
-            <Button variant="danger" disabled={!targetClientId} onClick={handleTransfer} title={t("projects.transferHint")}>
+            <Button variant="danger" disabled={!targetClientId} onClick={handleTransferClick} title={t("projects.transferHint")}>
               {t("projects.transferButton")}
             </Button>
             {transferError && <p className="cw-error">{transferError}</p>}
           </div>
         </>
       )}
+
+      <ConfirmModal
+        show={confirmingTransfer}
+        title={t("projects.transferButton")}
+        body={t("projects.transferConfirmBody", { name: targetProject.name, clientName: targetClient?.name || "" })}
+        confirmLabel={t("projects.transferButton")}
+        onConfirm={handleTransferConfirm}
+        onCancel={() => setConfirmingTransfer(false)}
+      />
     </Modal>
   );
 };

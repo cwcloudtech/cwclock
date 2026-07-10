@@ -51,7 +51,7 @@ const Project = () => {
     fields: [
       {
         name: "clientId",
-        type: "select",
+        type: "autocomplete",
         label: t("common.client"),
         required: true,
         placeholder: t("common.selectAClient"),
