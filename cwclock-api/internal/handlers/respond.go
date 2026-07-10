@@ -50,6 +50,7 @@ const (
 	CodeCantRemoveOwner        = "errors.cantRemoveOwner"
 	CodeMustOwnTargetOrg       = "errors.mustOwnTargetOrg"
 	CodeInvalidClientForOrg    = "errors.invalidClientForOrg"
+	CodeInvalidCountry         = "errors.invalidCountry"
 )
 
 func writeJSON(w http.ResponseWriter, status int, body any) {

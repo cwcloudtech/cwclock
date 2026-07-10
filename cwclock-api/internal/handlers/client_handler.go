@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -13,31 +14,37 @@ import (
 )
 
 type ClientHandler struct {
-	clients *store.ClientStore
-	orgs    *store.OrgStore
+	clients   *store.ClientStore
+	orgs      *store.OrgStore
+	countries *store.CountryStore
 }
 
-func NewClientHandler(clients *store.ClientStore, orgs *store.OrgStore) *ClientHandler {
-	return &ClientHandler{clients: clients, orgs: orgs}
+func NewClientHandler(clients *store.ClientStore, orgs *store.OrgStore, countries *store.CountryStore) *ClientHandler {
+	return &ClientHandler{clients: clients, orgs: orgs, countries: countries}
 }
 
 type clientPayload struct {
-	Name               string   `json:"name"`
-	Email              string   `json:"email"`
-	Address            string   `json:"address"`
-	PostalCode         string   `json:"postalCode"`
-	City               string   `json:"city"`
-	Country            string   `json:"country"`
-	VATNumber          string   `json:"vatNumber"`
-	VATRate            *float64 `json:"vatRate"`
-	VATDischargeMotive string   `json:"vatDischargeMotive"`
-	PurchaseOrder      string   `json:"purchaseOrder"`
-	HoursPerDay        float64  `json:"hoursPerDay"`
-	DailyRate          *float64 `json:"dailyRate"`
+	Name                 string   `json:"name"`
+	Email                string   `json:"email"`
+	Address              string   `json:"address"`
+	PostalCode           string   `json:"postalCode"`
+	City                 string   `json:"city"`
+	Country              string   `json:"country"`
+	VATNumber            string   `json:"vatNumber"`
+	VATRate              *float64 `json:"vatRate"`
+	VATDischargeMotive   string   `json:"vatDischargeMotive"`
+	SIREN                string   `json:"siren"`
+	SIRET                string   `json:"siret"`
+	NAF                  string   `json:"naf"`
+	MF                   string   `json:"mf"`
+	IdentificationNumber string   `json:"identificationNumber"`
+	PurchaseOrder        string   `json:"purchaseOrder"`
+	HoursPerDay          float64  `json:"hoursPerDay"`
+	DailyRate            *float64 `json:"dailyRate"`
 }
 
 func (p clientPayload) valid() bool {
-	return utils.IsNotBlank(p.Name)
+	return utils.IsNotBlank(p.Name) && utils.IsNotBlank(p.Country)
 }
 
 // validEmail lets the field stay blank (it's optional) but requires a
@@ -46,20 +53,29 @@ func (p clientPayload) validEmail() bool {
 	return utils.IsBlank(p.Email) || utils.IsValidEmail(p.Email)
 }
 
+func (h *ClientHandler) validCountry(ctx context.Context, p clientPayload) (bool, error) {
+	return h.countries.Exists(ctx, p.Country)
+}
+
 func (p clientPayload) toFields() store.ClientFields {
 	return store.ClientFields{
-		Name:               p.Name,
-		Email:              p.Email,
-		Address:            p.Address,
-		PostalCode:         p.PostalCode,
-		City:               p.City,
-		Country:            p.Country,
-		VATNumber:          p.VATNumber,
-		VATRate:            p.VATRate,
-		VATDischargeMotive: p.VATDischargeMotive,
-		PurchaseOrder:      p.PurchaseOrder,
-		HoursPerDay:        p.HoursPerDay,
-		DailyRate:          p.DailyRate,
+		Name:                 p.Name,
+		Email:                p.Email,
+		Address:              p.Address,
+		PostalCode:           p.PostalCode,
+		City:                 p.City,
+		Country:              p.Country,
+		VATNumber:            p.VATNumber,
+		VATRate:              p.VATRate,
+		VATDischargeMotive:   p.VATDischargeMotive,
+		SIREN:                p.SIREN,
+		SIRET:                p.SIRET,
+		NAF:                  p.NAF,
+		MF:                   p.MF,
+		IdentificationNumber: p.IdentificationNumber,
+		PurchaseOrder:        p.PurchaseOrder,
+		HoursPerDay:          p.HoursPerDay,
+		DailyRate:            p.DailyRate,
 	}
 }
 
@@ -96,11 +112,18 @@ func (h *ClientHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	var p clientPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !p.valid() {
-		writeError(w, http.StatusBadRequest, "Please add a name field", CodeNameRequired)
+		writeError(w, http.StatusBadRequest, "Please add a name and country field", CodeNameRequired)
 		return
 	}
 	if !p.validEmail() {
 		writeError(w, http.StatusBadRequest, "Please add a valid email", CodeInvalidEmail)
+		return
+	}
+	if ok, err := h.validCountry(r.Context(), p); err != nil {
+		writeStoreError(w, err)
+		return
+	} else if !ok {
+		writeError(w, http.StatusBadRequest, "Please use a supported country code", CodeInvalidCountry)
 		return
 	}
 
@@ -117,11 +140,18 @@ func (h *ClientHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var p clientPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !p.valid() {
-		writeError(w, http.StatusBadRequest, "Please add a name field", CodeNameRequired)
+		writeError(w, http.StatusBadRequest, "Please add a name and country field", CodeNameRequired)
 		return
 	}
 	if !p.validEmail() {
 		writeError(w, http.StatusBadRequest, "Please add a valid email", CodeInvalidEmail)
+		return
+	}
+	if ok, err := h.validCountry(r.Context(), p); err != nil {
+		writeStoreError(w, err)
+		return
+	} else if !ok {
+		writeError(w, http.StatusBadRequest, "Please use a supported country code", CodeInvalidCountry)
 		return
 	}
 

@@ -20,34 +20,44 @@ func NewClientStore(pool *pgxpool.Pool) *ClientStore {
 }
 
 type clientData struct {
-	Name               string   `json:"name"`
-	Email              string   `json:"email,omitempty"`
-	Address            string   `json:"address"`
-	PostalCode         string   `json:"postalCode"`
-	City               string   `json:"city"`
-	Country            string   `json:"country"`
-	VATNumber          string   `json:"vatNumber"`
-	VATRate            float64  `json:"vatRate"`
-	VATDischargeMotive string   `json:"vatDischargeMotive"`
-	PurchaseOrder      string   `json:"purchaseOrder"`
-	HoursPerDay        float64  `json:"hoursPerDay"`
-	DailyRate          *float64 `json:"dailyRate,omitempty"`
+	Name                 string   `json:"name"`
+	Email                string   `json:"email,omitempty"`
+	Address              string   `json:"address"`
+	PostalCode           string   `json:"postalCode"`
+	City                 string   `json:"city"`
+	Country              string   `json:"country"`
+	VATNumber            string   `json:"vatNumber"`
+	VATRate              float64  `json:"vatRate"`
+	VATDischargeMotive   string   `json:"vatDischargeMotive"`
+	SIREN                string   `json:"siren,omitempty"`
+	SIRET                string   `json:"siret,omitempty"`
+	NAF                  string   `json:"naf,omitempty"`
+	MF                   string   `json:"mf,omitempty"`
+	IdentificationNumber string   `json:"identificationNumber,omitempty"`
+	PurchaseOrder        string   `json:"purchaseOrder"`
+	HoursPerDay          float64  `json:"hoursPerDay"`
+	DailyRate            *float64 `json:"dailyRate,omitempty"`
 }
 
 // ClientFields holds the editable, non-identifying fields of a client.
 type ClientFields struct {
-	Name               string
-	Email              string
-	Address            string
-	PostalCode         string
-	City               string
-	Country            string
-	VATNumber          string
-	VATRate            *float64
-	VATDischargeMotive string
-	PurchaseOrder      string
-	HoursPerDay        float64
-	DailyRate          *float64
+	Name                 string
+	Email                string
+	Address              string
+	PostalCode           string
+	City                 string
+	Country              string
+	VATNumber            string
+	VATRate              *float64
+	VATDischargeMotive   string
+	SIREN                string
+	SIRET                string
+	NAF                  string
+	MF                   string
+	IdentificationNumber string
+	PurchaseOrder        string
+	HoursPerDay          float64
+	DailyRate            *float64
 }
 
 // defaultVATRate is applied when the client has no VAT rate set at all, or
@@ -64,18 +74,23 @@ func toClientData(f ClientFields) clientData {
 		hoursPerDay = 7
 	}
 	return clientData{
-		Name:               f.Name,
-		Email:              f.Email,
-		Address:            f.Address,
-		PostalCode:         f.PostalCode,
-		City:               f.City,
-		Country:            f.Country,
-		VATNumber:          f.VATNumber,
-		VATRate:            vatRate,
-		VATDischargeMotive: f.VATDischargeMotive,
-		PurchaseOrder:      f.PurchaseOrder,
-		HoursPerDay:        hoursPerDay,
-		DailyRate:          f.DailyRate,
+		Name:                 f.Name,
+		Email:                f.Email,
+		Address:              f.Address,
+		PostalCode:           f.PostalCode,
+		City:                 f.City,
+		Country:              f.Country,
+		VATNumber:            f.VATNumber,
+		VATRate:              vatRate,
+		VATDischargeMotive:   f.VATDischargeMotive,
+		SIREN:                f.SIREN,
+		SIRET:                f.SIRET,
+		NAF:                  f.NAF,
+		MF:                   f.MF,
+		IdentificationNumber: f.IdentificationNumber,
+		PurchaseOrder:        f.PurchaseOrder,
+		HoursPerDay:          hoursPerDay,
+		DailyRate:            f.DailyRate,
 	}
 }
 
@@ -101,6 +116,11 @@ func scanClient(row pgx.Row) (models.Client, error) {
 	c.VATNumber = d.VATNumber
 	c.VATRate = d.VATRate
 	c.VATDischargeMotive = d.VATDischargeMotive
+	c.SIREN = d.SIREN
+	c.SIRET = d.SIRET
+	c.NAF = d.NAF
+	c.MF = d.MF
+	c.IdentificationNumber = d.IdentificationNumber
 	c.PurchaseOrder = d.PurchaseOrder
 	c.HoursPerDay = d.HoursPerDay
 	c.DailyRate = d.DailyRate

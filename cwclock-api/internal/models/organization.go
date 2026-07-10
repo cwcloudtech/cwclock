@@ -12,70 +12,29 @@ const (
 )
 
 type Organization struct {
-	ID         string    `json:"id"`
-	OwnerID    string    `json:"ownerId"`
-	Name       string    `json:"name"`
-	Email      string    `json:"email"`
-	Address    string    `json:"address"`
-	PostalCode string    `json:"postalCode"`
-	City       string    `json:"city"`
-	Country    string    `json:"country"`
-	VATNumber  string    `json:"vatNumber"`
-	SIREN      string    `json:"siren"`
-	SIRET      string    `json:"siret"`
-	NAF        string    `json:"naf"`
-	Picture    string    `json:"picture,omitempty"`
-	PictureX   float64   `json:"pictureX"`
-	PictureY   float64   `json:"pictureY"`
-	Stamp      string    `json:"stamp,omitempty"`
-	StampX     float64   `json:"stampX"`
-	StampY     float64   `json:"stampY"`
-	Currency   string    `json:"currency"`
-	CreatedAt  time.Time `json:"createdAt"`
-	UpdatedAt  time.Time `json:"updatedAt"`
-}
-
-// defaultAllowedCurrencies is the fixed, ordered list of ISO 4217 currency
-// codes an organization may be billed in, used unless the deployment
-// overrides it via the CWCLOCK_ALLOWED_CURRENCIES env var (see
-// SetAllowedCurrencies). It's a closed list (not free text) so invoices/
-// exports only ever deal with currencies the business supports.
-var defaultAllowedCurrencies = []string{
-	"EUR", "USD", "GBP", "CAD", "CHF", "TND", "DZD", "MAD", "TRY", "EGP",
-	"SAR", "AED", "QAR", "CNY", "HKD", "SGD", "JPY", "AUD", "NZD",
-}
-
-// AllowedCurrencies is the effective, ordered list of ISO 4217 currency
-// codes organizations may be billed in. It starts out as
-// defaultAllowedCurrencies and can be overridden at startup with
-// SetAllowedCurrencies.
-var AllowedCurrencies = append([]string(nil), defaultAllowedCurrencies...)
-
-// SetAllowedCurrencies overrides AllowedCurrencies, e.g. from the
-// CWCLOCK_ALLOWED_CURRENCIES env var. A nil or empty list is ignored, so the
-// default list always stays in effect unless a valid override is given.
-func SetAllowedCurrencies(codes []string) {
-	if len(codes) == 0 {
-		return
-	}
-	AllowedCurrencies = codes
-}
-
-// IsAllowedCurrency reports whether code is one of AllowedCurrencies.
-func IsAllowedCurrency(code string) bool {
-	for _, c := range AllowedCurrencies {
-		if c == code {
-			return true
-		}
-	}
-	return false
-}
-
-// DefaultCurrency is applied to an organization when none is provided: the
-// first entry of AllowedCurrencies, so it stays valid even when the list is
-// overridden without "EUR" in it.
-func DefaultCurrency() string {
-	return AllowedCurrencies[0]
+	ID                   string    `json:"id"`
+	OwnerID              string    `json:"ownerId"`
+	Name                 string    `json:"name"`
+	Email                string    `json:"email"`
+	Address              string    `json:"address"`
+	PostalCode           string    `json:"postalCode"`
+	City                 string    `json:"city"`
+	Country              string    `json:"country"`
+	VATNumber            string    `json:"vatNumber"`
+	SIREN                string    `json:"siren"`
+	SIRET                string    `json:"siret"`
+	NAF                  string    `json:"naf"`
+	MF                   string    `json:"mf"`
+	IdentificationNumber string    `json:"identificationNumber"`
+	Picture              string    `json:"picture,omitempty"`
+	PictureX             float64   `json:"pictureX"`
+	PictureY             float64   `json:"pictureY"`
+	Stamp                string    `json:"stamp,omitempty"`
+	StampX               float64   `json:"stampX"`
+	StampY               float64   `json:"stampY"`
+	Currency             string    `json:"currency"`
+	CreatedAt            time.Time `json:"createdAt"`
+	UpdatedAt            time.Time `json:"updatedAt"`
 }
 
 // OrganizationWithOwner adds the owner's email to an Organization, for the

@@ -9,7 +9,6 @@ import (
 	"cwclock-api/internal/db"
 	"cwclock-api/internal/handlers"
 	"cwclock-api/internal/metrics"
-	"cwclock-api/internal/models"
 	"cwclock-api/internal/router"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/telemetry"
@@ -18,7 +17,6 @@ import (
 func main() {
 	cfg := config.Load()
 	runtime.GOMAXPROCS(cfg.MaxWorkers)
-	models.SetAllowedCurrencies(cfg.AllowedCurrencies)
 
 	ctx := context.Background()
 
@@ -40,7 +38,10 @@ func main() {
 	defer pool.Close()
 
 	userStore := store.NewUserStore(pool)
-	orgStore := store.NewOrgStore(pool)
+	countryStore := store.NewCountryStore(pool)
+	currencyStore := store.NewCurrencyStore(pool)
+	fieldStore := store.NewFieldStore(pool)
+	orgStore := store.NewOrgStore(pool, countryStore)
 	clientStore := store.NewClientStore(pool)
 	projectStore := store.NewProjectStore(pool)
 	timeEntryStore := store.NewTimeEntryStore(pool)
@@ -48,8 +49,8 @@ func main() {
 	invoiceStore := store.NewInvoiceStore(pool)
 
 	userHandler := handlers.NewUserHandler(userStore, cfg.JWTSecret, cfg.MaxImageSize)
-	orgHandler := handlers.NewOrganizationHandler(orgStore, userStore, cfg.MaxImageSize)
-	clientHandler := handlers.NewClientHandler(clientStore, orgStore)
+	orgHandler := handlers.NewOrganizationHandler(orgStore, userStore, countryStore, currencyStore, cfg.MaxImageSize)
+	clientHandler := handlers.NewClientHandler(clientStore, orgStore, countryStore)
 	projectHandler := handlers.NewProjectHandler(projectStore, clientStore)
 	timeEntryHandler := handlers.NewTimeEntryHandler(timeEntryStore)
 	adminHandler := handlers.NewAdminHandler(userStore, cfg.MaxImageSize)
@@ -57,6 +58,9 @@ func main() {
 	reportHandler := handlers.NewReportHandler(orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize)
 	apiKeyHandler := handlers.NewApiKeyHandler(apiKeyStore)
 	invoiceHandler := handlers.NewInvoiceHandler(invoiceStore, orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize)
+	currencyHandler := handlers.NewCurrencyHandler(currencyStore)
+	countryHandler := handlers.NewCountryHandler(countryStore)
+	fieldHandler := handlers.NewFieldHandler(fieldStore)
 
 	met, err := metrics.Setup(ctx, metrics.Config{
 		Endpoint: cfg.OtelEndpoint,
@@ -71,6 +75,7 @@ func main() {
 
 	r := router.New(
 		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler, importHandler, apiKeyHandler, invoiceHandler,
+		currencyHandler, countryHandler, fieldHandler,
 		orgStore, userStore, apiKeyStore, cfg.JWTSecret, cfg.CorsEnabled, cfg.CorsAllowedOrigins, cfg.Version, cfg.ManifestPath,
 		tel, met.Observe, met.Handler,
 	)

@@ -13,55 +13,62 @@ import (
 )
 
 type OrgStore struct {
-	pool *pgxpool.Pool
+	pool      *pgxpool.Pool
+	countries *CountryStore
 }
 
-func NewOrgStore(pool *pgxpool.Pool) *OrgStore {
-	return &OrgStore{pool: pool}
+func NewOrgStore(pool *pgxpool.Pool, countries *CountryStore) *OrgStore {
+	return &OrgStore{pool: pool, countries: countries}
 }
 
 type orgData struct {
-	Name       string   `json:"name"`
-	Address    string   `json:"address"`
-	PostalCode string   `json:"postalCode"`
-	City       string   `json:"city"`
-	Country    string   `json:"country"`
-	VATNumber  string   `json:"vatNumber"`
-	SIREN      string   `json:"siren"`
-	SIRET      string   `json:"siret"`
-	NAF        string   `json:"naf,omitempty"`
-	Picture    string   `json:"picture,omitempty"`
-	PictureX   *float64 `json:"pictureX,omitempty"`
-	PictureY   *float64 `json:"pictureY,omitempty"`
-	Stamp      string   `json:"stamp,omitempty"`
-	StampX     *float64 `json:"stampX,omitempty"`
-	StampY     *float64 `json:"stampY,omitempty"`
-	Currency   string   `json:"currency,omitempty"`
+	Name                 string   `json:"name"`
+	Address              string   `json:"address"`
+	PostalCode           string   `json:"postalCode"`
+	City                 string   `json:"city"`
+	Country              string   `json:"country"`
+	VATNumber            string   `json:"vatNumber"`
+	SIREN                string   `json:"siren"`
+	SIRET                string   `json:"siret"`
+	NAF                  string   `json:"naf,omitempty"`
+	MF                   string   `json:"mf,omitempty"`
+	IdentificationNumber string   `json:"identificationNumber,omitempty"`
+	Picture              string   `json:"picture,omitempty"`
+	PictureX             *float64 `json:"pictureX,omitempty"`
+	PictureY             *float64 `json:"pictureY,omitempty"`
+	Stamp                string   `json:"stamp,omitempty"`
+	StampX               *float64 `json:"stampX,omitempty"`
+	StampY               *float64 `json:"stampY,omitempty"`
+	Currency             string   `json:"currency,omitempty"`
 }
 
 // OrganizationFields holds the editable, non-identifying fields of an
 // organization (used by Create/Update to avoid long positional args).
 type OrganizationFields struct {
-	Name       string
-	Address    string
-	PostalCode string
-	City       string
-	Country    string
-	VATNumber  string
-	SIREN      string
-	SIRET      string
-	NAF        string
-	Picture    string
-	PictureX   float64
-	PictureY   float64
-	Stamp      string
-	StampX     float64
-	StampY     float64
-	Currency   string
+	Name                 string
+	Address              string
+	PostalCode           string
+	City                 string
+	Country              string
+	VATNumber            string
+	SIREN                string
+	SIRET                string
+	NAF                  string
+	MF                   string
+	IdentificationNumber string
+	Picture              string
+	PictureX             float64
+	PictureY             float64
+	Stamp                string
+	StampX               float64
+	StampY               float64
+	Currency             string
 }
 
 // applyOrgData unmarshals the stored JSON blob onto an organization already
-// populated with its scanned columns (id, owner, timestamps).
+// populated with its scanned columns (id, owner, timestamps). Currency
+// falls back to models.FallbackCurrency only defensively, for rows written
+// before Create/Update started always resolving and persisting one.
 func applyOrgData(o *models.Organization, raw []byte) error {
 	var d orgData
 	if err := json.Unmarshal(raw, &d); err != nil {
@@ -76,13 +83,15 @@ func applyOrgData(o *models.Organization, raw []byte) error {
 	o.SIREN = d.SIREN
 	o.SIRET = d.SIRET
 	o.NAF = d.NAF
+	o.MF = d.MF
+	o.IdentificationNumber = d.IdentificationNumber
 	o.Picture = d.Picture
 	o.PictureX = resolveImagePosition(d.PictureX)
 	o.PictureY = resolveImagePosition(d.PictureY)
 	o.Stamp = d.Stamp
 	o.StampX = resolveImagePosition(d.StampX)
 	o.StampY = resolveImagePosition(d.StampY)
-	o.Currency = utils.If(utils.IsBlank(d.Currency), models.DefaultCurrency(), d.Currency)
+	o.Currency = utils.If(utils.IsBlank(d.Currency), models.FallbackCurrency, d.Currency)
 	return nil
 }
 
@@ -103,29 +112,48 @@ func scanOrganization(row pgx.Row) (models.Organization, error) {
 
 func toOrgData(f OrganizationFields) orgData {
 	return orgData{
-		Name:       f.Name,
-		Address:    f.Address,
-		PostalCode: f.PostalCode,
-		City:       f.City,
-		Country:    f.Country,
-		VATNumber:  f.VATNumber,
-		SIREN:      f.SIREN,
-		SIRET:      f.SIRET,
-		NAF:        f.NAF,
-		Picture:    f.Picture,
-		PictureX:   &f.PictureX,
-		PictureY:   &f.PictureY,
-		Stamp:      f.Stamp,
-		StampX:     &f.StampX,
-		StampY:     &f.StampY,
-		Currency:   utils.If(utils.IsBlank(f.Currency), models.DefaultCurrency(), f.Currency),
+		Name:                 f.Name,
+		Address:              f.Address,
+		PostalCode:           f.PostalCode,
+		City:                 f.City,
+		Country:              f.Country,
+		VATNumber:            f.VATNumber,
+		SIREN:                f.SIREN,
+		SIRET:                f.SIRET,
+		NAF:                  f.NAF,
+		MF:                   f.MF,
+		IdentificationNumber: f.IdentificationNumber,
+		Picture:              f.Picture,
+		PictureX:             &f.PictureX,
+		PictureY:             &f.PictureY,
+		Stamp:                f.Stamp,
+		StampX:               &f.StampX,
+		StampY:               &f.StampY,
+		Currency:             f.Currency,
 	}
+}
+
+// resolveCurrency keeps an explicit currency as-is; a blank one defaults to
+// the country's own currency (ai-instruct-35: "the default currency should
+// be selected according to the country but let the user decide"), falling
+// back to models.FallbackCurrency when the country can't resolve one either.
+func (s *OrgStore) resolveCurrency(ctx context.Context, f OrganizationFields) (string, error) {
+	if utils.IsNotBlank(f.Currency) {
+		return f.Currency, nil
+	}
+	return s.countries.DefaultCurrency(ctx, f.Country)
 }
 
 // Create creates the organization and gives its owner an explicit "owner"
 // membership row, so they have somewhere to store things like a daily rate
 // just like any other member.
 func (s *OrgStore) Create(ctx context.Context, ownerID string, f OrganizationFields) (models.Organization, error) {
+	currency, err := s.resolveCurrency(ctx, f)
+	if err != nil {
+		return models.Organization{}, err
+	}
+	f.Currency = currency
+
 	data, err := json.Marshal(toOrgData(f))
 	if err != nil {
 		return models.Organization{}, err
@@ -224,6 +252,12 @@ func (s *OrgStore) ListAllWithOwner(ctx context.Context) ([]models.OrganizationW
 }
 
 func (s *OrgStore) Update(ctx context.Context, id string, f OrganizationFields) (models.Organization, error) {
+	currency, err := s.resolveCurrency(ctx, f)
+	if err != nil {
+		return models.Organization{}, err
+	}
+	f.Currency = currency
+
 	data, err := json.Marshal(toOrgData(f))
 	if err != nil {
 		return models.Organization{}, err

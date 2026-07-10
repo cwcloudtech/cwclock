@@ -19,6 +19,7 @@ const fr = {
     city: "Ville",
     country: "Pays",
     vatNumber: "Numéro de TVA",
+    identificationNumber: "Numéro d'identification",
     picture: "Photo",
     updateAvatar: "Changer l'avatar",
     uploadNewPicture: "Choisir une nouvelle photo de profil",
@@ -325,6 +326,7 @@ const fr = {
     cantRemoveOwner: "Le propriétaire de l'organisation ne peut pas être retiré.",
     mustOwnTargetOrg: "Vous devez posséder l'organisation cible pour y transférer un client.",
     invalidClientForOrg: "Ce client n'appartient pas à cette organisation.",
+    invalidCountry: "Veuillez sélectionner un pays pris en charge.",
   },
   reports: {
     summary: "Résumé",

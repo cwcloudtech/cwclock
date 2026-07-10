@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -16,38 +17,49 @@ import (
 type OrganizationHandler struct {
 	orgs         *store.OrgStore
 	users        *store.UserStore
+	countries    *store.CountryStore
+	currencies   *store.CurrencyStore
 	maxImageSize int64
 }
 
-func NewOrganizationHandler(orgs *store.OrgStore, users *store.UserStore, maxImageSize int64) *OrganizationHandler {
-	return &OrganizationHandler{orgs: orgs, users: users, maxImageSize: maxImageSize}
+func NewOrganizationHandler(orgs *store.OrgStore, users *store.UserStore, countries *store.CountryStore, currencies *store.CurrencyStore, maxImageSize int64) *OrganizationHandler {
+	return &OrganizationHandler{orgs: orgs, users: users, countries: countries, currencies: currencies, maxImageSize: maxImageSize}
 }
 
 type organizationPayload struct {
-	Name       string  `json:"name"`
-	Address    string  `json:"address"`
-	PostalCode string  `json:"postalCode"`
-	City       string  `json:"city"`
-	Country    string  `json:"country"`
-	VATNumber  string  `json:"vatNumber"`
-	SIREN      string  `json:"siren"`
-	SIRET      string  `json:"siret"`
-	NAF        string  `json:"naf"`
-	Picture    string  `json:"picture"`
-	PictureX   float64 `json:"pictureX"`
-	PictureY   float64 `json:"pictureY"`
-	Stamp      string  `json:"stamp"`
-	StampX     float64 `json:"stampX"`
-	StampY     float64 `json:"stampY"`
-	Currency   string  `json:"currency"`
+	Name                 string  `json:"name"`
+	Address              string  `json:"address"`
+	PostalCode           string  `json:"postalCode"`
+	City                 string  `json:"city"`
+	Country              string  `json:"country"`
+	VATNumber            string  `json:"vatNumber"`
+	SIREN                string  `json:"siren"`
+	SIRET                string  `json:"siret"`
+	NAF                  string  `json:"naf"`
+	MF                   string  `json:"mf"`
+	IdentificationNumber string  `json:"identificationNumber"`
+	Picture              string  `json:"picture"`
+	PictureX             float64 `json:"pictureX"`
+	PictureY             float64 `json:"pictureY"`
+	Stamp                string  `json:"stamp"`
+	StampX               float64 `json:"stampX"`
+	StampY               float64 `json:"stampY"`
+	Currency             string  `json:"currency"`
 }
 
 func (p organizationPayload) valid() bool {
-	return utils.IsNotBlank(p.Name)
+	return utils.IsNotBlank(p.Name) && utils.IsNotBlank(p.Country)
 }
 
-func (p organizationPayload) validCurrency() bool {
-	return utils.IsBlank(p.Currency) || models.IsAllowedCurrency(p.Currency)
+func (h *OrganizationHandler) validCountry(ctx context.Context, p organizationPayload) (bool, error) {
+	return h.countries.Exists(ctx, p.Country)
+}
+
+func (h *OrganizationHandler) validCurrency(ctx context.Context, p organizationPayload) (bool, error) {
+	if utils.IsBlank(p.Currency) {
+		return true, nil
+	}
+	return h.currencies.Exists(ctx, p.Currency)
 }
 
 func (p organizationPayload) imageTooLarge(maxImageSize int64) bool {
@@ -56,22 +68,24 @@ func (p organizationPayload) imageTooLarge(maxImageSize int64) bool {
 
 func (p organizationPayload) toFields() store.OrganizationFields {
 	return store.OrganizationFields{
-		Name:       p.Name,
-		Address:    p.Address,
-		PostalCode: p.PostalCode,
-		City:       p.City,
-		Country:    p.Country,
-		VATNumber:  p.VATNumber,
-		SIREN:      p.SIREN,
-		SIRET:      p.SIRET,
-		NAF:        p.NAF,
-		Picture:    p.Picture,
-		PictureX:   p.PictureX,
-		PictureY:   p.PictureY,
-		Stamp:      p.Stamp,
-		StampX:     p.StampX,
-		StampY:     p.StampY,
-		Currency:   p.Currency,
+		Name:                 p.Name,
+		Address:              p.Address,
+		PostalCode:           p.PostalCode,
+		City:                 p.City,
+		Country:              p.Country,
+		VATNumber:            p.VATNumber,
+		SIREN:                p.SIREN,
+		SIRET:                p.SIRET,
+		NAF:                  p.NAF,
+		MF:                   p.MF,
+		IdentificationNumber: p.IdentificationNumber,
+		Picture:              p.Picture,
+		PictureX:             p.PictureX,
+		PictureY:             p.PictureY,
+		Stamp:                p.Stamp,
+		StampX:               p.StampX,
+		StampY:               p.StampY,
+		Currency:             p.Currency,
 	}
 }
 
@@ -80,10 +94,20 @@ func (h *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	var p organizationPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !p.valid() {
-		writeError(w, http.StatusBadRequest, "Please add a name field", CodeNameRequired)
+		writeError(w, http.StatusBadRequest, "Please add a name and country field", CodeNameRequired)
 		return
 	}
-	if !p.validCurrency() {
+	if ok, err := h.validCountry(r.Context(), p); err != nil {
+		writeStoreError(w, err)
+		return
+	} else if !ok {
+		writeError(w, http.StatusBadRequest, "Please use a supported country code", CodeInvalidCountry)
+		return
+	}
+	if ok, err := h.validCurrency(r.Context(), p); err != nil {
+		writeStoreError(w, err)
+		return
+	} else if !ok {
 		writeError(w, http.StatusBadRequest, "Please use a supported currency code", CodeInvalidCurrency)
 		return
 	}
@@ -138,10 +162,20 @@ func (h *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var p organizationPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !p.valid() {
-		writeError(w, http.StatusBadRequest, "Please add a name field", CodeNameRequired)
+		writeError(w, http.StatusBadRequest, "Please add a name and country field", CodeNameRequired)
 		return
 	}
-	if !p.validCurrency() {
+	if ok, err := h.validCountry(r.Context(), p); err != nil {
+		writeStoreError(w, err)
+		return
+	} else if !ok {
+		writeError(w, http.StatusBadRequest, "Please use a supported country code", CodeInvalidCountry)
+		return
+	}
+	if ok, err := h.validCurrency(r.Context(), p); err != nil {
+		writeStoreError(w, err)
+		return
+	} else if !ok {
 		writeError(w, http.StatusBadRequest, "Please use a supported currency code", CodeInvalidCurrency)
 		return
 	}

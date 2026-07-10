@@ -3,14 +3,27 @@ package handlers
 import (
 	"net/http"
 
-	"cwclock-api/internal/models"
+	"cwclock-api/internal/store"
 )
 
-// ListCurrencies returns the effective, ordered list of ISO 4217 currency
-// codes organizations may be billed in (the built-in default, or the
-// CWCLOCK_ALLOWED_CURRENCIES override if the deployment set one). It's
-// public and has no store dependency: the frontend uses it instead of
-// hardcoding the list, so an override takes effect without a UI deploy.
-func ListCurrencies(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, models.AllowedCurrencies)
+type CurrencyHandler struct {
+	currencies *store.CurrencyStore
+}
+
+func NewCurrencyHandler(currencies *store.CurrencyStore) *CurrencyHandler {
+	return &CurrencyHandler{currencies: currencies}
+}
+
+// List returns every ISO 4217 currency organizations may be billed in, from
+// the currencies table (see ai-instruct-35 - this replaced the
+// CWCLOCK_ALLOWED_CURRENCIES env var, so a deployment now edits the table
+// instead of redeploying to change the list). Public and read-only: the
+// frontend uses it instead of hardcoding the list.
+func (h *CurrencyHandler) List(w http.ResponseWriter, r *http.Request) {
+	currencies, err := h.currencies.List(r.Context())
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"currencies": currencies})
 }

@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -17,7 +16,6 @@ type Config struct {
 	JWTSecret          string
 	MaxWorkers         int
 	PostgresPoolSize   int
-	AllowedCurrencies  []string
 	CorsEnabled        bool
 	CorsAllowedOrigins []string
 	Version            string
@@ -72,7 +70,6 @@ func Load() Config {
 		JWTSecret:          os.Getenv("JWT_SECRET"),
 		MaxWorkers:         maxWorkers,
 		PostgresPoolSize:   postgresPoolSize,
-		AllowedCurrencies:  parseAllowedCurrencies(os.Getenv("CWCLOCK_ALLOWED_CURRENCIES")),
 		CorsEnabled:        utils.IsTrue(os.Getenv("CWCLOCK_CORS_ENABLED")),
 		CorsAllowedOrigins: strings.Split(allowedOrigins, ","),
 		Version:            versionFromManifest(getEnv("CWCLOCK_MANIFEST_PATH", "manifest.json"), getEnv("APP_VERSION", "1.0.0")),
@@ -103,19 +100,4 @@ func versionFromManifest(path, fallback string) string {
 func getEnv(key, fallback string) string {
 	v := os.Getenv(key)
 	return utils.If(utils.IsNotBlank(v), v, fallback)
-}
-
-// parseAllowedCurrencies decodes CWCLOCK_ALLOWED_CURRENCIES, a JSON array of
-// ISO 4217 codes like ["EUR","USD","GBP"]. An empty or invalid value yields
-// nil, which callers treat as "keep the built-in default list".
-func parseAllowedCurrencies(raw string) []string {
-	if utils.IsBlank(raw) {
-		return nil
-	}
-	var codes []string
-	if err := json.Unmarshal([]byte(raw), &codes); err != nil {
-		slog.Warn("invalid CWCLOCK_ALLOWED_CURRENCIES, ignoring", "error", err)
-		return nil
-	}
-	return codes
 }

@@ -24,6 +24,9 @@ import useEmailAutocomplete from "../common/useEmailAutocomplete";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
 import useCurrencies from "../common/useCurrencies";
+import useCountries from "../common/useCountries";
+import useCountryFields from "../common/useCountryFields";
+import { identificationFieldConfig } from "../common/identificationFields";
 
 const emptyFields = {
   name: "",
@@ -35,6 +38,8 @@ const emptyFields = {
   siren: "",
   siret: "",
   naf: "",
+  mf: "",
+  identificationNumber: "",
   picture: "",
   pictureX: 50,
   pictureY: 50,
@@ -127,43 +132,65 @@ const Organizations = () => {
   const [transferEmail, setTransferEmail] = useState("");
   const [transferError, setTransferError] = useState("");
   const currencies = useCurrencies();
+  const countries = useCountries();
+  const createIdentificationFields = useCountryFields(fields.country);
+  const editIdentificationFields = useCountryFields(editFields?.country);
 
-  const orgFormConfig = {
+  const countryOptions = countries.map((c) => ({ value: c.iso, label: c.name }));
+  const currencyOptions = currencies.map((c) => ({ value: c.iso, label: c.iso }));
+
+  const buildOrgFormConfig = (identificationFields) => ({
     name: "Organization",
     fields: [
       { name: "name", type: "text", label: t("common.name"), required: true },
       { name: "address", type: "text", label: t("common.address") },
       { name: "postalCode", type: "text", label: t("common.postalCode") },
       { name: "city", type: "text", label: t("common.city") },
-      { name: "country", type: "text", label: t("common.country") },
-      { name: "vatNumber", type: "text", label: t("common.vatNumber") },
-      { name: "siren", type: "text", label: "SIREN" },
-      { name: "siret", type: "text", label: "SIRET" },
-      { name: "naf", type: "text", label: t("organizations.naf") },
+      {
+        name: "country",
+        type: "autocomplete",
+        label: t("common.country"),
+        placeholder: t("common.country"),
+        required: true,
+        options: countryOptions,
+      },
+      ...identificationFields.map((name) => identificationFieldConfig(name, t)),
       {
         name: "currency",
         type: "select",
         label: t("common.currency"),
         required: true,
-        options: currencies.map((code) => ({ value: code, label: code })),
+        options: currencyOptions,
       },
       { name: "picture", type: "image", label: t("common.picture") },
       { name: "stamp", type: "image", label: t("organizations.stamp") },
     ],
-  };
+  });
+
+  const orgFormConfig = buildOrgFormConfig(createIdentificationFields);
+  const editOrgFormConfig = buildOrgFormConfig(editIdentificationFields);
 
   useEffect(() => {
     dispatch(listOrgsApi(user.token));
   }, [dispatch, user.token]);
 
+  // Defaults the currency from the selected country (ai-instruct-35: "the
+  // default currency should be selected according to the country but let
+  // the user decide"), only while the field is still blank so it never
+  // clobbers a currency the user picked themselves.
   useEffect(() => {
-    if (currencies.length && !fields.currency) {
-      setFields((f) => ({ ...f, currency: currencies[0] }));
-    }
-    // Only react to the currency list becoming available, not to every
-    // keystroke in the rest of the create-organization form.
+    if (!fields.country || fields.currency) return;
+    const country = countries.find((c) => c.iso === fields.country);
+    if (country) setFields((f) => ({ ...f, currency: country.currency }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currencies]);
+  }, [fields.country, countries]);
+
+  useEffect(() => {
+    if (!editFields || !editFields.country || editFields.currency) return;
+    const country = countries.find((c) => c.iso === editFields.country);
+    if (country) setEditFields((f) => ({ ...f, currency: country.currency }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editFields?.country, countries]);
 
   useEffect(() => {
     if (currentOrgId) {
@@ -186,7 +213,7 @@ const Organizations = () => {
     setCreateError("");
     try {
       await dispatch(createOrgApi(fields, user.token));
-      setFields({ ...emptyFields, currency: currencies[0] || "" });
+      setFields(emptyFields);
     } catch (err) {
       setCreateError(apiErrorMessage(err, locale));
     }
@@ -204,7 +231,9 @@ const Organizations = () => {
       siren: currentOrg.siren || "",
       siret: currentOrg.siret || "",
       naf: currentOrg.naf || "",
-      currency: currentOrg.currency || currencies[0] || "",
+      mf: currentOrg.mf || "",
+      identificationNumber: currentOrg.identificationNumber || "",
+      currency: currentOrg.currency || "",
       picture: currentOrg.picture || "",
       pictureX: currentOrg.pictureX ?? 50,
       pictureY: currentOrg.pictureY ?? 50,
@@ -306,7 +335,7 @@ const Organizations = () => {
                 <div>
                   <h2 className="cw-subtitle">{t("organizations.editOrgTitle", { name: currentOrg.name })}</h2>
                   <ConfigForm
-                    config={orgFormConfig}
+                    config={editOrgFormConfig}
                     values={editFields}
                     onChange={setEditField}
                     onSubmit={handleEditSubmit}

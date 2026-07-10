@@ -19,6 +19,7 @@ const en = {
     city: "City",
     country: "Country",
     vatNumber: "VAT number",
+    identificationNumber: "Identification number",
     picture: "Picture",
     updateAvatar: "Update avatar",
     uploadNewPicture: "Upload a new profile picture",
@@ -325,6 +326,7 @@ const en = {
     cantRemoveOwner: "The organization owner cannot be removed.",
     mustOwnTargetOrg: "You must own the target organization to transfer a client to it.",
     invalidClientForOrg: "That client does not belong to this organization.",
+    invalidCountry: "Please select a supported country.",
   },
   reports: {
     summary: "Summary",

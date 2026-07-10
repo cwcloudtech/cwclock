@@ -4,6 +4,7 @@ import RequiredMark from "./RequiredMark";
 import ImagePicker from "./ImagePicker";
 import DropZone from "./DropZone";
 import TagsInput from "./TagsInput";
+import AutocompleteSelect from "./AutocompleteSelect";
 import contrastColor from "./contrastColor";
 import { useI18n } from "../../i18n/I18nContext";
 import styles from "./Styles/ConfigForm.module.css";
@@ -46,6 +47,16 @@ const ConfigForm = ({
             />
             {field.label}
           </label>
+        );
+      case "autocomplete":
+        return (
+          <AutocompleteSelect
+            label={field.label}
+            placeholder={field.placeholder}
+            options={field.options || []}
+            value={value}
+            onChange={(v) => onChange(field.name, v)}
+          />
         );
       case "select":
         return (
@@ -158,7 +169,7 @@ const ConfigForm = ({
     <form onSubmit={onSubmit}>
       {config.fields.map((field) => (
         <div className="cw-field" key={field.name}>
-          {field.type !== "checkbox" && (
+          {field.type !== "checkbox" && field.type !== "autocomplete" && (
             <label className="cw-label">
               {field.label}
               {field.required && <RequiredMark />}

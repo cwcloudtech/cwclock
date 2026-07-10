@@ -25,6 +25,9 @@ func New(
 	importHandler *handlers.ImportHandler,
 	apiKeyHandler *handlers.ApiKeyHandler,
 	invoiceHandler *handlers.InvoiceHandler,
+	currencyHandler *handlers.CurrencyHandler,
+	countryHandler *handlers.CountryHandler,
+	fieldHandler *handlers.FieldHandler,
 	orgs *store.OrgStore,
 	users *store.UserStore,
 	apiKeys middleware.ApiKeyVerifier,
@@ -58,7 +61,9 @@ func New(
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health", handlers.Health)
 		r.Get("/manifest", handlers.NewManifestHandler(manifestPath))
-		r.Get("/currencies", handlers.ListCurrencies)
+		r.Get("/currencies", currencyHandler.List)
+		r.Get("/countries", countryHandler.List)
+		r.Get("/fields", fieldHandler.List)
 
 		r.Route("/users", func(r chi.Router) {
 			r.Post("/", userHandler.Register)

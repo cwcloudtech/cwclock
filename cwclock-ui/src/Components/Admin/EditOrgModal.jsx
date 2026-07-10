@@ -8,6 +8,9 @@ import { listAllOrganizationsApi } from "../../Redux/Admin/Admin.actions";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
 import useCurrencies from "../common/useCurrencies";
+import useCountries from "../common/useCountries";
+import useCountryFields from "../common/useCountryFields";
+import { identificationFieldConfig } from "../common/identificationFields";
 
 const emptyFields = {
   name: "",
@@ -19,6 +22,8 @@ const emptyFields = {
   siren: "",
   siret: "",
   naf: "",
+  mf: "",
+  identificationNumber: "",
   picture: "",
   pictureX: 50,
   pictureY: 50,
@@ -34,6 +39,8 @@ const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
   const [fields, setFields] = useState(emptyFields);
   const [error, setError] = useState("");
   const currencies = useCurrencies();
+  const countries = useCountries();
+  const identificationFields = useCountryFields(fields.country);
 
   const orgFormConfig = {
     name: "Organization",
@@ -42,17 +49,21 @@ const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
       { name: "address", type: "text", label: t("common.address") },
       { name: "postalCode", type: "text", label: t("common.postalCode") },
       { name: "city", type: "text", label: t("common.city") },
-      { name: "country", type: "text", label: t("common.country") },
-      { name: "vatNumber", type: "text", label: t("common.vatNumber") },
-      { name: "siren", type: "text", label: "SIREN" },
-      { name: "siret", type: "text", label: "SIRET" },
-      { name: "naf", type: "text", label: t("organizations.naf") },
+      {
+        name: "country",
+        type: "autocomplete",
+        label: t("common.country"),
+        placeholder: t("common.country"),
+        required: true,
+        options: countries.map((c) => ({ value: c.iso, label: c.name })),
+      },
+      ...identificationFields.map((name) => identificationFieldConfig(name, t)),
       {
         name: "currency",
         type: "select",
         label: t("common.currency"),
         required: true,
-        options: currencies.map((code) => ({ value: code, label: code })),
+        options: currencies.map((c) => ({ value: c.iso, label: c.iso })),
       },
       { name: "picture", type: "image", label: t("common.picture") },
       { name: "stamp", type: "image", label: t("organizations.stamp") },
@@ -71,7 +82,9 @@ const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
         siren: targetOrg.siren || "",
         siret: targetOrg.siret || "",
         naf: targetOrg.naf || "",
-        currency: targetOrg.currency || currencies[0] || "",
+        mf: targetOrg.mf || "",
+        identificationNumber: targetOrg.identificationNumber || "",
+        currency: targetOrg.currency || "",
         picture: targetOrg.picture || "",
         pictureX: targetOrg.pictureX ?? 50,
         pictureY: targetOrg.pictureY ?? 50,
@@ -81,7 +94,17 @@ const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
       });
       setError("");
     }
-  }, [show, targetOrg, currencies]);
+    // Only react to the modal opening/target changing, not to the currency
+    // list becoming available (that no longer affects the initial value).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [show, targetOrg]);
+
+  useEffect(() => {
+    if (!fields.country || fields.currency) return;
+    const country = countries.find((c) => c.iso === fields.country);
+    if (country) setFields((f) => ({ ...f, currency: country.currency }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fields.country, countries]);
 
   if (!targetOrg) return null;
 

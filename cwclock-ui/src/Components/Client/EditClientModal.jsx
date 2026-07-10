@@ -8,6 +8,9 @@ import { updateClientApi, transferClientApi } from "../../Redux/Clients/Client.a
 import { isOrgOwner } from "../common/permissions";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
+import useCountries from "../common/useCountries";
+import useCountryFields from "../common/useCountryFields";
+import { identificationFieldConfig } from "../common/identificationFields";
 
 const emptyFields = {
   name: "",
@@ -19,6 +22,11 @@ const emptyFields = {
   vatNumber: "",
   vatRate: "",
   vatDischargeMotive: "",
+  siren: "",
+  siret: "",
+  naf: "",
+  mf: "",
+  identificationNumber: "",
   purchaseOrder: "",
   hoursPerDay: "",
   dailyRate: "",
@@ -40,6 +48,8 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
     .filter((o) => o.ownerId === user.id && o.id !== orgId)
     .map((o) => ({ value: o.id, label: o.name }));
   const targetOrg = organizations.find((o) => o.id === targetOrgId);
+  const countries = useCountries();
+  const identificationFields = useCountryFields(fields.country);
 
   const clientFormConfig = {
     name: "Client",
@@ -49,10 +59,17 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
       { name: "address", type: "text", label: t("common.address") },
       { name: "postalCode", type: "text", label: t("common.postalCode") },
       { name: "city", type: "text", label: t("common.city") },
-      { name: "country", type: "text", label: t("common.country") },
-      { name: "vatNumber", type: "text", label: t("common.vatNumber") },
+      {
+        name: "country",
+        type: "autocomplete",
+        label: t("common.country"),
+        placeholder: t("common.country"),
+        required: true,
+        options: countries.map((c) => ({ value: c.iso, label: c.name })),
+      },
       { name: "vatRate", type: "number", label: t("clients.vatRateLabel"), step: "0.01" },
       { name: "vatDischargeMotive", type: "text", label: t("clients.vatDischargeMotive") },
+      ...identificationFields.map((name) => identificationFieldConfig(name, t)),
       { name: "purchaseOrder", type: "text", label: t("clients.purchaseOrder") },
       { name: "hoursPerDay", type: "number", label: t("clients.hoursPerDay"), step: "0.01" },
       { name: "dailyRate", type: "number", label: t("clients.dailyRate"), step: "0.01", min: "0" },
@@ -71,6 +88,11 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
         vatNumber: targetClient.vatNumber || "",
         vatRate: targetClient.vatRate ?? "",
         vatDischargeMotive: targetClient.vatDischargeMotive || "",
+        siren: targetClient.siren || "",
+        siret: targetClient.siret || "",
+        naf: targetClient.naf || "",
+        mf: targetClient.mf || "",
+        identificationNumber: targetClient.identificationNumber || "",
         purchaseOrder: targetClient.purchaseOrder || "",
         hoursPerDay: targetClient.hoursPerDay ?? "",
         dailyRate: targetClient.dailyRate ?? "",
