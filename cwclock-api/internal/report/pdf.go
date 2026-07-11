@@ -18,8 +18,7 @@ const (
 
 	donutDisplaySize     = 130.0 // pt, ring's displayed width/height
 	donutLegendGap       = 10.0  // pt, gap between the ring and its legend
-	donutPanelWidth      = 170.0 // pt, ring/legend column width
-	donutGutterWidth     = 190.0 // pt, table's reserved right margin (panel + breathing room)
+	donutColumnWidth     = 170.0 // pt, ring/legend column width
 	donutSwatchSize      = 8.0   // pt, legend color-swatch square
 	donutLegendFont      = 8.0   // pt, project name line
 	donutLegendMetaFont  = 7.0   // pt, duration/percentage line
@@ -104,15 +103,12 @@ func RenderMarkdownPDF(markdown string, logoData []byte, logoType string) ([]byt
 }
 
 // RenderReportTablePDF renders a report PDF: the header markdown, an
-// optional chart image (pass nil chartPNG to omit it, placed between the
-// header and the table), then the table itself alongside an optional
-// project donut chart + legend (pass nil donutPNG to omit it, placed to the
-// table's right - see placeDonut/placeProjectLegend). Unlike
-// RenderMarkdownPDF, the table is drawn directly with fpdf (see drawTable)
-// rather than through a markdown table: mdtopdf sizes columns from the
-// header cell alone and can't wrap body text, so a long value would
-// overflow its column and get clipped by the next one's background fill
-// instead of wrapping.
+// optional charts row (pass nil chartPNG/donutPNG to omit either - see
+// placeChartsRow), then the table itself. Unlike RenderMarkdownPDF, the
+// table is drawn directly with fpdf (see drawTable) rather than through a
+// markdown table: mdtopdf sizes columns from the header cell alone and
+// can't wrap body text, so a long value would overflow its column and get
+// clipped by the next one's background fill instead of wrapping.
 func RenderReportTablePDF(headerMarkdown string, chartPNG []byte, donutPNG []byte, projectDurations []models.ReportProjectDuration, columns []tableColumn, rows [][]string, logoData []byte, logoType string) ([]byte, error) {
 	renderer := newRenderer()
 	addFooter(renderer.Pdf)
@@ -125,19 +121,9 @@ func RenderReportTablePDF(headerMarkdown string, chartPNG []byte, donutPNG []byt
 		return nil, err
 	}
 
-	if len(chartPNG) > 0 {
-		placeChart(renderer.Pdf, chartPNG)
-	}
-
 	translate := renderer.Pdf.UnicodeTranslatorFromDescriptor("cp1252")
-
-	rightGutter := 0.0
-	if len(donutPNG) > 0 {
-		rightGutter = donutGutterWidth
-		placeDonutPanel(renderer.Pdf, translate, donutPNG, projectDurations)
-	}
-
-	drawTable(renderer.Pdf, translate, columns, rows, rightGutter)
+	placeChartsRow(renderer.Pdf, translate, chartPNG, donutPNG, projectDurations)
+	drawTable(renderer.Pdf, translate, columns, rows)
 
 	return outputPDF(renderer.Pdf)
 }
@@ -154,58 +140,62 @@ func placeLogo(pdf *fpdf.Fpdf, data []byte, imgType string) {
 	pdf.ImageOptions("report-header-logo", pageWidth-logoMargin-width, logoMargin/2, width, logoMaxHeight, false, options, 0, "")
 }
 
-// placeChart embeds the daily chart PNG below the current cursor position,
-// scaled to the content width (capped at chartMaxWidthPt) and left-aligned
-// on the page's left margin. flow=true advances the cursor past the image's
-// height so the table markdown run afterward starts writing below it.
-func placeChart(pdf *fpdf.Fpdf, data []byte) {
+// placeImage embeds a PNG at an explicit (x, y), scaled to width with its
+// own aspect ratio preserved, and returns the drawn height. Doesn't move the
+// page cursor - callers position the next thing explicitly (see
+// placeChartsRow).
+func placeImage(pdf *fpdf.Fpdf, key string, data []byte, x, y, width float64) float64 {
 	options := fpdf.ImageOptions{ImageType: "PNG", ReadDpi: true}
-	info := pdf.RegisterImageOptionsReader("report-daily-chart", options, bytes.NewReader(data))
+	info := pdf.RegisterImageOptionsReader(key, options, bytes.NewReader(data))
 	if info == nil || info.Width() <= 0 || info.Height() <= 0 {
+		return 0
+	}
+	height := width * (info.Height() / info.Width())
+	pdf.ImageOptions(key, x, y, width, height, false, options, 0, "")
+	return height
+}
+
+// placeChartsRow embeds the summary report's two charts side by side, below
+// the header and above the table: the project donut ring + legend (see
+// ProjectDonutPNG/placeProjectLegend) on the left, the daily bar chart (see
+// DailyChartPNG) filling the remaining width to its right - the same
+// left/right order cwclock-ui's SummaryReportView uses for the same two
+// charts. Either image may be empty (nothing to plot); if both are, nothing
+// is drawn and the cursor is left untouched.
+func placeChartsRow(pdf *fpdf.Fpdf, translate func(string) string, chartPNG []byte, donutPNG []byte, projectDurations []models.ReportProjectDuration) {
+	if len(chartPNG) == 0 && len(donutPNG) == 0 {
 		return
 	}
 
 	left, _, right, _ := pdf.GetMargins()
 	pageWidth, _ := pdf.GetPageSize()
-	width := pageWidth - left - right
-	if width > chartMaxWidthPt {
-		width = chartMaxWidthPt
-	}
-	height := width * (info.Height() / info.Width())
+	usableWidth := pageWidth - left - right
 
 	pdf.Ln(6)
-	pdf.ImageOptions("report-daily-chart", left, pdf.GetY(), width, height, true, options, 0, "")
-	pdf.Ln(6)
-}
-
-// placeDonutPanel draws the summary report's project donut ring plus a
-// color-swatch legend (project name, duration, share of total) in the
-// page's right-hand gutter (see donutGutterWidth), anchored at the table's
-// starting Y. Drawn once - like placeChart's daily bar chart above it, it
-// isn't repeated if the table paginates.
-func placeDonutPanel(pdf *fpdf.Fpdf, translate func(string) string, data []byte, rows []models.ReportProjectDuration) {
-	_, _, right, _ := pdf.GetMargins()
-	pageWidth, _ := pdf.GetPageSize()
-	x := pageWidth - right - donutPanelWidth
 	y := pdf.GetY()
+	rowBottom := y
+	chartX := left
 
-	ringHeight := placeDonut(pdf, data, x+(donutPanelWidth-donutDisplaySize)/2, y, donutDisplaySize)
-	placeProjectLegend(pdf, translate, x, y+ringHeight+donutLegendGap, donutPanelWidth, rows)
-}
-
-// placeDonut embeds a square chart image (see ProjectDonutPNG) at an
-// explicit (x, y) position, scaled to size×size, and returns the drawn
-// height so callers can stack content below it (see placeDonutPanel).
-// Unlike placeChart, this doesn't move the page cursor - the donut sits
-// beside the table, not inline with it.
-func placeDonut(pdf *fpdf.Fpdf, data []byte, x, y, size float64) float64 {
-	options := fpdf.ImageOptions{ImageType: "PNG", ReadDpi: true}
-	info := pdf.RegisterImageOptionsReader("report-project-donut", options, bytes.NewReader(data))
-	if info == nil || info.Width() <= 0 || info.Height() <= 0 {
-		return 0
+	if len(donutPNG) > 0 {
+		ringX := left + (donutColumnWidth-donutDisplaySize)/2
+		ringHeight := placeImage(pdf, "report-project-donut", donutPNG, ringX, y, donutDisplaySize)
+		legendY := y + ringHeight + donutLegendGap
+		placeProjectLegend(pdf, translate, left, legendY, donutColumnWidth, projectDurations)
+		rowBottom = max(rowBottom, legendY+float64(len(projectDurations))*donutLegendRowHeight)
+		chartX = left + donutColumnWidth + donutLegendGap
 	}
-	pdf.ImageOptions("report-project-donut", x, y, size, size, false, options, 0, "")
-	return size
+
+	if len(chartPNG) > 0 {
+		width := usableWidth - (chartX - left)
+		if width > chartMaxWidthPt {
+			width = chartMaxWidthPt
+		}
+		height := placeImage(pdf, "report-daily-chart", chartPNG, chartX, y, width)
+		rowBottom = max(rowBottom, y+height)
+	}
+
+	pdf.SetXY(left, rowBottom)
+	pdf.Ln(6)
 }
 
 // placeProjectLegend draws one row per project below the donut ring: a

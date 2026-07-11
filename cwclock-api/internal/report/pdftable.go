@@ -31,16 +31,10 @@ type tableColumn struct {
 // cell at an explicit (x, y) position - never relying on the cursor a
 // previous cell's drawing left behind - so a wrapped cell can never bleed
 // into its neighbors.
-//
-// rightGutter reserves extra blank space on the page's right edge (pass 0
-// for none), used by the summary report to keep the table from running
-// under the project donut chart placed there (see placeDonut/
-// placeProjectLegend) - reserved on every page, not just the first, so
-// column widths stay consistent if the table paginates.
-func drawTable(pdf *fpdf.Fpdf, translate func(string) string, columns []tableColumn, rows [][]string, rightGutter float64) {
+func drawTable(pdf *fpdf.Fpdf, translate func(string) string, columns []tableColumn, rows [][]string) {
 	left, _, right, bottom := pdf.GetMargins()
 	pageWidth, pageHeight := pdf.GetPageSize()
-	usableWidth := pageWidth - left - right - rightGutter
+	usableWidth := pageWidth - left - right
 
 	totalWeight := 0.0
 	for _, c := range columns {
