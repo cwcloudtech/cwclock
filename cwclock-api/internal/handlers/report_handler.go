@@ -114,26 +114,26 @@ func decodeExportRequest(w http.ResponseWriter, r *http.Request) (exportRequest,
 // it with the display data a report needs (client/project/member names)
 // plus its computed duration and, when the caller is allowed to see it, its
 // billable amount.
-func (h *ReportHandler) loadEnrichedEntries(ctx context.Context, orgID string, filter store.ReportFilter, canSeeAmount bool) (models.Organization, []models.ReportEntry, error) {
+func (h *ReportHandler) loadEnrichedEntries(ctx context.Context, orgID string, filter store.ReportFilter, canSeeAmount bool) (models.Organization, []models.ReportEntry, report.Lookups, error) {
 	org, err := h.orgs.FindByID(ctx, orgID)
 	if err != nil {
-		return models.Organization{}, nil, err
+		return models.Organization{}, nil, report.Lookups{}, err
 	}
 	rawEntries, err := h.entries.ListForReport(ctx, orgID, filter)
 	if err != nil {
-		return models.Organization{}, nil, err
+		return models.Organization{}, nil, report.Lookups{}, err
 	}
 	clientsList, err := h.clients.List(ctx, orgID)
 	if err != nil {
-		return models.Organization{}, nil, err
+		return models.Organization{}, nil, report.Lookups{}, err
 	}
 	projectsList, err := h.projects.List(ctx, orgID, "")
 	if err != nil {
-		return models.Organization{}, nil, err
+		return models.Organization{}, nil, report.Lookups{}, err
 	}
 	members, err := h.orgs.ListMembers(ctx, orgID)
 	if err != nil {
-		return models.Organization{}, nil, err
+		return models.Organization{}, nil, report.Lookups{}, err
 	}
 
 	lk := report.Lookups{
@@ -151,10 +151,10 @@ func (h *ReportHandler) loadEnrichedEntries(ctx context.Context, orgID string, f
 		lk.Members[m.UserID] = m
 	}
 	if err := h.fillMissingMembers(ctx, rawEntries, lk.Members); err != nil {
-		return models.Organization{}, nil, err
+		return models.Organization{}, nil, report.Lookups{}, err
 	}
 
-	return org, report.Enrich(rawEntries, lk, canSeeAmount), nil
+	return org, report.Enrich(rawEntries, lk, canSeeAmount), lk, nil
 }
 
 // fillMissingMembers resolves entries' UserID directly against the users
@@ -220,7 +220,7 @@ func (h *ReportHandler) Detailed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	org, entries, err := h.loadEnrichedEntries(r.Context(), orgID, filter, canSeeAmount)
+	org, entries, _, err := h.loadEnrichedEntries(r.Context(), orgID, filter, canSeeAmount)
 	if err != nil {
 		writeStoreError(w, err)
 		return
@@ -268,7 +268,7 @@ func (h *ReportHandler) Summary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	org, entries, err := h.loadEnrichedEntries(r.Context(), orgID, filter, canSeeAmount)
+	org, entries, lk, err := h.loadEnrichedEntries(r.Context(), orgID, filter, canSeeAmount)
 	if err != nil {
 		writeStoreError(w, err)
 		return
@@ -277,9 +277,10 @@ func (h *ReportHandler) Summary(w http.ResponseWriter, r *http.Request) {
 	start, _ := time.Parse(report.DayLayout, filter.Start)
 	end, _ := time.Parse(report.DayLayout, filter.End)
 	summary := models.SummaryReport{
-		Totals: report.Totals(entries, canSeeAmount, org.Currency),
-		Daily:  report.DailyBuckets(entries, start, end),
-		Rows:   report.SummaryRows(entries, canSeeAmount),
+		Totals:           report.Totals(entries, canSeeAmount, org.Currency),
+		Daily:            report.DailyBuckets(entries, start, end),
+		Rows:             report.SummaryRows(entries, canSeeAmount),
+		ProjectDurations: report.ProjectDurations(entries, lk),
 	}
 
 	switch strings.ToUpper(req.ExportType) {

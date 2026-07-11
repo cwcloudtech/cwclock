@@ -84,7 +84,8 @@ func SummaryPDF(orgName, start, end string, report models.SummaryReport, logoDat
 	}
 
 	chartPNG := DailyChartPNG(report.Daily)
-	return RenderReportTablePDF(headerBuf.String(), chartPNG, columns, rows, logoData, logoType)
+	donutPNG := ProjectDonutPNG(report.ProjectDurations)
+	return RenderReportTablePDF(headerBuf.String(), chartPNG, donutPNG, report.ProjectDurations, columns, rows, logoData, logoType)
 }
 
 // DetailedPDF renders the detailed report as a PDF: a header with totals
@@ -132,5 +133,5 @@ func DetailedPDF(orgName, start, end string, report models.DetailedReport, logoD
 		rows = append(rows, row)
 	}
 
-	return RenderReportTablePDF(headerBuf.String(), nil, columns, rows, logoData, logoType)
+	return RenderReportTablePDF(headerBuf.String(), nil, nil, nil, columns, rows, logoData, logoType)
 }

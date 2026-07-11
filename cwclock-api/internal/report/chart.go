@@ -6,6 +6,9 @@ import (
 	"image/color"
 	"image/draw"
 	"image/png"
+	"math"
+	"strconv"
+	"strings"
 
 	"cwclock-api/internal/models"
 )
@@ -120,6 +123,91 @@ func DailyChartPNG(daily []models.ReportDailyBucket) []byte {
 			label = label[8:10]
 		}
 		drawLabel(img, label, barCx, baselineY+4, chartFontScale, labelColor)
+	}
+
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		return nil
+	}
+	return buf.Bytes()
+}
+
+// Pixel dimensions of the rasterized donut ring; kept square and large
+// enough to stay sharp once scaled down to its PDF display size.
+const (
+	donutCanvas      = 640
+	donutOuterRadius = 300.0
+	donutInnerRadius = 190.0
+	defaultRingColor = "#1cb9f7" // matches the frontend's ProjectBadge fallback
+)
+
+// parseHexColor parses a "#rrggbb" (or "rrggbb") string into a color.RGBA,
+// falling back to defaultRingColor for anything unset or malformed.
+func parseHexColor(hex string) color.RGBA {
+	clean := strings.TrimPrefix(hex, "#")
+	if len(clean) != 6 {
+		clean = strings.TrimPrefix(defaultRingColor, "#")
+	}
+	r, errR := strconv.ParseUint(clean[0:2], 16, 8)
+	g, errG := strconv.ParseUint(clean[2:4], 16, 8)
+	b, errB := strconv.ParseUint(clean[4:6], 16, 8)
+	if errR != nil || errG != nil || errB != nil {
+		return color.RGBA{28, 185, 247, 255}
+	}
+	return color.RGBA{uint8(r), uint8(g), uint8(b), 255}
+}
+
+// donutSlice is one project's angular span (radians, starting at 12 o'clock
+// and sweeping clockwise) within the rasterized ring.
+type donutSlice struct {
+	start, end float64
+	color      color.RGBA
+}
+
+// ProjectDonutPNG rasterizes the summary report's per-project duration
+// breakdown (see ProjectDurations) as a donut ring PNG, one slice per
+// project in its own color. No text is baked into the image - font3x5 (see
+// drawLabel) only has digits, not letters, so project names/hours are drawn
+// as real PDF text beside it instead (see placeProjectLegend in pdf.go).
+// Returns nil when there's nothing to plot.
+func ProjectDonutPNG(rows []models.ReportProjectDuration) []byte {
+	total := 0
+	for _, r := range rows {
+		total += r.DurationSecs
+	}
+	if total == 0 {
+		return nil
+	}
+
+	slices := make([]donutSlice, 0, len(rows))
+	cursor := -math.Pi / 2
+	for _, r := range rows {
+		sweep := float64(r.DurationSecs) / float64(total) * 2 * math.Pi
+		slices = append(slices, donutSlice{start: cursor, end: cursor + sweep, color: parseHexColor(r.Color)})
+		cursor += sweep
+	}
+
+	img := image.NewRGBA(image.Rect(0, 0, donutCanvas, donutCanvas))
+	center := float64(donutCanvas) / 2
+
+	for y := 0; y < donutCanvas; y++ {
+		for x := 0; x < donutCanvas; x++ {
+			dx, dy := float64(x)-center, float64(y)-center
+			radius := math.Hypot(dx, dy)
+			if radius < donutInnerRadius || radius > donutOuterRadius {
+				continue
+			}
+			angle := math.Atan2(dy, dx)
+			if angle < -math.Pi/2 {
+				angle += 2 * math.Pi
+			}
+			for _, s := range slices {
+				if angle >= s.start && angle < s.end {
+					img.Set(x, y, s.color)
+					break
+				}
+			}
+		}
 	}
 
 	var buf bytes.Buffer

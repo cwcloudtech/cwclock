@@ -73,13 +73,15 @@
   font-size: 0.95rem;
 }
 
-/* Daily bar chart: thin rounded-top bars on a recessive baseline, sparse
-   x-axis labels, native title attribute as the hover layer. */
+/* Shared card shell for both summary charts (daily bar chart and project
+   donut chart), so they read as one matched pair side by side. */
 .chart {
   background-color: var(--cw-surface);
   border: 1px solid var(--cw-border);
   border-radius: var(--cw-radius);
   padding: var(--cw-spacing);
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .chartBars {
@@ -90,12 +92,20 @@
   border-bottom: 1px solid var(--cw-border);
 }
 
-.chartBarCol {
+/* Sizing lives on the Tooltip wrapper span (see chartBarColTooltip) so it
+   can stretch inside .chartBars; only non-conflicting properties are added
+   there, since Tooltip's own .wrapper class already sets display/align. */
+.chartBarColTooltip {
   flex: 1;
   min-width: 4px;
+  height: 100%;
+}
+
+.chartBarCol {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
   height: 100%;
 }
 
@@ -129,6 +139,104 @@
   margin: 8px 0 0;
   font-size: 0.8rem;
   color: var(--cw-text-muted);
+}
+
+/* Charts row: donut on the left, bar chart on the right, each expandable to
+   mask the other (see SummaryReportView). */
+.chartsRow {
+  display: flex;
+  align-items: stretch;
+  gap: var(--cw-spacing);
+  flex-wrap: wrap;
+}
+
+.chartPane {
+  position: relative;
+}
+
+.chartPaneDonut {
+  flex: 0 0 320px;
+}
+
+.chartPaneBar {
+  flex: 1 1 420px;
+  min-width: 0;
+}
+
+.chartPaneFull {
+  flex: 1 1 100%;
+}
+
+/* Positioned wrapper for the expand/collapse button: kept separate from the
+   button itself so the Tooltip nested inside anchors its bubble off the
+   wrapper's own (normally-flowed) box, not a 0×0 box left behind by an
+   absolutely positioned button. */
+.expandBtnWrapper {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.expandBtn {
+  background: none;
+  border: none;
+  color: var(--cw-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  border-radius: var(--cw-radius-sm);
+}
+
+.expandBtn:hover {
+  color: var(--cw-primary-600);
+  background-color: var(--cw-bg-alt);
+}
+
+.donutWrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.donutSvg {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+}
+
+.donutSegment {
+  cursor: pointer;
+  transition: opacity var(--cw-transition);
+}
+
+.donutSegment:hover,
+.donutSegment:focus-visible {
+  opacity: 0.85;
+  outline: none;
+}
+
+.donutTotalValue {
+  font-size: 0.85rem;
+  font-weight: 700;
+  fill: var(--cw-text);
+}
+
+.donutTotalLabel {
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  fill: var(--cw-text-muted);
+}
+
+@media (max-width: 900px) {
+  .chartsRow {
+    flex-direction: column;
+  }
+
+  .chartPaneDonut,
+  .chartPaneBar {
+    flex: 1 1 auto;
+  }
 }
 
 .table {

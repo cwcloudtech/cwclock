@@ -271,3 +271,53 @@ func SummaryRows(entries []models.ReportEntry, canSeeAmount bool) []models.Repor
 	sort.SliceStable(rows, func(i, j int) bool { return rows[i].DurationSecs > rows[j].DurationSecs })
 	return rows
 }
+
+// defaultProjectColor matches the frontend's ProjectBadge fallback, used
+// whenever a project has no color set.
+const defaultProjectColor = "#1cb9f7"
+
+// maxDonutSlices caps how many distinct projects the summary donut chart
+// (web and PDF) shows individually; anything past the largest maxDonutSlices
+// projects is folded into one "Other" slice, keeping the chart and its PDF
+// legend readable and bounded regardless of how many projects a report
+// spans. This only affects the donut aggregate - the full-fidelity Rows
+// table is untouched.
+const maxDonutSlices = 8
+
+// ProjectDurations aggregates entries by project for the summary report's
+// donut chart, carrying each project's color (see defaultProjectColor for
+// unset colors). Ranked by duration, most time-consuming project first, with
+// anything past maxDonutSlices folded into a single gray "Other" slice.
+func ProjectDurations(entries []models.ReportEntry, lk Lookups) []models.ReportProjectDuration {
+	byProject := map[string]*models.ReportProjectDuration{}
+	order := []string{}
+
+	for _, e := range entries {
+		pd, ok := byProject[e.ProjectID]
+		if !ok {
+			color := lk.Projects[e.ProjectID].Color
+			if color == "" {
+				color = defaultProjectColor
+			}
+			pd = &models.ReportProjectDuration{ProjectID: e.ProjectID, ProjectName: e.ProjectName, Color: color}
+			byProject[e.ProjectID] = pd
+			order = append(order, e.ProjectID)
+		}
+		pd.DurationSecs += e.DurationSecs
+	}
+
+	all := make([]models.ReportProjectDuration, 0, len(order))
+	for _, id := range order {
+		all = append(all, *byProject[id])
+	}
+	sort.SliceStable(all, func(i, j int) bool { return all[i].DurationSecs > all[j].DurationSecs })
+
+	if len(all) <= maxDonutSlices {
+		return all
+	}
+	other := models.ReportProjectDuration{ProjectName: "Other", Color: "#9ca3af"}
+	for _, pd := range all[maxDonutSlices:] {
+		other.DurationSecs += pd.DurationSecs
+	}
+	return append(all[:maxDonutSlices], other)
+}

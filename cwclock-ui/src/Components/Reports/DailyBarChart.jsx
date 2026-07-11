@@ -1,17 +1,14 @@
 import React from "react";
 import { useI18n } from "../../i18n/I18nContext";
+import Tooltip from "../common/Tooltip";
+import { formatHours } from "./reportFormat";
 import styles from "./Styles/Reports.module.css";
-
-const formatHours = (secs) => {
-  const h = Math.floor(secs / 3600);
-  const m = Math.round((secs % 3600) / 60);
-  return `${h}h${String(m).padStart(2, "0")}`;
-};
 
 // Single-series magnitude-over-time bar chart (hours worked per day). Only
 // ~8 evenly spaced day labels are shown regardless of range length, matching
 // how the reference report sparsely labels a several-week axis; every bar
-// still carries its exact value as a native tooltip.
+// still carries its exact value in the shared Tooltip component (same bubble
+// design used by the project donut chart next to it).
 const DailyBarChart = ({ daily }) => {
   const { t } = useI18n();
   if (!daily || daily.length === 0) return null;
@@ -27,14 +24,16 @@ const DailyBarChart = ({ daily }) => {
           const date = new Date(`${d.day}T00:00:00`);
           const tooltip = `${date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}: ${formatHours(d.durationSecs)}`;
           return (
-            <div key={d.day} className={styles.chartBarCol} title={tooltip}>
-              <div className={styles.chartBarTrack}>
-                <div className={styles.chartBar} style={{ height: `${heightPct}%` }} />
+            <Tooltip key={d.day} label={tooltip} position="top" className={styles.chartBarColTooltip}>
+              <div className={styles.chartBarCol}>
+                <div className={styles.chartBarTrack}>
+                  <div className={styles.chartBar} style={{ height: `${heightPct}%` }} />
+                </div>
+                <span className={styles.chartBarLabel}>
+                  {i % labelStep === 0 ? date.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}
+                </span>
               </div>
-              <span className={styles.chartBarLabel}>
-                {i % labelStep === 0 ? date.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}
-              </span>
-            </div>
+            </Tooltip>
           );
         })}
       </div>

@@ -344,6 +344,7 @@ const en = {
     noEntries: "No time entries for this period.",
     noAccess: "You don't have access to reports in this organization.",
     chartHint: "Hours tracked per day for the selected period.",
+    donutHint: "Hours tracked per project for the selected period.",
     dateRangeShortcuts: "Date range shortcuts",
     shortcuts: "Shortcuts",
     startDate: "Start date",

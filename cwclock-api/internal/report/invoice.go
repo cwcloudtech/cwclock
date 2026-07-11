@@ -240,17 +240,17 @@ func RenderInvoicePDF(org models.Organization, client models.Client, owner model
 	}
 
 	translate := renderer.Pdf.UnicodeTranslatorFromDescriptor("cp1252")
-	drawTable(renderer.Pdf, translate, issuerColumns, issuerRows(org, invoiceDate, ownerContact))
+	drawTable(renderer.Pdf, translate, issuerColumns, issuerRows(org, invoiceDate, ownerContact), 0)
 	renderer.Pdf.Ln(8)
-	drawTable(renderer.Pdf, translate, clientColumns, clientRows(client))
+	drawTable(renderer.Pdf, translate, clientColumns, clientRows(client), 0)
 	renderer.Pdf.Ln(8)
 
 	if err := renderer.Run([]byte("## Object\n")); err != nil {
 		return nil, err
 	}
-	drawTable(renderer.Pdf, translate, lineItemColumns, lineItemRows(items))
+	drawTable(renderer.Pdf, translate, lineItemColumns, lineItemRows(items), 0)
 	renderer.Pdf.Ln(8)
-	drawTable(renderer.Pdf, translate, totalsColumns, totalsRows(client, totalHT, totalVAT, totalTTC, client.VATRate, org.Currency))
+	drawTable(renderer.Pdf, translate, totalsColumns, totalsRows(client, totalHT, totalVAT, totalTTC, client.VATRate, org.Currency), 0)
 
 	if org.Stamp != "" {
 		if decoded, dt, ok := decodeDataURI(org.Stamp); ok {

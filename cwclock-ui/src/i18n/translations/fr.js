@@ -344,6 +344,7 @@ const fr = {
     noEntries: "Aucune entrée de temps pour cette période.",
     noAccess: "Vous n'avez pas accès aux rapports de cette organisation.",
     chartHint: "Heures suivies par jour pour la période sélectionnée.",
+    donutHint: "Heures suivies par projet pour la période sélectionnée.",
     dateRangeShortcuts: "Raccourcis de période",
     shortcuts: "Raccourcis",
     startDate: "Date de début",

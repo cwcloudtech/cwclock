@@ -53,13 +53,24 @@ type ReportDailyBucket struct {
 	DurationSecs int    `json:"durationSecs"`
 }
 
+// ReportProjectDuration aggregates a summary report's total duration per
+// project, carrying the project's own color so the summary donut chart (web
+// and PDF) can render each slice consistently across both.
+type ReportProjectDuration struct {
+	ProjectID    string `json:"projectId"`
+	ProjectName  string `json:"projectName"`
+	Color        string `json:"color"`
+	DurationSecs int    `json:"durationSecs"`
+}
+
 type DetailedReport struct {
 	Totals  ReportTotals  `json:"totals"`
 	Entries []ReportEntry `json:"entries"`
 }
 
 type SummaryReport struct {
-	Totals ReportTotals        `json:"totals"`
-	Daily  []ReportDailyBucket `json:"daily"`
-	Rows   []ReportSummaryRow  `json:"rows"`
+	Totals           ReportTotals            `json:"totals"`
+	Daily            []ReportDailyBucket     `json:"daily"`
+	Rows             []ReportSummaryRow      `json:"rows"`
+	ProjectDurations []ReportProjectDuration `json:"projectDurations"`
 }
