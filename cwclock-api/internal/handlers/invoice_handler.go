@@ -198,7 +198,7 @@ func (h *InvoiceHandler) Generate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	externalconn.SyncUpload(r.Context(), ic.org.ExternalConnections, externalconn.FolderPath(inv.CreatedAt), inv.Number+".pdf", pdf)
+	externalconn.SyncUpload(r.Context(), ic.org.ExternalConnections, externalconn.YearFolder(inv.CreatedAt), externalconn.MonthCandidates(inv.CreatedAt), inv.Number+".pdf", pdf)
 
 	writeExportFile(w, "application/pdf", inv.Number+".pdf", pdf, nil)
 }
@@ -279,7 +279,7 @@ func (h *InvoiceHandler) Reupload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	externalconn.SyncUpload(r.Context(), org.ExternalConnections, externalconn.FolderPath(inv.CreatedAt), number+".pdf", pdf)
+	externalconn.SyncUpload(r.Context(), org.ExternalConnections, externalconn.YearFolder(inv.CreatedAt), externalconn.MonthCandidates(inv.CreatedAt), number+".pdf", pdf)
 	writeJSON(w, http.StatusOK, map[string]string{"id": invoiceID})
 }
 
@@ -338,7 +338,7 @@ func (h *InvoiceHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if org, err := h.orgs.FindByID(r.Context(), orgID); err == nil {
-		externalconn.SyncDelete(r.Context(), org.ExternalConnections, externalconn.FolderPath(inv.CreatedAt), inv.Number+".pdf")
+		externalconn.SyncDelete(r.Context(), org.ExternalConnections, externalconn.YearFolder(inv.CreatedAt), externalconn.MonthCandidates(inv.CreatedAt), inv.Number+".pdf")
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{"id": invoiceID})

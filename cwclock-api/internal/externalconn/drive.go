@@ -105,18 +105,17 @@ func newDriveTarget(conn models.ExternalConnection) (*driveTarget, error) {
 	}, nil
 }
 
-func (d *driveTarget) Upload(ctx context.Context, yearMonth, filename string, data []byte) error {
+func (d *driveTarget) Upload(ctx context.Context, year string, months []string, filename string, data []byte) error {
 	token, err := d.accessToken(ctx)
 	if err != nil {
 		return err
 	}
-	year, month := splitYearMonth(yearMonth)
 
 	yearFolder, err := d.ensureFolder(ctx, token, year, d.rootFolder)
 	if err != nil {
 		return err
 	}
-	monthFolder, err := d.ensureFolder(ctx, token, month, yearFolder)
+	monthFolder, err := d.ensureAnyFolder(ctx, token, months, yearFolder)
 	if err != nil {
 		return err
 	}
@@ -131,18 +130,17 @@ func (d *driveTarget) Upload(ctx context.Context, yearMonth, filename string, da
 	return d.createFile(ctx, token, filename, monthFolder, data)
 }
 
-func (d *driveTarget) Delete(ctx context.Context, yearMonth, filename string) error {
+func (d *driveTarget) Delete(ctx context.Context, year string, months []string, filename string) error {
 	token, err := d.accessToken(ctx)
 	if err != nil {
 		return err
 	}
-	year, month := splitYearMonth(yearMonth)
 
 	yearFolder, found, err := d.findFolder(ctx, token, year, d.rootFolder)
 	if err != nil || !found {
 		return err
 	}
-	monthFolder, found, err := d.findFolder(ctx, token, month, yearFolder)
+	monthFolder, found, err := d.findAnyFolder(ctx, token, months, yearFolder)
 	if err != nil || !found {
 		return err
 	}
@@ -151,14 +149,6 @@ func (d *driveTarget) Delete(ctx context.Context, yearMonth, filename string) er
 		return err
 	}
 	return d.deleteFile(ctx, token, fileID)
-}
-
-func splitYearMonth(yearMonth string) (year, month string) {
-	parts := strings.SplitN(yearMonth, "/", 2)
-	if len(parts) != 2 {
-		return yearMonth, ""
-	}
-	return parts[0], parts[1]
 }
 
 // accessToken exchanges a fresh service-account JWT assertion for a Drive
@@ -284,6 +274,32 @@ func (d *driveTarget) ensureFolder(ctx context.Context, token, name, parentID st
 		return id, nil
 	}
 	return d.createFolder(ctx, token, name, parentID)
+}
+
+// findAnyFolder searches for a folder matching any of names (e.g. the
+// month's English and French candidate names), so an existing folder in
+// either language is found rather than only the default one.
+func (d *driveTarget) findAnyFolder(ctx context.Context, token string, names []string, parentID string) (string, bool, error) {
+	clauses := make([]string, len(names))
+	for i, name := range names {
+		clauses[i] = fmt.Sprintf("name = '%s'", escapeDriveQueryValue(name))
+	}
+	query := fmt.Sprintf(
+		"(%s) and '%s' in parents and mimeType = '%s' and trashed = false",
+		strings.Join(clauses, " or "), parentID, driveFolderMime,
+	)
+	return d.searchOne(ctx, token, query)
+}
+
+// ensureAnyFolder reuses whichever of names' candidate folders already
+// exists, creating the first (default) candidate if none do.
+func (d *driveTarget) ensureAnyFolder(ctx context.Context, token string, names []string, parentID string) (string, error) {
+	if id, found, err := d.findAnyFolder(ctx, token, names, parentID); err != nil {
+		return "", err
+	} else if found {
+		return id, nil
+	}
+	return d.createFolder(ctx, token, names[0], parentID)
 }
 
 func (d *driveTarget) createFolder(ctx context.Context, token, name, parentID string) (string, error) {

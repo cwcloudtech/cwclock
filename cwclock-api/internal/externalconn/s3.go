@@ -45,14 +45,71 @@ func newS3Target(conn models.ExternalConnection) *s3Target {
 	}
 }
 
-func (s *s3Target) Upload(ctx context.Context, yearMonth, filename string, data []byte) error {
-	key := yearMonth + "/" + filename
+func (s *s3Target) Upload(ctx context.Context, year string, months []string, filename string, data []byte) error {
+	key, err := s.resolveKey(ctx, year, months, filename)
+	if err != nil {
+		return err
+	}
 	return s.do(ctx, http.MethodPut, key, data, "application/pdf")
 }
 
-func (s *s3Target) Delete(ctx context.Context, yearMonth, filename string) error {
-	key := yearMonth + "/" + filename
+func (s *s3Target) Delete(ctx context.Context, year string, months []string, filename string) error {
+	key, err := s.resolveKey(ctx, year, months, filename)
+	if err != nil {
+		return err
+	}
 	return s.do(ctx, http.MethodDelete, key, nil, "")
+}
+
+// resolveKey returns the key of an object already sitting under one of
+// months' candidate month folders (so a file previously filed under an
+// alternate-language month folder gets replaced/deleted in place rather
+// than duplicated), falling back to the first (default) candidate's key if
+// none of them currently hold the file.
+func (s *s3Target) resolveKey(ctx context.Context, year string, months []string, filename string) (string, error) {
+	for _, month := range months {
+		key := year + "/" + month + "/" + filename
+		found, err := s.exists(ctx, key)
+		if err != nil {
+			return "", err
+		}
+		if found {
+			return key, nil
+		}
+	}
+	return year + "/" + months[0] + "/" + filename, nil
+}
+
+// exists reports whether key is already present in the bucket, via a signed
+// HEAD request.
+func (s *s3Target) exists(ctx context.Context, key string) (bool, error) {
+	reqURL := s.endpoint + "/" + uriEncodePath(s.bucket) + "/" + uriEncodePath(key)
+	u, err := url.Parse(reqURL)
+	if err != nil {
+		return false, fmt.Errorf("external connection s3: invalid endpoint: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, reqURL, nil)
+	if err != nil {
+		return false, err
+	}
+	s.sign(req, u, nil)
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return false, fmt.Errorf("external connection s3: HEAD request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	io.Copy(io.Discard, resp.Body)
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return true, nil
+	case http.StatusNotFound:
+		return false, nil
+	default:
+		return false, fmt.Errorf("external connection s3: HEAD %s returned %d", key, resp.StatusCode)
+	}
 }
 
 func (s *s3Target) do(ctx context.Context, method, key string, body []byte, contentType string) error {
