@@ -48,7 +48,7 @@ func New(
 	if corsEnabled {
 		r.Use(cors.Handler(cors.Options{
 			AllowedOrigins: corsAllowedOrigins,
-			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 			AllowedHeaders: []string{"Authorization", "Content-Type", "X-Api-Key"},
 			// Content-Disposition must be explicitly exposed, otherwise the
 			// browser hides it from JS on cross-origin responses (like report
@@ -114,7 +114,7 @@ func New(
 				r.Use(middleware.OrgMembership(orgs, users))
 
 				r.Get("/", orgHandler.Get)
-				r.With(middleware.RequireRole(models.RoleOwner)).Put("/", orgHandler.Update)
+				r.With(middleware.RequireRole(models.RoleOwner)).Patch("/", orgHandler.Update)
 				r.With(middleware.RequireRole(models.RoleOwner)).Delete("/", orgHandler.Delete)
 				r.With(middleware.RequireRole(models.RoleOwner)).Put("/owner", orgHandler.TransferOwnership)
 				r.With(middleware.RequireRole(models.RoleOwner)).Patch("/external-connections", orgHandler.AddExternalConnection)

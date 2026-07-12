@@ -45,7 +45,7 @@ export const createOrgApi = (fields, token) => async (dispatch) => {
 export const updateOrgApi = (orgId, fields, token) => async (dispatch) => {
   dispatch({ type: OrgLOADING });
   try {
-    const { data } = await axios.put(`${ENDPOINT}${orgId}`, fields, authConfig(token));
+    const { data } = await axios.patch(`${ENDPOINT}${orgId}`, fields, authConfig(token));
     dispatch({ type: OrgUpdateSUCCESS, payload: data });
     toast.success(translate(getStoredLocale(), "toasts.orgUpdated"), toastOptions);
     return data;
