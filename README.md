@@ -8,13 +8,13 @@ A live version is available at [cwclock.me](https://www.cwclock.me).
 
 * Track time spent on tasks
 * Manage organizations, clients and project
-* Export in CSV or PDF compliant with Clockify format
-* API compatible with Clockify
+* Export in PDF or CSV with format compliant with Clockify format
+* Export API compliant with Clockify
 * Reimport Clockify CSV export files
 * Print invoices with daily rates and VAT (stored in object storage)
 * I18N (English and French for now)
 * Light/Dark mode
-* OpenTelemetry observability
+* OpenTelemetry & OpenMetrics (Prometheus) observability
 
 ## Technologies
 
