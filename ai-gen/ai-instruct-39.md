@@ -10,7 +10,7 @@ Add form with a "+" button selecting the type of external connections than adapt
 
 ## Invoice generation or update
 
-On every external connection, create a folder `YYYY/MM` and upload the invoice there.
+On every external connection, create a folder `YYYY/MM.{MonthName}` and upload the invoice there.
 If a file already exists with the same name, replace it.
 
 ## Invoice deletion

@@ -171,6 +171,7 @@ func New(
 					r.Post("/preview", invoiceHandler.Preview)
 					r.Post("/", invoiceHandler.Generate)
 					r.Get("/{invoiceId}/pdf", invoiceHandler.DownloadPDF)
+					r.Post("/{invoiceId}/reupload", invoiceHandler.Reupload)
 					r.Put("/{invoiceId}", invoiceHandler.UpdateStatus)
 					r.Delete("/{invoiceId}", invoiceHandler.Delete)
 				})

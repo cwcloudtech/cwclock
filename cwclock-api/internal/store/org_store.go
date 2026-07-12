@@ -22,24 +22,25 @@ func NewOrgStore(pool *pgxpool.Pool, countries *CountryStore) *OrgStore {
 }
 
 type orgData struct {
-	Name                 string   `json:"name"`
-	Address              string   `json:"address"`
-	PostalCode           string   `json:"postalCode"`
-	City                 string   `json:"city"`
-	Country              string   `json:"country"`
-	VATNumber            string   `json:"vatNumber"`
-	SIREN                string   `json:"siren"`
-	SIRET                string   `json:"siret"`
-	NAF                  string   `json:"naf,omitempty"`
-	MF                   string   `json:"mf,omitempty"`
-	IdentificationNumber string   `json:"identificationNumber,omitempty"`
-	Picture              string   `json:"picture,omitempty"`
-	PictureX             *float64 `json:"pictureX,omitempty"`
-	PictureY             *float64 `json:"pictureY,omitempty"`
-	Stamp                string   `json:"stamp,omitempty"`
-	StampX               *float64 `json:"stampX,omitempty"`
-	StampY               *float64 `json:"stampY,omitempty"`
-	Currency             string   `json:"currency,omitempty"`
+	Name                 string                      `json:"name"`
+	Address              string                      `json:"address"`
+	PostalCode           string                      `json:"postalCode"`
+	City                 string                      `json:"city"`
+	Country              string                      `json:"country"`
+	VATNumber            string                      `json:"vatNumber"`
+	SIREN                string                      `json:"siren"`
+	SIRET                string                      `json:"siret"`
+	NAF                  string                      `json:"naf,omitempty"`
+	MF                   string                      `json:"mf,omitempty"`
+	IdentificationNumber string                      `json:"identificationNumber,omitempty"`
+	Picture              string                      `json:"picture,omitempty"`
+	PictureX             *float64                    `json:"pictureX,omitempty"`
+	PictureY             *float64                    `json:"pictureY,omitempty"`
+	Stamp                string                      `json:"stamp,omitempty"`
+	StampX               *float64                    `json:"stampX,omitempty"`
+	StampY               *float64                    `json:"stampY,omitempty"`
+	Currency             string                      `json:"currency,omitempty"`
+	ExternalConnections  []models.ExternalConnection `json:"externalConnections,omitempty"`
 }
 
 // OrganizationFields holds the editable, non-identifying fields of an
@@ -63,6 +64,7 @@ type OrganizationFields struct {
 	StampX               float64
 	StampY               float64
 	Currency             string
+	ExternalConnections  []models.ExternalConnection
 }
 
 // applyOrgData unmarshals the stored JSON blob onto an organization already
@@ -92,6 +94,10 @@ func applyOrgData(o *models.Organization, raw []byte) error {
 	o.StampX = resolveImagePosition(d.StampX)
 	o.StampY = resolveImagePosition(d.StampY)
 	o.Currency = utils.If(utils.IsBlank(d.Currency), models.FallbackCurrency, d.Currency)
+	o.ExternalConnections = d.ExternalConnections
+	if o.ExternalConnections == nil {
+		o.ExternalConnections = []models.ExternalConnection{}
+	}
 	return nil
 }
 
@@ -130,6 +136,7 @@ func toOrgData(f OrganizationFields) orgData {
 		StampX:               &f.StampX,
 		StampY:               &f.StampY,
 		Currency:             f.Currency,
+		ExternalConnections:  f.ExternalConnections,
 	}
 }
 

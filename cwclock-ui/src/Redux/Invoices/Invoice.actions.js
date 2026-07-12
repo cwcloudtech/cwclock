@@ -130,6 +130,20 @@ export const updateInvoiceStatusApi = (orgId, invoiceId, status, token) => async
   }
 };
 
+// Reupload pushes an already-generated invoice's stored PDF to every one of
+// the organization's external connections again (e.g. after fixing a
+// connection's credentials). It doesn't change the invoice itself, so
+// there's no store update to dispatch, only a success/error toast.
+export const reuploadInvoiceApi = (orgId, invoiceId, token) => async () => {
+  try {
+    await axios.post(`${ENDPOINT(orgId)}${invoiceId}/reupload`, {}, authConfig(token));
+    toast.success(translate(getStoredLocale(), "toasts.invoiceReuploaded"), toastOptions);
+  } catch (e) {
+    toast.error(apiErrorMessage(await parseBlobError(e), getStoredLocale()), toastOptions);
+    throw e;
+  }
+};
+
 export const deleteInvoiceApi = (orgId, invoiceId, token) => async (dispatch) => {
   try {
     await axios.delete(`${ENDPOINT(orgId)}${invoiceId}`, authConfig(token));

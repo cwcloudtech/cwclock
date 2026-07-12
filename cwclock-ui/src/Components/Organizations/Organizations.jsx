@@ -16,6 +16,7 @@ import {
 } from "../../Redux/Organizations/Org.actions";
 import RequiredMark from "../common/RequiredMark";
 import ConfigForm from "../common/ConfigForm";
+import ExternalConnectionsEditor from "../common/ExternalConnectionsEditor";
 import applyImageField from "../common/applyImageField";
 import { isAdminOrOwner as computeIsAdminOrOwner, isOrgOwner } from "../common/permissions";
 import CollapsiblePanel from "../common/CollapsiblePanel";
@@ -48,6 +49,7 @@ const emptyFields = {
   stampX: 50,
   stampY: 50,
   currency: "",
+  externalConnections: [],
 };
 
 const roleLabelKey = {
@@ -242,6 +244,7 @@ const Organizations = () => {
       stamp: currentOrg.stamp || "",
       stampX: currentOrg.stampX ?? 50,
       stampY: currentOrg.stampY ?? 50,
+      externalConnections: currentOrg.externalConnections || [],
     });
   };
 
@@ -329,6 +332,11 @@ const Organizations = () => {
           submitLabel={t("common.create")}
           error={createError}
         />
+        <h3 className="cw-subtitle">{t("organizations.externalConnections")}</h3>
+        <ExternalConnectionsEditor
+          value={fields.externalConnections}
+          onChange={(v) => setField("externalConnections", v)}
+        />
       </CollapsiblePanel>
 
       {currentOrg && (
@@ -346,6 +354,11 @@ const Organizations = () => {
                     submitLabel={t("common.save")}
                     onCancel={() => setEditFields(null)}
                     error={editError}
+                  />
+                  <h3 className="cw-subtitle">{t("organizations.externalConnections")}</h3>
+                  <ExternalConnectionsEditor
+                    value={editFields.externalConnections}
+                    onChange={(v) => setEditField("externalConnections", v)}
                   />
                 </div>
               ) : (

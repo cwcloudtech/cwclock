@@ -4,10 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 
+	"cwclock-api/internal/externalconn"
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
 	"cwclock-api/internal/store"
@@ -27,24 +30,25 @@ func NewOrganizationHandler(orgs *store.OrgStore, users *store.UserStore, countr
 }
 
 type organizationPayload struct {
-	Name                 string  `json:"name"`
-	Address              string  `json:"address"`
-	PostalCode           string  `json:"postalCode"`
-	City                 string  `json:"city"`
-	Country              string  `json:"country"`
-	VATNumber            string  `json:"vatNumber"`
-	SIREN                string  `json:"siren"`
-	SIRET                string  `json:"siret"`
-	NAF                  string  `json:"naf"`
-	MF                   string  `json:"mf"`
-	IdentificationNumber string  `json:"identificationNumber"`
-	Picture              string  `json:"picture"`
-	PictureX             float64 `json:"pictureX"`
-	PictureY             float64 `json:"pictureY"`
-	Stamp                string  `json:"stamp"`
-	StampX               float64 `json:"stampX"`
-	StampY               float64 `json:"stampY"`
-	Currency             string  `json:"currency"`
+	Name                 string                      `json:"name"`
+	Address              string                      `json:"address"`
+	PostalCode           string                      `json:"postalCode"`
+	City                 string                      `json:"city"`
+	Country              string                      `json:"country"`
+	VATNumber            string                      `json:"vatNumber"`
+	SIREN                string                      `json:"siren"`
+	SIRET                string                      `json:"siret"`
+	NAF                  string                      `json:"naf"`
+	MF                   string                      `json:"mf"`
+	IdentificationNumber string                      `json:"identificationNumber"`
+	Picture              string                      `json:"picture"`
+	PictureX             float64                     `json:"pictureX"`
+	PictureY             float64                     `json:"pictureY"`
+	Stamp                string                      `json:"stamp"`
+	StampX               float64                     `json:"stampX"`
+	StampY               float64                     `json:"stampY"`
+	Currency             string                      `json:"currency"`
+	ExternalConnections  []models.ExternalConnection `json:"externalConnections"`
 }
 
 // nameValid and Country's own blank check (see Create/Update) are kept
@@ -70,6 +74,35 @@ func (p organizationPayload) imageTooLarge(maxImageSize int64) bool {
 	return utils.ImageSizeExceeds(p.Picture, maxImageSize) || utils.ImageSizeExceeds(p.Stamp, maxImageSize)
 }
 
+// validateExternalConnections enforces "every field is mandatory" per
+// connection type (ai-instruct-39) and assigns a fresh ID to any connection
+// the frontend submitted without one (newly added rows), so callers never
+// have to invent ids client-side.
+func validateExternalConnections(conns []models.ExternalConnection) error {
+	for i, c := range conns {
+		switch c.Type {
+		case models.ExternalConnectionS3:
+			if utils.IsBlank(c.Endpoint) || utils.IsBlank(c.BucketName) || utils.IsBlank(c.Region) ||
+				utils.IsBlank(c.AccessKey) || utils.IsBlank(c.SecretKey) {
+				return fmt.Errorf("s3 external connection requires endpoint, bucketName, region, accessKey and secretKey")
+			}
+		case models.ExternalConnectionGoogleDrive:
+			if utils.IsBlank(c.ServiceAccountBase64) || utils.IsBlank(c.FolderID) {
+				return fmt.Errorf("google_drive external connection requires serviceAccountBase64 and folderId")
+			}
+			if _, err := externalconn.DecodeServiceAccount(c.ServiceAccountBase64); err != nil {
+				return fmt.Errorf("google_drive external connection has an invalid service account: %w", err)
+			}
+		default:
+			return fmt.Errorf("unknown external connection type %q", c.Type)
+		}
+		if utils.IsBlank(c.ID) {
+			conns[i].ID = uuid.NewString()
+		}
+	}
+	return nil
+}
+
 func (p organizationPayload) toFields() store.OrganizationFields {
 	return store.OrganizationFields{
 		Name:                 p.Name,
@@ -90,6 +123,7 @@ func (p organizationPayload) toFields() store.OrganizationFields {
 		StampX:               p.StampX,
 		StampY:               p.StampY,
 		Currency:             p.Currency,
+		ExternalConnections:  p.ExternalConnections,
 	}
 }
 
@@ -121,6 +155,10 @@ func (h *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	if p.imageTooLarge(h.maxImageSize) {
 		writeError(w, http.StatusBadRequest, "Image is too large", CodeImageTooLarge)
+		return
+	}
+	if err := validateExternalConnections(p.ExternalConnections); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error(), CodeInvalidExternalConnection)
 		return
 	}
 
@@ -193,6 +231,10 @@ func (h *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	if p.imageTooLarge(h.maxImageSize) {
 		writeError(w, http.StatusBadRequest, "Image is too large", CodeImageTooLarge)
+		return
+	}
+	if err := validateExternalConnections(p.ExternalConnections); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error(), CodeInvalidExternalConnection)
 		return
 	}
 

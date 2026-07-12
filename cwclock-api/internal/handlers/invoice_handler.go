@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"cwclock-api/internal/externalconn"
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
 	"cwclock-api/internal/report"
@@ -197,6 +198,8 @@ func (h *InvoiceHandler) Generate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	externalconn.SyncUpload(r.Context(), ic.org.ExternalConnections, externalconn.FolderPath(inv.CreatedAt), inv.Number+".pdf", pdf)
+
 	writeExportFile(w, "application/pdf", inv.Number+".pdf", pdf, nil)
 }
 
@@ -242,6 +245,42 @@ func (h *InvoiceHandler) DownloadPDF(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeExportFile(w, "application/pdf", number+".pdf", pdf, nil)
+}
+
+// Reupload pushes an already-generated invoice's stored PDF to every one of
+// its organization's external connections again (e.g. after fixing a
+// connection's credentials), replacing the file previously written there.
+// It always responds 200 regardless of per-connection outcomes - those are
+// logged server-side (see externalconn.SyncUpload) - since the invoice
+// itself is unchanged either way.
+func (h *InvoiceHandler) Reupload(w http.ResponseWriter, r *http.Request) {
+	orgID, _ := middleware.OrgIDFromContext(r.Context())
+	invoiceID := chi.URLParam(r, "invoiceId")
+
+	inv, err := h.invoices.FindByID(r.Context(), invoiceID)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	if inv.OrganizationID != orgID {
+		writeError(w, http.StatusNotFound, "Resource not found", CodeNotFound)
+		return
+	}
+
+	org, err := h.orgs.FindByID(r.Context(), orgID)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+
+	pdf, number, err := h.invoices.GetPDF(r.Context(), invoiceID)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+
+	externalconn.SyncUpload(r.Context(), org.ExternalConnections, externalconn.FolderPath(inv.CreatedAt), number+".pdf", pdf)
+	writeJSON(w, http.StatusOK, map[string]string{"id": invoiceID})
 }
 
 type updateInvoiceStatusPayload struct {
@@ -297,5 +336,10 @@ func (h *InvoiceHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+
+	if org, err := h.orgs.FindByID(r.Context(), orgID); err == nil {
+		externalconn.SyncDelete(r.Context(), org.ExternalConnections, externalconn.FolderPath(inv.CreatedAt), inv.Number+".pdf")
+	}
+
 	writeJSON(w, http.StatusOK, map[string]string{"id": invoiceID})
 }

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { FaFileInvoiceDollar, FaRegEdit } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";
-import { FiDownload } from "react-icons/fi";
+import { FiDownload, FiUploadCloud } from "react-icons/fi";
 import { useI18n } from "../../i18n/I18nContext";
 import DateRangePicker from "../common/DateRangePicker";
 import MultiSelect from "../common/MultiSelect";
@@ -23,6 +23,7 @@ import {
   generateInvoiceApi,
   downloadInvoicePdfApi,
   updateInvoiceStatusApi,
+  reuploadInvoiceApi,
   deleteInvoiceApi,
   clearInvoices,
 } from "../../Redux/Invoices/Invoice.actions";
@@ -94,6 +95,15 @@ const InvoiceRow = ({ invoice, orgId, token, onDelete }) => {
             onClick={() => dispatch(downloadInvoicePdfApi(orgId, invoice.id, token))}
           >
             <FiDownload style={{ fontSize: "16px" }} />
+          </button>
+        </Tooltip>
+        <Tooltip label={t("invoices.reupload")}>
+          <button
+            type="button"
+            className={styles.iconBtn}
+            onClick={() => dispatch(reuploadInvoiceApi(orgId, invoice.id, token))}
+          >
+            <FiUploadCloud style={{ fontSize: "16px" }} />
           </button>
         </Tooltip>
         {editing ? (

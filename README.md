@@ -4,6 +4,12 @@ Opensource alternative to [Clockify](https://clockify.me) written in Go and reac
 
 A live version is available at [cwclock.me](https://www.cwclock.me).
 
+![cwclock1](./img/cwclock1.png)
+
+![cwclock2](./img/cwclock2.png)
+
+![cwclock3](./img/cwclock3.png)
+
 ## Features
 
 * Track time spent on tasks
@@ -24,9 +30,7 @@ A live version is available at [cwclock.me](https://www.cwclock.me).
 
 ## Getting started
 
-The whole stack (PostgreSQL, Flyway migrations, the [cwclock-api](./cwclock-api)
-backend and the [cwclock-ui](./cwclock-ui) frontend served by nginx) can be
-started with a single command:
+The whole stack (PostgreSQL, Flyway migrations, the [cwclock-api](./cwclock-api) backend and the [cwclock-ui](./cwclock-ui) frontend served by nginx) can be started with a single command:
 
 ```shell
 docker compose up --build --force-recreate
