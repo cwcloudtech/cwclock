@@ -55,6 +55,21 @@ export const updateOrgApi = (orgId, fields, token) => async (dispatch) => {
   }
 };
 
+// Adding a connection saves it immediately (ai-instruct-40) instead of
+// requiring the whole organization form to be submitted, via a dedicated
+// PATCH endpoint that only appends one connection.
+export const addExternalConnectionApi = (orgId, connection, token) => async (dispatch) => {
+  try {
+    const { data } = await axios.patch(`${ENDPOINT}${orgId}/external-connections`, connection, authConfig(token));
+    dispatch({ type: OrgUpdateSUCCESS, payload: data });
+    toast.success(translate(getStoredLocale(), "toasts.externalConnectionAdded"), toastOptions);
+    return data;
+  } catch (e) {
+    dispatch({ type: OrgERROR });
+    throw e;
+  }
+};
+
 export const deleteOrgApi = (orgId, token) => async (dispatch) => {
   dispatch({ type: OrgLOADING });
   try {
@@ -87,6 +102,17 @@ export const addMemberApi = (orgId, email, role, token) => async (dispatch) => {
     await axios.post(`${ENDPOINT}${orgId}/members/`, { email, role }, authConfig(token));
     dispatch(listMembersApi(orgId, token));
     toast.success(translate(getStoredLocale(), "toasts.memberAdded"), toastOptions);
+  } catch (e) {
+    dispatch({ type: OrgERROR });
+    throw e;
+  }
+};
+
+export const removeMemberApi = (orgId, userId, token) => async (dispatch) => {
+  try {
+    await axios.delete(`${ENDPOINT}${orgId}/members/${userId}`, authConfig(token));
+    dispatch(listMembersApi(orgId, token));
+    toast.success(translate(getStoredLocale(), "toasts.memberRemoved"), toastOptions);
   } catch (e) {
     dispatch({ type: OrgERROR });
     throw e;

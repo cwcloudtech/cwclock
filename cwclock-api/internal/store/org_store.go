@@ -277,6 +277,29 @@ func (s *OrgStore) Update(ctx context.Context, id string, f OrganizationFields) 
 	return scanOrganization(row)
 }
 
+// AddExternalConnection appends conn to the organization's stored
+// externalConnections list via a single jsonb_set/concat update (rather
+// than fetch-modify-Update, which would clobber a concurrent whole-org edit
+// touching any other field), per ai-instruct-40's "add a connection should
+// automatically save the organization" PATCH endpoint.
+func (s *OrgStore) AddExternalConnection(ctx context.Context, id string, conn models.ExternalConnection) (models.Organization, error) {
+	connJSON, err := json.Marshal(conn)
+	if err != nil {
+		return models.Organization{}, err
+	}
+	row := s.pool.QueryRow(ctx, `
+		UPDATE organizations
+		SET data = jsonb_set(
+			data,
+			'{externalConnections}',
+			COALESCE(data->'externalConnections', '[]'::jsonb) || jsonb_build_array($2::jsonb)
+		), updated_at = now()
+		WHERE id = $1
+		RETURNING id, owner_id, data, created_at, updated_at
+	`, id, connJSON)
+	return scanOrganization(row)
+}
+
 func (s *OrgStore) Delete(ctx context.Context, id string) error {
 	tag, err := s.pool.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, id)
 	if err != nil {

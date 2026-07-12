@@ -38,23 +38,27 @@
   white-space: nowrap;
 }
 
-.remove {
-  display: inline-flex;
+.iconBtn {
+  display: flex;
   align-items: center;
   justify-content: center;
   background: none;
   border: none;
-  padding: 0 2px;
-  color: var(--cw-primary-700);
-  font-size: 1.1rem;
-  line-height: 1;
+  padding: 6px 10px;
+  color: var(--cw-text-muted);
+  border-radius: var(--cw-radius-sm);
   cursor: pointer;
-  opacity: 0.7;
-  transition: opacity var(--cw-transition);
+  transition: background-color var(--cw-transition), color var(--cw-transition);
 }
 
-.remove:hover {
-  opacity: 1;
+.iconBtn:hover {
+  color: var(--cw-primary-700);
+  background-color: var(--cw-primary-tint);
+}
+
+.iconBtnDanger:hover {
+  color: var(--cw-danger);
+  background-color: var(--cw-danger-light);
 }
 
 .addBtn {

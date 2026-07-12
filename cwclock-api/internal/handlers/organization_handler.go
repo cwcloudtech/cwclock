@@ -246,6 +246,32 @@ func (h *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, org)
 }
 
+// AddExternalConnection appends a single external connection to the
+// organization and persists it immediately (ai-instruct-40: "add an
+// external connection should automatically save the organization"), instead
+// of requiring the whole organization form to be submitted.
+func (h *OrganizationHandler) AddExternalConnection(w http.ResponseWriter, r *http.Request) {
+	orgID, _ := middleware.OrgIDFromContext(r.Context())
+
+	var conn models.ExternalConnection
+	if err := json.NewDecoder(r.Body).Decode(&conn); err != nil {
+		writeError(w, http.StatusBadRequest, "Please provide a valid external connection", CodeInvalidExternalConnection)
+		return
+	}
+	conns := []models.ExternalConnection{conn}
+	if err := validateExternalConnections(conns); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error(), CodeInvalidExternalConnection)
+		return
+	}
+
+	org, err := h.orgs.AddExternalConnection(r.Context(), orgID, conns[0])
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, org)
+}
+
 func (h *OrganizationHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
 

@@ -7,6 +7,7 @@ import { postTasksApi, startTask } from "../../Redux/Tasks/Task.actions";
 import useTime from "./useTime";
 import projectLabel from "../common/projectLabel";
 import AutocompleteSelect from "../common/AutocompleteSelect";
+import padTimeString from "../common/padTimeString";
 import { useI18n } from "../../i18n/I18nContext";
 
 const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
@@ -33,7 +34,7 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
         text: name || t("timeTracker.defaultTaskName"),
         day: new Date().toISOString().slice(0, 10),
         start: start,
-        end: `${hours2}:${minutes2}:${seconds2}`,
+        end: padTimeString(`${hours2}:${minutes2}:${seconds2}`),
         allDay: false,
         clientId: project.clientId,
         projectId: project.id,
@@ -42,7 +43,7 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
       handleTimer();
     } else {
       handleTimer();
-      dispatch(startTask(`${hours}:${minutes}:${seconds}`));
+      dispatch(startTask(padTimeString(`${hours}:${minutes}:${seconds}`)));
     }
   };
 

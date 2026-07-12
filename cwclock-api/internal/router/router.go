@@ -117,12 +117,13 @@ func New(
 				r.With(middleware.RequireRole(models.RoleOwner)).Put("/", orgHandler.Update)
 				r.With(middleware.RequireRole(models.RoleOwner)).Delete("/", orgHandler.Delete)
 				r.With(middleware.RequireRole(models.RoleOwner)).Put("/owner", orgHandler.TransferOwnership)
+				r.With(middleware.RequireRole(models.RoleOwner)).Patch("/external-connections", orgHandler.AddExternalConnection)
 
 				r.Route("/members", func(r chi.Router) {
 					r.Get("/", orgHandler.ListMembers)
 					r.With(middleware.RequireRole(models.RoleOwner)).Post("/", orgHandler.AddMember)
 					r.With(middleware.RequireRole(models.RoleOwner)).Put("/{userId}", orgHandler.UpdateMember)
-					r.With(middleware.RequireRole(models.RoleOwner)).Delete("/{userId}", orgHandler.RemoveMember)
+					r.With(middleware.RequireRole(models.RoleAdmin)).Delete("/{userId}", orgHandler.RemoveMember)
 					r.With(middleware.RequireRole(models.RoleAdmin)).Put("/{userId}/rate", orgHandler.SetMemberRate)
 				})
 

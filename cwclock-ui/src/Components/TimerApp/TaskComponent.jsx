@@ -13,13 +13,14 @@ import AutocompleteSelect from "../common/AutocompleteSelect";
 import Tooltip from "../common/Tooltip";
 import toastOptions from "../../Redux/toastOptions";
 import { isAdminOrOwner as computeIsAdminOrOwner, memberRole } from "../common/permissions";
+import padTimeString from "../common/padTimeString";
 import { useI18n } from "../../i18n/I18nContext";
 
 const fieldsFromItem = (item) => ({
   text: item.text,
   day: item.day,
-  start: item.start || "",
-  end: item.end || "",
+  start: padTimeString(item.start) || "",
+  end: padTimeString(item.end) || "",
   allDay: item.allDay,
   projectId: item.projectId,
   userId: item.userId,
@@ -77,7 +78,9 @@ const TaskComponent = ({ item }) => {
     setIsEditing(false);
   };
 
-  const timeLabel = item.allDay ? t("timeTracker.allDay") : `${item.start || "?"} - ${item.end || "?"}`;
+  const timeLabel = item.allDay
+    ? t("timeTracker.allDay")
+    : `${padTimeString(item.start) || "?"} - ${padTimeString(item.end) || "?"}`;
 
   const maxLabelLen = parseInt(process.env.REACT_APP_TASK_LABEL_MAX_LENGTH) || 50;
   const isTextTruncated = maxLabelLen > 0 && item.text.length > maxLabelLen;

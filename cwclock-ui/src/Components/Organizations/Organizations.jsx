@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { MdDeleteForever } from "react-icons/md";
 import Button from "../common/Button";
 import ConfirmModal from "../common/ConfirmModal";
 import CopyIdButton from "../common/CopyIdButton";
+import Tooltip from "../common/Tooltip";
 import styles from "./Styles/Organizations.module.css";
 import {
   listOrgsApi,
@@ -11,6 +13,7 @@ import {
   selectOrg,
   listMembersApi,
   addMemberApi,
+  removeMemberApi,
   transferOwnershipApi,
   setMemberRateApi,
 } from "../../Redux/Organizations/Org.actions";
@@ -64,6 +67,7 @@ const MemberRow = ({ member, canSetRate, orgId, orgCurrency, token }) => {
   const dispatch = useDispatch();
   const [editing, setEditing] = useState(false);
   const [dailyRate, setDailyRate] = useState(member.dailyRate || "");
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
   const handleSave = (e) => {
     e.preventDefault();
@@ -72,6 +76,15 @@ const MemberRow = ({ member, canSetRate, orgId, orgCurrency, token }) => {
     setEditing(false);
   };
 
+  const handleRemove = () => {
+    setShowRemoveConfirm(false);
+    dispatch(removeMemberApi(orgId, member.userId, token));
+  };
+
+  // The owner can't be revoked (backend rejects it too - see
+  // ErrCannotRemoveOwner), so the button is simply hidden for that row.
+  const canRemove = canSetRate && member.role !== "owner";
+
   return (
     <li className="cw-list-item">
       <div className={styles.memberRow}>
@@ -79,16 +92,29 @@ const MemberRow = ({ member, canSetRate, orgId, orgCurrency, token }) => {
           {memberLabel(member)}
           {member.name && ` (${member.email})`} - {t(roleLabelKey[member.role] || "common.roleMember")}
         </span>
-        {canSetRate && !editing && (
-          <span className={styles.rate}>
-            {member.dailyRate
-              ? t("organizations.dailyRatePerDay", { rate: member.dailyRate, currency: orgCurrency })
-              : t("organizations.noDailyRateSet")}{" "}
-            <Button size="sm" variant="ghost" onClick={() => setEditing(true)} title={t("organizations.editDailyRate")}>
-              {t("common.edit")}
-            </Button>
-          </span>
-        )}
+        <span className={styles.memberActions}>
+          {canSetRate && !editing && (
+            <span className={styles.rate}>
+              {member.dailyRate
+                ? t("organizations.dailyRatePerDay", { rate: member.dailyRate, currency: orgCurrency })
+                : t("organizations.noDailyRateSet")}{" "}
+              <Button size="sm" variant="ghost" onClick={() => setEditing(true)} title={t("organizations.editDailyRate")}>
+                {t("common.edit")}
+              </Button>
+            </span>
+          )}
+          {canRemove && (
+            <Tooltip label={t("organizations.revokeMember")}>
+              <button
+                type="button"
+                className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                onClick={() => setShowRemoveConfirm(true)}
+              >
+                <MdDeleteForever style={{ fontSize: "18px" }} />
+              </button>
+            </Tooltip>
+          )}
+        </span>
       </div>
       {canSetRate && editing && (
         <form className={styles.rateForm} onSubmit={handleSave}>
@@ -116,6 +142,14 @@ const MemberRow = ({ member, canSetRate, orgId, orgCurrency, token }) => {
           </div>
         </form>
       )}
+      <ConfirmModal
+        show={showRemoveConfirm}
+        title={t("organizations.revokeMemberTitle")}
+        body={t("organizations.revokeMemberBody", { name: memberLabel(member) })}
+        confirmLabel={t("common.delete")}
+        onConfirm={handleRemove}
+        onCancel={() => setShowRemoveConfirm(false)}
+      />
     </li>
   );
 };
@@ -332,7 +366,7 @@ const Organizations = () => {
           submitLabel={t("common.create")}
           error={createError}
         />
-        <h3 className="cw-subtitle">{t("organizations.externalConnections")}</h3>
+        <h2 className="cw-subtitle">{t("organizations.externalConnections")}</h2>
         <ExternalConnectionsEditor
           value={fields.externalConnections}
           onChange={(v) => setField("externalConnections", v)}
@@ -355,10 +389,12 @@ const Organizations = () => {
                     onCancel={() => setEditFields(null)}
                     error={editError}
                   />
-                  <h3 className="cw-subtitle">{t("organizations.externalConnections")}</h3>
+                  <h2 className="cw-subtitle">{t("organizations.externalConnections")}</h2>
                   <ExternalConnectionsEditor
                     value={editFields.externalConnections}
                     onChange={(v) => setEditField("externalConnections", v)}
+                    orgId={currentOrgId}
+                    token={user.token}
                   />
                 </div>
               ) : (

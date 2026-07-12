@@ -8,6 +8,7 @@ import memberLabel from "../common/memberLabel";
 import projectLabel from "../common/projectLabel";
 import AutocompleteSelect from "../common/AutocompleteSelect";
 import Tooltip from "../common/Tooltip";
+import padTimeString from "../common/padTimeString";
 import { useI18n } from "../../i18n/I18nContext";
 import { formatHMS } from "./reportFormat";
 import styles from "./Styles/Reports.module.css";
@@ -15,8 +16,8 @@ import styles from "./Styles/Reports.module.css";
 const fieldsFromEntry = (e) => ({
   text: e.text,
   day: e.day,
-  start: e.start || "",
-  end: e.end || "",
+  start: padTimeString(e.start) || "",
+  end: padTimeString(e.end) || "",
   allDay: e.allDay,
   clientId: e.clientId,
   projectId: e.projectId,
@@ -172,7 +173,7 @@ const ReportEntryRow = ({ entry, orgId, currency, isAdminOrOwner, showAmount, on
         </div>
       </span>
       <span>
-        {entry.start || "?"} - {entry.end || "?"}
+        {padTimeString(entry.start) || "?"} - {padTimeString(entry.end) || "?"}
         {entry.allDay && ` (${t("timeTracker.allDay")})`}
       </span>
       <span>{formatHMS(entry.durationSecs)}</span>

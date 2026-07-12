@@ -1,8 +1,14 @@
 import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import { MdDeleteForever } from "react-icons/md";
 import Button from "./Button";
 import RequiredMark from "./RequiredMark";
+import Tooltip from "./Tooltip";
+import ConfirmModal from "./ConfirmModal";
 import fileToBase64 from "./fileToBase64";
+import { addExternalConnectionApi } from "../../Redux/Organizations/Org.actions";
 import { useI18n } from "../../i18n/I18nContext";
+import { apiErrorMessage } from "../../i18n/translate";
 import styles from "./Styles/ExternalConnectionsEditor.module.css";
 
 const emptyDraft = {
@@ -24,16 +30,23 @@ const isDraftComplete = (draft) => {
   return !!(draft.serviceAccountBase64 && draft.folderId);
 };
 
-// Manages an organization's `externalConnections` list (ai-instruct-39): a
-// "+" button reveals a per-type sub-form (S3 or Google Drive fields), and
-// existing connections are listed with a remove button. The whole array
-// rides along in the organization create/edit form's own fields object, so
-// no dedicated Redux actions or API calls are needed here.
-const ExternalConnectionsEditor = ({ value = [], onChange }) => {
-  const { t } = useI18n();
+// Manages an organization's `externalConnections` list (ai-instruct-39/40):
+// a "+" button reveals a per-type sub-form (S3 or Google Drive fields).
+// When orgId/token are given (editing an existing organization), adding a
+// connection saves it immediately via a dedicated PATCH endpoint and
+// refreshes the organization in place; otherwise (creating a brand new
+// organization, which doesn't exist yet to PATCH) it's just appended to the
+// local array, submitted along with the rest of the create form. Removing a
+// connection always stays local until the surrounding form is saved.
+const ExternalConnectionsEditor = ({ value = [], onChange, orgId, token }) => {
+  const { t, locale } = useI18n();
+  const dispatch = useDispatch();
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
   const [fileError, setFileError] = useState("");
+  const [addError, setAddError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deletingConnection, setDeletingConnection] = useState(null);
 
   const setDraftField = (key, val) => setDraft((d) => ({ ...d, [key]: val }));
 
@@ -50,17 +63,38 @@ const ExternalConnectionsEditor = ({ value = [], onChange }) => {
     }
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!isDraftComplete(draft)) return;
-    const connection = { id: crypto.randomUUID(), ...draft };
+    setAddError("");
+    const connection = { ...draft };
     delete connection.serviceAccountFileName;
-    onChange([...value, connection]);
+
+    if (orgId) {
+      setSaving(true);
+      try {
+        const updatedOrg = await dispatch(addExternalConnectionApi(orgId, connection, token));
+        onChange(updatedOrg.externalConnections);
+        setDraft(emptyDraft);
+        setFileError("");
+        setAdding(false);
+      } catch (err) {
+        setAddError(apiErrorMessage(err, locale));
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    onChange([...value, { id: crypto.randomUUID(), ...connection }]);
     setDraft(emptyDraft);
     setFileError("");
     setAdding(false);
   };
 
-  const handleRemove = (id) => onChange(value.filter((c) => c.id !== id));
+  const handleConfirmRemove = () => {
+    onChange(value.filter((c) => c.id !== deletingConnection.id));
+    setDeletingConnection(null);
+  };
 
   const summaryFor = (conn) =>
     conn.type === "s3"
@@ -77,14 +111,15 @@ const ExternalConnectionsEditor = ({ value = [], onChange }) => {
                 {conn.type === "s3" ? t("organizations.s3") : t("organizations.googleDrive")}
               </span>
               <span className={styles.summary}>{summaryFor(conn)}</span>
-              <button
-                type="button"
-                className={styles.remove}
-                onClick={() => handleRemove(conn.id)}
-                title={t("common.delete")}
-              >
-                ×
-              </button>
+              <Tooltip label={t("common.delete")}>
+                <button
+                  type="button"
+                  className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                  onClick={() => setDeletingConnection(conn)}
+                >
+                  <MdDeleteForever style={{ fontSize: "18px" }} />
+                </button>
+              </Tooltip>
             </li>
           ))}
         </ul>
@@ -200,7 +235,7 @@ const ExternalConnectionsEditor = ({ value = [], onChange }) => {
               type="button"
               size="sm"
               onClick={handleAdd}
-              disabled={!isDraftComplete(draft)}
+              disabled={!isDraftComplete(draft) || saving}
               title={t("organizations.addConnection")}
             >
               {t("common.add")}
@@ -213,18 +248,29 @@ const ExternalConnectionsEditor = ({ value = [], onChange }) => {
                 setAdding(false);
                 setDraft(emptyDraft);
                 setFileError("");
+                setAddError("");
               }}
               title={t("common.cancel")}
             >
               {t("common.cancel")}
             </Button>
           </div>
+          {addError && <p className="cw-error">{addError}</p>}
         </div>
       ) : (
         <button type="button" className={styles.addBtn} onClick={() => setAdding(true)} title={t("organizations.addConnection")}>
           + {t("organizations.addConnection")}
         </button>
       )}
+
+      <ConfirmModal
+        show={!!deletingConnection}
+        title={t("organizations.deleteConnectionTitle")}
+        body={deletingConnection ? t("organizations.deleteConnectionBody", { name: summaryFor(deletingConnection) }) : ""}
+        confirmLabel={t("common.delete")}
+        onConfirm={handleConfirmRemove}
+        onCancel={() => setDeletingConnection(null)}
+      />
     </div>
   );
 };

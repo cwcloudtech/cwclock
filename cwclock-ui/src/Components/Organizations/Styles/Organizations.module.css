@@ -47,6 +47,18 @@
   background-color: var(--cw-primary-tint);
 }
 
+.iconBtnDanger:hover {
+  color: var(--cw-danger);
+  background-color: var(--cw-danger-light);
+}
+
+.memberActions {
+  display: flex;
+  align-items: center;
+  gap: var(--cw-spacing-sm);
+  flex-shrink: 0;
+}
+
 .avatar {
   width: 24px;
   height: 24px;
