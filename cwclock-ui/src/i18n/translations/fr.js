@@ -307,6 +307,7 @@ const fr = {
     invoiceDeleted: "Facture supprimée.",
     invoiceReuploaded: "Facture rechargée vers les connexions externes.",
     externalConnectionAdded: "Connexion ajoutée.",
+    externalConnectionRemoved: "Connexion supprimée.",
     memberRemoved: "Membre supprimé.",
     profilePictureUpdated: "Photo de profil mise à jour.",
     profileUpdated: "Profil mis à jour avec succès.",
@@ -350,6 +351,8 @@ const fr = {
     mustOwnTargetOrg: "Vous devez posséder l'organisation cible pour y transférer un client.",
     invalidClientForOrg: "Ce client n'appartient pas à cette organisation.",
     invalidCountry: "Veuillez sélectionner un pays pris en charge.",
+    invalidExternalConnection: "Veuillez remplir tous les champs pour ce type de connexion.",
+    duplicateExternalConnection: "Cette connexion externe existe déjà.",
   },
   reports: {
     summary: "Résumé",

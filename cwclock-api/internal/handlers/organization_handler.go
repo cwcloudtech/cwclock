@@ -246,10 +246,35 @@ func (h *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, org)
 }
 
+// isDuplicateExternalConnection reports whether conn points at the same
+// destination as one of existing: same endpoint/bucket/region for S3 (the
+// credentials may legitimately differ, but it's still the same bucket), or
+// same folder for Google Drive.
+func isDuplicateExternalConnection(existing []models.ExternalConnection, conn models.ExternalConnection) bool {
+	for _, e := range existing {
+		if e.Type != conn.Type {
+			continue
+		}
+		switch conn.Type {
+		case models.ExternalConnectionS3:
+			if e.Endpoint == conn.Endpoint && e.BucketName == conn.BucketName && e.Region == conn.Region {
+				return true
+			}
+		case models.ExternalConnectionGoogleDrive:
+			if e.FolderID == conn.FolderID {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // AddExternalConnection appends a single external connection to the
 // organization and persists it immediately (ai-instruct-40: "add an
 // external connection should automatically save the organization"), instead
-// of requiring the whole organization form to be submitted.
+// of requiring the whole organization form to be submitted. Adding one that
+// already points at the same destination (same S3 bucket, or same Drive
+// folder) is rejected with 409 rather than silently creating a duplicate.
 func (h *OrganizationHandler) AddExternalConnection(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
 
@@ -264,7 +289,31 @@ func (h *OrganizationHandler) AddExternalConnection(w http.ResponseWriter, r *ht
 		return
 	}
 
-	org, err := h.orgs.AddExternalConnection(r.Context(), orgID, conns[0])
+	org, err := h.orgs.FindByID(r.Context(), orgID)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	if isDuplicateExternalConnection(org.ExternalConnections, conns[0]) {
+		writeError(w, http.StatusConflict, "This external connection already exists", CodeDuplicateExternalConnection)
+		return
+	}
+
+	updated, err := h.orgs.AddExternalConnection(r.Context(), orgID, conns[0])
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, updated)
+}
+
+// RemoveExternalConnection removes a single external connection from the
+// organization and persists it immediately, mirroring AddExternalConnection.
+func (h *OrganizationHandler) RemoveExternalConnection(w http.ResponseWriter, r *http.Request) {
+	orgID, _ := middleware.OrgIDFromContext(r.Context())
+	connID := chi.URLParam(r, "connectionId")
+
+	org, err := h.orgs.RemoveExternalConnection(r.Context(), orgID, connID)
 	if err != nil {
 		writeStoreError(w, err)
 		return

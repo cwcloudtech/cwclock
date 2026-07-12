@@ -300,6 +300,29 @@ func (s *OrgStore) AddExternalConnection(ctx context.Context, id string, conn mo
 	return scanOrganization(row)
 }
 
+// RemoveExternalConnection removes the connection with the given id from
+// the organization's stored externalConnections list, the same atomic
+// jsonb-only update as AddExternalConnection (rather than fetch-filter-
+// Update, which would clobber a concurrent whole-org edit touching any
+// other field). Removing an id that isn't present is a no-op, not an error.
+func (s *OrgStore) RemoveExternalConnection(ctx context.Context, id, connID string) (models.Organization, error) {
+	row := s.pool.QueryRow(ctx, `
+		UPDATE organizations
+		SET data = jsonb_set(
+			data,
+			'{externalConnections}',
+			(
+				SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb)
+				FROM jsonb_array_elements(COALESCE(data->'externalConnections', '[]'::jsonb)) elem
+				WHERE elem->>'id' != $2
+			)
+		), updated_at = now()
+		WHERE id = $1
+		RETURNING id, owner_id, data, created_at, updated_at
+	`, id, connID)
+	return scanOrganization(row)
+}
+
 func (s *OrgStore) Delete(ctx context.Context, id string) error {
 	tag, err := s.pool.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, id)
 	if err != nil {

@@ -70,6 +70,19 @@ export const addExternalConnectionApi = (orgId, connection, token) => async (dis
   }
 };
 
+// Removing a connection also saves immediately, mirroring addExternalConnectionApi.
+export const removeExternalConnectionApi = (orgId, connectionId, token) => async (dispatch) => {
+  try {
+    const { data } = await axios.patch(`${ENDPOINT}${orgId}/external-connections/${connectionId}`, {}, authConfig(token));
+    dispatch({ type: OrgUpdateSUCCESS, payload: data });
+    toast.success(translate(getStoredLocale(), "toasts.externalConnectionRemoved"), toastOptions);
+    return data;
+  } catch (e) {
+    dispatch({ type: OrgERROR });
+    throw e;
+  }
+};
+
 export const deleteOrgApi = (orgId, token) => async (dispatch) => {
   dispatch({ type: OrgLOADING });
   try {

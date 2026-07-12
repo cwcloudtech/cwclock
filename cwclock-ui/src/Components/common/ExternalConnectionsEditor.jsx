@@ -6,7 +6,7 @@ import RequiredMark from "./RequiredMark";
 import Tooltip from "./Tooltip";
 import ConfirmModal from "./ConfirmModal";
 import fileToBase64 from "./fileToBase64";
-import { addExternalConnectionApi } from "../../Redux/Organizations/Org.actions";
+import { addExternalConnectionApi, removeExternalConnectionApi } from "../../Redux/Organizations/Org.actions";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
 import styles from "./Styles/ExternalConnectionsEditor.module.css";
@@ -32,12 +32,11 @@ const isDraftComplete = (draft) => {
 
 // Manages an organization's `externalConnections` list (ai-instruct-39/40):
 // a "+" button reveals a per-type sub-form (S3 or Google Drive fields).
-// When orgId/token are given (editing an existing organization), adding a
-// connection saves it immediately via a dedicated PATCH endpoint and
+// When orgId/token are given (editing an existing organization), adding or
+// removing a connection saves immediately via dedicated PATCH endpoints and
 // refreshes the organization in place; otherwise (creating a brand new
-// organization, which doesn't exist yet to PATCH) it's just appended to the
-// local array, submitted along with the rest of the create form. Removing a
-// connection always stays local until the surrounding form is saved.
+// organization, which doesn't exist yet to PATCH) both just mutate the
+// local array, submitted along with the rest of the create form.
 const ExternalConnectionsEditor = ({ value = [], onChange, orgId, token }) => {
   const { t, locale } = useI18n();
   const dispatch = useDispatch();
@@ -47,6 +46,7 @@ const ExternalConnectionsEditor = ({ value = [], onChange, orgId, token }) => {
   const [addError, setAddError] = useState("");
   const [saving, setSaving] = useState(false);
   const [deletingConnection, setDeletingConnection] = useState(null);
+  const [removeError, setRemoveError] = useState("");
 
   const setDraftField = (key, val) => setDraft((d) => ({ ...d, [key]: val }));
 
@@ -91,8 +91,22 @@ const ExternalConnectionsEditor = ({ value = [], onChange, orgId, token }) => {
     setAdding(false);
   };
 
-  const handleConfirmRemove = () => {
-    onChange(value.filter((c) => c.id !== deletingConnection.id));
+  const handleConfirmRemove = async () => {
+    const connection = deletingConnection;
+    setRemoveError("");
+
+    if (orgId) {
+      try {
+        const updatedOrg = await dispatch(removeExternalConnectionApi(orgId, connection.id, token));
+        onChange(updatedOrg.externalConnections);
+        setDeletingConnection(null);
+      } catch (err) {
+        setRemoveError(apiErrorMessage(err, locale));
+      }
+      return;
+    }
+
+    onChange(value.filter((c) => c.id !== connection.id));
     setDeletingConnection(null);
   };
 
@@ -266,10 +280,20 @@ const ExternalConnectionsEditor = ({ value = [], onChange, orgId, token }) => {
       <ConfirmModal
         show={!!deletingConnection}
         title={t("organizations.deleteConnectionTitle")}
-        body={deletingConnection ? t("organizations.deleteConnectionBody", { name: summaryFor(deletingConnection) }) : ""}
+        body={
+          deletingConnection && (
+            <>
+              {t("organizations.deleteConnectionBody", { name: summaryFor(deletingConnection) })}
+              {removeError && <p className="cw-error">{removeError}</p>}
+            </>
+          )
+        }
         confirmLabel={t("common.delete")}
         onConfirm={handleConfirmRemove}
-        onCancel={() => setDeletingConnection(null)}
+        onCancel={() => {
+          setDeletingConnection(null);
+          setRemoveError("");
+        }}
       />
     </div>
   );

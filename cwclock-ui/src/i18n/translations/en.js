@@ -307,6 +307,7 @@ const en = {
     invoiceDeleted: "Invoice deleted.",
     invoiceReuploaded: "Invoice reuploaded to external connections.",
     externalConnectionAdded: "Connection added.",
+    externalConnectionRemoved: "Connection removed.",
     memberRemoved: "Member removed.",
     profilePictureUpdated: "Profile picture updated.",
     profileUpdated: "Profile updated successfully.",
@@ -350,6 +351,8 @@ const en = {
     mustOwnTargetOrg: "You must own the target organization to transfer a client to it.",
     invalidClientForOrg: "That client does not belong to this organization.",
     invalidCountry: "Please select a supported country.",
+    invalidExternalConnection: "Please fill in every field for this connection type.",
+    duplicateExternalConnection: "This external connection already exists.",
   },
   reports: {
     summary: "Summary",

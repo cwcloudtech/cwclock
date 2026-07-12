@@ -118,6 +118,7 @@ func New(
 				r.With(middleware.RequireRole(models.RoleOwner)).Delete("/", orgHandler.Delete)
 				r.With(middleware.RequireRole(models.RoleOwner)).Put("/owner", orgHandler.TransferOwnership)
 				r.With(middleware.RequireRole(models.RoleOwner)).Patch("/external-connections", orgHandler.AddExternalConnection)
+				r.With(middleware.RequireRole(models.RoleOwner)).Patch("/external-connections/{connectionId}", orgHandler.RemoveExternalConnection)
 
 				r.Route("/members", func(r chi.Router) {
 					r.Get("/", orgHandler.ListMembers)
