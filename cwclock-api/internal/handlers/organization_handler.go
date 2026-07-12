@@ -127,6 +127,44 @@ func (p organizationPayload) toFields() store.OrganizationFields {
 	}
 }
 
+// redactExternalConnections clears the credential-bearing fields of each
+// connection (S3 access/secret key, the Google Drive service account) so
+// they're never echoed back in an API response - see ai-instruct-41. This
+// only affects what gets serialized to the client; the real values are
+// still what's persisted and used server-side to talk to S3/Drive.
+func redactExternalConnections(conns []models.ExternalConnection) []models.ExternalConnection {
+	redacted := make([]models.ExternalConnection, len(conns))
+	for i, c := range conns {
+		c.AccessKey = ""
+		c.SecretKey = ""
+		c.ServiceAccountBase64 = ""
+		redacted[i] = c
+	}
+	return redacted
+}
+
+func redactOrg(org models.Organization) models.Organization {
+	org.ExternalConnections = redactExternalConnections(org.ExternalConnections)
+	return org
+}
+
+func redactOrgs(orgs []models.Organization) []models.Organization {
+	redacted := make([]models.Organization, len(orgs))
+	for i, o := range orgs {
+		redacted[i] = redactOrg(o)
+	}
+	return redacted
+}
+
+func redactOrgsWithOwner(orgs []models.OrganizationWithOwner) []models.OrganizationWithOwner {
+	redacted := make([]models.OrganizationWithOwner, len(orgs))
+	for i, o := range orgs {
+		o.Organization = redactOrg(o.Organization)
+		redacted[i] = o
+	}
+	return redacted
+}
+
 func (h *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 	userID, _ := middleware.UserIDFromContext(r.Context())
 
@@ -167,7 +205,7 @@ func (h *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, org)
+	writeJSON(w, http.StatusCreated, redactOrg(org))
 }
 
 func (h *OrganizationHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -178,7 +216,7 @@ func (h *OrganizationHandler) List(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, orgs)
+	writeJSON(w, http.StatusOK, redactOrgs(orgs))
 }
 
 // AdminList returns every organization, regardless of membership, for the
@@ -189,7 +227,7 @@ func (h *OrganizationHandler) AdminList(w http.ResponseWriter, r *http.Request) 
 		writeStoreError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, orgs)
+	writeJSON(w, http.StatusOK, redactOrgsWithOwner(orgs))
 }
 
 func (h *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
@@ -200,7 +238,7 @@ func (h *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, org)
+	writeJSON(w, http.StatusOK, redactOrg(org))
 }
 
 func (h *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -233,17 +271,28 @@ func (h *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "Image is too large", CodeImageTooLarge)
 		return
 	}
-	if err := validateExternalConnections(p.ExternalConnections); err != nil {
-		writeError(w, http.StatusBadRequest, err.Error(), CodeInvalidExternalConnection)
-		return
-	}
 
-	org, err := h.orgs.Update(r.Context(), orgID, p.toFields())
+	// External connections are managed exclusively through the dedicated
+	// Add/RemoveExternalConnection endpoints now (ai-instruct-40/41): the
+	// whole-org save ignores whatever the client sent for this field and
+	// keeps the organization's current connections as-is. Accepting it here
+	// would let a client round-trip the redacted list it was given (see
+	// redactExternalConnections) back into storage, wiping out every
+	// connection's real access/secret key or service account.
+	existing, err := h.orgs.FindByID(r.Context(), orgID)
 	if err != nil {
 		writeStoreError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, org)
+	fields := p.toFields()
+	fields.ExternalConnections = existing.ExternalConnections
+
+	org, err := h.orgs.Update(r.Context(), orgID, fields)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, redactOrg(org))
 }
 
 // isDuplicateExternalConnection reports whether conn points at the same
@@ -304,7 +353,7 @@ func (h *OrganizationHandler) AddExternalConnection(w http.ResponseWriter, r *ht
 		writeStoreError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, updated)
+	writeJSON(w, http.StatusOK, redactOrg(updated))
 }
 
 // RemoveExternalConnection removes a single external connection from the
@@ -318,7 +367,7 @@ func (h *OrganizationHandler) RemoveExternalConnection(w http.ResponseWriter, r 
 		writeStoreError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, org)
+	writeJSON(w, http.StatusOK, redactOrg(org))
 }
 
 func (h *OrganizationHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -479,5 +528,5 @@ func (h *OrganizationHandler) TransferOwnership(w http.ResponseWriter, r *http.R
 		writeStoreError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, org)
+	writeJSON(w, http.StatusOK, redactOrg(org))
 }
