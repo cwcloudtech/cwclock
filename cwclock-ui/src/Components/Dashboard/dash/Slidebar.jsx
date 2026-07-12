@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styles from "./STYLE/Slidebar.module.css";
-import { FaChevronLeft, FaChevronRight, FaUserCheck } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaUserCheck, FaGitAlt } from "react-icons/fa";
 import { FiLogOut, FiSun, FiMoon, FiGlobe } from "react-icons/fi";
 import { Route, Routes, useNavigate, Link } from "react-router-dom";
 import Dropdown, { DropdownItem, DropdownText, DropdownDivider } from "../../common/Dropdown";
@@ -137,6 +137,18 @@ const Slidebar = () => {
 
         <div className={styles.navbarrightmain}>
           {user.token ? (
+            <>
+            <Tooltip label={t("nav.gitRepository")}>
+              <a
+                href={process.env.REACT_APP_REPOURL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.gitRepoLink}
+                title={t("nav.gitRepository")}
+              >
+                <FaGitAlt fontSize="18px" />
+              </a>
+            </Tooltip>
             <Tooltip label={t("nav.accountMenu")}>
             <Dropdown
               align="end"
@@ -210,6 +222,7 @@ const Slidebar = () => {
               )}
             </Dropdown>
             </Tooltip>
+            </>
           ) : (
             <button className={styles.loginBtn} onClick={() => navigate("/login")} title={t("nav.goToLogin")}>
               {t("nav.login")}

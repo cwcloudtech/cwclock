@@ -28,6 +28,23 @@
 .navbarrightmain {
   display: flex;
   align-items: center;
+  gap: var(--cw-spacing-sm);
+}
+
+.gitRepoLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--cw-text-muted);
+  transition: background-color var(--cw-transition), color var(--cw-transition);
+}
+
+.gitRepoLink:hover {
+  color: var(--cw-primary-700);
+  background-color: var(--cw-primary-tint);
 }
 
 .Slideflex {

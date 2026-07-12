@@ -77,6 +77,7 @@ const en = {
     switchOrganization: "Switch organization",
     createOrganization: "Create organization",
     accountMenu: "Account menu",
+    gitRepository: "Git repository",
     editProfile: "Edit profile",
     editProfileTooltip: "Edit your profile and avatar",
     lightMode: "Light mode",

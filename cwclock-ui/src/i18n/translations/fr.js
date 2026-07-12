@@ -77,6 +77,7 @@ const fr = {
     switchOrganization: "Changer d'organisation",
     createOrganization: "Créer une organisation",
     accountMenu: "Menu du compte",
+    gitRepository: "Dépôt Git",
     editProfile: "Modifier le profil",
     editProfileTooltip: "Modifier votre profil et votre avatar",
     lightMode: "Mode clair",
