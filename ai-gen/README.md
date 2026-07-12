@@ -39,3 +39,4 @@
 * [ai-instruct-37](./ai-instruct-37.md)
 * [ai-instruct-38](./ai-instruct-38.md)
 * [ai-instruct-39](./ai-instruct-39.md)
+* [ai-instruct-40](./ai-instruct-40.md)
