@@ -78,6 +78,7 @@ const en = {
     createOrganization: "Create organization",
     accountMenu: "Account menu",
     gitRepository: "Git repository",
+    documentation: "Documentation",
     editProfile: "Edit profile",
     editProfileTooltip: "Edit your profile and avatar",
     lightMode: "Light mode",
@@ -115,6 +116,7 @@ const en = {
     passwordsDontMatch: "Passwords doesn't match.",
     openSourcePrefix: "Open source solution by CWCloud.tech, sources are available",
     here: "here",
+    documentationAvailable: ", documentation is available",
   },
   timeTracker: {
     whatAreYouWorkingOn: "What are you working on?",
