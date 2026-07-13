@@ -23,6 +23,10 @@ A live version is available at [cwclock.me](https://www.cwclock.me).
 * Light/Dark mode
 * OpenTelemetry & OpenMetrics (Prometheus) observability
 
+## Complet documentation
+
+The complete document's [here](https://www.cwcloud.tech/docs/tutorials/cwclock) (in French's [here](https://www.cwcloud.tech/fr/docs/tutorials/cwclock)).
+
 ## Technologies
 
 - [Go](https://go.dev) and [PostgreSQL](https://www.postgresql.org) for the API
@@ -30,6 +34,8 @@ A live version is available at [cwclock.me](https://www.cwclock.me).
 - [Flyway](https://flywaydb.org) for the migrations
 
 ## Getting started
+
+### With docker compose in local
 
 The whole stack (PostgreSQL, Flyway migrations, the [cwclock-api](./cwclock-api) backend and the [cwclock-ui](./cwclock-ui) frontend served by nginx) can be started with a single command:
 

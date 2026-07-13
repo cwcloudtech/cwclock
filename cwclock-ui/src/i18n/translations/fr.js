@@ -116,6 +116,7 @@ const fr = {
     passwordsDontMatch: "Les mots de passe ne correspondent pas.",
     openSourcePrefix: "Solution open source par CWCloud, les sources sont disponibles",
     here: "ici",
+    documentationAvailable: ", la documentation est disponible",
   },
   timeTracker: {
     whatAreYouWorkingOn: "Sur quoi travaillez-vous ?",
