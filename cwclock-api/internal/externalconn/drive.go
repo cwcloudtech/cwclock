@@ -89,6 +89,7 @@ type driveTarget struct {
 	key        serviceAccountKey
 	privateKey *rsa.PrivateKey
 	rootFolder string
+	flat       bool
 	httpClient *http.Client
 }
 
@@ -101,6 +102,7 @@ func newDriveTarget(conn models.ExternalConnection) (*driveTarget, error) {
 		key:        key,
 		privateKey: privateKey,
 		rootFolder: conn.FolderID,
+		flat:       conn.FlatDirectory,
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 	}, nil
 }
@@ -111,23 +113,19 @@ func (d *driveTarget) Upload(ctx context.Context, year string, months []string, 
 		return err
 	}
 
-	yearFolder, err := d.ensureFolder(ctx, token, year, d.rootFolder)
-	if err != nil {
-		return err
-	}
-	monthFolder, err := d.ensureAnyFolder(ctx, token, months, yearFolder)
+	folder, err := d.ensureTargetFolder(ctx, token, year, months)
 	if err != nil {
 		return err
 	}
 
-	fileID, found, err := d.findFile(ctx, token, filename, monthFolder)
+	fileID, found, err := d.findFile(ctx, token, filename, folder)
 	if err != nil {
 		return err
 	}
 	if found {
 		return d.updateFile(ctx, token, fileID, data)
 	}
-	return d.createFile(ctx, token, filename, monthFolder, data)
+	return d.createFile(ctx, token, filename, folder, data)
 }
 
 func (d *driveTarget) Delete(ctx context.Context, year string, months []string, filename string) error {
@@ -136,19 +134,44 @@ func (d *driveTarget) Delete(ctx context.Context, year string, months []string, 
 		return err
 	}
 
-	yearFolder, found, err := d.findFolder(ctx, token, year, d.rootFolder)
+	folder, found, err := d.findTargetFolder(ctx, token, year, months)
 	if err != nil || !found {
 		return err
 	}
-	monthFolder, found, err := d.findAnyFolder(ctx, token, months, yearFolder)
-	if err != nil || !found {
-		return err
-	}
-	fileID, found, err := d.findFile(ctx, token, filename, monthFolder)
+	fileID, found, err := d.findFile(ctx, token, filename, folder)
 	if err != nil || !found {
 		return err
 	}
 	return d.deleteFile(ctx, token, fileID)
+}
+
+// ensureTargetFolder resolves the folder invoices are uploaded into: the
+// root folder directly in flat mode (ai-instruct-42, for accounting
+// software that needs a flat listing with no subfolders), or the
+// year/month folder chain (creating whichever level is missing) otherwise.
+func (d *driveTarget) ensureTargetFolder(ctx context.Context, token, year string, months []string) (string, error) {
+	if d.flat {
+		return d.rootFolder, nil
+	}
+	yearFolder, err := d.ensureFolder(ctx, token, year, d.rootFolder)
+	if err != nil {
+		return "", err
+	}
+	return d.ensureAnyFolder(ctx, token, months, yearFolder)
+}
+
+// findTargetFolder is ensureTargetFolder's search-only counterpart, used by
+// Delete: the root folder directly in flat mode, or the year/month folder
+// chain if every level of it already exists.
+func (d *driveTarget) findTargetFolder(ctx context.Context, token, year string, months []string) (string, bool, error) {
+	if d.flat {
+		return d.rootFolder, true, nil
+	}
+	yearFolder, found, err := d.findFolder(ctx, token, year, d.rootFolder)
+	if err != nil || !found {
+		return "", false, err
+	}
+	return d.findAnyFolder(ctx, token, months, yearFolder)
 }
 
 // accessToken exchanges a fresh service-account JWT assertion for a Drive

@@ -62,6 +62,13 @@ type ExternalConnection struct {
 	SecretKey            string                 `json:"secretKey,omitempty"`
 	ServiceAccountBase64 string                 `json:"serviceAccountBase64,omitempty"`
 	FolderID             string                 `json:"folderId,omitempty"`
+	// FlatDirectory, when true, uploads invoices directly at the
+	// destination's root instead of nesting them under a "YYYY/MM.MonthName"
+	// folder (ai-instruct-42) - some accounting software watching a Drive
+	// folder or S3 bucket requires a flat listing with no subfolders. False
+	// (the zero value, so existing connections keep today's behavior) nests
+	// by year/month as before.
+	FlatDirectory bool `json:"flatDirectory,omitempty"`
 }
 
 // OrganizationWithOwner adds the owner's email to an Organization, for the

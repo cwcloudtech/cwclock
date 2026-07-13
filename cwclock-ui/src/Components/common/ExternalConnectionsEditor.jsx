@@ -21,6 +21,7 @@ const emptyDraft = {
   serviceAccountBase64: "",
   serviceAccountFileName: "",
   folderId: "",
+  flatDirectory: false,
 };
 
 const isDraftComplete = (draft) => {
@@ -110,10 +111,13 @@ const ExternalConnectionsEditor = ({ value = [], onChange, orgId, token }) => {
     setDeletingConnection(null);
   };
 
-  const summaryFor = (conn) =>
-    conn.type === "s3"
-      ? `${conn.bucketName} (${conn.endpoint})`
-      : `${t("organizations.googleDrive")} - ${conn.folderId}`;
+  const summaryFor = (conn) => {
+    const base =
+      conn.type === "s3"
+        ? `${conn.bucketName} (${conn.endpoint})`
+        : `${t("organizations.googleDrive")} - ${conn.folderId}`;
+    return conn.flatDirectory ? `${base} - ${t("organizations.flatDirectoryBadge")}` : base;
+  };
 
   return (
     <div className={styles.container}>
@@ -243,6 +247,16 @@ const ExternalConnectionsEditor = ({ value = [], onChange, orgId, token }) => {
               </div>
             </>
           )}
+
+          <label className={`cw-checkbox ${styles.flatDirectoryField}`}>
+            <input
+              type="checkbox"
+              checked={draft.flatDirectory}
+              onChange={(e) => setDraftField("flatDirectory", e.target.checked)}
+            />
+            {t("organizations.flatDirectory")}
+          </label>
+          <p className={styles.flatDirectoryHint}>{t("organizations.flatDirectoryHint")}</p>
 
           <div className={styles.addFormActions}>
             <Button

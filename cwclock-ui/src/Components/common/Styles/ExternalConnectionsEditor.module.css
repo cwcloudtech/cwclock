@@ -99,3 +99,13 @@
   font-size: 0.85rem;
   color: var(--cw-text-muted);
 }
+
+.flatDirectoryField {
+  margin-top: var(--cw-spacing-sm);
+}
+
+.flatDirectoryHint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--cw-text-muted);
+}

@@ -31,6 +31,7 @@ type s3Target struct {
 	region     string
 	accessKey  string
 	secretKey  string
+	flat       bool
 	httpClient *http.Client
 }
 
@@ -41,6 +42,7 @@ func newS3Target(conn models.ExternalConnection) *s3Target {
 		region:     conn.Region,
 		accessKey:  conn.AccessKey,
 		secretKey:  conn.SecretKey,
+		flat:       conn.FlatDirectory,
 		httpClient: &http.Client{Timeout: 15 * time.Second},
 	}
 }
@@ -65,8 +67,13 @@ func (s *s3Target) Delete(ctx context.Context, year string, months []string, fil
 // months' candidate month folders (so a file previously filed under an
 // alternate-language month folder gets replaced/deleted in place rather
 // than duplicated), falling back to the first (default) candidate's key if
-// none of them currently hold the file.
+// none of them currently hold the file. In flat mode (ai-instruct-42) the
+// key is always just the filename at the bucket's root, with no
+// year/month lookup at all.
 func (s *s3Target) resolveKey(ctx context.Context, year string, months []string, filename string) (string, error) {
+	if s.flat {
+		return filename, nil
+	}
 	for _, month := range months {
 		key := year + "/" + month + "/" + filename
 		found, err := s.exists(ctx, key)
