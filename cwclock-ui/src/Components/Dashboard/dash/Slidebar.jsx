@@ -246,12 +246,12 @@ const Slidebar = () => {
 
       <div className={styles.Slideflex}>
         <div className={`${styles.sidebarCol} ${expanded ? styles.sidebarColExpanded : ""}`}>
-          <SidebarNav expanded={expanded} isSuperuser={isSuperuser} showInvoices={showInvoices} />
           <Tooltip label={expanded ? t("nav.collapseSidebar") : t("nav.expandSidebar")} position="right" className={styles.toggleTooltip}>
             <button className={styles.sidebarToggle} onClick={handleclick}>
               {expanded ? <FaChevronLeft /> : <FaChevronRight />}
             </button>
           </Tooltip>
+          <SidebarNav expanded={expanded} isSuperuser={isSuperuser} showInvoices={showInvoices} />
         </div>
         <div className={styles.pages}>
           <Routes>
