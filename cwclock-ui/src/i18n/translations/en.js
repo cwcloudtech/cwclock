@@ -117,6 +117,10 @@ const en = {
     openSourcePrefix: "Open source solution by CWCloud.tech, sources are available",
     here: "here",
     documentationAvailable: ", documentation is available",
+    orContinueWith: "Or continue with",
+    continueWithGoogle: "Continue with Google",
+    continueWithGithub: "Continue with GitHub",
+    continueWithKeycloak: "Continue with Keycloak",
   },
   timeTracker: {
     whatAreYouWorkingOn: "What are you working on?",
@@ -359,6 +363,7 @@ const en = {
     invalidCountry: "Please select a supported country.",
     invalidExternalConnection: "Please fill in every field for this connection type.",
     duplicateExternalConnection: "This external connection already exists.",
+    oidcFailed: "Sign-in with this provider failed. Please try again.",
   },
   reports: {
     summary: "Summary",

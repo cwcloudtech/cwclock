@@ -1,0 +1,65 @@
+.wrapper {
+  margin-top: var(--cw-spacing);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--cw-spacing-sm);
+  margin-bottom: var(--cw-spacing-sm);
+  color: var(--cw-text-muted);
+  font-size: 0.8rem;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: var(--cw-border);
+}
+
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cw-spacing-sm);
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cw-spacing-sm);
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-sm);
+  background-color: var(--cw-surface);
+  color: var(--cw-text);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--cw-transition), border-color var(--cw-transition);
+}
+
+.btn:hover {
+  background-color: var(--cw-bg-alt);
+}
+
+.icon {
+  flex-shrink: 0;
+  font-size: 1.05rem;
+}
+
+.google .icon {
+  color: #ea4335;
+}
+
+.github .icon {
+  color: var(--cw-text);
+}
+
+.keycloak .icon {
+  color: var(--cw-primary-600);
+}

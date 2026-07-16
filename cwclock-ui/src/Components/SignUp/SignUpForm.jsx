@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import Spinner from "../spinner/Spinner";
 import { registerApi } from "../../Redux/Auth/Auth.actions";
 import { useI18n } from "../../i18n/I18nContext";
+import OidcButtons from "../common/OidcButtons";
 
 const SignUpForm = () => {
   const { t } = useI18n();
@@ -124,6 +125,7 @@ const SignUpForm = () => {
           {t("auth.createAccount")}
         </button>
       </form>
+      <OidcButtons />
     </div>
   );
 };

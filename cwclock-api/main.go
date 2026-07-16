@@ -9,6 +9,7 @@ import (
 	"cwclock-api/internal/db"
 	"cwclock-api/internal/handlers"
 	"cwclock-api/internal/metrics"
+	"cwclock-api/internal/oidc"
 	"cwclock-api/internal/router"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/telemetry"
@@ -61,6 +62,8 @@ func main() {
 	currencyHandler := handlers.NewCurrencyHandler(currencyStore)
 	countryHandler := handlers.NewCountryHandler(countryStore)
 	fieldHandler := handlers.NewFieldHandler(fieldStore)
+	oidcProviders := oidc.BuildProviders(cfg)
+	oidcHandler := handlers.NewOIDCHandler(oidcProviders, userStore, cfg.JWTSecret, cfg.APIBaseURL, cfg.UIBaseURL, cfg.OIDCKeycloakGroups)
 
 	met, err := metrics.Setup(ctx, metrics.Config{
 		Endpoint: cfg.OtelEndpoint,
@@ -75,7 +78,7 @@ func main() {
 
 	r := router.New(
 		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler, importHandler, apiKeyHandler, invoiceHandler,
-		currencyHandler, countryHandler, fieldHandler,
+		currencyHandler, countryHandler, fieldHandler, oidcHandler,
 		orgStore, userStore, apiKeyStore, cfg.JWTSecret, cfg.CorsEnabled, cfg.CorsAllowedOrigins, cfg.Version, cfg.ManifestPath,
 		tel, met.Observe, met.Handler,
 	)

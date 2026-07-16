@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import Spinner from "../spinner/Spinner";
 import { loginApi } from "../../Redux/Auth/Auth.actions";
 import { useI18n } from "../../i18n/I18nContext";
+import OidcButtons from "../common/OidcButtons";
 
 const LoginForm = () => {
   const { t } = useI18n();
@@ -73,6 +74,7 @@ const LoginForm = () => {
           {t("auth.logIn")}
         </button>
       </form>
+      <OidcButtons />
     </div>
   );
 };

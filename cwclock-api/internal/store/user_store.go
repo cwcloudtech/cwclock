@@ -110,6 +110,22 @@ func (s *UserStore) Create(ctx context.Context, email, passwordHash, name, surna
 	return u, nil
 }
 
+// FindOrCreateOIDC logs in a user authenticated via an OIDC provider: an
+// existing account is matched by email (linking it regardless of how it was
+// originally created), otherwise a new one is registered with no password
+// hash, so it follows the same superuser-if-first/disabled-otherwise rule as
+// Create but can never be logged into with a password.
+func (s *UserStore) FindOrCreateOIDC(ctx context.Context, email, name, surname string) (models.User, error) {
+	user, err := s.FindByEmail(ctx, email)
+	if err == nil {
+		return user, nil
+	}
+	if !errors.Is(err, ErrNotFound) {
+		return models.User{}, err
+	}
+	return s.Create(ctx, email, "", name, surname)
+}
+
 func (s *UserStore) FindByEmail(ctx context.Context, email string) (models.User, error) {
 	row := s.pool.QueryRow(ctx, `
 		SELECT id, email, data, created_at, updated_at

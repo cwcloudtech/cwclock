@@ -28,6 +28,7 @@ func New(
 	currencyHandler *handlers.CurrencyHandler,
 	countryHandler *handlers.CountryHandler,
 	fieldHandler *handlers.FieldHandler,
+	oidcHandler *handlers.OIDCHandler,
 	orgs *store.OrgStore,
 	users *store.UserStore,
 	apiKeys middleware.ApiKeyVerifier,
@@ -64,6 +65,12 @@ func New(
 		r.Get("/currencies", currencyHandler.List)
 		r.Get("/countries", countryHandler.List)
 		r.Get("/fields", fieldHandler.List)
+
+		r.Route("/oidc", func(r chi.Router) {
+			r.Get("/", oidcHandler.ListProviders)
+			r.Get("/{provider}/login", oidcHandler.Login)
+			r.Get("/{provider}/callback", oidcHandler.Callback)
+		})
 
 		r.Route("/users", func(r chi.Router) {
 			r.Post("/", userHandler.Register)

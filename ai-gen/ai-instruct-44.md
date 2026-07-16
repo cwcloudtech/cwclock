@@ -34,4 +34,3 @@ The endpoint should return a json like this:
 The frontend will display the login/signup buttons with those providers calling this endpoint.
 
 In the buttons I want also the logo/icon inside.
-

@@ -36,6 +36,24 @@ export const logoutUser = () => (dispatch) => {
   dispatch({ type: logout });
 };
 
+// oidcLoginApi finishes an OIDC login: the backend redirect only carries a
+// bare session token (it never talks to the frontend origin directly), so
+// the full profile is fetched from /me the same way meApi refreshes it, then
+// stored exactly like a password login/register response.
+export const oidcLoginApi = (token) => async (dispatch) => {
+  dispatch({ type: loading });
+  try {
+    const { data } = await axios.get(`${ENDPOINT}me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    dispatch({ type: register, payload: { ...data, token } });
+    toast.success(translate(getStoredLocale(), "toasts.loggedIn"), toastOptions);
+  } catch (e) {
+    toast.error(translate(getStoredLocale(), "errors.oidcFailed"), toastOptions);
+    dispatch({ type: error, payload: e.message });
+  }
+};
+
 // meApi verifies that the connected user still exists in the database, and
 // refreshes their locally cached profile (in particular the global role,
 // which can change server-side after the token was issued), disconnecting

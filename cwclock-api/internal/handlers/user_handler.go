@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 
+	"cwclock-api/internal/authtoken"
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
 	"cwclock-api/internal/store"
@@ -35,15 +34,6 @@ type registerPayload struct {
 	Password string `json:"password"`
 	Name     string `json:"name"`
 	Surname  string `json:"surname"`
-}
-
-func (h *UserHandler) generateToken(userID string) (string, error) {
-	claims := jwt.MapClaims{
-		"sub": userID,
-		"exp": time.Now().Add(20 * 24 * time.Hour).Unix(),
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(h.jwtSecret))
 }
 
 func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +67,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.generateToken(user.ID)
+	token, err := authtoken.Generate(h.jwtSecret, user.ID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
 		return
@@ -108,7 +98,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.generateToken(user.ID)
+	token, err := authtoken.Generate(h.jwtSecret, user.ID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
 		return

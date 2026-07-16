@@ -11,19 +11,29 @@ import (
 )
 
 type Config struct {
-	Port               string
-	DatabaseURL        string
-	JWTSecret          string
-	MaxWorkers         int
-	PostgresPoolSize   int
-	CorsEnabled        bool
-	CorsAllowedOrigins []string
-	Version            string
-	ManifestPath       string
-	OtelEndpoint       string
-	OtelProto          string
-	MaxImageSize       int64
-	MaxReportSize      int
+	Port                     string
+	DatabaseURL              string
+	JWTSecret                string
+	MaxWorkers               int
+	PostgresPoolSize         int
+	CorsEnabled              bool
+	CorsAllowedOrigins       []string
+	Version                  string
+	ManifestPath             string
+	OtelEndpoint             string
+	OtelProto                string
+	MaxImageSize             int64
+	MaxReportSize            int
+	APIBaseURL               string
+	UIBaseURL                string
+	OIDCGoogleClientID       string
+	OIDCGoogleClientSecret   string
+	OIDCGithubClientID       string
+	OIDCGithubClientSecret   string
+	OIDCKeycloakBaseURL      string
+	OIDCKeycloakClientID     string
+	OIDCKeycloakClientSecret string
+	OIDCKeycloakGroups       []string
 }
 
 // defaultMaxImageSize is applied when CWCLOCK_MAX_IMAGE_SIZE is unset or
@@ -65,20 +75,44 @@ func Load() Config {
 	}
 
 	return Config{
-		Port:               getEnv("PORT", "8080"),
-		DatabaseURL:        fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, pass, host, port, db, sslmode),
-		JWTSecret:          os.Getenv("JWT_SECRET"),
-		MaxWorkers:         maxWorkers,
-		PostgresPoolSize:   postgresPoolSize,
-		CorsEnabled:        utils.IsTrue(os.Getenv("CWCLOCK_CORS_ENABLED")),
-		CorsAllowedOrigins: strings.Split(allowedOrigins, ","),
-		Version:            versionFromManifest(getEnv("CWCLOCK_MANIFEST_PATH", "manifest.json"), getEnv("APP_VERSION", "1.0.0")),
-		ManifestPath:       getEnv("CWCLOCK_MANIFEST_PATH", "manifest.json"),
-		OtelEndpoint:       os.Getenv("CWCLOCK_OTEL_ENDPOINT"),
-		OtelProto:          getEnv("CWCLOCK_OTEL_PROTO", "otlp/grpc"),
-		MaxImageSize:       maxImageSize,
-		MaxReportSize:      maxReportSize,
+		Port:                     getEnv("PORT", "8080"),
+		DatabaseURL:              fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, pass, host, port, db, sslmode),
+		JWTSecret:                os.Getenv("JWT_SECRET"),
+		MaxWorkers:               maxWorkers,
+		PostgresPoolSize:         postgresPoolSize,
+		CorsEnabled:              utils.IsTrue(os.Getenv("CWCLOCK_CORS_ENABLED")),
+		CorsAllowedOrigins:       strings.Split(allowedOrigins, ","),
+		Version:                  versionFromManifest(getEnv("CWCLOCK_MANIFEST_PATH", "manifest.json"), getEnv("APP_VERSION", "1.0.0")),
+		ManifestPath:             getEnv("CWCLOCK_MANIFEST_PATH", "manifest.json"),
+		OtelEndpoint:             os.Getenv("CWCLOCK_OTEL_ENDPOINT"),
+		OtelProto:                getEnv("CWCLOCK_OTEL_PROTO", "otlp/grpc"),
+		MaxImageSize:             maxImageSize,
+		MaxReportSize:            maxReportSize,
+		APIBaseURL:               strings.TrimSuffix(getEnv("API_URL", "http://localhost:8080"), "/"),
+		UIBaseURL:                strings.TrimSuffix(getEnv("CWCLOCK_UI_URL", "http://localhost:3000"), "/"),
+		OIDCGoogleClientID:       os.Getenv("CWCLOCK_OIDC_GOOGLE_CLIENT_ID"),
+		OIDCGoogleClientSecret:   os.Getenv("CWCLOCK_OIDC_GOOGLE_CLIENT_SECRET"),
+		OIDCGithubClientID:       os.Getenv("CWCLOCK_OIDC_GITHUB_CLIENT_ID"),
+		OIDCGithubClientSecret:   os.Getenv("CWCLOCK_OIDC_GITHUB_CLIENT_SECRET"),
+		OIDCKeycloakBaseURL:      strings.TrimSuffix(os.Getenv("CWCLOCK_OIDC_KEYCLOAK_BASE_URL"), "/"),
+		OIDCKeycloakClientID:     os.Getenv("CWCLOCK_OIDC_KEYCLOAK_CLIENT_ID"),
+		OIDCKeycloakClientSecret: os.Getenv("CWCLOCK_OIDC_KEYCLOAK_CLIENT_SECRET"),
+		OIDCKeycloakGroups:       splitNonBlank(os.Getenv("CWCLOCK_OIDC_KEYCLOAK_GROUPS")),
 	}
+}
+
+// splitNonBlank splits a comma-separated list, trims each entry, and drops
+// blanks - so an unset or empty CWCLOCK_OIDC_KEYCLOAK_GROUPS yields an empty
+// slice rather than [""].
+func splitNonBlank(str string) []string {
+	var out []string
+	for _, part := range strings.Split(str, ",") {
+		part = strings.TrimSpace(part)
+		if utils.IsNotBlank(part) {
+			out = append(out, part)
+		}
+	}
+	return out
 }
 
 // versionFromManifest reads the version field from the manifest JSON file at
