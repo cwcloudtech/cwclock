@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -27,6 +26,7 @@ import (
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/telemetry"
+	"cwclock-api/internal/utils"
 )
 
 const meterName = "cwclock-api"
@@ -82,7 +82,7 @@ func Setup(
 	readerOpts := []sdkmetric.Option{sdkmetric.WithResource(res), sdkmetric.WithReader(promExporter)}
 	var shutdownFuncs []func(context.Context) error
 
-	if strings.TrimSpace(cfg.Endpoint) != "" {
+	if utils.IsNotBlank(cfg.Endpoint) {
 		metricExp, err := buildExporter(ctx, cfg)
 		if err != nil {
 			return nil, fmt.Errorf("metrics: building OTLP exporter: %w", err)

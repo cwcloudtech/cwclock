@@ -5,9 +5,9 @@ package telemetry
 
 import (
 	"context"
+	"cwclock-api/internal/utils"
 	"fmt"
 	"log/slog"
-	"strings"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -60,7 +60,7 @@ func Setup(ctx context.Context, cfg Config) (*Providers, error) {
 	tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithResource(res))
 	var shutdownFuncs []func(context.Context) error
 
-	if strings.TrimSpace(cfg.Endpoint) != "" {
+	if utils.IsNotBlank(cfg.Endpoint) {
 		traceExp, logExp, err := buildExporters(ctx, cfg)
 		if err != nil {
 			return nil, fmt.Errorf("telemetry: building OTLP exporters: %w", err)

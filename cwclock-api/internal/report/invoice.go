@@ -254,7 +254,7 @@ func RenderInvoicePDF(org models.Organization, client models.Client, owner model
 	renderer.Pdf.Ln(8)
 	drawTable(renderer.Pdf, translate, totalsColumns, totalsRows(client, totalHT, totalVAT, totalTTC, client.VATRate, org.Currency))
 
-	if org.Stamp != "" {
+	if utils.IsNotBlank(org.Stamp) {
 		if decoded, dt, ok := decodeDataURI(org.Stamp); ok {
 			placeStamp(renderer.Pdf, decoded, dt)
 		}

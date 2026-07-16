@@ -79,7 +79,7 @@ func (h *OIDCHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if errParam := r.URL.Query().Get("error"); errParam != "" {
+	if errParam := r.URL.Query().Get("error"); utils.IsNotBlank(errParam) {
 		h.redirectWithError(w, r, "oidc_denied")
 		return
 	}

@@ -155,7 +155,7 @@ func (s *InvoiceStore) List(ctx context.Context, orgID, clientID, start, end str
 		  AND selected_end_date <= $3::date
 	`
 	args := []any{orgID, start, end}
-	if clientID != "" {
+	if utils.IsNotBlank(clientID) {
 		args = append(args, clientID)
 		query += fmt.Sprintf(" AND client_id = $%d", len(args))
 	}

@@ -71,7 +71,7 @@ func ExchangeCode(ctx context.Context, p Provider, code, redirectURI string) (st
 		return utils.EMPTY, fmt.Errorf("oidc: decoding token response: %w", err)
 	}
 
-	if payload.Error != "" {
+	if utils.IsNotBlank(payload.Error) {
 		return utils.EMPTY, fmt.Errorf("oidc: token exchange failed: %s (%s)", payload.Error, payload.ErrorDescription)
 	}
 

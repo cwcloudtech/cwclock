@@ -4,6 +4,7 @@
 package openapi
 
 import (
+	"cwclock-api/internal/utils"
 	"net/http"
 	"regexp"
 	"strings"
@@ -132,7 +133,7 @@ func tagFor(route string) string {
 	if len(segments) >= 2 && segments[0] == "v1" {
 		return segments[1]
 	}
-	if len(segments) >= 1 && segments[0] != "" {
+	if len(segments) >= 1 && utils.IsNotBlank(segments[0]) {
 		return segments[0]
 	}
 	return "default"

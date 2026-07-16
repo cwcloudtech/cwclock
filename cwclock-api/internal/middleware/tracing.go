@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"cwclock-api/internal/utils"
 	"log/slog"
 	"net/http"
 	"time"
@@ -38,7 +39,7 @@ func Instrument(tracer trace.Tracer, logger *slog.Logger, observe EndpointObserv
 
 			route := r.URL.Path
 			if rc := chi.RouteContext(r.Context()); rc != nil {
-				if p := rc.RoutePattern(); p != "" {
+				if p := rc.RoutePattern(); utils.IsNotBlank(p) {
 					route = p
 				}
 			}

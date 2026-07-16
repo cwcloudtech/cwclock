@@ -132,7 +132,7 @@ func (s *s3Target) do(ctx context.Context, method, key string, body []byte, cont
 	if err != nil {
 		return err
 	}
-	if contentType != "" {
+	if utils.IsNotBlank(contentType) {
 		req.Header.Set("Content-Type", contentType)
 	}
 	s.sign(req, u, body)
@@ -165,7 +165,7 @@ func (s *s3Target) sign(req *http.Request, u *url.URL, body []byte) {
 	req.Header.Set("X-Amz-Content-Sha256", payloadHash)
 
 	signedHeaderNames := []string{"host", "x-amz-content-sha256", "x-amz-date"}
-	if req.Header.Get("Content-Type") != "" {
+	if utils.IsNotBlank(req.Header.Get("Content-Type")) {
 		signedHeaderNames = append(signedHeaderNames, "content-type")
 	}
 	sort.Strings(signedHeaderNames)

@@ -31,7 +31,7 @@ type ApiKeyVerifier interface {
 func Auth(secret string, apiKeys ApiKeyVerifier) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if apiKey := r.Header.Get("X-Api-Key"); apiKey != "" {
+			if apiKey := r.Header.Get("X-Api-Key"); utils.IsNotBlank(apiKey) {
 				userID, err := apiKeys.VerifyHash(r.Context(), utils.HashToken(apiKey))
 				if err != nil || utils.IsBlank(userID) {
 					unauthorized(w, "Not Authorised")

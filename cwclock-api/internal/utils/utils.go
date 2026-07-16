@@ -2,6 +2,7 @@ package utils
 
 import (
 	"crypto/sha256"
+	"cwclock-api/internal/utils"
 	"encoding/base64"
 	"encoding/hex"
 	"os"
@@ -16,7 +17,7 @@ const EMPTY = ""
 // IsNotBlank reports whether str contains at least one non-whitespace
 // character.
 func IsNotBlank(str string) bool {
-	return len(str) > 0 && strings.TrimSpace(str) != ""
+	return len(str) > 0 && utils.IsNotBlank(str)
 }
 
 // IsBlank reports whether str is empty or contains only whitespace.
