@@ -38,7 +38,7 @@ type s3Target struct {
 
 func newS3Target(conn models.ExternalConnection) *s3Target {
 	return &s3Target{
-		endpoint:   strings.TrimRight(conn.Endpoint, "/"),
+		endpoint:   utils.GetBaseUrl(conn.Endpoint),
 		bucket:     conn.BucketName,
 		region:     conn.Region,
 		accessKey:  conn.AccessKey,

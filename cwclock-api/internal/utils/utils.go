@@ -92,8 +92,16 @@ func IsValidEmail(str string) bool {
 	return emailPattern.MatchString(str)
 }
 
+func GetBaseUrl(url string) string {
+	return strings.TrimSuffix(url, "/")
+}
+
+func GetUriPath(url string) string {
+	return strings.TrimPrefix(url, "/")
+}
+
 func GetBaseUrlFromEnvWithFallback(envKey string, fallback string) string {
-	return strings.TrimSuffix(GetEnv(envKey, fallback), "/")
+	return GetBaseUrl(GetEnv(envKey, fallback))
 }
 
 func GetBaseUrlFromEnv(envKey string) string {

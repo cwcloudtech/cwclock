@@ -129,7 +129,7 @@ func Generate(r chi.Router, title, version string) Spec {
 // tagFor groups routes for the Swagger UI sidebar by the first path segment
 // after the /v1 prefix (e.g. "/v1/organizations/{orgId}/reports" -> "organizations").
 func tagFor(route string) string {
-	segments := strings.Split(strings.TrimPrefix(route, "/"), "/")
+	segments := strings.Split(utils.GetUriPath(route), "/")
 	if len(segments) >= 2 && segments[0] == "v1" {
 		return segments[1]
 	}
