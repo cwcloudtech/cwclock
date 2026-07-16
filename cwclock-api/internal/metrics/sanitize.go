@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"cwclock-api/internal/utils"
 	"regexp"
 	"strings"
 )
@@ -16,12 +17,13 @@ var (
 // used as part of a dynamic metric name rather than as a label value.
 func SanitizeMetricName(s string) string {
 	s = strings.ReplaceAll(strings.TrimSpace(s), " ", "_")
-	s = invalidNameChars.ReplaceAllString(s, "")
+	s = invalidNameChars.ReplaceAllString(s, utils.EMPTY)
 	s = strings.Trim(s, "_")
 	s = strings.ToLower(s)
-	if s == "" {
+	if utils.IsBlank(s) {
 		return "unnamed"
 	}
+
 	if leadingDigit.MatchString(s) {
 		s = "_" + s
 	}

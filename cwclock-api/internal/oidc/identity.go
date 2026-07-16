@@ -2,6 +2,7 @@ package oidc
 
 import (
 	"context"
+	"cwclock-api/internal/utils"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -93,13 +94,13 @@ func fetchStandardIdentity(ctx context.Context, p Provider, accessToken string) 
 	}
 
 	email, _ := claims["email"].(string)
-	if email == "" {
+	if utils.IsBlank(email) {
 		return Identity{}, errors.New("oidc: provider did not return an email")
 	}
 
 	given, _ := claims["given_name"].(string)
 	family, _ := claims["family_name"].(string)
-	if given == "" && family == "" {
+	if utils.IsBlank(given) && utils.IsBlank(family) {
 		full, _ := claims["name"].(string)
 		given, family = splitName(full)
 	}
@@ -127,19 +128,20 @@ func fetchGithubIdentity(ctx context.Context, accessToken string) (Identity, err
 	}
 
 	email := profile.Email
-	if email == "" {
+	if utils.IsBlank(email) {
 		var err error
 		email, err = fetchGithubPrimaryEmail(ctx, accessToken)
 		if err != nil {
 			return Identity{}, err
 		}
 	}
-	if email == "" {
+
+	if utils.IsBlank(email) {
 		return Identity{}, errors.New("oidc: github account has no accessible verified email")
 	}
 
 	name, surname := splitName(profile.Name)
-	if name == "" && surname == "" {
+	if utils.IsBlank(name) && utils.IsBlank(surname) {
 		name = profile.Login
 	}
 	return Identity{Email: email, Name: name, Surname: surname}, nil
@@ -163,10 +165,12 @@ func fetchGithubPrimaryEmail(ctx context.Context, accessToken string) (string, e
 		if !e.Verified {
 			continue
 		}
+
 		if e.Primary {
 			return e.Email, nil
 		}
-		if verified == "" {
+
+		if utils.IsBlank(verified) {
 			verified = e.Email
 		}
 	}
@@ -199,12 +203,14 @@ func getJSON(ctx context.Context, endpoint, token, scheme string, out any) error
 // GitHub (and a name-only OIDC claim) only provides one field.
 func splitName(full string) (name, surname string) {
 	full = strings.TrimSpace(full)
-	if full == "" {
-		return "", ""
+	if utils.IsBlank(full) {
+		return utils.EMPTY, utils.EMPTY
 	}
+
 	parts := strings.SplitN(full, " ", 2)
 	if len(parts) == 1 {
-		return parts[0], ""
+		return parts[0], utils.EMPTY
 	}
+
 	return parts[0], strings.TrimSpace(parts[1])
 }

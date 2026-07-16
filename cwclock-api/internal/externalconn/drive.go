@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/utils"
 )
 
 const (
@@ -60,10 +61,12 @@ func parseServiceAccount(base64JSON string) (serviceAccountKey, *rsa.PrivateKey,
 	if err := json.Unmarshal(raw, &key); err != nil {
 		return serviceAccountKey{}, nil, fmt.Errorf("invalid service account JSON: %w", err)
 	}
-	if key.ClientEmail == "" || key.PrivateKey == "" {
+
+	if utils.IsBlank(key.ClientEmail) || utils.IsBlank(key.PrivateKey) {
 		return serviceAccountKey{}, nil, fmt.Errorf("service account JSON is missing client_email or private_key")
 	}
-	if key.TokenURI == "" {
+
+	if utils.IsBlank(key.TokenURI) {
 		key.TokenURI = defaultTokenURI
 	}
 

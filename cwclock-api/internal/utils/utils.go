@@ -11,6 +11,8 @@ import (
 	"strings"
 )
 
+const EMPTY = ""
+
 // IsNotBlank reports whether str contains at least one non-whitespace
 // character.
 func IsNotBlank(str string) bool {
@@ -87,6 +89,14 @@ var emailPattern = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
 // IsValidEmail reports whether str looks like a plausible email address.
 func IsValidEmail(str string) bool {
 	return emailPattern.MatchString(str)
+}
+
+func GetBaseUrlFromEnvWithFallback(envKey string, fallback string) string {
+	return strings.TrimSuffix(GetEnv(envKey, fallback), "/")
+}
+
+func GetBaseUrlFromEnv(envKey string) string {
+	return GetBaseUrlFromEnvWithFallback(envKey, EMPTY)
 }
 
 // ImageSizeExceeds reports whether a base64 (optionally data-URI prefixed)

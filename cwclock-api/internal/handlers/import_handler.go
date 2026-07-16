@@ -11,6 +11,7 @@ import (
 
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/store"
+	"cwclock-api/internal/utils"
 )
 
 // ImportHandler handles bulk data imports from third-party tools.
@@ -143,7 +144,7 @@ func (h *ImportHandler) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		userFullName := strings.TrimSpace(rec[colIdx["User"]])
 		email := strings.TrimSpace(rec[colIdx["Email"]])
 
-		if projectName == "" || clientName == "" || email == "" {
+		if utils.IsBlank(projectName) || utils.IsBlank(clientName) || utils.IsBlank(email) {
 			skipped++
 			continue
 		}
@@ -203,7 +204,7 @@ func (h *ImportHandler) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		}
 
 		text := description
-		if text == "" {
+		if utils.IsBlank(text) {
 			text = projectName
 		}
 

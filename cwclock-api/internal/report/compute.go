@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/utils"
 )
 
 // allDayStartMinutes is the wall-clock start assumed for an "all day" entry
@@ -128,7 +129,7 @@ func amount(durationSecs int, client models.Client, project models.Project, memb
 
 func memberName(m models.Member) string {
 	name := strings.TrimSpace(strings.TrimSpace(m.Name) + " " + strings.TrimSpace(m.Surname))
-	if name == "" {
+	if utils.IsBlank(name) {
 		return m.Email
 	}
 	return name
@@ -296,9 +297,10 @@ func ProjectDurations(entries []models.ReportEntry, lk Lookups) []models.ReportP
 		pd, ok := byProject[e.ProjectID]
 		if !ok {
 			color := lk.Projects[e.ProjectID].Color
-			if color == "" {
+			if utils.IsBlank(color) {
 				color = defaultProjectColor
 			}
+
 			pd = &models.ReportProjectDuration{ProjectID: e.ProjectID, ProjectName: e.ProjectName, Color: color}
 			byProject[e.ProjectID] = pd
 			order = append(order, e.ProjectID)

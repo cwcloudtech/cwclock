@@ -11,6 +11,7 @@ import (
 	"cwclock-api/internal/authtoken"
 	"cwclock-api/internal/oidc"
 	"cwclock-api/internal/store"
+	"cwclock-api/internal/utils"
 )
 
 type OIDCHandler struct {
@@ -90,7 +91,7 @@ func (h *OIDCHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	code := r.URL.Query().Get("code")
-	if code == "" {
+	if utils.IsBlank(code) {
 		h.redirectWithError(w, r, "oidc_missing_code")
 		return
 	}
