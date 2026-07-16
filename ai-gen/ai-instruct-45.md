@@ -11,4 +11,4 @@ https://github.com/login/oauth/authorize?client_id=Ov23ligGjNkAuUXwqr4j&redirect
 It should be redirected to the frontend not the API.
 Keep this as default redirectURI but if it's the frontend who's making the API call to get this URI redirect to the frontend instead using the environment variable `CWCLOCK_UI_URL` and the path `/oidc/callback` (and check if the frontend router match).
 
-The frontend can pass a header `X-CWClock-Origin: frontend` to the API to indicate it's the frontend which requires the redirectURI.
+The frontend can pass a query param `?origin=frontend` to the API to indicate it's the frontend which requires the redirectURI.

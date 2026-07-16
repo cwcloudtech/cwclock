@@ -15,10 +15,10 @@ import (
 	"cwclock-api/internal/utils"
 )
 
-// originHeader is set by the frontend to ask Login for a frontend-bound
+// originParam is set by the frontend to ask Login for a frontend-bound
 // redirect_uri instead of the API-bound default - see Login and
 // FrontendCallback.
-const originHeader = "X-CWClock-Origin"
+const originParam = "origin"
 const originFrontend = "frontend"
 
 type OIDCHandler struct {
@@ -56,7 +56,7 @@ func (h *OIDCHandler) ListProviders(w http.ResponseWriter, r *http.Request) {
 // It defaults to the API's own callback route, which is what lets this
 // handler do the exchange itself before handing off to the frontend; when
 // frontend is true it points at the frontend's /oidc/callback route instead,
-// for callers that asked for that via originHeader (see Login).
+// for callers that asked for that via originParam (see Login).
 func (h *OIDCHandler) redirectURI(provider string, frontend bool) string {
 	if frontend {
 		return h.uiBaseURL + "/oidc/callback"
@@ -64,17 +64,11 @@ func (h *OIDCHandler) redirectURI(provider string, frontend bool) string {
 	return h.apiBaseURL + "/v1/oidc/" + provider + "/callback"
 }
 
-type oidcLoginResponse struct {
-	URL string `json:"url"`
-}
-
-// Login starts the flow for a provider. By default it redirects the browser
-// straight to the provider's authorization endpoint, using the API's own
-// callback as redirect_uri. If the caller sends originHeader, it instead
-// returns the authorization URL as JSON, built with the frontend's
-// /oidc/callback as redirect_uri - a plain <a href> navigation can't attach
-// that header, so the frontend does this as an API call and navigates the
-// browser to the returned URL itself.
+// Login starts the flow for a provider by redirecting the browser to its
+// authorization endpoint. By default redirect_uri points at the API's own
+// callback; if the caller passes ?origin=frontend it points at the
+// frontend's /oidc/callback instead, so the provider redirects the browser
+// there directly once the user consents.
 func (h *OIDCHandler) Login(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "provider")
 	provider, ok := oidc.Find(h.providers, name)
@@ -89,13 +83,8 @@ func (h *OIDCHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	frontend := r.Header.Get(originHeader) == originFrontend
+	frontend := r.URL.Query().Get(originParam) == originFrontend
 	authURL := provider.AuthorizationURL(h.redirectURI(provider.Name, frontend), state)
-
-	if frontend {
-		writeJSON(w, http.StatusOK, oidcLoginResponse{URL: authURL})
-		return
-	}
 
 	http.Redirect(w, r, authURL, http.StatusFound)
 }
@@ -178,7 +167,7 @@ func (h *OIDCHandler) Callback(w http.ResponseWriter, r *http.Request) {
 }
 
 // FrontendCallback finishes the flow when Login handed the frontend a
-// frontend-bound redirect_uri (via originHeader): the provider redirects the
+// frontend-bound redirect_uri (via originParam): the provider redirects the
 // browser to the frontend's own /oidc/callback route with code/state, and
 // the frontend calls this endpoint to complete the exchange and get a
 // session token back as JSON, since the browser already left the API's
