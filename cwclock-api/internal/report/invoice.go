@@ -115,11 +115,13 @@ func formatVAT(client models.Client, totalVAT float64, currency string) string {
 // entirely by addRow) when email itself is blank.
 func formatContact(name, email string) string {
 	if utils.IsBlank(email) {
-		return ""
+		return utils.EMPTY
 	}
+
 	if utils.IsBlank(name) {
 		return cell(email)
 	}
+
 	return cell(fmt.Sprintf("%s: %s", name, email))
 }
 

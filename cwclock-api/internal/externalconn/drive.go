@@ -47,7 +47,7 @@ type serviceAccountKey struct {
 func DecodeServiceAccount(base64JSON string) (email string, err error) {
 	key, _, err := parseServiceAccount(base64JSON)
 	if err != nil {
-		return "", err
+		return utils.EMPTY, err
 	}
 	return key.ClientEmail, nil
 }
@@ -158,7 +158,7 @@ func (d *driveTarget) ensureTargetFolder(ctx context.Context, token, year string
 	}
 	yearFolder, err := d.ensureFolder(ctx, token, year, d.rootFolder)
 	if err != nil {
-		return "", err
+		return utils.EMPTY, err
 	}
 	return d.ensureAnyFolder(ctx, token, months, yearFolder)
 }
@@ -172,7 +172,7 @@ func (d *driveTarget) findTargetFolder(ctx context.Context, token, year string, 
 	}
 	yearFolder, found, err := d.findFolder(ctx, token, year, d.rootFolder)
 	if err != nil || !found {
-		return "", false, err
+		return utils.EMPTY, false, err
 	}
 	return d.findAnyFolder(ctx, token, months, yearFolder)
 }
@@ -197,7 +197,7 @@ func (d *driveTarget) accessToken(ctx context.Context) (string, error) {
 	hashed := sha256.Sum256([]byte(signingInput))
 	signature, err := rsa.SignPKCS1v15(rand.Reader, d.privateKey, crypto.SHA256, hashed[:])
 	if err != nil {
-		return "", fmt.Errorf("external connection google_drive: could not sign JWT: %w", err)
+		return utils.EMPTY, fmt.Errorf("external connection google_drive: could not sign JWT: %w", err)
 	}
 	assertion := signingInput + "." + base64URLEncode(signature)
 
@@ -207,13 +207,13 @@ func (d *driveTarget) accessToken(ctx context.Context) (string, error) {
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, d.key.TokenURI, strings.NewReader(form.Encode()))
 	if err != nil {
-		return "", err
+		return utils.EMPTY, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := d.httpClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("external connection google_drive: token request failed: %w", err)
+		return utils.EMPTY, fmt.Errorf("external connection google_drive: token request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -221,12 +221,15 @@ func (d *driveTarget) accessToken(ctx context.Context) (string, error) {
 		AccessToken string `json:"access_token"`
 		Error       string `json:"error"`
 	}
+
 	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
-		return "", fmt.Errorf("external connection google_drive: invalid token response: %w", err)
+		return utils.EMPTY, fmt.Errorf("external connection google_drive: invalid token response: %w", err)
 	}
-	if resp.StatusCode >= 300 || tokenResp.AccessToken == "" {
-		return "", fmt.Errorf("external connection google_drive: token exchange returned %d: %s", resp.StatusCode, tokenResp.Error)
+
+	if resp.StatusCode >= 300 || utils.IsBlank(tokenResp.AccessToken) {
+		return utils.EMPTY, fmt.Errorf("external connection google_drive: token exchange returned %d: %s", resp.StatusCode, tokenResp.Error)
 	}
+
 	return tokenResp.AccessToken, nil
 }
 
@@ -260,28 +263,31 @@ func (d *driveTarget) searchOne(ctx context.Context, token, query string) (id st
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, driveAPIBase+"?"+q.Encode(), nil)
 	if err != nil {
-		return "", false, err
+		return utils.EMPTY, false, err
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := d.httpClient.Do(req)
 	if err != nil {
-		return "", false, fmt.Errorf("external connection google_drive: search failed: %w", err)
+		return utils.EMPTY, false, fmt.Errorf("external connection google_drive: search failed: %w", err)
 	}
+
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return "", false, fmt.Errorf("external connection google_drive: search returned %d: %s", resp.StatusCode, string(body))
+		return utils.EMPTY, false, fmt.Errorf("external connection google_drive: search returned %d: %s", resp.StatusCode, string(body))
 	}
 
 	var list driveFileList
 	if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
-		return "", false, fmt.Errorf("external connection google_drive: invalid search response: %w", err)
+		return utils.EMPTY, false, fmt.Errorf("external connection google_drive: invalid search response: %w", err)
 	}
+
 	if len(list.Files) == 0 {
-		return "", false, nil
+		return utils.EMPTY, false, nil
 	}
+
 	return list.Files[0].ID, true, nil
 }
 
@@ -295,10 +301,11 @@ func (d *driveTarget) findFolder(ctx context.Context, token, name, parentID stri
 
 func (d *driveTarget) ensureFolder(ctx context.Context, token, name, parentID string) (string, error) {
 	if id, found, err := d.findFolder(ctx, token, name, parentID); err != nil {
-		return "", err
+		return utils.EMPTY, err
 	} else if found {
 		return id, nil
 	}
+
 	return d.createFolder(ctx, token, name, parentID)
 }
 
@@ -310,10 +317,12 @@ func (d *driveTarget) findAnyFolder(ctx context.Context, token string, names []s
 	for i, name := range names {
 		clauses[i] = fmt.Sprintf("name = '%s'", escapeDriveQueryValue(name))
 	}
+
 	query := fmt.Sprintf(
 		"(%s) and '%s' in parents and mimeType = '%s' and trashed = false",
 		strings.Join(clauses, " or "), parentID, driveFolderMime,
 	)
+
 	return d.searchOne(ctx, token, query)
 }
 
@@ -321,10 +330,11 @@ func (d *driveTarget) findAnyFolder(ctx context.Context, token string, names []s
 // exists, creating the first (default) candidate if none do.
 func (d *driveTarget) ensureAnyFolder(ctx context.Context, token string, names []string, parentID string) (string, error) {
 	if id, found, err := d.findAnyFolder(ctx, token, names, parentID); err != nil {
-		return "", err
+		return utils.EMPTY, err
 	} else if found {
 		return id, nil
 	}
+
 	return d.createFolder(ctx, token, names[0], parentID)
 }
 
@@ -336,27 +346,27 @@ func (d *driveTarget) createFolder(ctx context.Context, token, name, parentID st
 	})
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, driveAPIBase+"?fields=id&supportsAllDrives=true", bytes.NewReader(body))
 	if err != nil {
-		return "", err
+		return utils.EMPTY, err
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := d.httpClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("external connection google_drive: create folder failed: %w", err)
+		return utils.EMPTY, fmt.Errorf("external connection google_drive: create folder failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 300 {
 		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return "", fmt.Errorf("external connection google_drive: create folder returned %d: %s", resp.StatusCode, string(respBody))
+		return utils.EMPTY, fmt.Errorf("external connection google_drive: create folder returned %d: %s", resp.StatusCode, string(respBody))
 	}
 
 	var created struct {
 		ID string `json:"id"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&created); err != nil {
-		return "", fmt.Errorf("external connection google_drive: invalid create folder response: %w", err)
+		return utils.EMPTY, fmt.Errorf("external connection google_drive: invalid create folder response: %w", err)
 	}
 	return created.ID, nil
 }

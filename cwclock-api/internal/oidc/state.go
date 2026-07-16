@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
+	"cwclock-api/internal/utils"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -29,7 +30,7 @@ var ErrInvalidState = errors.New("oidc: invalid or expired state")
 func SignState(secret, provider string) (string, error) {
 	nonce := make([]byte, 16)
 	if _, err := rand.Read(nonce); err != nil {
-		return "", err
+		return utils.EMPTY, err
 	}
 	payload := fmt.Sprintf("%s|%d|%s", provider, time.Now().Unix(), base64.RawURLEncoding.EncodeToString(nonce))
 	sig := sign(secret, payload)

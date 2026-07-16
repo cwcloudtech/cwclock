@@ -53,7 +53,7 @@ const (
 func parseCSVTime(s string) (string, error) {
 	t, err := time.Parse(csvTimeLayout, strings.TrimSpace(s))
 	if err != nil {
-		return "", fmt.Errorf("invalid time %q: %w", s, err)
+		return utils.EMPTY, fmt.Errorf("invalid time %q: %w", s, err)
 	}
 	return t.Format("15:04:05"), nil
 }
@@ -62,7 +62,7 @@ func parseCSVTime(s string) (string, error) {
 func parseCSVDate(s string) (string, error) {
 	t, err := time.Parse(csvDateLayout, strings.TrimSpace(s))
 	if err != nil {
-		return "", fmt.Errorf("invalid date %q: %w", s, err)
+		return utils.EMPTY, fmt.Errorf("invalid date %q: %w", s, err)
 	}
 	return t.Format(importDayLayout), nil
 }

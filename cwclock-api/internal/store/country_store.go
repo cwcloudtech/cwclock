@@ -65,7 +65,7 @@ func (s *CountryStore) DefaultCurrency(ctx context.Context, iso string) (string,
 		if errors.Is(err, pgx.ErrNoRows) {
 			return models.FallbackCurrency, nil
 		}
-		return "", err
+		return utils.EMPTY, err
 	}
 	return currency, nil
 }

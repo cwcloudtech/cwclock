@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/utils"
 )
 
 const s3Service = "s3"
@@ -78,8 +79,9 @@ func (s *s3Target) resolveKey(ctx context.Context, year string, months []string,
 		key := year + "/" + month + "/" + filename
 		found, err := s.exists(ctx, key)
 		if err != nil {
-			return "", err
+			return utils.EMPTY, err
 		}
+
 		if found {
 			return key, nil
 		}

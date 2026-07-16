@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/utils"
 )
 
 type InvoiceStore struct {
@@ -137,7 +138,7 @@ func (s *InvoiceStore) PeekNextNumber(ctx context.Context, orgID, clientName str
 		SELECT count(*) FROM invoices WHERE organization_id = $1 AND data->>'number' LIKE $2 || '%'
 	`, orgID, prefix).Scan(&count)
 	if err != nil {
-		return "", err
+		return utils.EMPTY, err
 	}
 	return fmt.Sprintf("%s%d", prefix, count+1), nil
 }

@@ -340,7 +340,7 @@ func (s *OrgStore) Delete(ctx context.Context, id string) error {
 func (s *OrgStore) GetRole(ctx context.Context, orgID, userID string) (models.Role, error) {
 	org, err := s.FindByID(ctx, orgID)
 	if err != nil {
-		return "", err
+		return utils.EMPTY, err
 	}
 	if org.OwnerID == userID {
 		return models.RoleOwner, nil
@@ -353,9 +353,9 @@ func (s *OrgStore) GetRole(ctx context.Context, orgID, userID string) (models.Ro
 	`, orgID, userID)
 	if err := row.Scan(&role); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return "", ErrNotFound
+			return utils.EMPTY, ErrNotFound
 		}
-		return "", err
+		return utils.EMPTY, err
 	}
 	return models.Role(role), nil
 }

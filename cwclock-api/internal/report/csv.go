@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/utils"
 )
 
 func formatHMS(durationSecs int) string {
@@ -31,7 +32,7 @@ func formatAmount(amt float64) string {
 // uniformly.
 func formatAMPM(hm *string) string {
 	if hm == nil {
-		return ""
+		return utils.EMPTY
 	}
 	total := parseSecondsOfDay(*hm) % (24 * 3600)
 	h, m, s := total/3600, (total%3600)/60, total%60

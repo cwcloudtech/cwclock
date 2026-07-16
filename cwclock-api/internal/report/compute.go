@@ -188,7 +188,7 @@ func Enrich(entries []models.TimeEntry, lk Lookups, canSeeAmount bool) []models.
 
 func startOf(e models.ReportEntry) string {
 	if e.Start == nil {
-		return ""
+		return utils.EMPTY
 	}
 	return *e.Start
 }

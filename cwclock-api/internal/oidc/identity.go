@@ -43,20 +43,22 @@ func ExchangeCode(ctx context.Context, p Provider, code, redirectURI string) (st
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, p.TokenURL, strings.NewReader(form.Encode()))
 	if err != nil {
-		return "", err
+		return utils.EMPTY, err
 	}
+
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return "", err
+		return utils.EMPTY, err
 	}
+
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return utils.EMPTY, err
 	}
 
 	var payload struct {
@@ -64,14 +66,17 @@ func ExchangeCode(ctx context.Context, p Provider, code, redirectURI string) (st
 		Error            string `json:"error"`
 		ErrorDescription string `json:"error_description"`
 	}
+
 	if err := json.Unmarshal(body, &payload); err != nil {
-		return "", fmt.Errorf("oidc: decoding token response: %w", err)
+		return utils.EMPTY, fmt.Errorf("oidc: decoding token response: %w", err)
 	}
+
 	if payload.Error != "" {
-		return "", fmt.Errorf("oidc: token exchange failed: %s (%s)", payload.Error, payload.ErrorDescription)
+		return utils.EMPTY, fmt.Errorf("oidc: token exchange failed: %s (%s)", payload.Error, payload.ErrorDescription)
 	}
-	if payload.AccessToken == "" {
-		return "", errors.New("oidc: token exchange returned no access_token")
+
+	if utils.IsBlank(payload.AccessToken) {
+		return utils.EMPTY, errors.New("oidc: token exchange returned no access_token")
 	}
 	return payload.AccessToken, nil
 }
@@ -157,7 +162,7 @@ func fetchGithubPrimaryEmail(ctx context.Context, accessToken string) (string, e
 		Verified bool   `json:"verified"`
 	}
 	if err := getJSON(ctx, "https://api.github.com/user/emails", accessToken, "Bearer", &emails); err != nil {
-		return "", err
+		return utils.EMPTY, err
 	}
 
 	var verified string

@@ -26,7 +26,7 @@ func NewApiKeyStore(pool *pgxpool.Pool) *ApiKeyStore {
 func generateToken() (string, error) {
 	buf := make([]byte, 32)
 	if _, err := rand.Read(buf); err != nil {
-		return "", err
+		return utils.EMPTY, err
 	}
 	return hex.EncodeToString(buf), nil
 }
@@ -108,9 +108,9 @@ func (s *ApiKeyStore) VerifyHash(ctx context.Context, hash string) (string, erro
 	`, hash).Scan(&userID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return "", ErrNotFound
+			return utils.EMPTY, ErrNotFound
 		}
-		return "", err
+		return utils.EMPTY, err
 	}
 	return userID, nil
 }
