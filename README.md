@@ -22,6 +22,7 @@ A live version is available at [cwclock.me](https://www.cwclock.me).
 * I18N (English and French for now)
 * Light/Dark mode
 * OpenTelemetry & OpenMetrics (Prometheus) observability
+* OIDC integration with Google OIDC, Github and Keycloak
 
 ## Complet documentation
 
