@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"os"
 	"regexp"
 	"slices"
 	"strconv"
@@ -19,6 +20,27 @@ func IsNotBlank(str string) bool {
 // IsBlank reports whether str is empty or contains only whitespace.
 func IsBlank(str string) bool {
 	return !IsNotBlank(str)
+}
+
+// SplitNonBlank splits a comma-separated list, trims each entry, and drops
+// blanks - so an unset or empty string yields an empty slice rather than
+// [""].
+func SplitNonBlank(str string) []string {
+	var out []string
+	for _, part := range strings.Split(str, ",") {
+		part = strings.TrimSpace(part)
+		if IsNotBlank(part) {
+			out = append(out, part)
+		}
+	}
+	return out
+}
+
+// GetEnv returns the environment variable key, or fallback when it is unset
+// or blank.
+func GetEnv(key, fallback string) string {
+	v := os.Getenv(key)
+	return If(IsNotBlank(v), v, fallback)
 }
 
 // IsTrue return whether str is not a false value.

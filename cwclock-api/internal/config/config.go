@@ -49,17 +49,17 @@ func Load() Config {
 	user := os.Getenv("POSTGRES_USER")
 	pass := os.Getenv("POSTGRES_PASSWORD")
 	host := os.Getenv("POSTGRES_HOST")
-	port := getEnv("POSTGRES_PORT", "5432")
+	port := utils.GetEnv("POSTGRES_PORT", "5432")
 	db := os.Getenv("POSTGRES_DB")
-	sslmode := getEnv("POSTGRES_SSLMODE", "disable")
-	allowedOrigins := getEnv("CWCLOCK_CORS_ALLOWED_ORIGINS", "*")
+	sslmode := utils.GetEnv("POSTGRES_SSLMODE", "disable")
+	allowedOrigins := utils.GetEnv("CWCLOCK_CORS_ALLOWED_ORIGINS", "*")
 
-	maxWorkers, err := strconv.Atoi(getEnv("MAX_WORKERS", "5"))
+	maxWorkers, err := strconv.Atoi(utils.GetEnv("MAX_WORKERS", "5"))
 	if err != nil || maxWorkers <= 0 {
 		maxWorkers = 5
 	}
 
-	postgresPoolSize, err := strconv.Atoi(getEnv("POSTGRES_POOL_SIZE", "5"))
+	postgresPoolSize, err := strconv.Atoi(utils.GetEnv("POSTGRES_POOL_SIZE", "5"))
 	if err != nil || postgresPoolSize <= 0 {
 		postgresPoolSize = 5
 	}
@@ -75,21 +75,21 @@ func Load() Config {
 	}
 
 	return Config{
-		Port:                     getEnv("PORT", "8080"),
+		Port:                     utils.GetEnv("PORT", "8080"),
 		DatabaseURL:              fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, pass, host, port, db, sslmode),
 		JWTSecret:                os.Getenv("JWT_SECRET"),
 		MaxWorkers:               maxWorkers,
 		PostgresPoolSize:         postgresPoolSize,
 		CorsEnabled:              utils.IsTrue(os.Getenv("CWCLOCK_CORS_ENABLED")),
 		CorsAllowedOrigins:       strings.Split(allowedOrigins, ","),
-		Version:                  versionFromManifest(getEnv("CWCLOCK_MANIFEST_PATH", "manifest.json"), getEnv("APP_VERSION", "1.0.0")),
-		ManifestPath:             getEnv("CWCLOCK_MANIFEST_PATH", "manifest.json"),
+		Version:                  versionFromManifest(utils.GetEnv("CWCLOCK_MANIFEST_PATH", "manifest.json"), utils.GetEnv("APP_VERSION", "1.0.0")),
+		ManifestPath:             utils.GetEnv("CWCLOCK_MANIFEST_PATH", "manifest.json"),
 		OtelEndpoint:             os.Getenv("CWCLOCK_OTEL_ENDPOINT"),
-		OtelProto:                getEnv("CWCLOCK_OTEL_PROTO", "otlp/grpc"),
+		OtelProto:                utils.GetEnv("CWCLOCK_OTEL_PROTO", "otlp/grpc"),
 		MaxImageSize:             maxImageSize,
 		MaxReportSize:            maxReportSize,
-		APIBaseURL:               strings.TrimSuffix(getEnv("API_URL", "http://localhost:8080"), "/"),
-		UIBaseURL:                strings.TrimSuffix(getEnv("CWCLOCK_UI_URL", "http://localhost:3000"), "/"),
+		APIBaseURL:               strings.TrimSuffix(utils.GetEnv("API_URL", "http://localhost:8080"), "/"),
+		UIBaseURL:                strings.TrimSuffix(utils.GetEnv("CWCLOCK_UI_URL", "http://localhost:3000"), "/"),
 		OIDCGoogleClientID:       os.Getenv("CWCLOCK_OIDC_GOOGLE_CLIENT_ID"),
 		OIDCGoogleClientSecret:   os.Getenv("CWCLOCK_OIDC_GOOGLE_CLIENT_SECRET"),
 		OIDCGithubClientID:       os.Getenv("CWCLOCK_OIDC_GITHUB_CLIENT_ID"),
@@ -97,22 +97,8 @@ func Load() Config {
 		OIDCKeycloakBaseURL:      strings.TrimSuffix(os.Getenv("CWCLOCK_OIDC_KEYCLOAK_BASE_URL"), "/"),
 		OIDCKeycloakClientID:     os.Getenv("CWCLOCK_OIDC_KEYCLOAK_CLIENT_ID"),
 		OIDCKeycloakClientSecret: os.Getenv("CWCLOCK_OIDC_KEYCLOAK_CLIENT_SECRET"),
-		OIDCKeycloakGroups:       splitNonBlank(os.Getenv("CWCLOCK_OIDC_KEYCLOAK_GROUPS")),
+		OIDCKeycloakGroups:       utils.SplitNonBlank(os.Getenv("CWCLOCK_OIDC_KEYCLOAK_GROUPS")),
 	}
-}
-
-// splitNonBlank splits a comma-separated list, trims each entry, and drops
-// blanks - so an unset or empty CWCLOCK_OIDC_KEYCLOAK_GROUPS yields an empty
-// slice rather than [""].
-func splitNonBlank(str string) []string {
-	var out []string
-	for _, part := range strings.Split(str, ",") {
-		part = strings.TrimSpace(part)
-		if utils.IsNotBlank(part) {
-			out = append(out, part)
-		}
-	}
-	return out
 }
 
 // versionFromManifest reads the version field from the manifest JSON file at
@@ -129,9 +115,4 @@ func versionFromManifest(path, fallback string) string {
 		return fallback
 	}
 	return m.Version
-}
-
-func getEnv(key, fallback string) string {
-	v := os.Getenv(key)
-	return utils.If(utils.IsNotBlank(v), v, fallback)
 }
