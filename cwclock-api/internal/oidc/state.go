@@ -70,6 +70,26 @@ func VerifyState(secret, provider, state string) error {
 	return nil
 }
 
+// ProviderFromState reads the provider name embedded in a state parameter
+// without verifying its signature, so the frontend-facing callback route
+// (which isn't scoped to a provider in its path) knows which provider to
+// verify the state against before trusting anything else in it.
+func ProviderFromState(state string) (string, error) {
+	parts := strings.SplitN(state, ".", 2)
+	if len(parts) != 2 {
+		return utils.EMPTY, ErrInvalidState
+	}
+	payload, err := base64.RawURLEncoding.DecodeString(parts[0])
+	if err != nil {
+		return utils.EMPTY, ErrInvalidState
+	}
+	fields := strings.SplitN(string(payload), "|", 3)
+	if len(fields) != 3 {
+		return utils.EMPTY, ErrInvalidState
+	}
+	return fields[0], nil
+}
+
 func sign(secret, payload string) []byte {
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write([]byte(payload))

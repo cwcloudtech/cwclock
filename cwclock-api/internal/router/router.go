@@ -68,6 +68,7 @@ func New(
 
 		r.Route("/oidc", func(r chi.Router) {
 			r.Get("/", oidcHandler.ListProviders)
+			r.Get("/callback", oidcHandler.FrontendCallback)
 			r.Get("/{provider}/login", oidcHandler.Login)
 			r.Get("/{provider}/callback", oidcHandler.Callback)
 		})

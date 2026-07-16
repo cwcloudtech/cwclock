@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { toast } from "react-toastify";
 import { FaGoogle, FaGithub, FaKey } from "react-icons/fa";
 import { useI18n } from "../../i18n/I18nContext";
+import toastOptions from "../../Redux/toastOptions";
 import styles from "./Styles/OidcButtons.module.css";
 
 const ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/oidc`;
@@ -41,6 +43,26 @@ const OidcButtons = () => {
     return null;
   }
 
+  // Asks the API for a frontend-bound authorization URL (X-CWClock-Origin
+  // tells it to point redirect_uri at our own /oidc/callback instead of its
+  // own) and navigates the browser there ourselves; a plain <a href> can't
+  // attach that header, so the link is a progressive-enhancement fallback
+  // for JS-less/middle-click navigation (still works via the API's default
+  // redirect_uri flow).
+  const handleLogin = (id) => async (e) => {
+    e.preventDefault();
+    try {
+      const { data } = await axios.get(`${process.env.REACT_APP_APIURL}/v1/oidc/${id}/login`, {
+        headers: { "X-CWClock-Origin": "frontend" },
+      });
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      toast.error(t("errors.oidcFailed"), toastOptions);
+    }
+  };
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.divider}>
@@ -51,6 +73,7 @@ const OidcButtons = () => {
           <a
             key={id}
             href={`${process.env.REACT_APP_APIURL}/v1/oidc/${id}/login`}
+            onClick={handleLogin(id)}
             className={`${styles.btn} ${styles[className]}`}
             title={t(labelKey)}
           >

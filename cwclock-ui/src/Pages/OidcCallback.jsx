@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
@@ -7,11 +8,14 @@ import { oidcLoginApi } from "../Redux/Auth/Auth.actions";
 import { useI18n } from "../i18n/I18nContext";
 import toastOptions from "../Redux/toastOptions";
 
-// OidcCallback is where the backend redirects the browser once an OIDC
-// login (google/github/keycloak) completes: it carries either ?token= (on
-// success) or ?error= (denied/failed) in the query string, since the
-// backend's own callback endpoint can only redirect, not call the frontend
-// origin directly.
+// OidcCallback is where an OIDC login (google/github/keycloak) lands once
+// it's done. Two flows reach it:
+//  - the API's own callback redirects here with ?token= (success) or
+//    ?error= (denied/failed), since it can only redirect, not call the
+//    frontend origin directly;
+//  - when OidcButtons asked for a frontend-bound redirect_uri, the provider
+//    redirects here directly with ?code=&state=, and this page itself calls
+//    the API to complete the exchange and get a token back as JSON.
 const OidcCallback = () => {
   const { t } = useI18n();
   const dispatch = useDispatch();
@@ -22,17 +26,35 @@ const OidcCallback = () => {
   useEffect(() => {
     const token = searchParams.get("token");
     const oidcError = searchParams.get("error");
+    const code = searchParams.get("code");
+    const state = searchParams.get("state");
 
-    if (oidcError) {
+    const fail = () => {
       toast.error(t("errors.oidcFailed"), toastOptions);
       navigate("/login", { replace: true });
+    };
+
+    if (oidcError) {
+      fail();
       return;
     }
     if (token) {
       dispatch(oidcLoginApi(token));
-    } else {
-      navigate("/login", { replace: true });
+      return;
     }
+    if (code && state) {
+      axios
+        .get(`${process.env.REACT_APP_APIURL}/v1/oidc/callback`, { params: { code, state } })
+        .then(({ data }) => {
+          if (!data?.token) {
+            throw new Error("missing token");
+          }
+          dispatch(oidcLoginApi(data.token));
+        })
+        .catch(fail);
+      return;
+    }
+    navigate("/login", { replace: true });
     // Runs once: the query string is only ever meaningful on the initial load of this page.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
