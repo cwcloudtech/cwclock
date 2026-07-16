@@ -54,6 +54,8 @@ This will:
 
 Once it's up, open [`http://localhost:3000`](http://localhost:3000) in your browser.
 
+A public image is available here `rg.fr-par.scw.cloud/cwclock-t8d7th/cwclock-api:latest`.
+
 ## Where you can find this repository ?
 
 * Main repo: https://gitlab.cwcloud.tech/oss/cwclock.git
