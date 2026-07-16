@@ -114,7 +114,7 @@ func DetailedCSV(entries []models.ReportEntry, canSeeAmount bool, currency strin
 		startStr, endStr := formatAMPM(e.Start), formatAMPM(e.End)
 
 		record := []string{
-			e.ProjectName, e.ClientName, e.Text, "", e.UserName, "", e.UserEmail, "", "Yes",
+			e.ProjectName, e.ClientName, e.Text, utils.EMPTY, e.UserName, utils.EMPTY, e.UserEmail, utils.EMPTY, "Yes",
 			dayStr, startStr, dayStr, endStr, formatHMS(e.DurationSecs), formatDecimalHours(e.DurationSecs),
 		}
 		if canSeeAmount {

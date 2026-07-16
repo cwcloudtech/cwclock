@@ -1,6 +1,7 @@
 package report
 
 import (
+	"cwclock-api/internal/utils"
 	_ "embed"
 	"encoding/base64"
 	"strings"
@@ -30,15 +31,15 @@ func ResolveLogo(orgPicture string) (data []byte, imgType string) {
 func decodeDataURI(dataURI string) (data []byte, imgType string, ok bool) {
 	const prefix = "data:"
 	if !strings.HasPrefix(dataURI, prefix) {
-		return nil, "", false
+		return nil, utils.EMPTY, false
 	}
 	comma := strings.IndexByte(dataURI, ',')
 	if comma < 0 {
-		return nil, "", false
+		return nil, utils.EMPTY, false
 	}
 	meta := dataURI[len(prefix):comma]
 	if !strings.Contains(meta, "base64") {
-		return nil, "", false
+		return nil, utils.EMPTY, false
 	}
 	mime, _, _ := strings.Cut(meta, ";")
 	imgType = strings.ToUpper(strings.TrimPrefix(mime, "image/"))
@@ -46,12 +47,12 @@ func decodeDataURI(dataURI string) (data []byte, imgType string, ok bool) {
 		imgType = "JPG"
 	}
 	if imgType != "PNG" && imgType != "JPG" && imgType != "GIF" {
-		return nil, "", false
+		return nil, utils.EMPTY, false
 	}
 
 	decoded, err := base64.StdEncoding.DecodeString(dataURI[comma+1:])
 	if err != nil {
-		return nil, "", false
+		return nil, utils.EMPTY, false
 	}
 	return decoded, imgType, true
 }

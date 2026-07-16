@@ -123,7 +123,7 @@ func (s *UserStore) FindOrCreateOIDC(ctx context.Context, email, name, surname s
 	if !errors.Is(err, ErrNotFound) {
 		return models.User{}, err
 	}
-	return s.Create(ctx, email, "", name, surname)
+	return s.Create(ctx, email, utils.EMPTY, name, surname)
 }
 
 func (s *UserStore) FindByEmail(ctx context.Context, email string) (models.User, error) {

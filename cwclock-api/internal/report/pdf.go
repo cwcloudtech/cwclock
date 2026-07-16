@@ -8,6 +8,7 @@ import (
 	"github.com/mandolyte/mdtopdf"
 
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/utils"
 )
 
 const (
@@ -43,7 +44,7 @@ const (
 // as raw UTF-8 bytes into a cp1252-encoded font and renders as mojibake.
 func newRenderer() *mdtopdf.PdfRenderer {
 	opts := []mdtopdf.RenderOption{mdtopdf.WithUnicodeTranslator("cp1252")}
-	renderer := mdtopdf.NewPdfRenderer("L", "A4", "", "", opts, mdtopdf.LIGHT)
+	renderer := mdtopdf.NewPdfRenderer("L", "A4", utils.EMPTY, utils.EMPTY, opts, mdtopdf.LIGHT)
 	renderer.THeader.Size = 9
 	renderer.TBody.Size = 9
 	return renderer
@@ -58,7 +59,7 @@ func addFooter(pdf *fpdf.Fpdf) {
 		pdf.SetY(-12)
 		pdf.SetFont("Helvetica", "I", 7)
 		pdf.SetTextColor(170, 170, 170)
-		pdf.CellFormat(0, 5, footerText, "", 0, "C", false, 0, footerURL)
+		pdf.CellFormat(0, 5, footerText, utils.EMPTY, 0, "C", false, 0, footerURL)
 	})
 }
 
@@ -137,7 +138,7 @@ func placeLogo(pdf *fpdf.Fpdf, data []byte, imgType string) {
 
 	width := info.Width() * (logoMaxHeight / info.Height())
 	pageWidth, _ := pdf.GetPageSize()
-	pdf.ImageOptions("report-header-logo", pageWidth-logoMargin-width, logoMargin/2, width, logoMaxHeight, false, options, 0, "")
+	pdf.ImageOptions("report-header-logo", pageWidth-logoMargin-width, logoMargin/2, width, logoMaxHeight, false, options, 0, utils.EMPTY)
 }
 
 // placeImage embeds a PNG at an explicit (x, y), scaled to width with its
@@ -151,7 +152,7 @@ func placeImage(pdf *fpdf.Fpdf, key string, data []byte, x, y, width float64) fl
 		return 0
 	}
 	height := width * (info.Height() / info.Width())
-	pdf.ImageOptions(key, x, y, width, height, false, options, 0, "")
+	pdf.ImageOptions(key, x, y, width, height, false, options, 0, utils.EMPTY)
 	return height
 }
 
@@ -223,14 +224,14 @@ func placeProjectLegend(pdf *fpdf.Fpdf, translate func(string) string, x, y, wid
 		pdf.SetFont("", "B", donutLegendFont)
 		name := truncateToWidth(pdf, translate(r.ProjectName), textWidth)
 		pdf.SetXY(textX, rowY)
-		pdf.CellFormat(textWidth, donutLegendLine, name, "", 0, "L", false, 0, "")
+		pdf.CellFormat(textWidth, donutLegendLine, name, utils.EMPTY, 0, "L", false, 0, utils.EMPTY)
 
 		pct := int(float64(r.DurationSecs)/float64(total)*100 + 0.5)
 		meta := fmt.Sprintf("%s - %d%%", formatHMS(r.DurationSecs), pct)
-		pdf.SetFont("", "", donutLegendMetaFont)
+		pdf.SetFont(utils.EMPTY, utils.EMPTY, donutLegendMetaFont)
 		pdf.SetTextColor(120, 120, 120)
 		pdf.SetXY(textX, rowY+donutLegendLine)
-		pdf.CellFormat(textWidth, donutLegendMetaLine, meta, "", 0, "L", false, 0, "")
+		pdf.CellFormat(textWidth, donutLegendMetaLine, meta, utils.EMPTY, 0, "L", false, 0, utils.EMPTY)
 		pdf.SetTextColor(0, 0, 0)
 
 		rowY += donutLegendRowHeight
@@ -271,5 +272,5 @@ func placeStamp(pdf *fpdf.Fpdf, data []byte, imgType string) {
 	pageWidth, _ := pdf.GetPageSize()
 
 	pdf.Ln(10)
-	pdf.ImageOptions("invoice-stamp", pageWidth-right-width, pdf.GetY(), width, height, true, options, 0, "")
+	pdf.ImageOptions("invoice-stamp", pageWidth-right-width, pdf.GetY(), width, height, true, options, 0, utils.EMPTY)
 }

@@ -1,6 +1,8 @@
 package report
 
 import (
+	"cwclock-api/internal/utils"
+
 	"github.com/go-pdf/fpdf"
 )
 
@@ -52,12 +54,12 @@ func drawTable(pdf *fpdf.Fpdf, translate func(string) string, columns []tableCol
 		x := left
 		for i, c := range columns {
 			pdf.SetXY(x, y)
-			pdf.CellFormat(widths[i], tableLineHeightPt, translate(c.Header), "1", 0, "C", true, 0, "")
+			pdf.CellFormat(widths[i], tableLineHeightPt, translate(c.Header), "1", 0, "C", true, 0, utils.EMPTY)
 			x += widths[i]
 		}
 		pdf.SetXY(left, y+tableLineHeightPt)
 		pdf.SetFillColor(255, 255, 255)
-		pdf.SetFont("", "", tableFontSizePt)
+		pdf.SetFont(utils.EMPTY, utils.EMPTY, tableFontSizePt)
 	}
 
 	drawHeader()
@@ -105,7 +107,7 @@ func drawTable(pdf *fpdf.Fpdf, translate func(string) string, columns []tableCol
 					border = "LRB"
 				}
 				pdf.SetXY(x, y+float64(j)*tableLineHeightPt)
-				pdf.CellFormat(widths[i], tableLineHeightPt, line, border, 0, "", fill, 0, "")
+				pdf.CellFormat(widths[i], tableLineHeightPt, line, border, 0, utils.EMPTY, fill, 0, utils.EMPTY)
 			}
 			x += widths[i]
 		}

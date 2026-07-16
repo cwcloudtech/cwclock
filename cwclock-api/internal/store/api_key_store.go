@@ -47,7 +47,7 @@ func scanApiKey(row pgx.Row) (models.ApiKey, error) {
 func (s *ApiKeyStore) Create(ctx context.Context, userID, description string, expiresAt *time.Time) (models.ApiKey, string, error) {
 	token, err := generateToken()
 	if err != nil {
-		return models.ApiKey{}, "", err
+		return models.ApiKey{}, utils.EMPTY, err
 	}
 
 	row := s.pool.QueryRow(ctx, `
@@ -57,7 +57,7 @@ func (s *ApiKeyStore) Create(ctx context.Context, userID, description string, ex
 	`, userID, utils.HashToken(token), description, expiresAt)
 	k, err := scanApiKey(row)
 	if err != nil {
-		return models.ApiKey{}, "", err
+		return models.ApiKey{}, utils.EMPTY, err
 	}
 	return k, token, nil
 }

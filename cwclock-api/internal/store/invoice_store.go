@@ -78,7 +78,7 @@ var nonAlnum = regexp.MustCompile(`[^A-Z0-9]`)
 // invoice number starts with: the client's name, uppercased and stripped of
 // everything but letters/digits, followed by the generation date.
 func invoiceNumberPrefix(clientName string, generatedAt time.Time) string {
-	return nonAlnum.ReplaceAllString(strings.ToUpper(clientName), "") + generatedAt.Format("20060102")
+	return nonAlnum.ReplaceAllString(strings.ToUpper(clientName), utils.EMPTY) + generatedAt.Format("20060102")
 }
 
 const maxInvoiceNumberAttempts = 1000
@@ -192,9 +192,9 @@ func (s *InvoiceStore) GetPDF(ctx context.Context, id string) (pdf []byte, numbe
 	row := s.pool.QueryRow(ctx, `SELECT pdf, data->>'number' FROM invoices WHERE id = $1`, id)
 	if err := row.Scan(&pdf, &number); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, "", ErrNotFound
+			return nil, utils.EMPTY, ErrNotFound
 		}
-		return nil, "", err
+		return nil, utils.EMPTY, err
 	}
 	return pdf, number, nil
 }

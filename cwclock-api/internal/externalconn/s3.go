@@ -61,7 +61,7 @@ func (s *s3Target) Delete(ctx context.Context, year string, months []string, fil
 	if err != nil {
 		return err
 	}
-	return s.do(ctx, http.MethodDelete, key, nil, "")
+	return s.do(ctx, http.MethodDelete, key, nil, utils.EMPTY)
 }
 
 // resolveKey returns the key of an object already sitting under one of

@@ -127,7 +127,7 @@ func (h *ReportHandler) loadEnrichedEntries(ctx context.Context, orgID string, f
 	if err != nil {
 		return models.Organization{}, nil, report.Lookups{}, err
 	}
-	projectsList, err := h.projects.List(ctx, orgID, "")
+	projectsList, err := h.projects.List(ctx, orgID, utils.EMPTY)
 	if err != nil {
 		return models.Organization{}, nil, report.Lookups{}, err
 	}

@@ -78,7 +78,7 @@ func parseCSVUserName(full string) (name, surname string) {
 	full = strings.TrimSpace(full)
 	idx := strings.IndexByte(full, ' ')
 	if idx < 0 {
-		return full, ""
+		return full, utils.EMPTY
 	}
 	return full[:idx], strings.TrimSpace(full[idx+1:])
 }
