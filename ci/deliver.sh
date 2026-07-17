@@ -20,5 +20,6 @@ for app in $CWCLOCK_APPS; do
   fi
 
   docker tag "${CI_REGISTRY}/${IMAGE_NAME}:${VERSION}" "${CI_REGISTRY}/${IMAGE_NAME}:latest"
+  docker push "${CI_REGISTRY}/${IMAGE_NAME}:${VERSION}"
   docker push "${CI_REGISTRY}/${IMAGE_NAME}:latest"
 done
