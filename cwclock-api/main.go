@@ -66,7 +66,7 @@ func main() {
 	countryHandler := handlers.NewCountryHandler(countryStore)
 	fieldHandler := handlers.NewFieldHandler(fieldStore)
 	oidcProviders := oidc.BuildProviders(cfg)
-	oidcHandler := handlers.NewOIDCHandler(oidcProviders, userStore, cfg.JWTSecret, cfg.APIBaseURL, cfg.UIBaseURL, cfg.OIDCKeycloakGroups)
+	oidcHandler := handlers.NewOIDCHandler(oidcProviders, userStore, cfg.JWTSecret, cfg.APIBaseURL, cfg.UIBaseURL, cfg.OIDCKeycloakGroups, cfg.ActivationMode)
 
 	met, err := metrics.Setup(ctx, metrics.Config{
 		Endpoint: cfg.OtelEndpoint,

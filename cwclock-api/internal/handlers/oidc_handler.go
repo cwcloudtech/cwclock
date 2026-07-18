@@ -28,9 +28,10 @@ type OIDCHandler struct {
 	apiBaseURL     string
 	uiBaseURL      string
 	keycloakGroups []string
+	activationMode string
 }
 
-func NewOIDCHandler(providers []oidc.Provider, users *store.UserStore, jwtSecret, apiBaseURL, uiBaseURL string, keycloakGroups []string) *OIDCHandler {
+func NewOIDCHandler(providers []oidc.Provider, users *store.UserStore, jwtSecret, apiBaseURL, uiBaseURL string, keycloakGroups []string, activationMode string) *OIDCHandler {
 	return &OIDCHandler{
 		providers:      providers,
 		users:          users,
@@ -38,6 +39,7 @@ func NewOIDCHandler(providers []oidc.Provider, users *store.UserStore, jwtSecret
 		apiBaseURL:     apiBaseURL,
 		uiBaseURL:      uiBaseURL,
 		keycloakGroups: keycloakGroups,
+		activationMode: activationMode,
 	}
 }
 
@@ -111,7 +113,7 @@ func (h *OIDCHandler) completeLogin(ctx context.Context, provider oidc.Provider,
 		return utils.EMPTY, "oidc_forbidden_group"
 	}
 
-	user, err := h.users.FindOrCreateOIDC(ctx, identity.Email, identity.Name, identity.Surname)
+	user, err := h.users.FindOrCreateOIDC(ctx, identity.Email, identity.Name, identity.Surname, h.activationMode)
 	if err != nil {
 		slog.Error("oidc user lookup/creation failed", "provider", provider.Name, "error", err)
 		return utils.EMPTY, "oidc_account_failed"

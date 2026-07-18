@@ -79,16 +79,8 @@ func (s *UserStore) Count(ctx context.Context) (int, error) {
 	return count, nil
 }
 
-// Create registers a user. The very first account ever created becomes the
-// superuser; every other account starts disabled until the superuser
-// confirms it.
-func (s *UserStore) Create(ctx context.Context, email, passwordHash, name, surname string) (models.User, error) {
-	count, err := s.Count(ctx)
-	if err != nil {
-		return models.User{}, err
-	}
-	role := utils.If(count == 0, models.GlobalRoleSuperuser, models.GlobalRoleDisabled)
-
+// insertUser inserts a brand-new account with an already-decided role.
+func (s *UserStore) insertUser(ctx context.Context, email, passwordHash, name, surname string, role models.GlobalRole) (models.User, error) {
 	data, err := json.Marshal(userData{Password: passwordHash, Name: name, Surname: surname, Role: string(role)})
 	if err != nil {
 		return models.User{}, err
@@ -110,12 +102,28 @@ func (s *UserStore) Create(ctx context.Context, email, passwordHash, name, surna
 	return u, nil
 }
 
+// Create registers a user. The very first account ever created becomes the
+// superuser; every other account starts disabled until the superuser
+// confirms it (or, in activation mode "email", until they follow their
+// emailed confirmation link - see handlers.UserHandler.Register).
+func (s *UserStore) Create(ctx context.Context, email, passwordHash, name, surname string) (models.User, error) {
+	count, err := s.Count(ctx)
+	if err != nil {
+		return models.User{}, err
+	}
+	role := utils.If(count == 0, models.GlobalRoleSuperuser, models.GlobalRoleDisabled)
+	return s.insertUser(ctx, email, passwordHash, name, surname, role)
+}
+
 // FindOrCreateOIDC logs in a user authenticated via an OIDC provider: an
 // existing account is matched by email (linking it regardless of how it was
 // originally created), otherwise a new one is registered with no password
-// hash, so it follows the same superuser-if-first/disabled-otherwise rule as
-// Create but can never be logged into with a password.
-func (s *UserStore) FindOrCreateOIDC(ctx context.Context, email, name, surname string) (models.User, error) {
+// hash. The very first account ever created still becomes superuser; a
+// later one is confirmed immediately when activationMode is "email" (the
+// identity provider already verified the address, so there's nothing left
+// to confirm by email, unlike a password registration), otherwise it starts
+// disabled and needs the superuser's approval like every other mode.
+func (s *UserStore) FindOrCreateOIDC(ctx context.Context, email, name, surname, activationMode string) (models.User, error) {
 	user, err := s.FindByEmail(ctx, email)
 	if err == nil {
 		return user, nil
@@ -123,7 +131,19 @@ func (s *UserStore) FindOrCreateOIDC(ctx context.Context, email, name, surname s
 	if !errors.Is(err, ErrNotFound) {
 		return models.User{}, err
 	}
-	return s.Create(ctx, email, utils.EMPTY, name, surname)
+
+	count, err := s.Count(ctx)
+	if err != nil {
+		return models.User{}, err
+	}
+	role := models.GlobalRoleDisabled
+	switch {
+	case count == 0:
+		role = models.GlobalRoleSuperuser
+	case activationMode == models.ActivationModeEmail:
+		role = models.GlobalRoleConfirmed
+	}
+	return s.insertUser(ctx, email, utils.EMPTY, name, surname, role)
 }
 
 func (s *UserStore) FindByEmail(ctx context.Context, email string) (models.User, error) {

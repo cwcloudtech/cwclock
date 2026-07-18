@@ -108,7 +108,7 @@ func Load() Config {
 		OIDCKeycloakClientID:     os.Getenv("CWCLOCK_OIDC_KEYCLOAK_CLIENT_ID"),
 		OIDCKeycloakClientSecret: os.Getenv("CWCLOCK_OIDC_KEYCLOAK_CLIENT_SECRET"),
 		OIDCKeycloakGroups:       utils.SplitList(os.Getenv("CWCLOCK_OIDC_KEYCLOAK_GROUPS")),
-		CWCloudAPIURL:            utils.GetBaseUrlFromEnv("CWCLOUD_API_URL"),
+		CWCloudAPIURL:            utils.GetBaseUrlFromEnvWithFallback("CWCLOUD_API_URL", "https://api.cwcloud.tech"),
 		CWCloudAPIKey:            os.Getenv("CWCLOUD_API_KEY"),
 		EmailFrom:                utils.GetEnv("CWCLOCK_EMAIL_FROM", "no-reply@cwclock.comwork.io"),
 		ActivationMode:           activationMode,
