@@ -8,7 +8,7 @@ env|grep "POSTGRES_"|while read; do
 done
 
 echo "" > .env.cwclock.api
-env|grep "CWCLOCK_"|while read; do
+env|grep -E "(CWCLOCK|CWCLOUD)_"|while read; do
   echo "${REPLY}" >> .env.cwclock.api
 done
 
