@@ -256,17 +256,17 @@ func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgName, 
 	var body template.HTML
 	if language == "fr" {
 		subject = fmt.Sprintf("Facture %s (%s)", invoiceNumber, period)
-		title = fmt.Sprintf("Votre facture %s de %s (%s)", invoiceNumber, orgName, period)
+		title = fmt.Sprintf("Votre facture %s de %s", invoiceNumber, orgName)
 		body = template.HTML(fmt.Sprintf(
-			`<p>Veuillez trouver ci-joint la facture <strong>%s</strong> de %s.</p>`,
-			template.HTMLEscapeString(invoiceNumber), template.HTMLEscapeString(orgName),
+			`<p>Veuillez trouver ci-joint la facture <strong>%s</strong> de <strong>%s</strong> (%s).</p>`,
+			template.HTMLEscapeString(invoiceNumber), template.HTMLEscapeString(orgName), template.HTMLEscapeString(period),
 		))
 	} else {
 		subject = fmt.Sprintf("Invoice %s (%s)", invoiceNumber, period)
-		title = fmt.Sprintf("Your invoice %s from %s (%s)", invoiceNumber, orgName, period)
+		title = fmt.Sprintf("Your invoice %s from %s", invoiceNumber, orgName)
 		body = template.HTML(fmt.Sprintf(
-			`<p>Please find attached invoice <strong>%s</strong> from %s.</p>`,
-			template.HTMLEscapeString(invoiceNumber), template.HTMLEscapeString(orgName),
+			`<p>Please find attached invoice <strong>%s</strong> from <strong>%s</strong> (%s).</p>`,
+			template.HTMLEscapeString(invoiceNumber), template.HTMLEscapeString(orgName), template.HTMLEscapeString(period),
 		))
 	}
 
