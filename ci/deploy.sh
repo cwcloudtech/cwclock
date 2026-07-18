@@ -13,7 +13,7 @@ env|grep -E "(CWCLOCK|CWCLOUD)_"|while read; do
 done
 
 echo "CWCLOCK_API_URL=${CWCLOCK_API_URL}" > .env.cwclock.ui
-echo "CWCLOCK_UI_URL=${CWCLOCK_UI_URL}" > .env.cwclock.ui
+echo "CWCLOCK_UI_URL=${CWCLOCK_UI_URL}" >> .env.cwclock.ui
 echo "CWCLOCK_MAX_IMAGE_SIZE=${CWCLOCK_MAX_IMAGE_SIZE}" >> .env.cwclock.ui
 
 docker ps -a | grep -i cwclock | awk '{system ("docker rm -f "$1)}' || :

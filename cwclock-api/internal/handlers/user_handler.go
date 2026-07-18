@@ -19,27 +19,22 @@ import (
 	"cwclock-api/internal/utils"
 )
 
-// confirmationTokenTTL/resetTokenTTL bound how long an emailed confirmation
-// or password-reset link stays usable.
-const (
-	confirmationTokenTTL = 48 * time.Hour
-	resetTokenTTL        = 1 * time.Hour
-)
-
 type UserHandler struct {
-	users          *store.UserStore
-	jwtSecret      string
-	maxImageSize   int64
-	activationMode string
-	mailer         *email.Sender
-	apiBaseURL     string
-	uiBaseURL      string
+	users                *store.UserStore
+	jwtSecret            string
+	maxImageSize         int64
+	activationMode       string
+	mailer               *email.Sender
+	apiBaseURL           string
+	uiBaseURL            string
+	confirmationTokenTTL time.Duration
 }
 
-func NewUserHandler(users *store.UserStore, jwtSecret string, maxImageSize int64, activationMode string, mailer *email.Sender, apiBaseURL, uiBaseURL string) *UserHandler {
+func NewUserHandler(users *store.UserStore, jwtSecret string, maxImageSize int64, activationMode string, mailer *email.Sender, apiBaseURL, uiBaseURL string, confirmationTokenTTL time.Duration) *UserHandler {
 	return &UserHandler{
 		users: users, jwtSecret: jwtSecret, maxImageSize: maxImageSize,
 		activationMode: activationMode, mailer: mailer, apiBaseURL: apiBaseURL, uiBaseURL: uiBaseURL,
+		confirmationTokenTTL: confirmationTokenTTL,
 	}
 }
 
@@ -107,7 +102,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 // sendConfirmationEmail mints a purpose-scoped confirmation token for user
 // and emails the confirmation link (best-effort - see email.Sender).
 func (h *UserHandler) sendConfirmationEmail(ctx context.Context, user models.User) {
-	token, err := authtoken.GeneratePurpose(h.jwtSecret, user.ID, authtoken.PurposeConfirmAccount, confirmationTokenTTL)
+	token, err := authtoken.GeneratePurpose(h.jwtSecret, user.ID, authtoken.PurposeConfirmAccount, h.confirmationTokenTTL)
 	if err != nil {
 		slog.Error("failed to generate confirmation token", "error", err)
 		return
@@ -358,7 +353,7 @@ func (h *UserHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	user, err := h.users.FindByEmail(r.Context(), p.Email)
 	// A banned user can never request a password renewal.
 	if err == nil && user.Role != models.GlobalRoleBan {
-		token, err := authtoken.GeneratePurpose(h.jwtSecret, user.ID, authtoken.PurposeResetPassword, resetTokenTTL)
+		token, err := authtoken.GeneratePurpose(h.jwtSecret, user.ID, authtoken.PurposeResetPassword, h.confirmationTokenTTL)
 		if err != nil {
 			slog.Error("failed to generate password reset token", "error", err)
 		} else {

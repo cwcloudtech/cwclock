@@ -35,6 +35,7 @@ type request struct {
 	From       string      `json:"from"`
 	To         string      `json:"to"`
 	Bcc        string      `json:"bcc,omitempty"`
+	ReplyTo    string      `json:"reply_to,omitempty"`
 	Subject    string      `json:"subject"`
 	Content    string      `json:"content"`
 	Attachment *Attachment `json:"attachment,omitempty"`
@@ -73,15 +74,22 @@ const mutedStyle = "color:#64748b;"
 func renderBody(title string, body template.HTML, logoOverride string) (string, error) {
 	logo := logoDataURI(logoOverride)
 	var buf bytes.Buffer
-	// Logo is template.URL (rather than a plain string) so html/template
-	// trusts it verbatim in the <img src> attribute instead of replacing it
-	// with "#ZgotmplZ" - safe here since logoDataURI already validated it's
-	// a data:image/... URI, never arbitrary user input.
+	// Logo carries the whole src="..." attribute as template.HTMLAttr rather
+	// than the URL alone as template.URL, so html/template splices it into
+	// the <img> tag verbatim instead of passing it through its URL/attribute
+	// escaper - which HTML-entity-escapes every '+' in the base64 payload
+	// (data URIs use '+' from the base64 alphabet) into "&#43;". That's
+	// valid HTML a browser would decode back fine, but it corrupted the
+	// image once real email clients got hold of it (base64 with literal
+	// "&#43;" substrings is no longer valid base64), which is what made the
+	// logo render broken. Safe to trust verbatim here since logoDataURI
+	// already validated it's a well-formed data:image/... URI, never
+	// arbitrary user input.
 	err := bodyTemplate.Execute(&buf, struct {
 		Title string
-		Logo  template.URL
+		Logo  template.HTMLAttr
 		Body  template.HTML
-	}{Title: title, Logo: template.URL(logo), Body: body})
+	}{Title: title, Logo: template.HTMLAttr(`src="` + logo + `"`), Body: body})
 	if err != nil {
 		return "", err
 	}
@@ -106,9 +114,9 @@ func logoDataURI(override string) string {
 
 // send posts one email best-effort: a blank apiURL/apiKey or a failed
 // request is logged (with the payload, so it can be replayed by hand) and
-// otherwise ignored.
-func (s *Sender) send(ctx context.Context, to, subject, htmlContent string, attachment *Attachment) {
-	payload := request{From: s.from, To: to, Subject: subject, Content: htmlContent, Attachment: attachment}
+// otherwise ignored. replyTo is optional - pass "" to leave it unset.
+func (s *Sender) send(ctx context.Context, to, replyTo, subject, htmlContent string, attachment *Attachment) {
+	payload := request{From: s.from, To: to, ReplyTo: replyTo, Subject: subject, Content: htmlContent, Attachment: attachment}
 
 	if utils.IsBlank(s.apiURL) || utils.IsBlank(s.apiKey) {
 		slog.Warn("cwcloud email api is not configured (CWCLOUD_API_URL/CWCLOUD_API_KEY), skipping email", "to", to, "subject", subject)
@@ -156,7 +164,7 @@ func (s *Sender) SendConfirmation(ctx context.Context, to, confirmURL string) {
 		slog.Error("failed to render confirmation email", "error", err)
 		return
 	}
-	s.send(ctx, to, "Confirm your CWClock account", html, nil)
+	s.send(ctx, to, utils.EMPTY, "Confirm your CWClock account", html, nil)
 }
 
 // SendPasswordReset emails the password-renewal link to a user who
@@ -173,13 +181,15 @@ func (s *Sender) SendPasswordReset(ctx context.Context, to, resetURL string) {
 		slog.Error("failed to render password reset email", "error", err)
 		return
 	}
-	s.send(ctx, to, "Reset your CWClock password", html, nil)
+	s.send(ctx, to, utils.EMPTY, "Reset your CWClock password", html, nil)
 }
 
 // SendInvoice emails a generated invoice PDF to one or more recipients. The
 // organization's avatar (orgPicture, a data URI) replaces the CWClock logo
-// in the email header when it's set.
-func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgName, orgPicture, invoiceNumber string, pdf []byte) {
+// in the email header when it's set. replyTo is set to the organization
+// owner's email so a reply from the client reaches them directly rather
+// than the noreply From address.
+func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgName, orgPicture, replyTo, invoiceNumber string, pdf []byte) {
 	if len(recipients) == 0 {
 		return
 	}
@@ -197,5 +207,5 @@ func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgName, 
 		FileName: invoiceNumber + ".pdf",
 		B64:      base64.StdEncoding.EncodeToString(pdf),
 	}
-	s.send(ctx, strings.Join(recipients, ","), "Invoice "+invoiceNumber, html, attachment)
+	s.send(ctx, strings.Join(recipients, ","), replyTo, "Invoice "+invoiceNumber, html, attachment)
 }

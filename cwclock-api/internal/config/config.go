@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"cwclock-api/internal/models"
 	"cwclock-api/internal/utils"
@@ -38,6 +39,7 @@ type Config struct {
 	CWCloudAPIURL            string
 	CWCloudAPIKey            string
 	EmailFrom                string
+	ConfirmationEmailTTL     time.Duration
 	ActivationMode           string
 }
 
@@ -49,6 +51,12 @@ const defaultMaxImageSize int64 = 2 * 1024 * 1024
 // isn't a parsable number of entries; it caps how many time entries a single
 // report/export or invoice generation may cover.
 const defaultMaxReportSize int = 5000
+
+// defaultConfirmationEmailExpirationHours is applied when
+// CWCLOCK_CONFIRMATION_EMAIL_EXPIRATION is unset or isn't a parsable number
+// of hours; it bounds how long an account-confirmation or password-reset
+// link emailed to a user stays usable.
+const defaultConfirmationEmailExpirationHours int = 24
 
 func Load() Config {
 	user := os.Getenv("POSTGRES_USER")
@@ -84,6 +92,11 @@ func Load() Config {
 		activationMode = models.ActivationModeAdmin
 	}
 
+	confirmationEmailExpirationHours, err := strconv.Atoi(os.Getenv("CWCLOCK_CONFIRMATION_EMAIL_EXPIRATION"))
+	if err != nil || confirmationEmailExpirationHours <= 0 {
+		confirmationEmailExpirationHours = defaultConfirmationEmailExpirationHours
+	}
+
 	return Config{
 		Port:                     utils.GetEnv("PORT", "8080"),
 		DatabaseURL:              fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, pass, host, port, db, sslmode),
@@ -110,7 +123,8 @@ func Load() Config {
 		OIDCKeycloakGroups:       utils.SplitList(os.Getenv("CWCLOCK_OIDC_KEYCLOAK_GROUPS")),
 		CWCloudAPIURL:            utils.GetBaseUrlFromEnvWithFallback("CWCLOUD_API_URL", "https://api.cwcloud.tech"),
 		CWCloudAPIKey:            os.Getenv("CWCLOUD_API_KEY"),
-		EmailFrom:                utils.GetEnv("CWCLOCK_EMAIL_FROM", "no-reply@cwclock.comwork.io"),
+		EmailFrom:                utils.GetEnv("CWCLOCK_MAIL_FROM", "noreply@cwcloud.tech"),
+		ConfirmationEmailTTL:     time.Duration(confirmationEmailExpirationHours) * time.Hour,
 		ActivationMode:           activationMode,
 	}
 }

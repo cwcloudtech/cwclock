@@ -328,13 +328,19 @@ func (h *InvoiceHandler) SendEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	owner, err := h.users.FindByID(r.Context(), org.OwnerID)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+
 	pdf, number, err := h.invoices.GetPDF(r.Context(), invoiceID)
 	if err != nil {
 		writeStoreError(w, err)
 		return
 	}
 
-	h.mailer.SendInvoice(r.Context(), recipients, org.Name, org.Picture, number, pdf)
+	h.mailer.SendInvoice(r.Context(), recipients, org.Name, org.Picture, owner.Email, number, pdf)
 	writeJSON(w, http.StatusOK, map[string]string{"id": invoiceID})
 }
 

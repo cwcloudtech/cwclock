@@ -52,7 +52,7 @@ func main() {
 
 	mailer := email.NewSender(cfg.CWCloudAPIURL, cfg.CWCloudAPIKey, cfg.EmailFrom)
 
-	userHandler := handlers.NewUserHandler(userStore, cfg.JWTSecret, cfg.MaxImageSize, cfg.ActivationMode, mailer, cfg.APIBaseURL, cfg.UIBaseURL)
+	userHandler := handlers.NewUserHandler(userStore, cfg.JWTSecret, cfg.MaxImageSize, cfg.ActivationMode, mailer, cfg.APIBaseURL, cfg.UIBaseURL, cfg.ConfirmationEmailTTL)
 	orgHandler := handlers.NewOrganizationHandler(orgStore, userStore, countryStore, currencyStore, cfg.MaxImageSize)
 	clientHandler := handlers.NewClientHandler(clientStore, orgStore, countryStore)
 	projectHandler := handlers.NewProjectHandler(projectStore, clientStore)
