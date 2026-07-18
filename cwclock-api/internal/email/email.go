@@ -78,22 +78,26 @@ const centerStyle = "text-align:center;"
 func renderBody(title string, body template.HTML, logoOverride string) (string, error) {
 	logo := logoDataURI(logoOverride)
 	var buf bytes.Buffer
-	// Logo carries the whole src="..." attribute as template.HTMLAttr rather
-	// than the URL alone as template.URL, so html/template splices it into
-	// the <img> tag verbatim instead of passing it through its URL/attribute
-	// escaper - which HTML-entity-escapes every '+' in the base64 payload
-	// (data URIs use '+' from the base64 alphabet) into "&#43;". That's
-	// valid HTML a browser would decode back fine, but it corrupted the
-	// image once real email clients got hold of it (base64 with literal
-	// "&#43;" substrings is no longer valid base64), which is what made the
-	// logo render broken. Safe to trust verbatim here since logoDataURI
-	// already validated it's a well-formed data:image/... URI, never
-	// arbitrary user input.
+	// Logo MUST be template.HTMLAttr carrying the whole src="..." attribute,
+	// not a plain string interpolated inside a literal src="{{ .Logo }}" in
+	// the template. html/template treats a plain string spliced into a URL
+	// attribute as untrusted and runs it through its URL safety filter,
+	// which only allows the http/https/mailto schemes - a data: URI (which
+	// is what every logo here is, see logoDataURI) fails that check and the
+	// ENTIRE attribute gets replaced with the literal text "#ZgotmplZ".
+	// That's Go's own safety placeholder for "this value was rejected", not
+	// a mangled encoding - it's why the logo shows as a broken image with
+	// literally no real src. template.HTMLAttr sidesteps this: it's spliced
+	// in at the "before attribute name" parser state (see the {{ .Logo }}
+	// placement in email.tpl.html, outside of any src="...") verbatim, with
+	// no URL filtering at all. Safe to trust here since logoDataURI already
+	// validated it's a well-formed data:image/... URI, never arbitrary user
+	// input.
 	err := bodyTemplate.Execute(&buf, struct {
 		Title string
-		Logo  string
+		Logo  template.HTMLAttr
 		Body  template.HTML
-	}{Title: title, Logo: logo, Body: body})
+	}{Title: title, Logo: template.HTMLAttr(`src="` + logo + `"`), Body: body})
 	if err != nil {
 		return "", err
 	}
