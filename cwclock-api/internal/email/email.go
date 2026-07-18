@@ -129,17 +129,17 @@ func logoDataURI(override string) string {
 // blank, isn't valid base64, or doesn't sniff as one of those image types.
 func bareBase64DataURI(payload string) (string, bool) {
 	if utils.IsBlank(payload) {
-		return "", false
+		return utils.EMPTY, false
 	}
 	decoded, err := base64.StdEncoding.DecodeString(payload)
 	if err != nil {
-		return "", false
+		return utils.EMPTY, false
 	}
 	switch mimeType := http.DetectContentType(decoded); mimeType {
 	case "image/png", "image/jpeg", "image/gif", "image/webp":
 		return "data:" + mimeType + ";base64," + payload, true
 	default:
-		return "", false
+		return utils.EMPTY, false
 	}
 }
 
