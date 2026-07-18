@@ -91,6 +91,36 @@ func IsValidEmail(str string) bool {
 	return emailPattern.MatchString(str)
 }
 
+// minPasswordLength is the shortest password IsPasswordValid accepts,
+// matching CWCloud's password policy.
+const minPasswordLength = 8
+
+var (
+	passwordUpperPattern  = regexp.MustCompile(`[A-Z]`)
+	passwordLowerPattern  = regexp.MustCompile(`[a-z]`)
+	passwordSymbolPattern = regexp.MustCompile(`[^A-Za-z0-9]`)
+)
+
+// IsPasswordValid reports whether password meets CWCloud's password policy -
+// at least minPasswordLength characters, with at least one uppercase letter,
+// one lowercase letter and one symbol. When it doesn't, it also returns the
+// i18n code of the first unmet rule, meant to be sent back to the client as
+// the response's i18n_code as-is.
+func IsPasswordValid(password string) (bool, string) {
+	switch {
+	case len(password) < minPasswordLength:
+		return false, "errors.passwordTooShort"
+	case !passwordUpperPattern.MatchString(password):
+		return false, "errors.passwordNoUpper"
+	case !passwordLowerPattern.MatchString(password):
+		return false, "errors.passwordNoLower"
+	case !passwordSymbolPattern.MatchString(password):
+		return false, "errors.passwordNoSymbol"
+	default:
+		return true, EMPTY
+	}
+}
+
 func GetBaseUrl(url string) string {
 	return strings.TrimSuffix(url, "/")
 }

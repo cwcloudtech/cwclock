@@ -400,6 +400,10 @@ const en = {
     invoiceNumberExists: "An invoice with this number already exists.",
     invalidToken: "This link is invalid or has expired.",
     noInvoiceRecipient: "This client has no email address to send the invoice to.",
+    passwordTooShort: "Password must be at least 8 characters long.",
+    passwordNoUpper: "Password must contain an uppercase letter.",
+    passwordNoLower: "Password must contain a lowercase letter.",
+    passwordNoSymbol: "Password must contain a special character.",
   },
   reports: {
     summary: "Summary",

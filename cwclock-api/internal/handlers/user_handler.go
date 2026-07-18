@@ -60,6 +60,10 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "Please add all fields", CodeAllFieldsRequired)
 		return
 	}
+	if ok, code := utils.IsPasswordValid(p.Password); !ok {
+		writeInvalidPassword(w, code)
+		return
+	}
 
 	if _, err := h.users.FindByEmail(r.Context(), p.Email); err == nil {
 		writeError(w, http.StatusBadRequest, "A user with this email already exists", CodeDuplicateEmail)
@@ -237,6 +241,10 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "Passwords do not match", CodePasswordsMismatch)
 			return
 		}
+		if ok, code := utils.IsPasswordValid(p.Password); !ok {
+			writeInvalidPassword(w, code)
+			return
+		}
 		hash, err := bcrypt.GenerateFromPassword([]byte(p.Password), bcrypt.DefaultCost)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
@@ -380,6 +388,10 @@ func (h *UserHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 	if p.Password != p.ConfirmPassword {
 		writeError(w, http.StatusBadRequest, "Passwords do not match", CodePasswordsMismatch)
+		return
+	}
+	if ok, code := utils.IsPasswordValid(p.Password); !ok {
+		writeInvalidPassword(w, code)
 		return
 	}
 

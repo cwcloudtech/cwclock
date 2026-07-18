@@ -49,7 +49,7 @@ This will:
 2. Run the SQL migrations from [cwclock-db](./cwclock-db) with Flyway.
 3. Build and start the Go backend, listening on `http://localhost:8080`.
 4. Build the React frontend and serve it through nginx on
-   `http://localhost:3000`, calling the backend directly at the `API_URL`
+   `http://localhost:3000`, calling the backend directly at the `CWCLOCK_API_URL`
    environment variable.
 
 Once it's up, open [`http://localhost:3000`](http://localhost:3000) in your browser.

@@ -57,6 +57,10 @@ const (
 	CodeInvoiceNumberExists         = "errors.invoiceNumberExists"
 	CodeInvalidToken                = "errors.invalidToken"
 	CodeNoInvoiceRecipient          = "errors.noInvoiceRecipient"
+	CodePasswordTooShort            = "errors.passwordTooShort"
+	CodePasswordNoUpper             = "errors.passwordNoUpper"
+	CodePasswordNoLower             = "errors.passwordNoLower"
+	CodePasswordNoSymbol            = "errors.passwordNoSymbol"
 )
 
 func writeJSON(w http.ResponseWriter, status int, body any) {
@@ -69,6 +73,21 @@ func writeJSON(w http.ResponseWriter, status int, body any) {
 
 func writeError(w http.ResponseWriter, status int, message string, i18nCode string) {
 	writeJSON(w, status, errorBody{Message: message, I18nCode: i18nCode})
+}
+
+// passwordPolicyMessages pairs each i18n code utils.IsPasswordValid can
+// return with its English fallback message.
+var passwordPolicyMessages = map[string]string{
+	CodePasswordTooShort: "Password must be at least 8 characters long",
+	CodePasswordNoUpper:  "Password must contain an uppercase letter",
+	CodePasswordNoLower:  "Password must contain a lowercase letter",
+	CodePasswordNoSymbol: "Password must contain a special character",
+}
+
+// writeInvalidPassword rejects a request whose new password failed
+// utils.IsPasswordValid, given the i18n code it returned.
+func writeInvalidPassword(w http.ResponseWriter, code string) {
+	writeError(w, http.StatusBadRequest, passwordPolicyMessages[code], code)
 }
 
 // writeStoreError maps a store error to its HTTP status: 404 when the

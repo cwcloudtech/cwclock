@@ -400,6 +400,10 @@ const fr = {
     invoiceNumberExists: "Une facture avec ce numéro existe déjà.",
     invalidToken: "Ce lien est invalide ou a expiré.",
     noInvoiceRecipient: "Ce client n'a pas d'adresse email pour l'envoi de la facture.",
+    passwordTooShort: "Le mot de passe doit contenir au moins 8 caractères.",
+    passwordNoUpper: "Le mot de passe doit contenir une majuscule.",
+    passwordNoLower: "Le mot de passe doit contenir une minuscule.",
+    passwordNoSymbol: "Le mot de passe doit contenir un caractère spécial.",
   },
   reports: {
     summary: "Résumé",

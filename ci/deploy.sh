@@ -7,7 +7,7 @@ env|grep "POSTGRES_"|while read; do
   echo "${REPLY}" >> .env.cwclock.db
 done
 
-echo "" > .env.cwclock.api
+echo "JWT_SECRET=${JWT_SECRET}" > .env.cwclock.api
 env|grep -E "(CWCLOCK|CWCLOUD)_"|while read; do
   echo "${REPLY}" >> .env.cwclock.api
 done

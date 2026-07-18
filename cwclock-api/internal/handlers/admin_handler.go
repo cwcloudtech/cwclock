@@ -93,6 +93,10 @@ func (h *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	fields := store.AdminUserFields{Email: p.Email, Name: p.Name, Surname: p.Surname, Role: p.Role}
 
 	if p.Password != nil && utils.IsNotBlank(*p.Password) {
+		if ok, code := utils.IsPasswordValid(*p.Password); !ok {
+			writeInvalidPassword(w, code)
+			return
+		}
 		hash, err := bcrypt.GenerateFromPassword([]byte(*p.Password), bcrypt.DefaultCost)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
