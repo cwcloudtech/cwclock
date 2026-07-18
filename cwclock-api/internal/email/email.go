@@ -15,6 +15,7 @@ import (
 	"html/template"
 	"log/slog"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -56,28 +57,48 @@ func NewSender(apiURL, apiKey, from string) *Sender {
 
 var bodyTemplate = template.Must(template.New("email").Parse(templates.EmailHTML))
 
+// buttonStyle mirrors the frontend's primary .cw-button (index.css) so a
+// CTA link in an email looks the same as one in the app: --cw-primary
+// background, white text, --cw-radius-sm corners.
+const buttonStyle = "display:inline-block;margin-top:8px;padding:9px 18px;" +
+	"background-color:#1cb9f7;color:#ffffff;font-weight:600;" +
+	"border-radius:6px;text-decoration:none;"
+
+// mutedStyle mirrors --cw-text-muted, for secondary/help text under a CTA.
+const mutedStyle = "color:#64748b;"
+
 // renderBody wraps body in CWClock's shared email layout, with the
 // CWClock logo or, when logoOverride is a data URI (an organization's own
 // avatar), that image instead.
 func renderBody(title string, body template.HTML, logoOverride string) (string, error) {
 	logo := logoDataURI(logoOverride)
 	var buf bytes.Buffer
+	// Logo is template.URL (rather than a plain string) so html/template
+	// trusts it verbatim in the <img src> attribute instead of replacing it
+	// with "#ZgotmplZ" - safe here since logoDataURI already validated it's
+	// a data:image/... URI, never arbitrary user input.
 	err := bodyTemplate.Execute(&buf, struct {
 		Title string
-		Logo  string
+		Logo  template.URL
 		Body  template.HTML
-	}{Title: title, Logo: logo, Body: body})
+	}{Title: title, Logo: template.URL(logo), Body: body})
 	if err != nil {
 		return "", err
 	}
 	return buf.String(), nil
 }
 
-// logoDataURI returns override as-is when it already looks like a data URI
+// imageDataURI matches a base64 data URI for one of the raster image types
+// browsers render inline, the same shape this app's own avatar uploads
+// produce (see report.decodeDataURI).
+var imageDataURI = regexp.MustCompile(`^data:image/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+/=]+$`)
+
+// logoDataURI returns override as-is when it's a well-formed image data URI
 // (an organization's uploaded avatar), otherwise the bundled CWClock logo
-// encoded as one.
+// encoded as one. Anything else (including a malformed or non-image data
+// URI) falls back to the default logo rather than being trusted verbatim.
 func logoDataURI(override string) string {
-	if strings.HasPrefix(override, "data:") {
+	if imageDataURI.MatchString(override) {
 		return override
 	}
 	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(assets.CWClockLogoPNG)
@@ -125,10 +146,10 @@ func (s *Sender) send(ctx context.Context, to, subject, htmlContent string, atta
 // registered user (activation mode "email").
 func (s *Sender) SendConfirmation(ctx context.Context, to, confirmURL string) {
 	body := template.HTML(fmt.Sprintf(
-		`<p>Welcome to CWClock!</p><p>Please confirm your account by clicking the link below:</p>`+
-			`<p><a href="%s">Confirm my account</a></p>`+
-			`<p>If you didn't create this account, you can safely ignore this email.</p>`,
-		template.HTMLEscapeString(confirmURL),
+		`<p>Welcome to CWClock!</p><p>Please confirm your account by clicking the button below:</p>`+
+			`<p><a href="%s" style="%s">Confirm my account</a></p>`+
+			`<p style="%s">If you didn't create this account, you can safely ignore this email.</p>`,
+		template.HTMLEscapeString(confirmURL), buttonStyle, mutedStyle,
 	))
 	html, err := renderBody("Confirm your CWClock account", body, utils.EMPTY)
 	if err != nil {
@@ -143,9 +164,9 @@ func (s *Sender) SendConfirmation(ctx context.Context, to, confirmURL string) {
 func (s *Sender) SendPasswordReset(ctx context.Context, to, resetURL string) {
 	body := template.HTML(fmt.Sprintf(
 		`<p>We received a request to reset your CWClock password.</p>`+
-			`<p><a href="%s">Choose a new password</a></p>`+
-			`<p>If you didn't request this, you can safely ignore this email.</p>`,
-		template.HTMLEscapeString(resetURL),
+			`<p><a href="%s" style="%s">Choose a new password</a></p>`+
+			`<p style="%s">If you didn't request this, you can safely ignore this email.</p>`,
+		template.HTMLEscapeString(resetURL), buttonStyle, mutedStyle,
 	))
 	html, err := renderBody("Reset your CWClock password", body, utils.EMPTY)
 	if err != nil {
