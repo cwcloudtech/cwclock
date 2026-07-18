@@ -28,6 +28,28 @@ const identificationFieldFallback = "Identification number"
 // identification field(s)" apart from "it only has the EU VAT Code row".
 const vatCodeField = "VAT Code"
 
+// frenchSpeakingCountries is the client_language(country_iso,
+// language_iso_code) decision table (ai-instruct-51): the closed set of
+// country ISO codes whose invoice emails go out in French. Any country not
+// listed here keeps English.
+var frenchSpeakingCountries = map[string]bool{
+	"FR": true, // France
+	"BE": true, // Belgium
+	"TN": true, // Tunisia
+	"DZ": true, // Algeria
+	"MA": true, // Morocco
+}
+
+// ClientLanguage is the client_language(country_iso, language_iso_code)
+// decision table: the ISO 639-1 language code invoice emails should be sent
+// in for a client based in countryISO.
+func ClientLanguage(countryISO string) string {
+	if frenchSpeakingCountries[countryISO] {
+		return "fr"
+	}
+	return "en"
+}
+
 // ResolveFields applies the "For the rest, by default put 'Identification
 // number'" fallback on top of a country's raw fields rows: a country with
 // no rows at all gets just the fallback, and a country whose only row is

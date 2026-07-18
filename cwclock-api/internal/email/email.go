@@ -215,20 +215,51 @@ func (s *Sender) SendPasswordReset(ctx context.Context, to, resetURL string) {
 	s.send(ctx, to, utils.EMPTY, "Reset your CWClock password", html, nil)
 }
 
+// formatUSDate formats a "2006-01-02" day string as CWClock's US display
+// date (01/02/2006), matching the invoice PDF (see report.formatUSDate).
+// Returns day unchanged if it doesn't parse.
+func formatUSDate(day string) string {
+	d, err := time.Parse("2006-01-02", day)
+	if err != nil {
+		return day
+	}
+	return d.Format("01/02/2006")
+}
+
 // SendInvoice emails a generated invoice PDF to one or more recipients. The
 // organization's avatar (orgPicture, a data URI) replaces the CWClock logo
 // in the email header when it's set. replyTo is set to the organization
 // owner's email so a reply from the client reaches them directly rather
-// than the noreply From address.
-func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgName, orgPicture, replyTo, invoiceNumber string, pdf []byte) {
+// than the noreply From address. startDay/endDay are the invoice's billed
+// period ("2006-01-02"), shown in parentheses in the subject/title.
+// language is the client_language decision table's result (models.
+// ClientLanguage) - "fr" sends the email in French, anything else in
+// English.
+func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgName, orgPicture, replyTo, invoiceNumber, startDay, endDay, language string, pdf []byte) {
 	if len(recipients) == 0 {
 		return
 	}
-	body := template.HTML(fmt.Sprintf(
-		`<p>Please find attached invoice <strong>%s</strong> from %s.</p>`,
-		template.HTMLEscapeString(invoiceNumber), template.HTMLEscapeString(orgName),
-	))
-	html, err := renderBody("Your invoice from "+orgName, body, orgPicture)
+	period := fmt.Sprintf("%s - %s", formatUSDate(startDay), formatUSDate(endDay))
+
+	var subject, title string
+	var body template.HTML
+	if language == "fr" {
+		subject = fmt.Sprintf("Facture %s (%s)", invoiceNumber, period)
+		title = fmt.Sprintf("Votre facture %s de %s (%s)", invoiceNumber, orgName, period)
+		body = template.HTML(fmt.Sprintf(
+			`<p>Veuillez trouver ci-joint la facture <strong>%s</strong> de %s.</p>`,
+			template.HTMLEscapeString(invoiceNumber), template.HTMLEscapeString(orgName),
+		))
+	} else {
+		subject = fmt.Sprintf("Invoice %s (%s)", invoiceNumber, period)
+		title = fmt.Sprintf("Your invoice %s from %s (%s)", invoiceNumber, orgName, period)
+		body = template.HTML(fmt.Sprintf(
+			`<p>Please find attached invoice <strong>%s</strong> from %s.</p>`,
+			template.HTMLEscapeString(invoiceNumber), template.HTMLEscapeString(orgName),
+		))
+	}
+
+	html, err := renderBody(title, body, orgPicture)
 	if err != nil {
 		slog.Error("failed to render invoice email", "error", err)
 		return
@@ -238,5 +269,5 @@ func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgName, 
 		FileName: invoiceNumber + ".pdf",
 		B64:      base64.StdEncoding.EncodeToString(pdf),
 	}
-	s.send(ctx, strings.Join(recipients, ","), replyTo, "Invoice "+invoiceNumber, html, attachment)
+	s.send(ctx, strings.Join(recipients, ","), replyTo, subject, html, attachment)
 }
