@@ -211,6 +211,8 @@ func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgID, or
 	if utils.IsNotBlank(accountingEmail) {
 		cc = append(cc, accountingEmail)
 	} else if utils.IsNotBlank(ownerEmail) {
+		// TODO for now CWCloud's api only supports one cc recipient
+		// In the future we want both the accounting email and the owner email to be cc recipients
 		cc = append(cc, ownerEmail)
 	}
 

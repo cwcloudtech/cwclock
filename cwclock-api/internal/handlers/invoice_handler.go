@@ -320,6 +320,10 @@ func (h *InvoiceHandler) SendEmail(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		recipients = []string{client.Email}
+	} else {
+		// TODO for now CWCloud's api only supports one recipient
+		first := recipients[0]
+		recipients = []string{first}
 	}
 
 	org, err := h.orgs.FindByID(r.Context(), orgID)
