@@ -1,5 +1,9 @@
 # AI instruction 46
 
+## Move the template and asset directory
+
+Move `report/assets` and `report/templates` directly in `internal` folder.
+
 ## Email utils
 
 CWClock will use the email API of CWCloud with two variables:
@@ -31,6 +35,12 @@ curl -X 'POST' \
 Make an utils to send emails.
 Attachment is optional but will be used later.
 
+The utils must act like best effort: if the variables are blank (use `utils.IsBlank`), log that they are missing but do not fail. If CWCloud API is not available, log that it's not available (with the payload) but do not fail.
+
+The content is html, I want a template with the logo of CWClock for all the emails which will be sent. I want a go template file `internal/templates/email.tpl.html`.
+
+The logo is in `internal/assets/cwclock-logo.png` and must be injected as base64 variable in the template with a `{{ .Logo }}` variable.
+
 ## Activation mode
 
 I want an environment variable `CWCLOCK_ACTIVATION_MODE` with `admin` as default value.
@@ -58,3 +68,21 @@ I want a status `ban` alongside `disabled`, `confirmed` or `superuser`.
 It's like `disabled` except the message is explaining that the user has been banned by an administrator (so another `i18n_code` must be sent by the API).
 
 A ban user cannot request a password renewal or confirm his account even if the activation mode is `email` and the confirmation request is not expired.
+
+## Invoice generation
+
+I want a new button which is _Generate with id_ which will open a popin asking for a particular invoice's id.
+
+The webservice `/generate` will take the invoice id as optional field and use it if it's set instead of current computation of this id. If it's not set, continue the same computation rule.
+
+Of course if the requested id already exists with the same id, the webservice will fail with a 409 error and a proper `i18n_code`.
+
+## Invoice sending
+
+On client I want an optional field _Invoice's emails_ which will be the list of emails with `,` or `;` as separator (and trim each element to return a list of emails, I want an utils function for that in `utils.go`).
+
+On the invoice table I want a button for sending the invoice to the client's invoices emails.
+If this field is empty, use the client's email instead.
+
+The logo in the email template must be replaced by the organization's avatar if it exists.
+
