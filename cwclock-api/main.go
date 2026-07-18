@@ -50,7 +50,7 @@ func main() {
 	apiKeyStore := store.NewApiKeyStore(pool)
 	invoiceStore := store.NewInvoiceStore(pool)
 
-	mailer := email.NewSender(cfg.CWCloudAPIURL, cfg.CWCloudAPIKey, cfg.EmailFrom)
+	mailer := email.NewSender(cfg.CWCloudAPIURL, cfg.CWCloudAPIKey, cfg.EmailFrom, cfg.APIBaseURL)
 
 	userHandler := handlers.NewUserHandler(userStore, cfg.JWTSecret, cfg.MaxImageSize, cfg.ActivationMode, mailer, cfg.APIBaseURL, cfg.UIBaseURL, cfg.ConfirmationEmailTTL)
 	orgHandler := handlers.NewOrganizationHandler(orgStore, userStore, countryStore, currencyStore, cfg.MaxImageSize)

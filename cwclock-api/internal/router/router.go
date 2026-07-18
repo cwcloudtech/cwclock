@@ -67,6 +67,12 @@ func New(
 		r.Get("/countries", countryHandler.List)
 		r.Get("/fields", fieldHandler.List)
 
+		// Public logo endpoints (no auth) - emails reference these by URL
+		// instead of embedding an image as a data: URI, which mail clients and
+		// email-sending APIs commonly strip from <img src> outright.
+		r.Get("/assets/logo.png", handlers.AssetsLogo)
+		r.Get("/organizations/{orgId}/logo", orgHandler.PublicLogo)
+
 		r.Route("/oidc", func(r chi.Router) {
 			r.Get("/", oidcHandler.ListProviders)
 			r.Get("/callback", oidcHandler.FrontendCallback)

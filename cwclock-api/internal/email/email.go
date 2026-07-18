@@ -15,11 +15,9 @@ import (
 	"html/template"
 	"log/slog"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 
-	"cwclock-api/internal/assets"
 	"cwclock-api/internal/templates"
 	"cwclock-api/internal/utils"
 )
@@ -47,14 +45,19 @@ type Sender struct {
 	apiURL string
 	apiKey string
 	from   string
-	client *http.Client
+	// selfBaseURL is this CWClock API's own public base URL (cfg.APIBaseURL),
+	// used to build the <img src> logo URLs emails reference (see logoURL) -
+	// distinct from apiURL, which is CWCloud's email-sending API.
+	selfBaseURL string
+	client      *http.Client
 }
 
 // NewSender builds a Sender for the given CWCloud API base URL/key and
 // From address. apiURL/apiKey are allowed to be blank - Send logs and skips
-// rather than failing when they are.
-func NewSender(apiURL, apiKey, from string) *Sender {
-	return &Sender{apiURL: apiURL, apiKey: apiKey, from: from, client: &http.Client{Timeout: 15 * time.Second}}
+// rather than failing when they are. selfBaseURL is this API's own public
+// base URL, used to build hosted logo URLs (see logoURL).
+func NewSender(apiURL, apiKey, from, selfBaseURL string) *Sender {
+	return &Sender{apiURL: apiURL, apiKey: apiKey, from: from, selfBaseURL: selfBaseURL, client: &http.Client{Timeout: 15 * time.Second}}
 }
 
 var bodyTemplate = template.Must(template.New("email").Parse(templates.EmailHTML))
@@ -72,80 +75,37 @@ const mutedStyle = "color:#64748b;"
 // centerStyle centers the paragraph wrapping a CTA button.
 const centerStyle = "text-align:center;"
 
-// renderBody wraps body in CWClock's shared email layout, with the
-// CWClock logo or, when logoOverride is a data URI (an organization's own
-// avatar), that image instead.
-func renderBody(title string, body template.HTML, logoOverride string) (string, error) {
-	logo := logoDataURI(logoOverride)
+// renderBody wraps body in CWClock's shared email layout, with the header
+// image pointed at logoURL (see Sender.logoURL).
+func renderBody(title string, body template.HTML, logoURL string) (string, error) {
 	var buf bytes.Buffer
-	// Logo MUST be template.HTMLAttr carrying the whole src="..." attribute,
-	// not a plain string interpolated inside a literal src="{{ .Logo }}" in
-	// the template. html/template treats a plain string spliced into a URL
-	// attribute as untrusted and runs it through its URL safety filter,
-	// which only allows the http/https/mailto schemes - a data: URI (which
-	// is what every logo here is, see logoDataURI) fails that check and the
-	// ENTIRE attribute gets replaced with the literal text "#ZgotmplZ".
-	// That's Go's own safety placeholder for "this value was rejected", not
-	// a mangled encoding - it's why the logo shows as a broken image with
-	// literally no real src. template.HTMLAttr sidesteps this: it's spliced
-	// in at the "before attribute name" parser state (see the {{ .Logo }}
-	// placement in email.tpl.html, outside of any src="...") verbatim, with
-	// no URL filtering at all. Safe to trust here since logoDataURI already
-	// validated it's a well-formed data:image/... URI, never arbitrary user
-	// input.
 	err := bodyTemplate.Execute(&buf, struct {
 		Title string
-		Logo  template.HTMLAttr
+		Logo  template.URL
 		Body  template.HTML
-	}{Title: title, Logo: template.HTMLAttr(`src="` + logo + `"`), Body: body})
+	}{Title: title, Logo: template.URL(logoURL), Body: body})
 	if err != nil {
 		return "", err
 	}
 	return buf.String(), nil
 }
 
-// imageDataURI matches a base64 data URI for one of the raster image types
-// browsers render inline, the same shape this app's own avatar uploads
-// produce (see report.decodeDataURI).
-var imageDataURI = regexp.MustCompile(`^data:image/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+/=]+$`)
-
-// logoDataURI returns override as-is when it's a well-formed image data URI,
-// builds one from it when it's a bare base64 payload (organization avatars
-// are stored in the database as just the base64 string, with no
-// "data:image/...;base64," prefix or mime type), or falls back to the
-// bundled CWClock logo when override is blank or isn't a decodable,
-// supported image.
-func logoDataURI(override string) string {
-	if imageDataURI.MatchString(override) {
-		return override
+// logoURL resolves the <img src> for an email's header to a stable HTTPS
+// URL rather than an embedded data: URI. Data URIs were tried first, and
+// even once correctly escaped (html/template defangs a data: URI spliced
+// into a plain string src="..." into the literal text "#ZgotmplZ" unless
+// it's given a trusted type) the logo still didn't render: many
+// email-sending APIs and mail clients strip data: URIs from <img src>
+// outright, a limitation no amount of correct HTML can work around. orgID
+// selects that organization's public logo endpoint (see
+// handlers.OrganizationHandler.PublicLogo, which falls back to the default
+// CWClock logo itself when the org has no usable picture) - pass "" to
+// always get the default logo (see handlers.AssetsLogo).
+func (s *Sender) logoURL(orgID string) string {
+	if utils.IsBlank(orgID) {
+		return s.selfBaseURL + "/v1/assets/logo.png"
 	}
-	if uri, ok := bareBase64DataURI(override); ok {
-		return uri
-	}
-	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(assets.CWClockLogoPNG)
-}
-
-// bareBase64DataURI builds a data URI for a base64 payload that has no
-// "data:image/...;base64," prefix, sniffing its actual image type from its
-// decoded bytes rather than assuming one - an organization's uploaded
-// avatar can be a PNG, JPEG, GIF or WEBP, and mislabeling e.g. a JPEG as
-// "image/png" makes most renderers refuse to display it since the declared
-// mime type no longer matches the content. Returns ok=false when payload is
-// blank, isn't valid base64, or doesn't sniff as one of those image types.
-func bareBase64DataURI(payload string) (string, bool) {
-	if utils.IsBlank(payload) {
-		return utils.EMPTY, false
-	}
-	decoded, err := base64.StdEncoding.DecodeString(payload)
-	if err != nil {
-		return utils.EMPTY, false
-	}
-	switch mimeType := http.DetectContentType(decoded); mimeType {
-	case "image/png", "image/jpeg", "image/gif", "image/webp":
-		return "data:" + mimeType + ";base64," + payload, true
-	default:
-		return utils.EMPTY, false
-	}
+	return s.selfBaseURL + "/v1/organizations/" + orgID + "/logo"
 }
 
 // send posts one email best-effort: a blank apiURL/apiKey or a failed
@@ -195,7 +155,7 @@ func (s *Sender) SendConfirmation(ctx context.Context, to, confirmURL string) {
 			`<p style="%s">If you didn't create this account, you can safely ignore this email.</p>`,
 		centerStyle, template.HTMLEscapeString(confirmURL), buttonStyle, mutedStyle,
 	))
-	html, err := renderBody("Confirm your CWClock account", body, utils.EMPTY)
+	html, err := renderBody("Confirm your CWClock account", body, s.logoURL(utils.EMPTY))
 	if err != nil {
 		slog.Error("failed to render confirmation email", "error", err)
 		return
@@ -212,7 +172,7 @@ func (s *Sender) SendPasswordReset(ctx context.Context, to, resetURL string) {
 			`<p style="%s">If you didn't request this, you can safely ignore this email.</p>`,
 		centerStyle, template.HTMLEscapeString(resetURL), buttonStyle, mutedStyle,
 	))
-	html, err := renderBody("Reset your CWClock password", body, utils.EMPTY)
+	html, err := renderBody("Reset your CWClock password", body, s.logoURL(utils.EMPTY))
 	if err != nil {
 		slog.Error("failed to render password reset email", "error", err)
 		return
@@ -232,17 +192,18 @@ func formatUSDate(day string) string {
 }
 
 // SendInvoice emails a generated invoice PDF to one or more recipients. The
-// organization's avatar (orgPicture, a data URI) replaces the CWClock logo
-// in the email header when it's set. ownerEmail (the organization owner's
-// email) is set as replyTo, so a reply from the client reaches them
-// directly rather than the noreply From address, and - along with
-// accountingEmail, the organization's optional accounting department
-// address, when set - always cc'd so a copy of every invoice sent to a
-// client reaches them too. startDay/endDay are the invoice's billed period
-// ("2006-01-02"), shown in parentheses in the subject/title. language is
-// the client_language decision table's result (models.ClientLanguage) -
-// "fr" sends the email in French, anything else in English.
-func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgName, orgPicture, ownerEmail, accountingEmail, invoiceNumber, startDay, endDay, language string, pdf []byte) {
+// organization's own avatar (see handlers.OrganizationHandler.PublicLogo)
+// replaces the CWClock logo in the email header when it has one. ownerEmail
+// (the organization owner's email) is set as replyTo, so a reply from the
+// client reaches them directly rather than the noreply From address, and -
+// along with accountingEmail, the organization's optional accounting
+// department address, when set - always cc'd so a copy of every invoice
+// sent to a client reaches them too. startDay/endDay are the invoice's
+// billed period ("2006-01-02"), shown in parentheses in the subject/title.
+// language is the client_language decision table's result (models.
+// ClientLanguage) - "fr" sends the email in French, anything else in
+// English.
+func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgID, orgName, ownerEmail, accountingEmail, invoiceNumber, startDay, endDay, language string, pdf []byte) {
 	if len(recipients) == 0 {
 		return
 	}
@@ -273,7 +234,7 @@ func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgName, 
 		))
 	}
 
-	html, err := renderBody(title, body, orgPicture)
+	html, err := renderBody(title, body, s.logoURL(orgID))
 	if err != nil {
 		slog.Error("failed to render invoice email", "error", err)
 		return

@@ -253,6 +253,29 @@ func (h *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, redactOrg(org))
 }
 
+// PublicLogo serves an organization's avatar as a real image over HTTP (see
+// AssetsLogo, which this falls back to when the org has no picture set or
+// it isn't a decodable, supported image - so a stale/invalid logo still
+// shows something in an email rather than a broken image icon). No auth:
+// it's a public route, since it needs to be fetchable by a mail client with
+// no credentials - the same reasoning as AssetsLogo, and organization ids
+// aren't guessable.
+func (h *OrganizationHandler) PublicLogo(w http.ResponseWriter, r *http.Request) {
+	orgID := chi.URLParam(r, "orgId")
+
+	org, err := h.orgs.FindByID(r.Context(), orgID)
+	if err == nil {
+		if data, mimeType, ok := utils.DecodeImage(org.Picture); ok {
+			w.Header().Set("Content-Type", mimeType)
+			w.Header().Set("Cache-Control", "public, max-age=3600")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write(data)
+			return
+		}
+	}
+	AssetsLogo(w, r)
+}
+
 func (h *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
 
