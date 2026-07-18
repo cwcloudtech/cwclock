@@ -34,6 +34,7 @@ type Attachment struct {
 type request struct {
 	From       string      `json:"from"`
 	To         string      `json:"to"`
+	Cc         string      `json:"cc,omitempty"`
 	Bcc        string      `json:"bcc,omitempty"`
 	ReplyTo    string      `json:"reply_to,omitempty"`
 	Subject    string      `json:"subject"`
@@ -145,9 +146,9 @@ func bareBase64DataURI(payload string) (string, bool) {
 
 // send posts one email best-effort: a blank apiURL/apiKey or a failed
 // request is logged (with the payload, so it can be replayed by hand) and
-// otherwise ignored. replyTo is optional - pass "" to leave it unset.
-func (s *Sender) send(ctx context.Context, to, replyTo, subject, htmlContent string, attachment *Attachment) {
-	payload := request{From: s.from, To: to, ReplyTo: replyTo, Subject: subject, Content: htmlContent, Attachment: attachment}
+// otherwise ignored. cc/replyTo are optional - pass "" to leave either unset.
+func (s *Sender) send(ctx context.Context, to, cc, replyTo, subject, htmlContent string, attachment *Attachment) {
+	payload := request{From: s.from, To: to, Cc: cc, ReplyTo: replyTo, Subject: subject, Content: htmlContent, Attachment: attachment}
 
 	if utils.IsBlank(s.apiURL) || utils.IsBlank(s.apiKey) {
 		slog.Warn("cwcloud email api is not configured (CWCLOUD_API_URL/CWCLOUD_API_KEY), skipping email", "to", to, "subject", subject)
@@ -195,7 +196,7 @@ func (s *Sender) SendConfirmation(ctx context.Context, to, confirmURL string) {
 		slog.Error("failed to render confirmation email", "error", err)
 		return
 	}
-	s.send(ctx, to, utils.EMPTY, "Confirm your CWClock account", html, nil)
+	s.send(ctx, to, utils.EMPTY, utils.EMPTY, "Confirm your CWClock account", html, nil)
 }
 
 // SendPasswordReset emails the password-renewal link to a user who
@@ -212,7 +213,7 @@ func (s *Sender) SendPasswordReset(ctx context.Context, to, resetURL string) {
 		slog.Error("failed to render password reset email", "error", err)
 		return
 	}
-	s.send(ctx, to, utils.EMPTY, "Reset your CWClock password", html, nil)
+	s.send(ctx, to, utils.EMPTY, utils.EMPTY, "Reset your CWClock password", html, nil)
 }
 
 // formatUSDate formats a "2006-01-02" day string as CWClock's US display
@@ -228,17 +229,27 @@ func formatUSDate(day string) string {
 
 // SendInvoice emails a generated invoice PDF to one or more recipients. The
 // organization's avatar (orgPicture, a data URI) replaces the CWClock logo
-// in the email header when it's set. replyTo is set to the organization
-// owner's email so a reply from the client reaches them directly rather
-// than the noreply From address. startDay/endDay are the invoice's billed
-// period ("2006-01-02"), shown in parentheses in the subject/title.
-// language is the client_language decision table's result (models.
-// ClientLanguage) - "fr" sends the email in French, anything else in
-// English.
-func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgName, orgPicture, replyTo, invoiceNumber, startDay, endDay, language string, pdf []byte) {
+// in the email header when it's set. ownerEmail (the organization owner's
+// email) is set as replyTo, so a reply from the client reaches them
+// directly rather than the noreply From address, and - along with
+// accountingEmail, the organization's optional accounting department
+// address, when set - always cc'd so a copy of every invoice sent to a
+// client reaches them too. startDay/endDay are the invoice's billed period
+// ("2006-01-02"), shown in parentheses in the subject/title. language is
+// the client_language decision table's result (models.ClientLanguage) -
+// "fr" sends the email in French, anything else in English.
+func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgName, orgPicture, ownerEmail, accountingEmail, invoiceNumber, startDay, endDay, language string, pdf []byte) {
 	if len(recipients) == 0 {
 		return
 	}
+	cc := make([]string, 0, 2)
+	if utils.IsNotBlank(ownerEmail) {
+		cc = append(cc, ownerEmail)
+	}
+	if utils.IsNotBlank(accountingEmail) {
+		cc = append(cc, accountingEmail)
+	}
+
 	period := fmt.Sprintf("%s - %s", formatUSDate(startDay), formatUSDate(endDay))
 
 	var subject, title string
@@ -269,5 +280,5 @@ func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgName, 
 		FileName: invoiceNumber + ".pdf",
 		B64:      base64.StdEncoding.EncodeToString(pdf),
 	}
-	s.send(ctx, strings.Join(recipients, ","), replyTo, subject, html, attachment)
+	s.send(ctx, strings.Join(recipients, ","), strings.Join(cc, ","), ownerEmail, subject, html, attachment)
 }

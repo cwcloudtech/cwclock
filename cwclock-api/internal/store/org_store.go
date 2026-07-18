@@ -23,6 +23,7 @@ func NewOrgStore(pool *pgxpool.Pool, countries *CountryStore) *OrgStore {
 
 type orgData struct {
 	Name                 string                      `json:"name"`
+	AccountingEmail      string                      `json:"accountingEmail,omitempty"`
 	Address              string                      `json:"address"`
 	PostalCode           string                      `json:"postalCode"`
 	City                 string                      `json:"city"`
@@ -47,6 +48,7 @@ type orgData struct {
 // organization (used by Create/Update to avoid long positional args).
 type OrganizationFields struct {
 	Name                 string
+	AccountingEmail      string
 	Address              string
 	PostalCode           string
 	City                 string
@@ -77,6 +79,7 @@ func applyOrgData(o *models.Organization, raw []byte) error {
 		return err
 	}
 	o.Name = d.Name
+	o.AccountingEmail = d.AccountingEmail
 	o.Address = d.Address
 	o.PostalCode = d.PostalCode
 	o.City = d.City
@@ -119,6 +122,7 @@ func scanOrganization(row pgx.Row) (models.Organization, error) {
 func toOrgData(f OrganizationFields) orgData {
 	return orgData{
 		Name:                 f.Name,
+		AccountingEmail:      f.AccountingEmail,
 		Address:              f.Address,
 		PostalCode:           f.PostalCode,
 		City:                 f.City,

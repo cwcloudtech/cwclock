@@ -31,6 +31,7 @@ func NewOrganizationHandler(orgs *store.OrgStore, users *store.UserStore, countr
 
 type organizationPayload struct {
 	Name                 string                      `json:"name"`
+	AccountingEmail      string                      `json:"accountingEmail"`
 	Address              string                      `json:"address"`
 	PostalCode           string                      `json:"postalCode"`
 	City                 string                      `json:"city"`
@@ -57,6 +58,12 @@ type organizationPayload struct {
 // being reported as "Please fill in the Name field" (ai-instruct-37).
 func (p organizationPayload) nameValid() bool {
 	return utils.IsNotBlank(p.Name)
+}
+
+// validAccountingEmail lets the field stay blank (it's optional) but
+// requires a plausible address when set.
+func (p organizationPayload) validAccountingEmail() bool {
+	return utils.IsBlank(p.AccountingEmail) || utils.IsValidEmail(p.AccountingEmail)
 }
 
 func (h *OrganizationHandler) validCountry(ctx context.Context, p organizationPayload) (bool, error) {
@@ -106,6 +113,7 @@ func validateExternalConnections(conns []models.ExternalConnection) error {
 func (p organizationPayload) toFields() store.OrganizationFields {
 	return store.OrganizationFields{
 		Name:                 p.Name,
+		AccountingEmail:      p.AccountingEmail,
 		Address:              p.Address,
 		PostalCode:           p.PostalCode,
 		City:                 p.City,
@@ -175,6 +183,10 @@ func (h *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	if utils.IsBlank(p.Country) {
 		writeError(w, http.StatusBadRequest, "Please select a country", CodeCountryRequired)
+		return
+	}
+	if !p.validAccountingEmail() {
+		writeError(w, http.StatusBadRequest, "Please add a valid accounting email", CodeInvalidEmail)
 		return
 	}
 	if ok, err := h.validCountry(r.Context(), p); err != nil {
@@ -251,6 +263,10 @@ func (h *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	if utils.IsBlank(p.Country) {
 		writeError(w, http.StatusBadRequest, "Please select a country", CodeCountryRequired)
+		return
+	}
+	if !p.validAccountingEmail() {
+		writeError(w, http.StatusBadRequest, "Please add a valid accounting email", CodeInvalidEmail)
 		return
 	}
 	if ok, err := h.validCountry(r.Context(), p); err != nil {

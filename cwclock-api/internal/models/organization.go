@@ -12,10 +12,15 @@ const (
 )
 
 type Organization struct {
-	ID                   string               `json:"id"`
-	OwnerID              string               `json:"ownerId"`
-	Name                 string               `json:"name"`
-	Email                string               `json:"email"`
+	ID      string `json:"id"`
+	OwnerID string `json:"ownerId"`
+	Name    string `json:"name"`
+	Email   string `json:"email"`
+	// AccountingEmail is an optional second address (the organization's
+	// accounting department, when it has one distinct from the owner) that
+	// always gets a copy of invoice emails sent to a client, alongside the
+	// owner.
+	AccountingEmail      string               `json:"accountingEmail,omitempty"`
 	Address              string               `json:"address"`
 	PostalCode           string               `json:"postalCode"`
 	City                 string               `json:"city"`

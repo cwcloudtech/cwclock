@@ -196,6 +196,8 @@ const fr = {
     createOrganization: "Créer une organisation",
     editOrgTitle: "Modifier {{name}}",
     editOrganization: "Modifier l'organisation",
+    accountingEmail: "Email de la comptabilité",
+    accountingEmailPlaceholder: "Optionnel - en copie de chaque email de facture",
     editOrgTooltip: "Modifier les informations de cette organisation",
     membersOf: "Membres de {{name}}",
     addMemberPanel: "Ajouter un membre",

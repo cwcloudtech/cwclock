@@ -14,6 +14,7 @@ import { identificationFieldConfig } from "../common/identificationFields";
 
 const emptyFields = {
   name: "",
+  accountingEmail: "",
   address: "",
   postalCode: "",
   city: "",
@@ -59,6 +60,12 @@ const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
       },
       ...identificationFields.map((name) => identificationFieldConfig(name, t)),
       {
+        name: "accountingEmail",
+        type: "email",
+        label: t("organizations.accountingEmail"),
+        placeholder: t("organizations.accountingEmailPlaceholder"),
+      },
+      {
         name: "currency",
         type: "select",
         label: t("common.currency"),
@@ -74,6 +81,7 @@ const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
     if (show && targetOrg) {
       setFields({
         name: targetOrg.name || "",
+        accountingEmail: targetOrg.accountingEmail || "",
         address: targetOrg.address || "",
         postalCode: targetOrg.postalCode || "",
         city: targetOrg.city || "",
