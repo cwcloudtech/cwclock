@@ -246,12 +246,11 @@ func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgName, 
 	if len(recipients) == 0 {
 		return
 	}
-	cc := make([]string, 0, 2)
-	if utils.IsNotBlank(ownerEmail) {
-		cc = append(cc, ownerEmail)
-	}
+	cc := make([]string, 0, 1)
 	if utils.IsNotBlank(accountingEmail) {
 		cc = append(cc, accountingEmail)
+	} else if utils.IsNotBlank(ownerEmail) {
+		cc = append(cc, ownerEmail)
 	}
 
 	period := fmt.Sprintf("%s - %s", formatUSDate(startDay), formatUSDate(endDay))
