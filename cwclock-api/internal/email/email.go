@@ -90,9 +90,9 @@ func renderBody(title string, body template.HTML, logoOverride string) (string, 
 	// arbitrary user input.
 	err := bodyTemplate.Execute(&buf, struct {
 		Title string
-		Logo  template.HTMLAttr
+		Logo  string
 		Body  template.HTML
-	}{Title: title, Logo: template.HTMLAttr(`src="` + logo + `"`), Body: body})
+	}{Title: title, Logo: logo, Body: body})
 	if err != nil {
 		return "", err
 	}
