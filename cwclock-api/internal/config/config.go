@@ -98,7 +98,7 @@ func Load() Config {
 		OtelProto:                utils.GetEnv("CWCLOCK_OTEL_PROTO", "otlp/grpc"),
 		MaxImageSize:             maxImageSize,
 		MaxReportSize:            maxReportSize,
-		APIBaseURL:               utils.GetBaseUrlFromEnvWithFallback("API_URL", "http://localhost:8080"),
+		APIBaseURL:               utils.GetBaseUrlFromEnvWithFallback("CWCLOCK_API_URL", "http://localhost:8080"),
 		UIBaseURL:                utils.GetBaseUrlFromEnvWithFallback("CWCLOCK_UI_URL", "http://localhost:3000"),
 		OIDCGoogleClientID:       os.Getenv("CWCLOCK_OIDC_GOOGLE_CLIENT_ID"),
 		OIDCGoogleClientSecret:   os.Getenv("CWCLOCK_OIDC_GOOGLE_CLIENT_SECRET"),
