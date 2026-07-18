@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { FaFileInvoiceDollar, FaRegEdit } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";
-import { FiDownload, FiUploadCloud } from "react-icons/fi";
+import { FiDownload, FiUploadCloud, FiMail } from "react-icons/fi";
 import { useI18n } from "../../i18n/I18nContext";
 import DateRangePicker from "../common/DateRangePicker";
 import MultiSelect from "../common/MultiSelect";
@@ -13,6 +13,7 @@ import EmptyState from "../common/EmptyState";
 import Button from "../common/Button";
 import Tooltip from "../common/Tooltip";
 import ConfirmModal from "../common/ConfirmModal";
+import GenerateInvoiceIdModal from "./GenerateInvoiceIdModal";
 import toastOptions from "../../Redux/toastOptions";
 import { listClientsApi } from "../../Redux/Clients/Client.actions";
 import { listProjectsApi } from "../../Redux/Projects/Project.actions";
@@ -24,6 +25,7 @@ import {
   downloadInvoicePdfApi,
   updateInvoiceStatusApi,
   reuploadInvoiceApi,
+  sendInvoiceEmailApi,
   deleteInvoiceApi,
   clearInvoices,
 } from "../../Redux/Invoices/Invoice.actions";
@@ -106,6 +108,15 @@ const InvoiceRow = ({ invoice, orgId, token, onDelete }) => {
             <FiUploadCloud style={{ fontSize: "16px" }} />
           </button>
         </Tooltip>
+        <Tooltip label={t("invoices.sendInvoice")}>
+          <button
+            type="button"
+            className={styles.iconBtn}
+            onClick={() => dispatch(sendInvoiceEmailApi(orgId, invoice.id, token))}
+          >
+            <FiMail style={{ fontSize: "16px" }} />
+          </button>
+        </Tooltip>
         {editing ? (
           <Button size="sm" onClick={handleSave} title={t("invoices.saveStatus")}>
             {t("common.save")}
@@ -147,6 +158,7 @@ const Invoices = () => {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [deletingInvoice, setDeletingInvoice] = useState(null);
+  const [showGenerateWithId, setShowGenerateWithId] = useState(false);
 
   const isAdminOrOwner = computeIsAdminOrOwner(user, members);
   const setRange = (start, end) => setRangeState({ start, end });
@@ -198,7 +210,7 @@ const Invoices = () => {
     return <p className="cw-error">{t("invoices.noAccess")}</p>;
   }
 
-  const runAction = async (apiThunk) => {
+  const runAction = async (apiThunk, ...extraArgs) => {
     setError("");
     if (!clientId) {
       setError(t("invoices.clientRequired"));
@@ -210,13 +222,18 @@ const Invoices = () => {
     }
     setBusy(true);
     try {
-      await dispatch(apiThunk(currentOrgId, clientId, range.start, range.end, projectIds, user.token));
+      await dispatch(apiThunk(currentOrgId, clientId, range.start, range.end, projectIds, user.token, ...extraArgs));
       refreshInvoices();
     } catch (err) {
       setError(apiErrorMessage(err, locale));
     } finally {
       setBusy(false);
     }
+  };
+
+  const handleGenerateWithId = async (number) => {
+    setShowGenerateWithId(false);
+    await runAction(generateInvoiceApi, number);
   };
 
   const handleDelete = async () => {
@@ -264,6 +281,14 @@ const Invoices = () => {
         <Button disabled={busy} onClick={() => runAction(generateInvoiceApi)} title={t("invoices.generateHint")}>
           {t("invoices.generate")}
         </Button>
+        <Button
+          variant="secondary"
+          disabled={busy}
+          onClick={() => setShowGenerateWithId(true)}
+          title={t("invoices.generateWithIdHint")}
+        >
+          {t("invoices.generateWithId")}
+        </Button>
       </div>
 
       {error && <p className="cw-error">{error}</p>}
@@ -294,6 +319,12 @@ const Invoices = () => {
         confirmLabel={t("common.delete")}
         onConfirm={handleDelete}
         onCancel={() => setDeletingInvoice(null)}
+      />
+
+      <GenerateInvoiceIdModal
+        show={showGenerateWithId}
+        onClose={() => setShowGenerateWithId(false)}
+        onConfirm={handleGenerateWithId}
       />
     </div>
   );

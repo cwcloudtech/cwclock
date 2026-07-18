@@ -87,6 +87,11 @@
   color: var(--cw-danger);
 }
 
+.roleBan {
+  background-color: var(--cw-danger);
+  color: var(--cw-danger-light);
+}
+
 .rowActions {
   display: flex;
   align-items: center;

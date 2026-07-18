@@ -10,6 +10,12 @@ const (
 	GlobalRoleSuperuser GlobalRole = "superuser"
 	GlobalRoleConfirmed GlobalRole = "confirmed"
 	GlobalRoleDisabled  GlobalRole = "disabled"
+	// GlobalRoleBan is like GlobalRoleDisabled (blocks every action beyond
+	// login/reading own status) except it's a deliberate administrator
+	// action rather than a pending-approval state, so it carries its own
+	// i18n code and can never be lifted by a confirmation link or password
+	// renewal (see I18nAccountBanned).
+	GlobalRoleBan GlobalRole = "ban"
 )
 
 type User struct {
@@ -36,6 +42,10 @@ type UserResponse struct {
 	Picture  string     `json:"picture,omitempty"`
 	PictureX float64    `json:"pictureX"`
 	PictureY float64    `json:"pictureY"`
+	// I18nCode is set when Role is disabled or ban, so the frontend can
+	// display the right explanation without hardcoding the server's
+	// activation mode (see I18nCodeForRole).
+	I18nCode string `json:"i18nCode,omitempty"`
 }
 
 type UserMeResponse struct {
@@ -49,4 +59,8 @@ type UserMeResponse struct {
 	PictureY  float64    `json:"pictureY"`
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt time.Time  `json:"updatedAt"`
+	// I18nCode is set when Role is disabled or ban, so the frontend can
+	// display the right explanation without hardcoding the server's
+	// activation mode (see I18nCodeForRole).
+	I18nCode string `json:"i18nCode,omitempty"`
 }

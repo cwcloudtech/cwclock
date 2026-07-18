@@ -54,6 +54,31 @@ export const oidcLoginApi = (token) => async (dispatch) => {
   }
 };
 
+// forgotPasswordApi requests a password-renewal email for the given
+// address. The backend always responds success regardless of whether the
+// address is registered, so this never reveals which emails have accounts.
+export const forgotPasswordApi = (email) => async () => {
+  try {
+    await axios.post(`${ENDPOINT}forgot-password`, { email });
+    toast.success(translate(getStoredLocale(), "toasts.passwordResetSent"), toastOptions);
+  } catch (e) {
+    toast.error(apiErrorMessage(e, getStoredLocale()), toastOptions);
+    throw e;
+  }
+};
+
+// resetPasswordApi sets a new password from the token emailed by
+// forgotPasswordApi.
+export const resetPasswordApi = (token, password, confirmPassword) => async () => {
+  try {
+    await axios.post(`${ENDPOINT}reset-password`, { token, password, confirmPassword });
+    toast.success(translate(getStoredLocale(), "toasts.passwordReset"), toastOptions);
+  } catch (e) {
+    toast.error(apiErrorMessage(e, getStoredLocale()), toastOptions);
+    throw e;
+  }
+};
+
 // meApi verifies that the connected user still exists in the database, and
 // refreshes their locally cached profile (in particular the global role,
 // which can change server-side after the token was issued), disconnecting

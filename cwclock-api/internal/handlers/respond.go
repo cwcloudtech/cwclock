@@ -54,6 +54,9 @@ const (
 	CodeInvalidCountry              = "errors.invalidCountry"
 	CodeInvalidExternalConnection   = "errors.invalidExternalConnection"
 	CodeDuplicateExternalConnection = "errors.duplicateExternalConnection"
+	CodeInvoiceNumberExists         = "errors.invoiceNumberExists"
+	CodeInvalidToken                = "errors.invalidToken"
+	CodeNoInvoiceRecipient          = "errors.noInvoiceRecipient"
 )
 
 func writeJSON(w http.ResponseWriter, status int, body any) {
@@ -85,6 +88,10 @@ func writeStoreError(w http.ResponseWriter, err error) {
 	}
 	if errors.Is(err, store.ErrCannotRemoveOwner) {
 		writeError(w, http.StatusBadRequest, "The organization owner cannot be removed", CodeCantRemoveOwner)
+		return
+	}
+	if errors.Is(err, store.ErrInvoiceNumberExists) {
+		writeError(w, http.StatusConflict, "An invoice with this number already exists", CodeInvoiceNumberExists)
 		return
 	}
 	slog.Error("unhandled store error", "error", err)

@@ -15,9 +15,10 @@ const roleBadgeClass = {
   superuser: styles.roleSuperuser,
   confirmed: styles.roleConfirmed,
   disabled: styles.roleDisabled,
+  ban: styles.roleBan,
 };
 
-const FILTERS = ["all", "superuser", "confirmed", "disabled"];
+const FILTERS = ["all", "superuser", "confirmed", "disabled", "ban"];
 
 const Admin = () => {
   const { t } = useI18n();

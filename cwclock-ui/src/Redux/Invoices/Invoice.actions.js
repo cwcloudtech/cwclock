@@ -14,13 +14,14 @@ const ENDPOINT = (orgId) => `${process.env.REACT_APP_APIURL}/v1/organizations/${
 
 const authConfig = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
 
-const toPayload = (clientId, start, end, projectIds) => {
+const toPayload = (clientId, start, end, projectIds, number) => {
   const payload = {
     clientId,
     dateRangeStart: `${start}T00:00:00.000Z`,
     dateRangeEnd: `${end}T23:59:59.999Z`,
   };
   if (projectIds?.length) payload.projectIds = projectIds;
+  if (number) payload.number = number;
   return payload;
 };
 
@@ -91,9 +92,11 @@ export const previewInvoiceApi = (orgId, clientId, start, end, projectIds, token
 // Generate saves the invoice and downloads its PDF. The caller is
 // responsible for re-dispatching listInvoicesApi afterward to refresh the
 // table, since this endpoint streams a PDF rather than the saved invoice.
-export const generateInvoiceApi = (orgId, clientId, start, end, projectIds, token) => async () => {
+// number is optional - when set, it's used as the invoice's id instead of
+// the usual computed one (see "Generate with id").
+export const generateInvoiceApi = (orgId, clientId, start, end, projectIds, token, number) => async () => {
   try {
-    const response = await axios.post(ENDPOINT(orgId), toPayload(clientId, start, end, projectIds), {
+    const response = await axios.post(ENDPOINT(orgId), toPayload(clientId, start, end, projectIds, number), {
       ...authConfig(token),
       responseType: "blob",
     });
@@ -138,6 +141,20 @@ export const reuploadInvoiceApi = (orgId, invoiceId, token) => async () => {
   try {
     await axios.post(`${ENDPOINT(orgId)}${invoiceId}/reupload`, {}, authConfig(token));
     toast.success(translate(getStoredLocale(), "toasts.invoiceReuploaded"), toastOptions);
+  } catch (e) {
+    toast.error(apiErrorMessage(await parseBlobError(e), getStoredLocale()), toastOptions);
+    throw e;
+  }
+};
+
+// SendEmail emails an already-generated invoice's PDF to the client's
+// invoice recipients (or their plain email when that field is blank). It
+// doesn't change the invoice itself, so there's no store update to
+// dispatch, only a success/error toast.
+export const sendInvoiceEmailApi = (orgId, invoiceId, token) => async () => {
+  try {
+    await axios.post(`${ENDPOINT(orgId)}${invoiceId}/send`, {}, authConfig(token));
+    toast.success(translate(getStoredLocale(), "toasts.invoiceSent"), toastOptions);
   } catch (e) {
     toast.error(apiErrorMessage(await parseBlobError(e), getStoredLocale()), toastOptions);
     throw e;

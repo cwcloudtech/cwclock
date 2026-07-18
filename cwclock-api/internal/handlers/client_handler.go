@@ -26,6 +26,7 @@ func NewClientHandler(clients *store.ClientStore, orgs *store.OrgStore, countrie
 type clientPayload struct {
 	Name                 string   `json:"name"`
 	Email                string   `json:"email"`
+	InvoiceEmails        string   `json:"invoiceEmails"`
 	ContactName          string   `json:"contactName"`
 	Address              string   `json:"address"`
 	PostalCode           string   `json:"postalCode"`
@@ -66,6 +67,7 @@ func (p clientPayload) toFields() store.ClientFields {
 	return store.ClientFields{
 		Name:                 p.Name,
 		Email:                p.Email,
+		InvoiceEmails:        p.InvoiceEmails,
 		ContactName:          p.ContactName,
 		Address:              p.Address,
 		PostalCode:           p.PostalCode,

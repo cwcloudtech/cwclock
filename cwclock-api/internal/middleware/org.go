@@ -10,6 +10,7 @@ import (
 
 	"cwclock-api/internal/models"
 	"cwclock-api/internal/store"
+	"cwclock-api/internal/utils"
 )
 
 type orgContextKey string
@@ -87,7 +88,17 @@ func OrgRoleFromContext(ctx context.Context) (models.Role, bool) {
 }
 
 func jsonError(w http.ResponseWriter, status int, message string) {
+	jsonErrorCode(w, status, message, utils.EMPTY)
+}
+
+// jsonErrorCode is jsonError with an i18n_code the frontend can look up in
+// its own translation dictionaries, mirroring handlers.errorBody's shape.
+func jsonErrorCode(w http.ResponseWriter, status int, message, i18nCode string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(map[string]string{"message": message})
+	body := map[string]string{"message": message}
+	if utils.IsNotBlank(i18nCode) {
+		body["i18n_code"] = i18nCode
+	}
+	_ = json.NewEncoder(w).Encode(body)
 }

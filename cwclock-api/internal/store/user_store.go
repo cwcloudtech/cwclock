@@ -202,6 +202,21 @@ func (s *UserStore) UpdateProfile(ctx context.Context, id, name, surname string,
 	return scanUser(row)
 }
 
+// Confirm sets a disabled account's role to confirmed, used when a user
+// follows their emailed confirmation link (activation mode "email").
+func (s *UserStore) Confirm(ctx context.Context, id string) (models.User, error) {
+	patch, err := json.Marshal(map[string]any{"role": string(models.GlobalRoleConfirmed)})
+	if err != nil {
+		return models.User{}, err
+	}
+	row := s.pool.QueryRow(ctx, `
+		UPDATE users SET data = data || $2::jsonb, updated_at = now()
+		WHERE id = $1
+		RETURNING id, email, data, created_at, updated_at
+	`, id, patch)
+	return scanUser(row)
+}
+
 // ErrDuplicateEmail is returned when an admin edit would collide with
 // another account's email address.
 var ErrDuplicateEmail = errors.New("email already in use")

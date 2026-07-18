@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ .Title }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f7;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f7;padding:24px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#ffffff;border-radius:8px;overflow:hidden;">
+          <tr>
+            <td style="padding:24px;text-align:center;background-color:#101828;">
+              <img src="{{ .Logo }}" alt="CWClock" height="40" style="height:40px;">
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px;color:#1a1a1a;font-size:15px;line-height:1.6;">
+              {{ .Body }}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 32px;color:#8a8f98;font-size:12px;text-align:center;border-top:1px solid #eef0f2;">
+              &copy; <a href="https://www.cwcloud.tech" style="color:#8a8f98;text-decoration:none;">CWCloud</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

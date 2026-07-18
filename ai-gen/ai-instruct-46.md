@@ -85,4 +85,3 @@ On the invoice table I want a button for sending the invoice to the client's inv
 If this field is empty, use the client's email instead.
 
 The logo in the email template must be replaced by the organization's avatar if it exists.
-

@@ -22,6 +22,7 @@ import { identificationFieldConfig } from "../common/identificationFields";
 const initialFields = {
   name: "",
   email: "",
+  invoiceEmails: "",
   contactName: "",
   address: "",
   postalCode: "",
@@ -62,6 +63,7 @@ const Clients = () => {
     fields: [
       { name: "name", type: "text", label: t("common.name"), required: true },
       { name: "email", type: "email", label: t("common.email") },
+      { name: "invoiceEmails", type: "text", label: t("clients.invoiceEmails"), placeholder: t("clients.invoiceEmailsHint") },
       { name: "contactName", type: "text", label: t("clients.contactName") },
       { name: "address", type: "text", label: t("common.address") },
       { name: "postalCode", type: "text", label: t("common.postalCode") },

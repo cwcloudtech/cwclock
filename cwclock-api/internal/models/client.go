@@ -3,10 +3,14 @@ package models
 import "time"
 
 type Client struct {
-	ID                   string    `json:"id"`
-	OrganizationID       string    `json:"organizationId"`
-	Name                 string    `json:"name"`
-	Email                string    `json:"email,omitempty"`
+	ID             string `json:"id"`
+	OrganizationID string `json:"organizationId"`
+	Name           string `json:"name"`
+	Email          string `json:"email,omitempty"`
+	// InvoiceEmails is the client's optional list of invoice recipients, as
+	// a raw comma/semicolon-separated string (see utils.SplitList) - when
+	// blank, invoices are sent to Email instead.
+	InvoiceEmails        string    `json:"invoiceEmails,omitempty"`
 	ContactName          string    `json:"contactName"`
 	Address              string    `json:"address"`
 	PostalCode           string    `json:"postalCode"`

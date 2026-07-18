@@ -1,22 +1,36 @@
 import React, { useEffect, useState } from "react";
 import styles from "./Styles/Form.module.css";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import Spinner from "../spinner/Spinner";
 import { loginApi } from "../../Redux/Auth/Auth.actions";
 import { useI18n } from "../../i18n/I18nContext";
 import OidcButtons from "../common/OidcButtons";
+import toastOptions from "../../Redux/toastOptions";
 
 const LoginForm = () => {
   const { t } = useI18n();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user, isLoading } = useSelector((state) => state.auth);
+  const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const { email, password } = formData;
+
+  useEffect(() => {
+    const confirmed = searchParams.get("confirmed");
+    if (confirmed === "1") {
+      toast.success(t("auth.confirmationSuccess"), toastOptions);
+    } else if (confirmed === "0") {
+      const reason = searchParams.get("reason");
+      toast.error(reason === "banned" ? t("auth.confirmationBanned") : t("auth.confirmationInvalid"), toastOptions);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onChange = (e) => {
     let { name, value } = e.target;
@@ -74,6 +88,9 @@ const LoginForm = () => {
           {t("auth.logIn")}
         </button>
       </form>
+      <div className={styles.footer}>
+        <Link to="/forgot-password">{t("auth.forgotPassword")}</Link>
+      </div>
       <OidcButtons />
     </div>
   );

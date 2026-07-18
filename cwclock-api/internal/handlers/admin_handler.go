@@ -54,7 +54,7 @@ func (h *AdminHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 
 func validGlobalRole(role string) bool {
 	switch models.GlobalRole(role) {
-	case models.GlobalRoleSuperuser, models.GlobalRoleConfirmed, models.GlobalRoleDisabled:
+	case models.GlobalRoleSuperuser, models.GlobalRoleConfirmed, models.GlobalRoleDisabled, models.GlobalRoleBan:
 		return true
 	default:
 		return false

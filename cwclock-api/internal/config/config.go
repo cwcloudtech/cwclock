@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"cwclock-api/internal/models"
 	"cwclock-api/internal/utils"
 )
 
@@ -34,6 +35,10 @@ type Config struct {
 	OIDCKeycloakClientID     string
 	OIDCKeycloakClientSecret string
 	OIDCKeycloakGroups       []string
+	CWCloudAPIURL            string
+	CWCloudAPIKey            string
+	EmailFrom                string
+	ActivationMode           string
 }
 
 // defaultMaxImageSize is applied when CWCLOCK_MAX_IMAGE_SIZE is unset or
@@ -74,6 +79,11 @@ func Load() Config {
 		maxReportSize = defaultMaxReportSize
 	}
 
+	activationMode := utils.GetEnv("CWCLOCK_ACTIVATION_MODE", models.ActivationModeAdmin)
+	if !models.IsValidActivationMode(activationMode) {
+		activationMode = models.ActivationModeAdmin
+	}
+
 	return Config{
 		Port:                     utils.GetEnv("PORT", "8080"),
 		DatabaseURL:              fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, pass, host, port, db, sslmode),
@@ -97,7 +107,11 @@ func Load() Config {
 		OIDCKeycloakBaseURL:      utils.GetBaseUrlFromEnv("CWCLOCK_OIDC_KEYCLOAK_BASE_URL"),
 		OIDCKeycloakClientID:     os.Getenv("CWCLOCK_OIDC_KEYCLOAK_CLIENT_ID"),
 		OIDCKeycloakClientSecret: os.Getenv("CWCLOCK_OIDC_KEYCLOAK_CLIENT_SECRET"),
-		OIDCKeycloakGroups:       utils.SplitNonBlank(os.Getenv("CWCLOCK_OIDC_KEYCLOAK_GROUPS")),
+		OIDCKeycloakGroups:       utils.SplitList(os.Getenv("CWCLOCK_OIDC_KEYCLOAK_GROUPS")),
+		CWCloudAPIURL:            utils.GetBaseUrlFromEnv("CWCLOUD_API_URL"),
+		CWCloudAPIKey:            os.Getenv("CWCLOUD_API_KEY"),
+		EmailFrom:                utils.GetEnv("CWCLOCK_EMAIL_FROM", "no-reply@cwclock.comwork.io"),
+		ActivationMode:           activationMode,
 	}
 }
 

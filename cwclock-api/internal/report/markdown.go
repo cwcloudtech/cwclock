@@ -1,11 +1,11 @@
 package report
 
 import (
-	_ "embed"
 	"strings"
 	"text/template"
 
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/templates"
 )
 
 // reportHeader is the data both report markdown templates share: title,
@@ -35,14 +35,7 @@ func newReportHeader(title, orgName string, start, end string, totals models.Rep
 	return h
 }
 
-// headerMarkdownTpl is the report header's markdown template, externalized
-// under templates/ (with a .tpl.md extension) so report markdown lives in
-// its own reviewable file instead of a Go string literal.
-//
-//go:embed templates/header.tpl.md
-var headerMarkdownTpl string
-
-var headerTemplate = template.Must(template.New("header").Parse(headerMarkdownTpl))
+var headerTemplate = template.Must(template.New("header").Parse(templates.HeaderMarkdown))
 
 // SummaryPDF renders the summary report as a PDF: a header with totals, the
 // daily duration chart as an image, then one table row per (project,

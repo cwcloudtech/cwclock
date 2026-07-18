@@ -88,13 +88,56 @@ func isUniqueViolation(err error) bool {
 	return errors.As(err, &pgErr) && pgErr.Code == "23505"
 }
 
-// Create allocates the next free invoice number for today under this
-// client (prefix+1, prefix+2, ... on a collision) and inserts the invoice,
-// retrying on the unique (organization_id, number) constraint rather than a
-// check-then-insert, which would race under concurrent invoice generation.
-// buildFields is called once per attempt (usually just once) since the
-// rendered PDF embeds the invoice number it's ultimately saved under.
-func (s *InvoiceStore) Create(ctx context.Context, orgID, clientID, clientName string, buildFields func(number string) (InvoiceFields, error)) (models.Invoice, error) {
+// ErrInvoiceNumberExists is returned by Create when a caller-supplied
+// invoice number collides with one that already exists for the
+// organization.
+var ErrInvoiceNumberExists = errors.New("invoice number already exists")
+
+// insertInvoice inserts one invoice attempt under number, returning
+// ErrInvoiceNumberExists (rather than the raw unique-violation error) on a
+// (organization_id, number) collision.
+func (s *InvoiceStore) insertInvoice(ctx context.Context, orgID, clientID, number string, f InvoiceFields) (models.Invoice, error) {
+	data, err := json.Marshal(invoiceData{
+		Number: number, Status: f.Status,
+		TotalHT: f.TotalHT, TotalVAT: f.TotalVAT, TotalTTC: f.TotalTTC,
+	})
+	if err != nil {
+		return models.Invoice{}, err
+	}
+
+	row := s.pool.QueryRow(ctx, `
+		INSERT INTO invoices (organization_id, client_id, data, pdf, selected_begin_date, selected_end_date)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id, organization_id, client_id, data, selected_begin_date, selected_end_date, created_at, updated_at
+	`, orgID, clientID, data, f.PDF, f.SelectedBeginDate, f.SelectedEndDate)
+	inv, err := scanInvoice(row)
+	if err != nil {
+		if isUniqueViolation(err) {
+			return models.Invoice{}, ErrInvoiceNumberExists
+		}
+		return models.Invoice{}, err
+	}
+	return inv, nil
+}
+
+// Create allocates an invoice number and inserts the invoice. When
+// requestedNumber is set, it's used as-is and a collision fails outright
+// with ErrInvoiceNumberExists (the caller asked for this specific number).
+// Otherwise the next free number for today under this client is allocated
+// (prefix+1, prefix+2, ... on a collision), retrying on the unique
+// (organization_id, number) constraint rather than a check-then-insert,
+// which would race under concurrent invoice generation. buildFields is
+// called once per attempt (usually just once) since the rendered PDF embeds
+// the invoice number it's ultimately saved under.
+func (s *InvoiceStore) Create(ctx context.Context, orgID, clientID, clientName, requestedNumber string, buildFields func(number string) (InvoiceFields, error)) (models.Invoice, error) {
+	if utils.IsNotBlank(requestedNumber) {
+		f, err := buildFields(requestedNumber)
+		if err != nil {
+			return models.Invoice{}, err
+		}
+		return s.insertInvoice(ctx, orgID, clientID, requestedNumber, f)
+	}
+
 	prefix := invoiceNumberPrefix(clientName, time.Now())
 	for attempt := 1; attempt <= maxInvoiceNumberAttempts; attempt++ {
 		number := fmt.Sprintf("%s%d", prefix, attempt)
@@ -103,24 +146,11 @@ func (s *InvoiceStore) Create(ctx context.Context, orgID, clientID, clientName s
 			return models.Invoice{}, err
 		}
 
-		data, err := json.Marshal(invoiceData{
-			Number: number, Status: f.Status,
-			TotalHT: f.TotalHT, TotalVAT: f.TotalVAT, TotalTTC: f.TotalTTC,
-		})
-		if err != nil {
-			return models.Invoice{}, err
-		}
-
-		row := s.pool.QueryRow(ctx, `
-			INSERT INTO invoices (organization_id, client_id, data, pdf, selected_begin_date, selected_end_date)
-			VALUES ($1, $2, $3, $4, $5, $6)
-			RETURNING id, organization_id, client_id, data, selected_begin_date, selected_end_date, created_at, updated_at
-		`, orgID, clientID, data, f.PDF, f.SelectedBeginDate, f.SelectedEndDate)
-		inv, err := scanInvoice(row)
+		inv, err := s.insertInvoice(ctx, orgID, clientID, number, f)
 		if err == nil {
 			return inv, nil
 		}
-		if !isUniqueViolation(err) {
+		if !errors.Is(err, ErrInvoiceNumberExists) {
 			return models.Invoice{}, err
 		}
 	}

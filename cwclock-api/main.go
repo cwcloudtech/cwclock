@@ -7,6 +7,7 @@ import (
 
 	"cwclock-api/internal/config"
 	"cwclock-api/internal/db"
+	"cwclock-api/internal/email"
 	"cwclock-api/internal/handlers"
 	"cwclock-api/internal/metrics"
 	"cwclock-api/internal/oidc"
@@ -49,7 +50,9 @@ func main() {
 	apiKeyStore := store.NewApiKeyStore(pool)
 	invoiceStore := store.NewInvoiceStore(pool)
 
-	userHandler := handlers.NewUserHandler(userStore, cfg.JWTSecret, cfg.MaxImageSize)
+	mailer := email.NewSender(cfg.CWCloudAPIURL, cfg.CWCloudAPIKey, cfg.EmailFrom)
+
+	userHandler := handlers.NewUserHandler(userStore, cfg.JWTSecret, cfg.MaxImageSize, cfg.ActivationMode, mailer, cfg.APIBaseURL, cfg.UIBaseURL)
 	orgHandler := handlers.NewOrganizationHandler(orgStore, userStore, countryStore, currencyStore, cfg.MaxImageSize)
 	clientHandler := handlers.NewClientHandler(clientStore, orgStore, countryStore)
 	projectHandler := handlers.NewProjectHandler(projectStore, clientStore)
@@ -58,7 +61,7 @@ func main() {
 	importHandler := handlers.NewImportHandler(userStore, clientStore, projectStore, timeEntryStore)
 	reportHandler := handlers.NewReportHandler(orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize)
 	apiKeyHandler := handlers.NewApiKeyHandler(apiKeyStore)
-	invoiceHandler := handlers.NewInvoiceHandler(invoiceStore, orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize)
+	invoiceHandler := handlers.NewInvoiceHandler(invoiceStore, orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize, mailer)
 	currencyHandler := handlers.NewCurrencyHandler(currencyStore)
 	countryHandler := handlers.NewCountryHandler(countryStore)
 	fieldHandler := handlers.NewFieldHandler(fieldStore)
@@ -79,7 +82,7 @@ func main() {
 	r := router.New(
 		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler, importHandler, apiKeyHandler, invoiceHandler,
 		currencyHandler, countryHandler, fieldHandler, oidcHandler,
-		orgStore, userStore, apiKeyStore, cfg.JWTSecret, cfg.CorsEnabled, cfg.CorsAllowedOrigins, cfg.Version, cfg.ManifestPath,
+		orgStore, userStore, apiKeyStore, cfg.JWTSecret, cfg.ActivationMode, cfg.CorsEnabled, cfg.CorsAllowedOrigins, cfg.Version, cfg.ManifestPath,
 		tel, met.Observe, met.Handler,
 	)
 

@@ -1,14 +1,12 @@
 package report
 
 import (
-	"cwclock-api/internal/utils"
-	_ "embed"
 	"encoding/base64"
 	"strings"
-)
 
-//go:embed assets/cwclock-logo.png
-var defaultLogoPNG []byte
+	"cwclock-api/internal/assets"
+	"cwclock-api/internal/utils"
+)
 
 // ResolveLogo returns the image bytes and fpdf image type ("PNG"/"JPG"/"GIF")
 // to place in a report's header: the organization's own avatar when it's in
@@ -21,7 +19,7 @@ func ResolveLogo(orgPicture string) (data []byte, imgType string) {
 	if decoded, dt, ok := decodeDataURI(orgPicture); ok {
 		return decoded, dt
 	}
-	return defaultLogoPNG, "PNG"
+	return assets.CWClockLogoPNG, "PNG"
 }
 
 // decodeDataURI parses a "data:image/png;base64,...." URI (as produced by

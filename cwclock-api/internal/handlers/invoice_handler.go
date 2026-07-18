@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"cwclock-api/internal/email"
 	"cwclock-api/internal/externalconn"
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
@@ -23,6 +24,7 @@ type InvoiceHandler struct {
 	entries  *store.TimeEntryStore
 	users    *store.UserStore
 	maxSize  int
+	mailer   *email.Sender
 }
 
 func NewInvoiceHandler(
@@ -33,19 +35,23 @@ func NewInvoiceHandler(
 	entries *store.TimeEntryStore,
 	users *store.UserStore,
 	maxSize int,
+	mailer *email.Sender,
 ) *InvoiceHandler {
-	return &InvoiceHandler{invoices: invoices, orgs: orgs, clients: clients, projects: projects, entries: entries, users: users, maxSize: maxSize}
+	return &InvoiceHandler{invoices: invoices, orgs: orgs, clients: clients, projects: projects, entries: entries, users: users, maxSize: maxSize, mailer: mailer}
 }
 
 // invoiceRequest is the JSON body accepted by the preview/generate
 // endpoints: one client (required) and a date range (required), matching
 // exportRequest's date shape so the frontend can reuse the same
-// dateRangeStart/dateRangeEnd payload convention as reports.
+// dateRangeStart/dateRangeEnd payload convention as reports. Number is only
+// used by Generate: when set, it's used as-is instead of the usual
+// computed invoice number (see store.InvoiceStore.Create).
 type invoiceRequest struct {
 	ClientID       string   `json:"clientId"`
 	DateRangeStart string   `json:"dateRangeStart"`
 	DateRangeEnd   string   `json:"dateRangeEnd"`
 	ProjectIDs     []string `json:"projectIds"`
+	Number         string   `json:"number,omitempty"`
 }
 
 func decodeInvoiceRequest(w http.ResponseWriter, r *http.Request) (invoiceRequest, bool) {
@@ -178,7 +184,7 @@ func (h *InvoiceHandler) Generate(w http.ResponseWriter, r *http.Request) {
 
 	var pdf []byte
 	var renderErr error
-	inv, err := h.invoices.Create(r.Context(), orgID, req.ClientID, ic.client.Name, func(number string) (store.InvoiceFields, error) {
+	inv, err := h.invoices.Create(r.Context(), orgID, req.ClientID, ic.client.Name, req.Number, func(number string) (store.InvoiceFields, error) {
 		pdf, renderErr = report.RenderInvoicePDF(ic.org, ic.client, ic.owner, number, ic.items, ic.totalHT, ic.totalVAT, ic.totalTTC, ic.startDay, ic.endDay)
 		if renderErr != nil {
 			return store.InvoiceFields{}, renderErr
@@ -194,7 +200,7 @@ func (h *InvoiceHandler) Generate(w http.ResponseWriter, r *http.Request) {
 		}, nil
 	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
+		writeStoreError(w, err)
 		return
 	}
 
@@ -280,6 +286,55 @@ func (h *InvoiceHandler) Reupload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	externalconn.SyncUpload(r.Context(), org.ExternalConnections, externalconn.YearFolder(inv.CreatedAt), externalconn.MonthCandidates(inv.CreatedAt), number+".pdf", pdf)
+	writeJSON(w, http.StatusOK, map[string]string{"id": invoiceID})
+}
+
+// SendEmail emails an already-generated invoice's PDF to the client's
+// invoice recipients (see models.Client.InvoiceEmails), falling back to the
+// client's own email when that field is blank. The organization's avatar
+// replaces the CWClock logo in the email when it's set.
+func (h *InvoiceHandler) SendEmail(w http.ResponseWriter, r *http.Request) {
+	orgID, _ := middleware.OrgIDFromContext(r.Context())
+	invoiceID := chi.URLParam(r, "invoiceId")
+
+	inv, err := h.invoices.FindByID(r.Context(), invoiceID)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	if inv.OrganizationID != orgID {
+		writeError(w, http.StatusNotFound, "Resource not found", CodeNotFound)
+		return
+	}
+
+	client, err := h.clients.FindByID(r.Context(), inv.ClientID)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+
+	recipients := utils.SplitList(client.InvoiceEmails)
+	if len(recipients) == 0 {
+		if utils.IsBlank(client.Email) {
+			writeError(w, http.StatusBadRequest, "This client has no email address to send the invoice to", CodeNoInvoiceRecipient)
+			return
+		}
+		recipients = []string{client.Email}
+	}
+
+	org, err := h.orgs.FindByID(r.Context(), orgID)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+
+	pdf, number, err := h.invoices.GetPDF(r.Context(), invoiceID)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+
+	h.mailer.SendInvoice(r.Context(), recipients, org.Name, org.Picture, number, pdf)
 	writeJSON(w, http.StatusOK, map[string]string{"id": invoiceID})
 }
 

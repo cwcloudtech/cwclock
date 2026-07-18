@@ -9,7 +9,7 @@ import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
 import styles from "./Styles/Admin.module.css";
 
-const ROLES = ["superuser", "confirmed", "disabled"];
+const ROLES = ["superuser", "confirmed", "disabled", "ban"];
 
 const EditUserModal = ({ show, onClose, targetUser, token }) => {
   const { t, locale } = useI18n();

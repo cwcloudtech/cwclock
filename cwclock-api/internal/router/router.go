@@ -33,6 +33,7 @@ func New(
 	users *store.UserStore,
 	apiKeys middleware.ApiKeyVerifier,
 	jwtSecret string,
+	activationMode string,
 	corsEnabled bool,
 	corsAllowedOrigins []string,
 	apiVersion string,
@@ -73,16 +74,22 @@ func New(
 			r.Get("/{provider}/callback", oidcHandler.Callback)
 		})
 
+		r.Route("/user", func(r chi.Router) {
+			r.Get("/confirmation", userHandler.Confirm)
+		})
+
 		r.Route("/users", func(r chi.Router) {
 			r.Post("/", userHandler.Register)
 			r.Post("/login", userHandler.Login)
+			r.Post("/forgot-password", userHandler.ForgotPassword)
+			r.Post("/reset-password", userHandler.ResetPassword)
 
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.Auth(jwtSecret, apiKeys))
 				r.Get("/me", userHandler.Me)
 
 				r.Group(func(r chi.Router) {
-					r.Use(middleware.RequireActiveUser(users))
+					r.Use(middleware.RequireActiveUser(users, activationMode))
 					r.Put("/me", userHandler.UpdateProfile)
 					r.Put("/me/picture", userHandler.UpdatePicture)
 					r.Get("/search", userHandler.Search)
@@ -98,7 +105,7 @@ func New(
 
 		r.Route("/admin/users", func(r chi.Router) {
 			r.Use(middleware.Auth(jwtSecret, apiKeys))
-			r.Use(middleware.RequireActiveUser(users))
+			r.Use(middleware.RequireActiveUser(users, activationMode))
 			r.Use(middleware.RequireSuperuser(users))
 			r.Get("/", adminHandler.ListUsers)
 			r.Put("/{id}", adminHandler.UpdateUser)
@@ -107,14 +114,14 @@ func New(
 
 		r.Route("/admin/organizations", func(r chi.Router) {
 			r.Use(middleware.Auth(jwtSecret, apiKeys))
-			r.Use(middleware.RequireActiveUser(users))
+			r.Use(middleware.RequireActiveUser(users, activationMode))
 			r.Use(middleware.RequireSuperuser(users))
 			r.Get("/", orgHandler.AdminList)
 		})
 
 		r.Route("/organizations", func(r chi.Router) {
 			r.Use(middleware.Auth(jwtSecret, apiKeys))
-			r.Use(middleware.RequireActiveUser(users))
+			r.Use(middleware.RequireActiveUser(users, activationMode))
 			r.Post("/", orgHandler.Create)
 			r.Get("/", orgHandler.List)
 
@@ -182,6 +189,7 @@ func New(
 					r.Post("/", invoiceHandler.Generate)
 					r.Get("/{invoiceId}/pdf", invoiceHandler.DownloadPDF)
 					r.Post("/{invoiceId}/reupload", invoiceHandler.Reupload)
+					r.Post("/{invoiceId}/send", invoiceHandler.SendEmail)
 					r.Put("/{invoiceId}", invoiceHandler.UpdateStatus)
 					r.Delete("/{invoiceId}", invoiceHandler.Delete)
 				})

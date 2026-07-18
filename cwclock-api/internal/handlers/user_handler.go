@@ -1,27 +1,46 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
+	"net/url"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
 	"cwclock-api/internal/authtoken"
+	"cwclock-api/internal/email"
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/utils"
 )
 
+// confirmationTokenTTL/resetTokenTTL bound how long an emailed confirmation
+// or password-reset link stays usable.
+const (
+	confirmationTokenTTL = 48 * time.Hour
+	resetTokenTTL        = 1 * time.Hour
+)
+
 type UserHandler struct {
-	users        *store.UserStore
-	jwtSecret    string
-	maxImageSize int64
+	users          *store.UserStore
+	jwtSecret      string
+	maxImageSize   int64
+	activationMode string
+	mailer         *email.Sender
+	apiBaseURL     string
+	uiBaseURL      string
 }
 
-func NewUserHandler(users *store.UserStore, jwtSecret string, maxImageSize int64) *UserHandler {
-	return &UserHandler{users: users, jwtSecret: jwtSecret, maxImageSize: maxImageSize}
+func NewUserHandler(users *store.UserStore, jwtSecret string, maxImageSize int64, activationMode string, mailer *email.Sender, apiBaseURL, uiBaseURL string) *UserHandler {
+	return &UserHandler{
+		users: users, jwtSecret: jwtSecret, maxImageSize: maxImageSize,
+		activationMode: activationMode, mailer: mailer, apiBaseURL: apiBaseURL, uiBaseURL: uiBaseURL,
+	}
 }
 
 type credentials struct {
@@ -67,6 +86,10 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if user.Role == models.GlobalRoleDisabled && h.activationMode == models.ActivationModeEmail {
+		h.sendConfirmationEmail(r.Context(), user)
+	}
+
 	token, err := authtoken.Generate(h.jwtSecret, user.ID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
@@ -77,7 +100,20 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		ID: user.ID, Email: user.Email, Name: user.Name, Surname: user.Surname,
 		Role: user.Role, Token: token, Picture: user.Picture,
 		PictureX: user.PictureX, PictureY: user.PictureY,
+		I18nCode: models.I18nCodeForRole(user.Role, h.activationMode),
 	})
+}
+
+// sendConfirmationEmail mints a purpose-scoped confirmation token for user
+// and emails the confirmation link (best-effort - see email.Sender).
+func (h *UserHandler) sendConfirmationEmail(ctx context.Context, user models.User) {
+	token, err := authtoken.GeneratePurpose(h.jwtSecret, user.ID, authtoken.PurposeConfirmAccount, confirmationTokenTTL)
+	if err != nil {
+		slog.Error("failed to generate confirmation token", "error", err)
+		return
+	}
+	confirmURL := h.apiBaseURL + "/v1/user/confirmation?token=" + url.QueryEscape(token)
+	h.mailer.SendConfirmation(ctx, user.Email, confirmURL)
 }
 
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -108,6 +144,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		ID: user.ID, Email: user.Email, Name: user.Name, Surname: user.Surname,
 		Role: user.Role, Token: token, Picture: user.Picture,
 		PictureX: user.PictureX, PictureY: user.PictureY,
+		I18nCode: models.I18nCodeForRole(user.Role, h.activationMode),
 	})
 }
 
@@ -124,6 +161,7 @@ func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
 		ID:        user.ID,
 		Email:     user.Email,
 		Name:      user.Name,
+		I18nCode:  models.I18nCodeForRole(user.Role, h.activationMode),
 		Surname:   user.Surname,
 		Role:      user.Role,
 		Picture:   user.Picture,
@@ -256,4 +294,129 @@ func (h *UserHandler) Search(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	writeJSON(w, http.StatusOK, results)
+}
+
+// Confirm is the endpoint a user's emailed confirmation link points to
+// (activation mode "email"): GET /v1/user/confirmation?token=... - clicked
+// directly from the email, so on success/failure it redirects to the
+// frontend rather than returning JSON, mirroring the OIDC callback flow.
+func (h *UserHandler) Confirm(w http.ResponseWriter, r *http.Request) {
+	token := r.URL.Query().Get("token")
+	userID, err := authtoken.ParsePurpose(h.jwtSecret, token, authtoken.PurposeConfirmAccount)
+	if err != nil {
+		h.redirectToLogin(w, r, "invalid")
+		return
+	}
+
+	user, err := h.users.FindByID(r.Context(), userID)
+	if err != nil {
+		h.redirectToLogin(w, r, "invalid")
+		return
+	}
+
+	// A banned account can never be confirmed this way, even with a valid,
+	// unexpired token - being banned overrides a pending confirmation.
+	if user.Role == models.GlobalRoleBan {
+		h.redirectToLogin(w, r, "banned")
+		return
+	}
+
+	if user.Role == models.GlobalRoleDisabled {
+		if _, err := h.users.Confirm(r.Context(), userID); err != nil {
+			h.redirectToLogin(w, r, "invalid")
+			return
+		}
+	}
+
+	h.redirectToLogin(w, r, "")
+}
+
+func (h *UserHandler) redirectToLogin(w http.ResponseWriter, r *http.Request, confirmError string) {
+	target := h.uiBaseURL + "/login?confirmed=1"
+	if utils.IsNotBlank(confirmError) {
+		target = h.uiBaseURL + "/login?confirmed=0&reason=" + url.QueryEscape(confirmError)
+	}
+	http.Redirect(w, r, target, http.StatusFound)
+}
+
+type forgotPasswordPayload struct {
+	Email string `json:"email"`
+}
+
+// ForgotPassword emails a password-renewal link when the address matches an
+// account. It always responds 200 with the same generic message regardless
+// of whether the account exists (or is banned, which silently skips
+// sending) so the endpoint can't be used to test which emails are
+// registered.
+func (h *UserHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var p forgotPasswordPayload
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || utils.IsBlank(p.Email) {
+		writeError(w, http.StatusBadRequest, "Please add an email", CodeInvalidEmail)
+		return
+	}
+
+	user, err := h.users.FindByEmail(r.Context(), p.Email)
+	// A banned user can never request a password renewal.
+	if err == nil && user.Role != models.GlobalRoleBan {
+		token, err := authtoken.GeneratePurpose(h.jwtSecret, user.ID, authtoken.PurposeResetPassword, resetTokenTTL)
+		if err != nil {
+			slog.Error("failed to generate password reset token", "error", err)
+		} else {
+			resetURL := h.uiBaseURL + "/reset-password?token=" + url.QueryEscape(token)
+			h.mailer.SendPasswordReset(r.Context(), user.Email, resetURL)
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "If this email is registered, a reset link has been sent."})
+}
+
+type resetPasswordPayload struct {
+	Token           string `json:"token"`
+	Password        string `json:"password"`
+	ConfirmPassword string `json:"confirmPassword"`
+}
+
+// ResetPassword sets a new password from a token minted by ForgotPassword.
+func (h *UserHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var p resetPasswordPayload
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || utils.IsBlank(p.Token) || utils.IsBlank(p.Password) {
+		writeError(w, http.StatusBadRequest, "Please add a token and a password", CodeInvalidRequestBody)
+		return
+	}
+	if p.Password != p.ConfirmPassword {
+		writeError(w, http.StatusBadRequest, "Passwords do not match", CodePasswordsMismatch)
+		return
+	}
+
+	userID, err := authtoken.ParsePurpose(h.jwtSecret, p.Token, authtoken.PurposeResetPassword)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "This reset link is invalid or has expired", CodeInvalidToken)
+		return
+	}
+
+	user, err := h.users.FindByID(r.Context(), userID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "This reset link is invalid or has expired", CodeInvalidToken)
+		return
+	}
+	// A banned user can never renew their password, even with a valid,
+	// unexpired reset token.
+	if user.Role == models.GlobalRoleBan {
+		writeError(w, http.StatusForbidden, "Your account has been banned by an administrator.", CodeInvalidToken)
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(p.Password), bcrypt.DefaultCost)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
+		return
+	}
+	hashed := string(hash)
+
+	if _, err := h.users.UpdateProfile(r.Context(), userID, user.Name, user.Surname, &hashed); err != nil {
+		writeStoreError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "Password updated."})
 }

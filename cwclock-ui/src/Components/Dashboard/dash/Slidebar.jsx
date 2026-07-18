@@ -78,8 +78,8 @@ const Slidebar = () => {
     navigate("/login");
   };
 
-  if (user.role === "disabled") {
-    return <DisabledNotice />;
+  if (user.role === "disabled" || user.role === "ban") {
+    return <DisabledNotice user={user} />;
   }
 
   return (

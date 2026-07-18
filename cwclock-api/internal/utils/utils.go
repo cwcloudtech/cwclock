@@ -24,12 +24,12 @@ func IsBlank(str string) bool {
 	return !IsNotBlank(str)
 }
 
-// SplitNonBlank splits a comma-separated list, trims each entry, and drops
-// blanks - so an unset or empty string yields an empty slice rather than
-// [""].
-func SplitNonBlank(str string) []string {
+// SplitList splits a comma-or-semicolon-separated list of string
+// addresses, trims each entry, and drops blanks - so an unset or empty
+// string yields an empty slice rather than [""].
+func SplitList(str string) []string {
 	var out []string
-	for _, part := range strings.Split(str, ",") {
+	for _, part := range strings.FieldsFunc(str, func(r rune) bool { return r == ',' || r == ';' }) {
 		part = strings.TrimSpace(part)
 		if IsNotBlank(part) {
 			out = append(out, part)

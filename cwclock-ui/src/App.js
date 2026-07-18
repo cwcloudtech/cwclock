@@ -2,6 +2,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 import Login from "./Pages/Login";
 import SignUp from "./Pages/SignUp";
+import ForgotPassword from "./Pages/ForgotPassword";
+import ResetPassword from "./Pages/ResetPassword";
 import OidcCallback from "./Pages/OidcCallback";
 import { ToastContainer } from "react-toastify";
 import Slidebar from "./Components/Dashboard/dash/Slidebar";
@@ -18,6 +20,8 @@ function App() {
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/oidc/callback" element={<OidcCallback />} />
             <Route path="/dashboard/*" element={<Slidebar />}>
               <Route path=":topics" element={<Slidebar />}></Route>
