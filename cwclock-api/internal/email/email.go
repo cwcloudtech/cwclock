@@ -68,6 +68,9 @@ const buttonStyle = "display:inline-block;margin-top:8px;padding:9px 18px;" +
 // mutedStyle mirrors --cw-text-muted, for secondary/help text under a CTA.
 const mutedStyle = "color:#64748b;"
 
+// centerStyle centers the paragraph wrapping a CTA button.
+const centerStyle = "text-align:center;"
+
 // renderBody wraps body in CWClock's shared email layout, with the
 // CWClock logo or, when logoOverride is a data URI (an organization's own
 // avatar), that image instead.
@@ -101,15 +104,43 @@ func renderBody(title string, body template.HTML, logoOverride string) (string, 
 // produce (see report.decodeDataURI).
 var imageDataURI = regexp.MustCompile(`^data:image/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+/=]+$`)
 
-// logoDataURI returns override as-is when it's a well-formed image data URI
-// (an organization's uploaded avatar), otherwise the bundled CWClock logo
-// encoded as one. Anything else (including a malformed or non-image data
-// URI) falls back to the default logo rather than being trusted verbatim.
+// logoDataURI returns override as-is when it's a well-formed image data URI,
+// builds one from it when it's a bare base64 payload (organization avatars
+// are stored in the database as just the base64 string, with no
+// "data:image/...;base64," prefix or mime type), or falls back to the
+// bundled CWClock logo when override is blank or isn't a decodable,
+// supported image.
 func logoDataURI(override string) string {
 	if imageDataURI.MatchString(override) {
 		return override
 	}
+	if uri, ok := bareBase64DataURI(override); ok {
+		return uri
+	}
 	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(assets.CWClockLogoPNG)
+}
+
+// bareBase64DataURI builds a data URI for a base64 payload that has no
+// "data:image/...;base64," prefix, sniffing its actual image type from its
+// decoded bytes rather than assuming one - an organization's uploaded
+// avatar can be a PNG, JPEG, GIF or WEBP, and mislabeling e.g. a JPEG as
+// "image/png" makes most renderers refuse to display it since the declared
+// mime type no longer matches the content. Returns ok=false when payload is
+// blank, isn't valid base64, or doesn't sniff as one of those image types.
+func bareBase64DataURI(payload string) (string, bool) {
+	if utils.IsBlank(payload) {
+		return "", false
+	}
+	decoded, err := base64.StdEncoding.DecodeString(payload)
+	if err != nil {
+		return "", false
+	}
+	switch mimeType := http.DetectContentType(decoded); mimeType {
+	case "image/png", "image/jpeg", "image/gif", "image/webp":
+		return "data:" + mimeType + ";base64," + payload, true
+	default:
+		return "", false
+	}
 }
 
 // send posts one email best-effort: a blank apiURL/apiKey or a failed
@@ -155,9 +186,9 @@ func (s *Sender) send(ctx context.Context, to, replyTo, subject, htmlContent str
 func (s *Sender) SendConfirmation(ctx context.Context, to, confirmURL string) {
 	body := template.HTML(fmt.Sprintf(
 		`<p>Welcome to CWClock!</p><p>Please confirm your account by clicking the button below:</p>`+
-			`<p><a href="%s" style="%s">Confirm my account</a></p>`+
+			`<p style="%s"><a href="%s" style="%s">Confirm my account</a></p>`+
 			`<p style="%s">If you didn't create this account, you can safely ignore this email.</p>`,
-		template.HTMLEscapeString(confirmURL), buttonStyle, mutedStyle,
+		centerStyle, template.HTMLEscapeString(confirmURL), buttonStyle, mutedStyle,
 	))
 	html, err := renderBody("Confirm your CWClock account", body, utils.EMPTY)
 	if err != nil {
@@ -172,9 +203,9 @@ func (s *Sender) SendConfirmation(ctx context.Context, to, confirmURL string) {
 func (s *Sender) SendPasswordReset(ctx context.Context, to, resetURL string) {
 	body := template.HTML(fmt.Sprintf(
 		`<p>We received a request to reset your CWClock password.</p>`+
-			`<p><a href="%s" style="%s">Choose a new password</a></p>`+
+			`<p style="%s"><a href="%s" style="%s">Choose a new password</a></p>`+
 			`<p style="%s">If you didn't request this, you can safely ignore this email.</p>`,
-		template.HTMLEscapeString(resetURL), buttonStyle, mutedStyle,
+		centerStyle, template.HTMLEscapeString(resetURL), buttonStyle, mutedStyle,
 	))
 	html, err := renderBody("Reset your CWClock password", body, utils.EMPTY)
 	if err != nil {
