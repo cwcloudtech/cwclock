@@ -30,14 +30,14 @@ type Attachment struct {
 }
 
 type request struct {
-	From       string      `json:"from"`
-	To         string      `json:"to"`
-	Cc         string      `json:"cc,omitempty"`
-	Bcc        string      `json:"bcc,omitempty"`
-	ReplyTo    string      `json:"reply_to,omitempty"`
-	Subject    string      `json:"subject"`
-	Content    string      `json:"content"`
-	Attachment *Attachment `json:"attachment,omitempty"`
+	From        string       `json:"from"`
+	To          string       `json:"to"`
+	Cc          string       `json:"cc,omitempty"`
+	Bcc         string       `json:"bcc,omitempty"`
+	ReplyTo     string       `json:"reply_to,omitempty"`
+	Subject     string       `json:"subject"`
+	Content     string       `json:"content"`
+	Attachments []Attachment `json:"attachments,omitempty"`
 }
 
 // Sender posts emails to CWCloud's email API (POST {apiURL}/v1/email).
@@ -110,9 +110,10 @@ func (s *Sender) logoURL(orgID string) string {
 
 // send posts one email best-effort: a blank apiURL/apiKey or a failed
 // request is logged (with the payload, so it can be replayed by hand) and
-// otherwise ignored. cc/replyTo are optional - pass "" to leave either unset.
-func (s *Sender) send(ctx context.Context, to, cc, replyTo, subject, htmlContent string, attachment *Attachment) {
-	payload := request{From: s.from, To: to, Cc: cc, ReplyTo: replyTo, Subject: subject, Content: htmlContent, Attachment: attachment}
+// otherwise ignored. cc/replyTo are optional - pass "" to leave either
+// unset; attachments may be nil/empty.
+func (s *Sender) send(ctx context.Context, to, cc, replyTo, subject, htmlContent string, attachments []Attachment) {
+	payload := request{From: s.from, To: to, Cc: cc, ReplyTo: replyTo, Subject: subject, Content: htmlContent, Attachments: attachments}
 
 	if utils.IsBlank(s.apiURL) || utils.IsBlank(s.apiKey) {
 		slog.Warn("cwcloud email api is not configured (CWCLOUD_API_URL/CWCLOUD_API_KEY), skipping email", "to", to, "subject", subject)
@@ -202,8 +203,10 @@ func formatUSDate(day string) string {
 // billed period ("2006-01-02"), shown in parentheses in the subject/title.
 // language is the client_language decision table's result (models.
 // ClientLanguage) - "fr" sends the email in French, anything else in
-// English.
-func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgID, orgName, ownerEmail, accountingEmail, invoiceNumber, startDay, endDay, language string, pdf []byte) {
+// English. reportAttachments are the optional summary/detailed report PDFs
+// for the same period (see models.Client.SendReportsWithInvoice), joined
+// alongside the invoice PDF via CWCloud's email API's attachments list.
+func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgID, orgName, ownerEmail, accountingEmail, invoiceNumber, startDay, endDay, language string, pdf []byte, reportAttachments []Attachment) {
 	if len(recipients) == 0 {
 		return
 	}
@@ -242,10 +245,10 @@ func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgID, or
 		slog.Error("failed to render invoice email", "error", err)
 		return
 	}
-	attachment := &Attachment{
+	attachments := append([]Attachment{{
 		MimeType: "application/pdf",
 		FileName: invoiceNumber + ".pdf",
 		B64:      base64.StdEncoding.EncodeToString(pdf),
-	}
-	s.send(ctx, strings.Join(recipients, ","), strings.Join(cc, ","), ownerEmail, subject, html, attachment)
+	}}, reportAttachments...)
+	s.send(ctx, strings.Join(recipients, ","), strings.Join(cc, ","), ownerEmail, subject, html, attachments)
 }

@@ -253,6 +253,7 @@ const en = {
     purchaseOrder: "Purchase order",
     hoursPerDay: "Hours/day (default 7)",
     dailyRate: "Daily rate (overrides member rate)",
+    sendReportsWithInvoice: "Also send the summary and detailed reports with invoice emails",
     dailyRateSet: " - Daily rate {{rate}}",
     vatAndHours: " - VAT {{rate}}% - {{hours}}h/day",
     editClientTitle: "Edit {{name}}",

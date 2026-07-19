@@ -14,7 +14,7 @@ The endpoint to call is :
 
 ```shell
 curl -X 'POST' \
-  '${CWCLOUD_API_URL}$/v1/email' \
+  '${CWCLOUD_API_URL}/v1/email' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -H 'X-Auth-Token: ${CWCLOUD_API_KEY}' \

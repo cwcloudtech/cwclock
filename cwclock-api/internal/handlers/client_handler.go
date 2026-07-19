@@ -24,25 +24,26 @@ func NewClientHandler(clients *store.ClientStore, orgs *store.OrgStore, countrie
 }
 
 type clientPayload struct {
-	Name                 string   `json:"name"`
-	Email                string   `json:"email"`
-	InvoiceEmails        string   `json:"invoiceEmails"`
-	ContactName          string   `json:"contactName"`
-	Address              string   `json:"address"`
-	PostalCode           string   `json:"postalCode"`
-	City                 string   `json:"city"`
-	Country              string   `json:"country"`
-	VATNumber            string   `json:"vatNumber"`
-	VATRate              *float64 `json:"vatRate"`
-	VATDischargeMotive   string   `json:"vatDischargeMotive"`
-	SIREN                string   `json:"siren"`
-	SIRET                string   `json:"siret"`
-	NAF                  string   `json:"naf"`
-	MF                   string   `json:"mf"`
-	IdentificationNumber string   `json:"identificationNumber"`
-	PurchaseOrder        string   `json:"purchaseOrder"`
-	HoursPerDay          float64  `json:"hoursPerDay"`
-	DailyRate            *float64 `json:"dailyRate"`
+	Name                   string   `json:"name"`
+	Email                  string   `json:"email"`
+	InvoiceEmails          string   `json:"invoiceEmails"`
+	ContactName            string   `json:"contactName"`
+	Address                string   `json:"address"`
+	PostalCode             string   `json:"postalCode"`
+	City                   string   `json:"city"`
+	Country                string   `json:"country"`
+	VATNumber              string   `json:"vatNumber"`
+	VATRate                *float64 `json:"vatRate"`
+	VATDischargeMotive     string   `json:"vatDischargeMotive"`
+	SIREN                  string   `json:"siren"`
+	SIRET                  string   `json:"siret"`
+	NAF                    string   `json:"naf"`
+	MF                     string   `json:"mf"`
+	IdentificationNumber   string   `json:"identificationNumber"`
+	PurchaseOrder          string   `json:"purchaseOrder"`
+	HoursPerDay            float64  `json:"hoursPerDay"`
+	DailyRate              *float64 `json:"dailyRate"`
+	SendReportsWithInvoice bool     `json:"sendReportsWithInvoice"`
 }
 
 // nameValid and Country's own blank check (see Create/Update) are kept
@@ -65,25 +66,26 @@ func (h *ClientHandler) validCountry(ctx context.Context, p clientPayload) (bool
 
 func (p clientPayload) toFields() store.ClientFields {
 	return store.ClientFields{
-		Name:                 p.Name,
-		Email:                p.Email,
-		InvoiceEmails:        p.InvoiceEmails,
-		ContactName:          p.ContactName,
-		Address:              p.Address,
-		PostalCode:           p.PostalCode,
-		City:                 p.City,
-		Country:              p.Country,
-		VATNumber:            p.VATNumber,
-		VATRate:              p.VATRate,
-		VATDischargeMotive:   p.VATDischargeMotive,
-		SIREN:                p.SIREN,
-		SIRET:                p.SIRET,
-		NAF:                  p.NAF,
-		MF:                   p.MF,
-		IdentificationNumber: p.IdentificationNumber,
-		PurchaseOrder:        p.PurchaseOrder,
-		HoursPerDay:          p.HoursPerDay,
-		DailyRate:            p.DailyRate,
+		Name:                   p.Name,
+		Email:                  p.Email,
+		InvoiceEmails:          p.InvoiceEmails,
+		ContactName:            p.ContactName,
+		Address:                p.Address,
+		PostalCode:             p.PostalCode,
+		City:                   p.City,
+		Country:                p.Country,
+		VATNumber:              p.VATNumber,
+		VATRate:                p.VATRate,
+		VATDischargeMotive:     p.VATDischargeMotive,
+		SIREN:                  p.SIREN,
+		SIRET:                  p.SIRET,
+		NAF:                    p.NAF,
+		MF:                     p.MF,
+		IdentificationNumber:   p.IdentificationNumber,
+		PurchaseOrder:          p.PurchaseOrder,
+		HoursPerDay:            p.HoursPerDay,
+		DailyRate:              p.DailyRate,
+		SendReportsWithInvoice: p.SendReportsWithInvoice,
 	}
 }
 

@@ -33,6 +33,7 @@ const emptyFields = {
   purchaseOrder: "",
   hoursPerDay: "",
   dailyRate: "",
+  sendReportsWithInvoice: false,
 };
 
 const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
@@ -79,6 +80,7 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
       { name: "purchaseOrder", type: "text", label: t("clients.purchaseOrder") },
       { name: "hoursPerDay", type: "number", label: t("clients.hoursPerDay"), step: "0.01" },
       { name: "dailyRate", type: "number", label: t("clients.dailyRate"), step: "0.01", min: "0" },
+      { name: "sendReportsWithInvoice", type: "checkbox", label: t("clients.sendReportsWithInvoice") },
     ],
   };
 
@@ -104,6 +106,7 @@ const EditClientModal = ({ show, onClose, targetClient, orgId, token }) => {
         purchaseOrder: targetClient.purchaseOrder || "",
         hoursPerDay: targetClient.hoursPerDay ?? "",
         dailyRate: targetClient.dailyRate ?? "",
+        sendReportsWithInvoice: targetClient.sendReportsWithInvoice || false,
       });
       setError("");
       setTargetOrgId("");

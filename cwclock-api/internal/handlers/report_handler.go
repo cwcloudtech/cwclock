@@ -187,6 +187,45 @@ func exportFilenameDate(day string) string {
 	return d.Format(report.FilenameDateLayout)
 }
 
+// GenerateDetailedPDF renders the same detailed-report PDF the Detailed
+// endpoint's PDF export produces, without the surrounding HTTP request -
+// for embedding as an email attachment (see InvoiceHandler.SendEmail's
+// "send reports along with the invoice" client flag,
+// models.Client.SendReportsWithInvoice). Callers are responsible for their
+// own report-size check (see checkReportSize) before calling this.
+func (h *ReportHandler) GenerateDetailedPDF(ctx context.Context, orgID string, filter store.ReportFilter, canSeeAmount bool) (data []byte, filename string, err error) {
+	org, entries, _, err := h.loadEnrichedEntries(ctx, orgID, filter, canSeeAmount)
+	if err != nil {
+		return nil, "", err
+	}
+	totals := report.Totals(entries, canSeeAmount, org.Currency)
+	logoData, logoType := report.ResolveLogo(org.Picture)
+	data, err = report.DetailedPDF(org.Name, filter.Start, filter.End, models.DetailedReport{Totals: totals, Entries: entries}, logoData, logoType)
+	filename = fmt.Sprintf("CWClock_Time_Report_Detailed_%s-%s.pdf", exportFilenameDate(filter.Start), exportFilenameDate(filter.End))
+	return data, filename, err
+}
+
+// GenerateSummaryPDF is GenerateDetailedPDF's summary-report counterpart -
+// see its doc comment.
+func (h *ReportHandler) GenerateSummaryPDF(ctx context.Context, orgID string, filter store.ReportFilter, canSeeAmount bool) (data []byte, filename string, err error) {
+	org, entries, lk, err := h.loadEnrichedEntries(ctx, orgID, filter, canSeeAmount)
+	if err != nil {
+		return nil, "", err
+	}
+	start, _ := time.Parse(report.DayLayout, filter.Start)
+	end, _ := time.Parse(report.DayLayout, filter.End)
+	summary := models.SummaryReport{
+		Totals:           report.Totals(entries, canSeeAmount, org.Currency),
+		Daily:            report.DailyBuckets(entries, start, end),
+		Rows:             report.SummaryRows(entries, canSeeAmount),
+		ProjectDurations: report.ProjectDurations(entries, lk),
+	}
+	logoData, logoType := report.ResolveLogo(org.Picture)
+	data, err = report.SummaryPDF(org.Name, filter.Start, filter.End, summary, logoData, logoType)
+	filename = fmt.Sprintf("CWClock_Time_Report_Summary_%s-%s.pdf", exportFilenameDate(filter.Start), exportFilenameDate(filter.End))
+	return data, filename, err
+}
+
 func writeExportFile(w http.ResponseWriter, contentType, filename string, data []byte, err error) {
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)

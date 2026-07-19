@@ -51,3 +51,4 @@
 * [ai-instruct-49](./ai-instruct-49.md)
 * [ai-instruct-50](./ai-instruct-50.md)
 * [ai-instruct-51](./ai-instruct-51.md)
+* [ai-instruct-52](./ai-instruct-52.md)

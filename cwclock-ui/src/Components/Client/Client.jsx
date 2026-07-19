@@ -39,6 +39,7 @@ const initialFields = {
   purchaseOrder: "",
   hoursPerDay: "",
   dailyRate: "",
+  sendReportsWithInvoice: false,
 };
 
 const Clients = () => {
@@ -82,6 +83,7 @@ const Clients = () => {
       { name: "purchaseOrder", type: "text", label: t("clients.purchaseOrder") },
       { name: "hoursPerDay", type: "number", label: t("clients.hoursPerDay"), step: "0.01" },
       { name: "dailyRate", type: "number", label: t("clients.dailyRate"), step: "0.01", min: "0" },
+      { name: "sendReportsWithInvoice", type: "checkbox", label: t("clients.sendReportsWithInvoice") },
     ],
   };
 

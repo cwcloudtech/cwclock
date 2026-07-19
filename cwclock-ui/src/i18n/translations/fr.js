@@ -253,6 +253,7 @@ const fr = {
     purchaseOrder: "Bon de commande",
     hoursPerDay: "Heures/jour (par défaut 7)",
     dailyRate: "Taux journalier (prioritaire sur celui du membre)",
+    sendReportsWithInvoice: "Envoyer aussi les rapports (synthèse et détaillé) avec les emails de facture",
     dailyRateSet: " - Taux journalier {{rate}}",
     vatAndHours: " - TVA {{rate}}% - {{hours}}h/jour",
     editClientTitle: "Modifier {{name}}",

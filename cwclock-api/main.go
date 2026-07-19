@@ -61,7 +61,7 @@ func main() {
 	importHandler := handlers.NewImportHandler(userStore, clientStore, projectStore, timeEntryStore)
 	reportHandler := handlers.NewReportHandler(orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize)
 	apiKeyHandler := handlers.NewApiKeyHandler(apiKeyStore)
-	invoiceHandler := handlers.NewInvoiceHandler(invoiceStore, orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize, mailer)
+	invoiceHandler := handlers.NewInvoiceHandler(invoiceStore, orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize, mailer, reportHandler)
 	currencyHandler := handlers.NewCurrencyHandler(currencyStore)
 	countryHandler := handlers.NewCountryHandler(countryStore)
 	fieldHandler := handlers.NewFieldHandler(fieldStore)

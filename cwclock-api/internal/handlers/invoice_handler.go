@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -25,6 +27,10 @@ type InvoiceHandler struct {
 	users    *store.UserStore
 	maxSize  int
 	mailer   *email.Sender
+	// reports generates the summary/detailed report PDFs joined to an
+	// invoice email when the client has SendReportsWithInvoice set (see
+	// SendEmail).
+	reports *ReportHandler
 }
 
 func NewInvoiceHandler(
@@ -36,8 +42,9 @@ func NewInvoiceHandler(
 	users *store.UserStore,
 	maxSize int,
 	mailer *email.Sender,
+	reports *ReportHandler,
 ) *InvoiceHandler {
-	return &InvoiceHandler{invoices: invoices, orgs: orgs, clients: clients, projects: projects, entries: entries, users: users, maxSize: maxSize, mailer: mailer}
+	return &InvoiceHandler{invoices: invoices, orgs: orgs, clients: clients, projects: projects, entries: entries, users: users, maxSize: maxSize, mailer: mailer, reports: reports}
 }
 
 // invoiceRequest is the JSON body accepted by the preview/generate
@@ -341,8 +348,38 @@ func (h *InvoiceHandler) SendEmail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	language := models.ClientLanguage(client.Country)
-	h.mailer.SendInvoice(r.Context(), recipients, org.ID, org.Name, owner.Email, org.AccountingEmail, number, inv.SelectedBeginDate, inv.SelectedEndDate, language, pdf)
+	reportAttachments := h.invoiceReportAttachments(r.Context(), orgID, client, inv)
+	h.mailer.SendInvoice(r.Context(), recipients, org.ID, org.Name, owner.Email, org.AccountingEmail, number, inv.SelectedBeginDate, inv.SelectedEndDate, language, pdf, reportAttachments)
 	writeJSON(w, http.StatusOK, map[string]string{"id": invoiceID})
+}
+
+// invoiceReportAttachments builds the summary/detailed report PDFs for the
+// invoice's client and billed period, when the client has
+// SendReportsWithInvoice set. Best-effort like the rest of the email
+// package: a report that fails to size-check or generate is logged and
+// skipped rather than blocking the invoice email over it.
+func (h *InvoiceHandler) invoiceReportAttachments(ctx context.Context, orgID string, client models.Client, inv models.Invoice) []email.Attachment {
+	if !client.SendReportsWithInvoice {
+		return nil
+	}
+	filter := store.ReportFilter{Start: inv.SelectedBeginDate, End: inv.SelectedEndDate, ClientIDs: []string{client.ID}}
+	if err := h.reports.checkReportSize(ctx, orgID, filter); err != nil {
+		slog.Error("failed to size-check reports for invoice email, sending without them", "error", err, "invoiceId", inv.ID)
+		return nil
+	}
+
+	var attachments []email.Attachment
+	if data, filename, err := h.reports.GenerateSummaryPDF(ctx, orgID, filter, true); err != nil {
+		slog.Error("failed to generate summary report for invoice email, sending without it", "error", err, "invoiceId", inv.ID)
+	} else {
+		attachments = append(attachments, email.Attachment{MimeType: "application/pdf", FileName: filename, B64: base64.StdEncoding.EncodeToString(data)})
+	}
+	if data, filename, err := h.reports.GenerateDetailedPDF(ctx, orgID, filter, true); err != nil {
+		slog.Error("failed to generate detailed report for invoice email, sending without it", "error", err, "invoiceId", inv.ID)
+	} else {
+		attachments = append(attachments, email.Attachment{MimeType: "application/pdf", FileName: filename, B64: base64.StdEncoding.EncodeToString(data)})
+	}
+	return attachments
 }
 
 type updateInvoiceStatusPayload struct {
