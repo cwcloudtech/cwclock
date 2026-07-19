@@ -192,6 +192,16 @@ func formatUSDate(day string) string {
 	return d.Format("01/02/2006")
 }
 
+// formatFRDate formats a "2006-01-02" day string as a French display date
+// (02/01/2006, i.e. DD/MM/YYYY). Returns day unchanged if it doesn't parse.
+func formatFRDate(day string) string {
+	d, err := time.Parse("2006-01-02", day)
+	if err != nil {
+		return day
+	}
+	return d.Format("02/01/2006")
+}
+
 // SendInvoice emails a generated invoice PDF to one or more recipients. The
 // organization's own avatar (see handlers.OrganizationHandler.PublicLogo)
 // replaces the CWClock logo in the email header when it has one. ownerEmail
@@ -220,23 +230,33 @@ func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgID, or
 		cc = append(cc, accountingEmail)
 	}
 
-	period := fmt.Sprintf("%s - %s", formatUSDate(startDay), formatUSDate(endDay))
+	withTimesheets := len(reportAttachments) > 0
 
 	var subject, title string
 	var body template.HTML
 	if language == "fr" {
+		period := fmt.Sprintf("%s - %s", formatFRDate(startDay), formatFRDate(endDay))
+		suffix := "."
+		if withTimesheets {
+			suffix = ", avec les feuilles de temps."
+		}
 		subject = fmt.Sprintf("Facture %s (%s)", invoiceNumber, period)
 		title = fmt.Sprintf("Votre facture %s de %s", invoiceNumber, orgName)
 		body = template.HTML(fmt.Sprintf(
-			`<p>Veuillez trouver ci-joint la facture <strong>%s</strong> de <strong>%s</strong> (%s).</p>`,
-			template.HTMLEscapeString(invoiceNumber), template.HTMLEscapeString(orgName), template.HTMLEscapeString(period),
+			`<p>Veuillez trouver ci-joint la facture <strong>%s</strong> de <strong>%s</strong> (%s)%s</p>`,
+			template.HTMLEscapeString(invoiceNumber), template.HTMLEscapeString(orgName), template.HTMLEscapeString(period), suffix,
 		))
 	} else {
+		period := fmt.Sprintf("%s - %s", formatUSDate(startDay), formatUSDate(endDay))
+		suffix := "."
+		if withTimesheets {
+			suffix = ", with the timesheets."
+		}
 		subject = fmt.Sprintf("Invoice %s (%s)", invoiceNumber, period)
 		title = fmt.Sprintf("Your invoice %s from %s", invoiceNumber, orgName)
 		body = template.HTML(fmt.Sprintf(
-			`<p>Please find attached invoice <strong>%s</strong> from <strong>%s</strong> (%s).</p>`,
-			template.HTMLEscapeString(invoiceNumber), template.HTMLEscapeString(orgName), template.HTMLEscapeString(period),
+			`<p>Please find attached invoice <strong>%s</strong> from <strong>%s</strong> (%s)%s</p>`,
+			template.HTMLEscapeString(invoiceNumber), template.HTMLEscapeString(orgName), template.HTMLEscapeString(period), suffix,
 		))
 	}
 
