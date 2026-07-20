@@ -4,6 +4,7 @@
 package authtoken
 
 import (
+	"cwclock-api/internal/utils"
 	"errors"
 	"time"
 
@@ -53,14 +54,14 @@ func ParsePurpose(secret, tokenString, purpose string) (userID string, err error
 		return []byte(secret), nil
 	})
 	if err != nil || !token.Valid {
-		return "", ErrInvalidPurposeToken
+		return utils.EMPTY, ErrInvalidPurposeToken
 	}
 	if p, _ := claims["purpose"].(string); p != purpose {
-		return "", ErrInvalidPurposeToken
+		return utils.EMPTY, ErrInvalidPurposeToken
 	}
 	sub, ok := claims["sub"].(string)
-	if !ok || sub == "" {
-		return "", ErrInvalidPurposeToken
+	if !ok || utils.IsBlank(sub) {
+		return utils.EMPTY, ErrInvalidPurposeToken
 	}
 	return sub, nil
 }
