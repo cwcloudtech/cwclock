@@ -144,7 +144,6 @@ const Slidebar = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.gitRepoLink}
-                title={t("nav.documentation")}
               >
                 <FaBook fontSize="18px" />
               </a>
@@ -155,13 +154,12 @@ const Slidebar = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.gitRepoLink}
-                title={t("nav.gitRepository")}
               >
                 <FaGitAlt fontSize="18px" />
               </a>
             </Tooltip>
             <Tooltip label={t("nav.contactForm")}>
-              <Link to="/contact" className={styles.gitRepoLink} title={t("nav.contactForm")}>
+              <Link to="/contact" className={styles.gitRepoLink}>
                 <FaEnvelope fontSize="18px" />
               </Link>
             </Tooltip>
