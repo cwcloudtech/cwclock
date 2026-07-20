@@ -2,4 +2,4 @@
 
 {{.Period}}
 
-**Total:** {{.TotalDuration}}   **Billable:** {{.TotalDuration}}{{if .ShowAmount}}   **Amount:** {{.TotalAmount}} {{.Currency}}{{end}}
+**Total:** {{.TotalDuration}}   **Billable:** {{.TotalDuration}}   **Days:** {{.TotalDays}}{{if .ShowAmount}}   **Amount:** {{.TotalAmount}} {{.Currency}}{{end}}

@@ -25,6 +25,10 @@ func formatAmount(amt float64) string {
 	return fmt.Sprintf("%.2f", amt)
 }
 
+func formatDays(days float64) string {
+	return fmt.Sprintf("%.2f", days)
+}
+
 // formatAMPM renders a wall-clock string as "HH:MM:SSAM/PM", matching the
 // reference export's format. It goes through parseSecondsOfDay (not
 // time.Parse) so it handles both "HH:MM:SS" (real entries, since their time

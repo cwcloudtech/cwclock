@@ -15,6 +15,7 @@ type reportHeader struct {
 	OrgName       string
 	Period        string
 	TotalDuration string
+	TotalDays     string
 	ShowAmount    bool
 	TotalAmount   string
 	Currency      string
@@ -26,6 +27,7 @@ func newReportHeader(title, orgName string, start, end string, totals models.Rep
 		OrgName:       orgName,
 		Period:        formatUSDate(start) + " - " + formatUSDate(end),
 		TotalDuration: formatHMS(totals.DurationSecs),
+		TotalDays:     formatDays(totals.Days),
 		Currency:      totals.Currency,
 	}
 	if totals.Amount != nil {
