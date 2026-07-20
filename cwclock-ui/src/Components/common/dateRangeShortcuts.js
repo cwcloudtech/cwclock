@@ -20,8 +20,22 @@ export const toISODate = (d) => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
-export const dateRangeShortcuts = (t) => {
-  const today = startOfDay(new Date());
+// fromISODate parses a "YYYY-MM-DD" string into a local Date at midnight -
+// toISODate's inverse. Deliberately not `new Date(isoString)`: that parses
+// as UTC midnight, which shifts to the previous/next day once read back
+// through local getters (getFullYear/getMonth/getDate, as toISODate and
+// this module's other helpers all do) for any timezone ahead of UTC.
+export const fromISODate = (iso) => {
+  const [yyyy, mm, dd] = iso.split("-").map(Number);
+  return new Date(yyyy, mm - 1, dd);
+};
+
+// referenceDate defaults to the real current date/time - pass a specific
+// one (e.g. the user's most recently logged time entry) to compute these
+// shortcuts as if that were "today" instead, as Reports.jsx's initial
+// default range does (ai-instruct-63).
+export const dateRangeShortcuts = (t, referenceDate = new Date()) => {
+  const today = startOfDay(referenceDate);
 
   return [
     { key: "today", label: t("reports.shortcutToday"), range: () => [today, today] },

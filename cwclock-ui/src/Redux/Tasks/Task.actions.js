@@ -39,6 +39,20 @@ export const getTasksApi = (orgId, token, page = 1, pageSize = process.env.REACT
     });
   }
 };
+// fetchLatestEntryDayApi resolves the caller's most recently logged time
+// entry's day ("YYYY-MM-DD"), or null if they have none - doesn't touch the
+// shared tasks list state (unlike getTasksApi), since it's just a lookup
+// used by Reports.jsx to default its date range to the user's last logged
+// activity instead of today's date (ai-instruct-63).
+export const fetchLatestEntryDayApi = (orgId, token) => async () => {
+  try {
+    const { data } = await axios.get(ENDPOINT(orgId), { ...authConfig(token), params: { page: 1, pageSize: 1 } });
+    return data.items?.[0]?.day ?? null;
+  } catch (e) {
+    return null;
+  }
+};
+
 // Time record creation intentionally has no success toast: it fires every
 // time the timer is stopped, which would be too noisy.
 export const postTasksApi = (item, orgId, token) => async (dispatch) => {

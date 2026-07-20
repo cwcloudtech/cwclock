@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { FaChartBar } from "react-icons/fa";
@@ -13,14 +13,19 @@ import { listClientsApi } from "../../Redux/Clients/Client.actions";
 import { listProjectsApi } from "../../Redux/Projects/Project.actions";
 import { listMembersApi } from "../../Redux/Organizations/Org.actions";
 import { fetchReportApi, exportReportApi, clearReport } from "../../Redux/Reports/Report.actions";
-import { dateRangeShortcuts, toISODate } from "../common/dateRangeShortcuts";
+import { fetchLatestEntryDayApi } from "../../Redux/Tasks/Task.actions";
+import { dateRangeShortcuts, toISODate, fromISODate } from "../common/dateRangeShortcuts";
 import { isAdminOrOwner as computeIsAdminOrOwner, isSuperadmin, memberRole } from "../common/permissions";
 import SummaryReportView from "./SummaryReportView";
 import DetailedReportView from "./DetailedReportView";
 import styles from "./Styles/Reports.module.css";
 
-const defaultRange = (t) => {
-  const thisWeek = dateRangeShortcuts(t).find((s) => s.key === "thisWeek");
+// referenceDate defaults to today - pass the user's most recently logged
+// time entry's date instead once it's known (see the effect below), so the
+// initial range reflects their last activity rather than an empty "this
+// week" when they haven't logged anything recently (ai-instruct-63).
+const defaultRange = (t, referenceDate) => {
+  const thisWeek = dateRangeShortcuts(t, referenceDate).find((s) => s.key === "thisWeek");
   const [s, e] = thisWeek.range();
   return { start: toISODate(s), end: toISODate(e) };
 };
@@ -44,7 +49,15 @@ const Reports = () => {
   const canAccess = isSuperadmin(user) || (myRole && myRole !== "reader");
   const isAdminOrOwner = computeIsAdminOrOwner(user, members);
 
-  const setRange = (start, end) => setRangeState({ start, end });
+  // Tracks whether the user has touched the date range themselves, so the
+  // most-recent-entry lookup below never clobbers a choice they already
+  // made - a ref rather than state since it's read from inside an async
+  // callback (see the effect below), where a state closure would go stale.
+  const rangeTouchedRef = useRef(false);
+  const setRange = (start, end) => {
+    rangeTouchedRef.current = true;
+    setRangeState({ start, end });
+  };
 
   useEffect(() => {
     if (currentOrgId) {
@@ -53,6 +66,24 @@ const Reports = () => {
       dispatch(listMembersApi(currentOrgId, user.token));
     }
   }, [dispatch, currentOrgId, user.token]);
+
+  // Defaults the date range to the week of the user's most recently logged
+  // time entry instead of the real current date, so it isn't just an empty
+  // "this week" for someone who hasn't logged anything in a while
+  // (ai-instruct-63). Only applies once, and only if the range is still
+  // untouched by the time it resolves.
+  useEffect(() => {
+    if (!currentOrgId) return;
+    let cancelled = false;
+    dispatch(fetchLatestEntryDayApi(currentOrgId, user.token)).then((day) => {
+      if (cancelled || !day || rangeTouchedRef.current) return;
+      setRangeState(defaultRange(t, fromISODate(day)));
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentOrgId]);
 
   // Narrowing the client filter narrows which projects make sense too, so
   // drop any already-selected project that no longer belongs to one of the
