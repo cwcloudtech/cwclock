@@ -16,16 +16,18 @@ import (
 
 // allDayStartMinutes is the wall-clock start assumed for an "all day" entry
 // (9:00 AM), so it renders as a plausible work window instead of a literal
-// 00:00-23:59 span. allDayLunchStartMinutes/allDayLunchBreakMinutes bake in
-// an unpaid 1-hour lunch pause at noon (ai-instruct-61): the morning runs
-// 9:00-12:00 (or less, if HoursPerDay leaves fewer than 3 hours to work),
-// and the afternoon, starting after the break, makes up whatever of the
-// client's HoursPerDay the morning didn't cover - see allDayWindow.
-const (
-	allDayStartMinutes      = 9 * 60
-	allDayLunchStartMinutes = 12 * 60
-	allDayLunchBreakMinutes = 60
-)
+// 00:00-23:59 span - see allDayWindow.
+//
+// ai-instruct-61 briefly baked an unpaid 1-hour lunch pause at noon into
+// this, and ai-instruct-64 briefly split an all-day entry into two
+// ReportEntry rows (one per side of that pause) to keep each row's duration
+// honest. ai-instruct-65 reverted both: the split broke the detailed
+// webview's edit form (two rows sharing one real time entry id), and a
+// single continuous 9:00-to-9:00-plus-HoursPerDay window is simpler to
+// compute and reason about. Total hours/days are unaffected either way -
+// they were always exactly HoursPerDay for an all-day entry regardless of
+// how its window/rows were displayed.
+const allDayStartMinutes = 9 * 60
 
 // DayLayout is the plain calendar-day format ("2006-01-02" in Go's reference
 // time, i.e. YYYY-MM-DD) used everywhere a report deals with a day as a bare
@@ -82,49 +84,13 @@ func formatMinutesOfDay(min int) string {
 	return fmt.Sprintf("%02d:%02d", min/60, min%60)
 }
 
-// allDaySegment is one work session of a synthetic "all day" schedule (see
-// allDaySegments): a wall-clock start/end pair plus its own duration.
-type allDaySegment struct {
-	start, end   string
-	durationSecs int
-}
-
-// allDaySegments splits an "all day" entry into the work session(s) implied
-// by a day starting at 9:00 AM with a 1-hour lunch pause at noon, ending
-// once the client's HoursPerDay (falling back to 7h if unset) worth of work
-// is done (ai-instruct-61/64) - not a literal 00:00-23:59 span, nor a
-// lunch-free 9:00-to-9:00-plus-HoursPerDay span. The morning covers up to 3
-// hours (9:00-12:00); if HoursPerDay is 3 or less, that single segment is
-// the whole day, with no lunch pause at all. Otherwise a second segment,
-// starting at 13:00, makes up the rest of HoursPerDay - each entry.AllDay
-// time entry becomes one models.ReportEntry row per segment returned here,
-// so the detailed report shows the two work sessions as separate lines
-// rather than one span whose duration would otherwise silently include the
-// unpaid lunch gap.
-func allDaySegments(client models.Client) []allDaySegment {
-	totalMinutes := int(hoursPerDay(client) * 60)
-	morningMinutes := allDayLunchStartMinutes - allDayStartMinutes
-	if totalMinutes <= morningMinutes {
-		return []allDaySegment{{
-			start:        formatMinutesOfDay(allDayStartMinutes),
-			end:          formatMinutesOfDay(allDayStartMinutes + totalMinutes),
-			durationSecs: totalMinutes * 60,
-		}}
-	}
-	afternoonStart := allDayLunchStartMinutes + allDayLunchBreakMinutes
-	afternoonMinutes := totalMinutes - morningMinutes
-	return []allDaySegment{
-		{
-			start:        formatMinutesOfDay(allDayStartMinutes),
-			end:          formatMinutesOfDay(allDayLunchStartMinutes),
-			durationSecs: morningMinutes * 60,
-		},
-		{
-			start:        formatMinutesOfDay(afternoonStart),
-			end:          formatMinutesOfDay(afternoonStart + afternoonMinutes),
-			durationSecs: afternoonMinutes * 60,
-		},
-	}
+// allDayWindow returns the display start/end for an "all day" entry: 9:00
+// AM through 9:00 AM plus the client's HoursPerDay (falling back to 7h if
+// unset) - not a literal 00:00-23:59 span. See allDayStartMinutes for why
+// this is a single continuous window rather than a lunch-aware split.
+func allDayWindow(client models.Client) (start, end string) {
+	endMinutes := allDayStartMinutes + int(hoursPerDay(client)*60)
+	return formatMinutesOfDay(allDayStartMinutes), formatMinutesOfDay(endMinutes)
 }
 
 // DurationSecs computes an entry's duration: an all-day entry takes its
@@ -180,32 +146,28 @@ func memberName(m models.Member) string {
 	return name
 }
 
-// Enrich turns raw time entries into ReportEntry values. An "all day" entry
-// becomes one row per allDaySegments segment (one or two - see there), each
-// respecting only its own session's hours, rather than a single row whose
-// displayed span would silently include the unpaid lunch gap in its
-// duration (ai-instruct-64); their durations still sum to the client's
-// HoursPerDay, same as a single-row all-day entry always has. Amount is
-// left nil for every entry unless canSeeAmount is true (readers can't reach
-// this code path at all; members can see their hours but never a priced
-// amount).
+// Enrich turns raw time entries into ReportEntry values: one row per entry,
+// always - an "all day" entry displays allDayWindow's single 9:00-to-9:00-
+// plus-HoursPerDay span (ai-instruct-65), rather than the multi-row lunch-
+// aware split ai-instruct-64 tried, which broke the detailed webview's edit
+// form. Amount is left nil for every entry unless canSeeAmount is true
+// (readers can't reach this code path at all; members can see their hours
+// but never a priced amount).
 func Enrich(entries []models.TimeEntry, lk Lookups, canSeeAmount bool) []models.ReportEntry {
 	out := make([]models.ReportEntry, 0, len(entries))
 	for _, e := range entries {
 		client := lk.Clients[e.ClientID]
 		project := lk.Projects[e.ProjectID]
 		member := lk.Members[e.UserID]
+		dur := DurationSecs(e, client)
 
-		if !e.AllDay {
-			dur := DurationSecs(e, client)
-			out = append(out, buildReportEntry(e, client, project, member, e.Start, e.End, dur, canSeeAmount))
-			continue
+		start, end := e.Start, e.End
+		if e.AllDay {
+			s, en := allDayWindow(client)
+			start, end = &s, &en
 		}
 
-		for _, seg := range allDaySegments(client) {
-			start, end := seg.start, seg.end
-			out = append(out, buildReportEntry(e, client, project, member, &start, &end, seg.durationSecs, canSeeAmount))
-		}
+		out = append(out, buildReportEntry(e, client, project, member, start, end, dur, canSeeAmount))
 	}
 
 	// Most recent first, matching the reference report's ordering.
@@ -220,8 +182,7 @@ func Enrich(entries []models.TimeEntry, lk Lookups, canSeeAmount bool) []models.
 
 // buildReportEntry builds one ReportEntry row for entry e, given the
 // start/end/duration it should display - e's own fields for a regular
-// entry, or one of allDaySegments' segments for an "all day" entry (see
-// Enrich, which may call this more than once per e).
+// entry, or allDayWindow's synthetic span/HoursPerDay for an "all day" one.
 func buildReportEntry(e models.TimeEntry, client models.Client, project models.Project, member models.Member, start, end *string, durSecs int, canSeeAmount bool) models.ReportEntry {
 	re := models.ReportEntry{
 		ID:           e.ID,

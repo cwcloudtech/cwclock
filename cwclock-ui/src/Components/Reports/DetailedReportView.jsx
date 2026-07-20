@@ -40,12 +40,9 @@ const DetailedReportView = ({ report, orgId, isAdminOrOwner, onChanged }) => {
           <span />
         </div>
         {entries.length === 0 && <p className={styles.empty}>{t("reports.noEntries")}</p>}
-        {entries.map((entry, i) => (
+        {entries.map((entry) => (
           <ReportEntryRow
-            // An "all day" entry now renders as two rows sharing the same
-            // entry.id (one per work session - see report.allDaySegments),
-            // so the index has to be part of the key too.
-            key={`${entry.id}-${i}`}
+            key={entry.id}
             entry={entry}
             orgId={orgId}
             currency={totals.currency}
