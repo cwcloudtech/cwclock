@@ -161,7 +161,6 @@ const fr = {
     searchMember: "Rechercher un membre...",
     deleteRecordTitle: "Supprimer l'entrée de temps",
     deleteRecordBody: "Voulez-vous vraiment supprimer « {{text}} » ? Cette action est irréversible.",
-    defaultTaskName: "Tâche",
     importCsv: "Importer un CSV",
     importCsvTitle: "Importer des entrées de temps depuis un CSV",
     importCsvHint:

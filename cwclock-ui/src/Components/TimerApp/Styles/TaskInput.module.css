@@ -45,6 +45,12 @@
   flex-shrink: 0;
 }
 
+.AllDayField {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .AllDayPicker {
   padding: 8px 10px;
   border: 1px solid var(--cw-border);
@@ -58,6 +64,12 @@
 .AllDayPicker:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.AllDayIcon {
+  font-size: 16px;
+  color: var(--cw-text-muted);
+  flex-shrink: 0;
 }
 
 .clock {

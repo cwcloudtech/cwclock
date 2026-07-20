@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { FiCalendar } from "react-icons/fi";
 import styles from "./Styles/TaskInput.module.css";
 import useTimer from "./useTimer";
 import useDateHook from "./useDateHook";
@@ -36,7 +37,7 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
     const project = projects.find((p) => p.id === projectId);
     if (!project) return;
     const taskObj = {
-      text: name || t("timeTracker.defaultTaskName"),
+      text: name || project.name,
       day,
       allDay: true,
       clientId: project.clientId,
@@ -53,7 +54,7 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
         return;
       }
       let taskObj = {
-        text: name || t("timeTracker.defaultTaskName"),
+        text: name || project.name,
         day: new Date().toISOString().slice(0, 10),
         start: start,
         end: padTimeString(`${hours2}:${minutes2}:${seconds2}`),
@@ -89,7 +90,7 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
           disabled={timerOn}
         />
         <div className={styles.Timer}>
-          <Tooltip label={t("timeTracker.allDay")} position="bottom">
+          <div className={styles.AllDayField}>
             <input
               type="date"
               className={styles.AllDayPicker}
@@ -98,7 +99,10 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
               disabled={!projectId || timerOn}
               aria-label={t("timeTracker.allDay")}
             />
-          </Tooltip>
+            <Tooltip label={t("timeTracker.allDay")} position="bottom">
+              <FiCalendar className={styles.AllDayIcon} />
+            </Tooltip>
+          </div>
           <span className={styles.clock} title={t("timeTracker.elapsedTime")}>
             {hrs < 10 ? "0" + hrs : hrs}:{min < 10 ? "0" + min : min}:
             {sec < 10 ? "0" + sec : sec}

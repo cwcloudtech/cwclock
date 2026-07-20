@@ -161,7 +161,6 @@ const en = {
     searchMember: "Search member...",
     deleteRecordTitle: "Delete time record",
     deleteRecordBody: 'Are you sure to delete "{{text}}"? This can\'t be undone.',
-    defaultTaskName: "Task",
     importCsv: "Import CSV",
     importCsvTitle: "Import time entries from CSV",
     importCsvHint:
