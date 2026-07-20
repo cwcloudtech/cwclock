@@ -365,6 +365,7 @@ const fr = {
     subject: "Sujet",
     message: "Message",
     send: "Envoyer le message",
+    backToTimeTracking: "Retour au suivi du temps",
   },
   errors: {
     network: "Une erreur est survenue. Veuillez réessayer.",
@@ -418,6 +419,9 @@ const fr = {
     passwordNoSymbol: "Le mot de passe doit contenir un caractère spécial.",
     contactFormNotConfigured: "Le formulaire de contact n'est pas disponible pour le moment.",
     contactFormFailed: "Échec de l'envoi de votre message, veuillez réessayer plus tard.",
+    contactRateLimited: "Vous envoyez trop de messages. Veuillez patienter avant de réessayer.",
+    contactMessageTooShort: "Votre message est trop court. Merci d'ajouter un peu plus de détails.",
+    contactGibberish: "Votre message ressemble à du spam. Merci de le reformuler.",
   },
   reports: {
     summary: "Résumé",

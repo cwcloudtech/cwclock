@@ -2,12 +2,28 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 
 	"cwclock-api/internal/contact"
 	"cwclock-api/internal/utils"
 )
+
+// cwcloudContactErrors maps CWCloud's own contact-request i18n_code values
+// to this API's error response (status + i18n_code) - see contact.APIError.
+// A code CWCloud returns that isn't in this map (including a blank one,
+// since i18n_code is optional there) falls back to the generic
+// CodeContactFormFailed response.
+var cwcloudContactErrors = map[string]struct {
+	status int
+	code   string
+	msg    string
+}{
+	"cf_rate_limiting":  {http.StatusTooManyRequests, CodeContactRateLimited, "You're sending too many messages, please try again later"},
+	"message_too_short": {http.StatusBadRequest, CodeContactMessageTooShort, "Your message is too short"},
+	"gibberish":         {http.StatusBadRequest, CodeContactGibberish, "Your message looks like spam, please rewrite it"},
+}
 
 type ContactHandler struct {
 	contact *contact.Client
@@ -59,6 +75,13 @@ func (h *ContactHandler) Create(w http.ResponseWriter, r *http.Request) {
 		ClientIP: contact.ResolveClientIP(r),
 	})
 	if err != nil {
+		var apiErr *contact.APIError
+		if errors.As(err, &apiErr) {
+			if mapped, ok := cwcloudContactErrors[apiErr.Code]; ok {
+				writeError(w, mapped.status, mapped.msg, mapped.code)
+				return
+			}
+		}
 		slog.Error("failed to submit contact form", "error", err)
 		writeError(w, http.StatusBadGateway, "Failed to send your message, please try again later", CodeContactFormFailed)
 		return

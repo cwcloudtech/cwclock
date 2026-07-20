@@ -122,7 +122,11 @@ const ContactForm = () => {
         </button>
       </form>
       <div className={styles.footer}>
-        <Link to="/login">{t("auth.backToLogin")}</Link>
+        {user?.token ? (
+          <Link to="/dashboard/timetracker">{t("contact.backToTimeTracking")}</Link>
+        ) : (
+          <Link to="/login">{t("auth.backToLogin")}</Link>
+        )}
       </div>
     </div>
   );

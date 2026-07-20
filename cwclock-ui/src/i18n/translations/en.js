@@ -365,6 +365,7 @@ const en = {
     subject: "Subject",
     message: "Message",
     send: "Send message",
+    backToTimeTracking: "Back to time reporting",
   },
   errors: {
     network: "Something went wrong. Please try again.",
@@ -418,6 +419,9 @@ const en = {
     passwordNoSymbol: "Password must contain a special character.",
     contactFormNotConfigured: "The contact form isn't available right now.",
     contactFormFailed: "Failed to send your message, please try again later.",
+    contactRateLimited: "You're sending too many messages. Please wait a bit before trying again.",
+    contactMessageTooShort: "Your message is too short. Please add a bit more detail.",
+    contactGibberish: "Your message looks like spam. Please rewrite it.",
   },
   reports: {
     summary: "Summary",

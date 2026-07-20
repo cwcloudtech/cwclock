@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"time"
@@ -65,6 +66,23 @@ func ResolveClientIP(r *http.Request) string {
 	return forwardedBy
 }
 
+// APIError is returned by Send when CWCloud's contact-request API responds
+// with a non-2xx status. Code is CWCloud's own i18n_code from the response
+// body (e.g. "cf_rate_limiting", "message_too_short", "gibberish") - it's
+// optional, so a well-formed error response may still leave Code blank;
+// callers must handle that rather than assuming it's always set.
+type APIError struct {
+	StatusCode int
+	Code       string
+}
+
+func (e *APIError) Error() string {
+	if utils.IsNotBlank(e.Code) {
+		return fmt.Sprintf("cwcloud contact api returned status %d (code %q)", e.StatusCode, e.Code)
+	}
+	return fmt.Sprintf("cwcloud contact api returned status %d", e.StatusCode)
+}
+
 // Client posts contact form submissions to CWCloud's contact-request API.
 type Client struct {
 	apiURL string
@@ -117,7 +135,16 @@ func (c *Client) Send(ctx context.Context, s Submission) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 300 {
-		return fmt.Errorf("cwcloud contact api returned status %d", resp.StatusCode)
+		// Best-effort: CWCloud's i18n_code is optional and the body isn't
+		// guaranteed to even be JSON, so a decode failure just leaves Code
+		// blank rather than masking the real StatusCode-based error.
+		var errBody struct {
+			I18nCode string `json:"i18n_code"`
+		}
+		if raw, readErr := io.ReadAll(resp.Body); readErr == nil {
+			_ = json.Unmarshal(raw, &errBody)
+		}
+		return &APIError{StatusCode: resp.StatusCode, Code: errBody.I18nCode}
 	}
 	return nil
 }
