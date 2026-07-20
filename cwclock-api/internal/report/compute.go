@@ -16,8 +16,16 @@ import (
 
 // allDayStartMinutes is the wall-clock start assumed for an "all day" entry
 // (9:00 AM), so it renders as a plausible work window instead of a literal
-// 00:00-23:59 span.
-const allDayStartMinutes = 9 * 60
+// 00:00-23:59 span. allDayLunchStartMinutes/allDayLunchBreakMinutes bake in
+// an unpaid 1-hour lunch pause at noon (ai-instruct-61): the morning runs
+// 9:00-12:00 (or less, if HoursPerDay leaves fewer than 3 hours to work),
+// and the afternoon, starting after the break, makes up whatever of the
+// client's HoursPerDay the morning didn't cover - see allDayWindow.
+const (
+	allDayStartMinutes      = 9 * 60
+	allDayLunchStartMinutes = 12 * 60
+	allDayLunchBreakMinutes = 60
+)
 
 // DayLayout is the plain calendar-day format ("2006-01-02" in Go's reference
 // time, i.e. YYYY-MM-DD) used everywhere a report deals with a day as a bare
@@ -74,11 +82,21 @@ func formatMinutesOfDay(min int) string {
 	return fmt.Sprintf("%02d:%02d", min/60, min%60)
 }
 
-// allDayWindow returns the display start/end for an "all day" entry: 9:00 AM
-// through 9:00 AM plus the client's HoursPerDay (falling back to 7h if
-// unset) — not a literal 00:00-23:59 span.
+// allDayWindow returns the display start/end for an "all day" entry: a work
+// day starting at 9:00 AM with a 1-hour lunch pause at noon, ending once
+// the client's HoursPerDay (falling back to 7h if unset) worth of work is
+// done - not a literal 00:00-23:59 span, nor a lunch-free 9:00-to-9:00-
+// plus-HoursPerDay span. The morning covers up to 3 hours (9:00-12:00); if
+// HoursPerDay is 3 or less, the day ends there with no lunch pause at all.
+// Otherwise the afternoon, starting at 13:00, makes up the rest.
 func allDayWindow(client models.Client) (start, end string) {
-	endMinutes := allDayStartMinutes + int(hoursPerDay(client)*60)
+	totalMinutes := int(hoursPerDay(client) * 60)
+	morningMinutes := allDayLunchStartMinutes - allDayStartMinutes
+	if totalMinutes <= morningMinutes {
+		return formatMinutesOfDay(allDayStartMinutes), formatMinutesOfDay(allDayStartMinutes + totalMinutes)
+	}
+	afternoonMinutes := totalMinutes - morningMinutes
+	endMinutes := allDayLunchStartMinutes + allDayLunchBreakMinutes + afternoonMinutes
 	return formatMinutesOfDay(allDayStartMinutes), formatMinutesOfDay(endMinutes)
 }
 
