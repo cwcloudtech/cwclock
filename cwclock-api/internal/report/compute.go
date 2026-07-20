@@ -82,22 +82,49 @@ func formatMinutesOfDay(min int) string {
 	return fmt.Sprintf("%02d:%02d", min/60, min%60)
 }
 
-// allDayWindow returns the display start/end for an "all day" entry: a work
-// day starting at 9:00 AM with a 1-hour lunch pause at noon, ending once
-// the client's HoursPerDay (falling back to 7h if unset) worth of work is
-// done - not a literal 00:00-23:59 span, nor a lunch-free 9:00-to-9:00-
-// plus-HoursPerDay span. The morning covers up to 3 hours (9:00-12:00); if
-// HoursPerDay is 3 or less, the day ends there with no lunch pause at all.
-// Otherwise the afternoon, starting at 13:00, makes up the rest.
-func allDayWindow(client models.Client) (start, end string) {
+// allDaySegment is one work session of a synthetic "all day" schedule (see
+// allDaySegments): a wall-clock start/end pair plus its own duration.
+type allDaySegment struct {
+	start, end   string
+	durationSecs int
+}
+
+// allDaySegments splits an "all day" entry into the work session(s) implied
+// by a day starting at 9:00 AM with a 1-hour lunch pause at noon, ending
+// once the client's HoursPerDay (falling back to 7h if unset) worth of work
+// is done (ai-instruct-61/64) - not a literal 00:00-23:59 span, nor a
+// lunch-free 9:00-to-9:00-plus-HoursPerDay span. The morning covers up to 3
+// hours (9:00-12:00); if HoursPerDay is 3 or less, that single segment is
+// the whole day, with no lunch pause at all. Otherwise a second segment,
+// starting at 13:00, makes up the rest of HoursPerDay - each entry.AllDay
+// time entry becomes one models.ReportEntry row per segment returned here,
+// so the detailed report shows the two work sessions as separate lines
+// rather than one span whose duration would otherwise silently include the
+// unpaid lunch gap.
+func allDaySegments(client models.Client) []allDaySegment {
 	totalMinutes := int(hoursPerDay(client) * 60)
 	morningMinutes := allDayLunchStartMinutes - allDayStartMinutes
 	if totalMinutes <= morningMinutes {
-		return formatMinutesOfDay(allDayStartMinutes), formatMinutesOfDay(allDayStartMinutes + totalMinutes)
+		return []allDaySegment{{
+			start:        formatMinutesOfDay(allDayStartMinutes),
+			end:          formatMinutesOfDay(allDayStartMinutes + totalMinutes),
+			durationSecs: totalMinutes * 60,
+		}}
 	}
+	afternoonStart := allDayLunchStartMinutes + allDayLunchBreakMinutes
 	afternoonMinutes := totalMinutes - morningMinutes
-	endMinutes := allDayLunchStartMinutes + allDayLunchBreakMinutes + afternoonMinutes
-	return formatMinutesOfDay(allDayStartMinutes), formatMinutesOfDay(endMinutes)
+	return []allDaySegment{
+		{
+			start:        formatMinutesOfDay(allDayStartMinutes),
+			end:          formatMinutesOfDay(allDayLunchStartMinutes),
+			durationSecs: morningMinutes * 60,
+		},
+		{
+			start:        formatMinutesOfDay(afternoonStart),
+			end:          formatMinutesOfDay(afternoonStart + afternoonMinutes),
+			durationSecs: afternoonMinutes * 60,
+		},
+	}
 }
 
 // DurationSecs computes an entry's duration: an all-day entry takes its
@@ -153,46 +180,32 @@ func memberName(m models.Member) string {
 	return name
 }
 
-// Enrich turns raw time entries into ReportEntry values. Amount is left nil
-// for every entry unless canSeeAmount is true (readers can't reach this code
-// path at all; members can see their hours but never a priced amount).
+// Enrich turns raw time entries into ReportEntry values. An "all day" entry
+// becomes one row per allDaySegments segment (one or two - see there), each
+// respecting only its own session's hours, rather than a single row whose
+// displayed span would silently include the unpaid lunch gap in its
+// duration (ai-instruct-64); their durations still sum to the client's
+// HoursPerDay, same as a single-row all-day entry always has. Amount is
+// left nil for every entry unless canSeeAmount is true (readers can't reach
+// this code path at all; members can see their hours but never a priced
+// amount).
 func Enrich(entries []models.TimeEntry, lk Lookups, canSeeAmount bool) []models.ReportEntry {
 	out := make([]models.ReportEntry, 0, len(entries))
 	for _, e := range entries {
 		client := lk.Clients[e.ClientID]
 		project := lk.Projects[e.ProjectID]
 		member := lk.Members[e.UserID]
-		dur := DurationSecs(e, client)
 
-		start, end := e.Start, e.End
-		if e.AllDay {
-			s, en := allDayWindow(client)
-			start, end = &s, &en
+		if !e.AllDay {
+			dur := DurationSecs(e, client)
+			out = append(out, buildReportEntry(e, client, project, member, e.Start, e.End, dur, canSeeAmount))
+			continue
 		}
 
-		re := models.ReportEntry{
-			ID:           e.ID,
-			Day:          e.Day,
-			Start:        start,
-			End:          end,
-			AllDay:       e.AllDay,
-			DurationSecs: dur,
-			Days:         float64(dur) / 3600 / hoursPerDay(client),
-			Text:         e.Text,
-			ClientID:     e.ClientID,
-			ClientName:   client.Name,
-			ProjectID:    e.ProjectID,
-			ProjectName:  project.Name,
-			UserID:       e.UserID,
-			UserName:     memberName(member),
-			UserEmail:    member.Email,
-			CreatedAt:    e.CreatedAt,
+		for _, seg := range allDaySegments(client) {
+			start, end := seg.start, seg.end
+			out = append(out, buildReportEntry(e, client, project, member, &start, &end, seg.durationSecs, canSeeAmount))
 		}
-		if canSeeAmount {
-			amt := amount(dur, client, project, member)
-			re.Amount = &amt
-		}
-		out = append(out, re)
 	}
 
 	// Most recent first, matching the reference report's ordering.
@@ -203,6 +216,36 @@ func Enrich(entries []models.TimeEntry, lk Lookups, canSeeAmount bool) []models.
 		return startOf(out[i]) > startOf(out[j])
 	})
 	return out
+}
+
+// buildReportEntry builds one ReportEntry row for entry e, given the
+// start/end/duration it should display - e's own fields for a regular
+// entry, or one of allDaySegments' segments for an "all day" entry (see
+// Enrich, which may call this more than once per e).
+func buildReportEntry(e models.TimeEntry, client models.Client, project models.Project, member models.Member, start, end *string, durSecs int, canSeeAmount bool) models.ReportEntry {
+	re := models.ReportEntry{
+		ID:           e.ID,
+		Day:          e.Day,
+		Start:        start,
+		End:          end,
+		AllDay:       e.AllDay,
+		DurationSecs: durSecs,
+		Days:         float64(durSecs) / 3600 / hoursPerDay(client),
+		Text:         e.Text,
+		ClientID:     e.ClientID,
+		ClientName:   client.Name,
+		ProjectID:    e.ProjectID,
+		ProjectName:  project.Name,
+		UserID:       e.UserID,
+		UserName:     memberName(member),
+		UserEmail:    member.Email,
+		CreatedAt:    e.CreatedAt,
+	}
+	if canSeeAmount {
+		amt := amount(durSecs, client, project, member)
+		re.Amount = &amt
+	}
+	return re
 }
 
 func startOf(e models.ReportEntry) string {
