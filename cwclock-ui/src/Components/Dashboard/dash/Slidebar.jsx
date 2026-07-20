@@ -163,7 +163,6 @@ const Slidebar = () => {
                 <FaEnvelope fontSize="18px" />
               </Link>
             </Tooltip>
-            <Tooltip label={t("nav.accountMenu")} position="bottom">
             <Dropdown
               align="end"
               triggerClassName={styles.profileTrigger}
@@ -235,7 +234,6 @@ const Slidebar = () => {
                 </>
               )}
             </Dropdown>
-            </Tooltip>
             </>
           ) : (
             <button className={styles.loginBtn} onClick={() => navigate("/login")} title={t("nav.goToLogin")}>

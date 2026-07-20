@@ -77,7 +77,6 @@ const fr = {
     cwclockHome: "Accueil CWClock",
     switchOrganization: "Changer d'organisation",
     createOrganization: "Créer une organisation",
-    accountMenu: "Menu du compte",
     gitRepository: "Dépôt Git",
     documentation: "Documentation",
     contactForm: "Nous contacter",
