@@ -138,7 +138,7 @@ const Slidebar = () => {
         <div className={styles.navbarrightmain}>
           {user.token ? (
             <>
-            <Tooltip label={t("nav.documentation")}>
+            <Tooltip label={t("nav.documentation")} position="bottom">
               <a
                 href={process.env[`REACT_APP_${locale.toUpperCase()}_DOCURL`] || process.env.REACT_APP_EN_DOCURL}
                 target="_blank"
@@ -148,7 +148,7 @@ const Slidebar = () => {
                 <FaBook fontSize="18px" />
               </a>
             </Tooltip>
-            <Tooltip label={t("nav.gitRepository")}>
+            <Tooltip label={t("nav.gitRepository")} position="bottom">
               <a
                 href={process.env.REACT_APP_REPOURL}
                 target="_blank"
@@ -158,12 +158,12 @@ const Slidebar = () => {
                 <FaGitAlt fontSize="18px" />
               </a>
             </Tooltip>
-            <Tooltip label={t("nav.contactForm")}>
+            <Tooltip label={t("nav.contactForm")} position="bottom">
               <Link to="/contact" className={styles.gitRepoLink}>
                 <FaEnvelope fontSize="18px" />
               </Link>
             </Tooltip>
-            <Tooltip label={t("nav.accountMenu")}>
+            <Tooltip label={t("nav.accountMenu")} position="bottom">
             <Dropdown
               align="end"
               triggerClassName={styles.profileTrigger}
