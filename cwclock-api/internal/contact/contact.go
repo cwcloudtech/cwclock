@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -33,6 +34,41 @@ type Submission struct {
 	Message   string
 	Name      string
 	Firstname string
+	// ClientIP is the caller's IP address, forwarded to CWCloud via the
+	// X-Client-IP header rather than the JSON body - see ResolveClientIP,
+	// which callers should use to fill this in.
+	ClientIP string
+}
+
+// X-Real-IP and X-Forwarded-By are the incoming request headers
+// ResolveClientIP falls back to when the contact form itself didn't supply
+// an ip.
+const (
+	headerXRealIP      = "X-Real-IP"
+	headerXForwardedBy = "X-Forwarded-By"
+	headerXClientIP    = "X-Client-IP"
+)
+
+// ResolveClientIP determines the X-Client-IP header value to forward to
+// CWCloud's contact-request API: formIP (the contact form's own optional
+// "ip" field, kept out of the JSON body forwarded to CWCloud - see request)
+// when set, otherwise the incoming request's X-Real-IP header, falling back
+// to X-Forwarded-By when that's blank too.
+func ResolveClientIP(formIP string, r *http.Request) string {
+	if utils.IsNotBlank(formIP) {
+		slog.Info("contact form client ip from request body", "ip", formIP)
+		return formIP
+	}
+	if r == nil {
+		return utils.EMPTY
+	}
+	if realIP := r.Header.Get(headerXRealIP); utils.IsNotBlank(realIP) {
+		slog.Info("contact form client ip from header", "header", headerXRealIP, "ip", realIP)
+		return realIP
+	}
+	forwardedBy := r.Header.Get(headerXForwardedBy)
+	slog.Info("contact form client ip from header", "header", headerXForwardedBy, "ip", forwardedBy)
+	return forwardedBy
 }
 
 // Client posts contact form submissions to CWCloud's contact-request API.
@@ -76,6 +112,9 @@ func (c *Client) Send(ctx context.Context, s Submission) error {
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
+	if utils.IsNotBlank(s.ClientIP) {
+		req.Header.Set(headerXClientIP, s.ClientIP)
+	}
 
 	resp, err := c.client.Do(req)
 	if err != nil {
