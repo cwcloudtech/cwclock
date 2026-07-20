@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { FaFileInvoiceDollar, FaRegEdit } from "react-icons/fa";
@@ -18,6 +18,7 @@ import toastOptions from "../../Redux/toastOptions";
 import { listClientsApi } from "../../Redux/Clients/Client.actions";
 import { listProjectsApi } from "../../Redux/Projects/Project.actions";
 import { listMembersApi } from "../../Redux/Organizations/Org.actions";
+import { fetchLatestEntryDayApi } from "../../Redux/Tasks/Task.actions";
 import {
   listInvoicesApi,
   previewInvoiceApi,
@@ -29,7 +30,7 @@ import {
   deleteInvoiceApi,
   clearInvoices,
 } from "../../Redux/Invoices/Invoice.actions";
-import { dateRangeShortcuts, toISODate } from "../common/dateRangeShortcuts";
+import { dateRangeShortcuts, toISODate, fromISODate } from "../common/dateRangeShortcuts";
 import { isAdminOrOwner as computeIsAdminOrOwner } from "../common/permissions";
 import { apiErrorMessage } from "../../i18n/translate";
 import styles from "./Styles/Invoices.module.css";
@@ -52,8 +53,13 @@ const STATUS_BADGE_CLASS = {
   refunded: "statusRefunded",
 };
 
-const defaultRange = (t) => {
-  const thisMonth = dateRangeShortcuts(t).find((s) => s.key === "thisMonth");
+// referenceDate defaults to today - pass the user's most recently logged
+// time entry's date instead once it's known (see the effect below), so the
+// initial range's end reflects their last activity rather than today when
+// they haven't logged anything recently. Start is always the first day of
+// that reference date's month.
+const defaultRange = (t, referenceDate) => {
+  const thisMonth = dateRangeShortcuts(t, referenceDate).find((s) => s.key === "thisMonth");
   const [s, e] = thisMonth.range();
   return { start: toISODate(s), end: toISODate(e) };
 };
@@ -161,7 +167,15 @@ const Invoices = () => {
   const [showGenerateWithId, setShowGenerateWithId] = useState(false);
 
   const isAdminOrOwner = computeIsAdminOrOwner(user, members);
-  const setRange = (start, end) => setRangeState({ start, end });
+  // Tracks whether the user has touched the date range themselves, so the
+  // most-recent-entry lookup below never clobbers a choice they already
+  // made - a ref rather than state since it's read from inside an async
+  // callback (see the effect below), where a state closure would go stale.
+  const rangeTouchedRef = useRef(false);
+  const setRange = (start, end) => {
+    rangeTouchedRef.current = true;
+    setRangeState({ start, end });
+  };
   const sortedClients = [...clients].sort((a, b) => a.name.localeCompare(b.name));
   const clientProjects = projects
     .filter((p) => p.clientId === clientId)
@@ -177,6 +191,23 @@ const Invoices = () => {
       dispatch(listMembersApi(currentOrgId, user.token));
     }
   }, [dispatch, currentOrgId, user.token]);
+
+  // Defaults the date range's end to the user's most recently logged time
+  // entry instead of today, so the preselected month reflects their last
+  // activity rather than the real current date. Only applies once, and only
+  // if the range is still untouched by the time it resolves.
+  useEffect(() => {
+    if (!currentOrgId) return;
+    let cancelled = false;
+    dispatch(fetchLatestEntryDayApi(currentOrgId, user.token)).then((day) => {
+      if (cancelled || !day || rangeTouchedRef.current) return;
+      setRangeState(defaultRange(t, fromISODate(day)));
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentOrgId]);
 
   // All of the client's projects are included by default when switching
   // clients, matching "optional filter, everything selected until narrowed".

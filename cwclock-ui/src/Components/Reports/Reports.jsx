@@ -22,11 +22,12 @@ import styles from "./Styles/Reports.module.css";
 
 // referenceDate defaults to today - pass the user's most recently logged
 // time entry's date instead once it's known (see the effect below), so the
-// initial range reflects their last activity rather than an empty "this
-// week" when they haven't logged anything recently (ai-instruct-63).
+// initial range reflects their last activity rather than an empty range
+// when they haven't logged anything recently (ai-instruct-63). Start is
+// always the first day of that reference date's month.
 const defaultRange = (t, referenceDate) => {
-  const thisWeek = dateRangeShortcuts(t, referenceDate).find((s) => s.key === "thisWeek");
-  const [s, e] = thisWeek.range();
+  const thisMonth = dateRangeShortcuts(t, referenceDate).find((s) => s.key === "thisMonth");
+  const [s, e] = thisMonth.range();
   return { start: toISODate(s), end: toISODate(e) };
 };
 
