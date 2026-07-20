@@ -356,6 +356,14 @@ const en = {
     passwordResetSent: "If this email is registered, a reset link has been sent.",
     passwordReset: "Password updated. You can now log in.",
     invoiceSent: "Invoice sent.",
+    contactSent: "Your message has been sent.",
+  },
+  contact: {
+    title: "Contact us",
+    body: "Have a question or feedback? Send us a message.",
+    subject: "Subject",
+    message: "Message",
+    send: "Send message",
   },
   errors: {
     network: "Something went wrong. Please try again.",
@@ -407,6 +415,8 @@ const en = {
     passwordNoUpper: "Password must contain an uppercase letter.",
     passwordNoLower: "Password must contain a lowercase letter.",
     passwordNoSymbol: "Password must contain a special character.",
+    contactFormNotConfigured: "The contact form isn't available right now.",
+    contactFormFailed: "Failed to send your message, please try again later.",
   },
   reports: {
     summary: "Summary",

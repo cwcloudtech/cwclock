@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"cwclock-api/internal/config"
+	"cwclock-api/internal/contact"
 	"cwclock-api/internal/db"
 	"cwclock-api/internal/email"
 	"cwclock-api/internal/handlers"
@@ -67,6 +68,7 @@ func main() {
 	fieldHandler := handlers.NewFieldHandler(fieldStore)
 	oidcProviders := oidc.BuildProviders(cfg)
 	oidcHandler := handlers.NewOIDCHandler(oidcProviders, userStore, cfg.JWTSecret, cfg.APIBaseURL, cfg.UIBaseURL, cfg.OIDCKeycloakGroups, cfg.ActivationMode)
+	contactHandler := handlers.NewContactHandler(contact.New(cfg.CWCloudAPIURL, cfg.CWCloudContactFormID))
 
 	met, err := metrics.Setup(ctx, metrics.Config{
 		Endpoint: cfg.OtelEndpoint,
@@ -81,7 +83,7 @@ func main() {
 
 	r := router.New(
 		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler, importHandler, apiKeyHandler, invoiceHandler,
-		currencyHandler, countryHandler, fieldHandler, oidcHandler,
+		currencyHandler, countryHandler, fieldHandler, oidcHandler, contactHandler,
 		orgStore, userStore, apiKeyStore, cfg.JWTSecret, cfg.ActivationMode, cfg.CorsEnabled, cfg.CorsAllowedOrigins, cfg.Version, cfg.ManifestPath,
 		tel, met.Observe, met.Handler,
 	)

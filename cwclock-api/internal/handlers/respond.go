@@ -61,6 +61,8 @@ const (
 	CodePasswordNoUpper             = "errors.passwordNoUpper"
 	CodePasswordNoLower             = "errors.passwordNoLower"
 	CodePasswordNoSymbol            = "errors.passwordNoSymbol"
+	CodeContactFormNotConfigured    = "errors.contactFormNotConfigured"
+	CodeContactFormFailed           = "errors.contactFormFailed"
 )
 
 func writeJSON(w http.ResponseWriter, status int, body any) {

@@ -29,6 +29,7 @@ func New(
 	countryHandler *handlers.CountryHandler,
 	fieldHandler *handlers.FieldHandler,
 	oidcHandler *handlers.OIDCHandler,
+	contactHandler *handlers.ContactHandler,
 	orgs *store.OrgStore,
 	users *store.UserStore,
 	apiKeys middleware.ApiKeyVerifier,
@@ -66,6 +67,9 @@ func New(
 		r.Get("/currencies", currencyHandler.List)
 		r.Get("/countries", countryHandler.List)
 		r.Get("/fields", fieldHandler.List)
+
+		// Public contact form (no auth) - forwards to CWCloud's /v1/contactreq.
+		r.Post("/contact", contactHandler.Create)
 
 		// Public logo endpoints (no auth) - emails reference these by URL
 		// instead of embedding an image as a data: URI, which mail clients and

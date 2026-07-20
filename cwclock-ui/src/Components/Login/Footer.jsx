@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import styles from './Styles/Form.module.css';
 import { useI18n } from '../../i18n/I18nContext';
 
@@ -14,6 +15,9 @@ const Footer = ({margin}) => {
         <p>
           {t('auth.openSourcePrefix')} <a href={REPO_URL} target='_blank' rel='noreferrer'>{t('auth.here')}</a>
           {t('auth.documentationAvailable')} <a href={DOC_URL} target='_blank' rel='noreferrer'>{t('auth.here')}</a>.
+        </p>
+        <p>
+          <Link to='/contact'>{t('contact.title')}</Link>
         </p>
     </div>
     </div>

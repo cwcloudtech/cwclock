@@ -5,6 +5,7 @@ import SignUp from "./Pages/SignUp";
 import ForgotPassword from "./Pages/ForgotPassword";
 import ResetPassword from "./Pages/ResetPassword";
 import OidcCallback from "./Pages/OidcCallback";
+import Contact from "./Pages/Contact";
 import { ToastContainer } from "react-toastify";
 import Slidebar from "./Components/Dashboard/dash/Slidebar";
 import { ThemeProvider } from "./Components/common/ThemeContext";
@@ -23,6 +24,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/oidc/callback" element={<OidcCallback />} />
+            <Route path="/contact" element={<Contact />} />
             <Route path="/dashboard/*" element={<Slidebar />}>
               <Route path=":topics" element={<Slidebar />}></Route>
             </Route>

@@ -356,6 +356,14 @@ const fr = {
     passwordResetSent: "Si cette adresse email est enregistrée, un lien de réinitialisation a été envoyé.",
     passwordReset: "Mot de passe mis à jour. Vous pouvez maintenant vous connecter.",
     invoiceSent: "Facture envoyée.",
+    contactSent: "Votre message a été envoyé.",
+  },
+  contact: {
+    title: "Nous contacter",
+    body: "Une question ou une remarque ? Envoyez-nous un message.",
+    subject: "Sujet",
+    message: "Message",
+    send: "Envoyer le message",
   },
   errors: {
     network: "Une erreur est survenue. Veuillez réessayer.",
@@ -407,6 +415,8 @@ const fr = {
     passwordNoUpper: "Le mot de passe doit contenir une majuscule.",
     passwordNoLower: "Le mot de passe doit contenir une minuscule.",
     passwordNoSymbol: "Le mot de passe doit contenir un caractère spécial.",
+    contactFormNotConfigured: "Le formulaire de contact n'est pas disponible pour le moment.",
+    contactFormFailed: "Échec de l'envoi de votre message, veuillez réessayer plus tard.",
   },
   reports: {
     summary: "Résumé",
