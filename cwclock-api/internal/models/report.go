@@ -3,8 +3,10 @@ package models
 import "time"
 
 // ReportEntry is a time entry enriched with the display data a report needs
-// (client/project/member names) plus its computed duration and, when the
-// caller is allowed to see it, its billable amount.
+// (client/project/member names) plus its computed duration, the equivalent
+// number of days that duration represents (its client's HoursPerDay - see
+// report.hoursPerDay), and, when the caller is allowed to see it, its
+// billable amount.
 type ReportEntry struct {
 	ID           string    `json:"id"`
 	Day          string    `json:"day"`
@@ -12,6 +14,7 @@ type ReportEntry struct {
 	End          *string   `json:"end"`
 	AllDay       bool      `json:"allDay"`
 	DurationSecs int       `json:"durationSecs"`
+	Days         float64   `json:"days"`
 	Text         string    `json:"text"`
 	ClientID     string    `json:"clientId"`
 	ClientName   string    `json:"clientName"`
@@ -24,11 +27,13 @@ type ReportEntry struct {
 	Amount       *float64  `json:"amount,omitempty"`
 }
 
-// ReportTotals summarizes a report's overall duration/amount. Amount is nil
-// for callers not allowed to see billable amounts (readers are blocked
-// entirely; members never see amounts, only admins/owner do).
+// ReportTotals summarizes a report's overall duration/days/amount. Amount is
+// nil for callers not allowed to see billable amounts (readers are blocked
+// entirely; members never see amounts, only admins/owner do) - Days has no
+// such restriction, it's a duration-derived figure like DurationSecs.
 type ReportTotals struct {
 	DurationSecs int      `json:"durationSecs"`
+	Days         float64  `json:"days"`
 	Amount       *float64 `json:"amount,omitempty"`
 	Currency     string   `json:"currency"`
 }

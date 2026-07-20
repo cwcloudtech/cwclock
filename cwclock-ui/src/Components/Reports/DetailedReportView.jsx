@@ -18,6 +18,9 @@ const DetailedReportView = ({ report, orgId, isAdminOrOwner, onChanged }) => {
         <span>
           <strong>{t("reports.billable")}:</strong> {formatHMS(totals.durationSecs)}
         </span>
+        <span>
+          <strong>{t("reports.days")}:</strong> {(totals.days ?? 0).toFixed(2)}
+        </span>
         {showAmount && (
           <span>
             <strong>{t("reports.amount")}:</strong> {totals.amount.toFixed(2)} {totals.currency}

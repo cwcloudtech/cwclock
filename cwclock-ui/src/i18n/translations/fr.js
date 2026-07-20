@@ -433,6 +433,7 @@ const fr = {
     exportPdf: "Exporter en PDF",
     total: "Total",
     billable: "Facturable",
+    days: "Jours",
     amount: "Montant",
     duration: "Durée",
     time: "Heure",

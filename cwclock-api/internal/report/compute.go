@@ -177,6 +177,7 @@ func Enrich(entries []models.TimeEntry, lk Lookups, canSeeAmount bool) []models.
 			End:          end,
 			AllDay:       e.AllDay,
 			DurationSecs: dur,
+			Days:         float64(dur) / 3600 / hoursPerDay(client),
 			Text:         e.Text,
 			ClientID:     e.ClientID,
 			ClientName:   client.Name,
@@ -217,6 +218,7 @@ func Totals(entries []models.ReportEntry, canSeeAmount bool, currency string) mo
 	var amt float64
 	for _, e := range entries {
 		t.DurationSecs += e.DurationSecs
+		t.Days += e.Days
 		if e.Amount != nil {
 			amt += *e.Amount
 		}
