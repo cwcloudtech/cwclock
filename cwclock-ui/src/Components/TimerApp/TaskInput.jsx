@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { FiCalendar } from "react-icons/fi";
+import { FiCalendar, FiUpload } from "react-icons/fi";
 import styles from "./Styles/TaskInput.module.css";
 import useTimer from "./useTimer";
 import useDateHook from "./useDateHook";
@@ -20,6 +20,7 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
   const [name, setName] = useState("");
   const [projectId, setProjectId] = useState("");
   const [allDayDate, setAllDayDate] = useState("");
+  const allDayInputRef = useRef(null);
   const { start } = useSelector((state) => state.tasks);
   const { user } = useSelector((state) => state.auth);
   const { currentOrgId } = useSelector((state) => state.organizations);
@@ -45,6 +46,19 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
     };
     dispatch(postTasksApi(taskObj, currentOrgId, user.token));
     setAllDayDate("");
+  };
+
+  // Opens the (visually hidden) native date input's picker from the icon
+  // button - showPicker() is the modern, no-visible-input way to trigger it;
+  // .click() is the fallback for browsers that don't support it yet.
+  const openAllDayPicker = () => {
+    const el = allDayInputRef.current;
+    if (!el) return;
+    if (el.showPicker) {
+      el.showPicker();
+    } else {
+      el.click();
+    }
   };
 
   const handleSubmit = () => {
@@ -90,19 +104,6 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
           disabled={timerOn}
         />
         <div className={styles.Timer}>
-          <div className={styles.AllDayField}>
-            <input
-              type="date"
-              className={styles.AllDayPicker}
-              value={allDayDate}
-              onChange={handleAllDayDate}
-              disabled={!projectId || timerOn}
-              aria-label={t("timeTracker.allDay")}
-            />
-            <Tooltip label={t("timeTracker.allDay")} position="bottom">
-              <FiCalendar className={styles.AllDayIcon} />
-            </Tooltip>
-          </div>
           <span className={styles.clock} title={t("timeTracker.elapsedTime")}>
             {hrs < 10 ? "0" + hrs : hrs}:{min < 10 ? "0" + min : min}:
             {sec < 10 ? "0" + sec : sec}
@@ -116,15 +117,38 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
             {timerOn ? t("timeTracker.stop") : t("timeTracker.start")}
           </button>
           {isAdminOrOwner && (
+            <Tooltip label={t("timeTracker.importCsvTitle")} position="bottom">
+              <button
+                type="button"
+                className={styles.AllDayIconBtn}
+                onClick={onImportClick}
+                aria-label={t("timeTracker.importCsvTitle")}
+              >
+                <FiUpload fontSize="16px" />
+              </button>
+            </Tooltip>
+          )}
+          <input
+            ref={allDayInputRef}
+            type="date"
+            className={styles.AllDayPickerHidden}
+            value={allDayDate}
+            onChange={handleAllDayDate}
+            disabled={!projectId || timerOn}
+            aria-hidden="true"
+            tabIndex={-1}
+          />
+          <Tooltip label={t("timeTracker.allDay")} position="bottom">
             <button
               type="button"
-              className={styles.ImportBtn}
-              onClick={onImportClick}
-              title={t("timeTracker.importCsvTitle")}
+              className={styles.AllDayIconBtn}
+              onClick={openAllDayPicker}
+              disabled={!projectId || timerOn}
+              aria-label={t("timeTracker.allDay")}
             >
-              {t("timeTracker.importCsv")}
+              <FiCalendar fontSize="16px" />
             </button>
-          )}
+          </Tooltip>
         </div>
       </div>
     </div>
