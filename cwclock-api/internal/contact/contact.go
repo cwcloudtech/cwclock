@@ -41,8 +41,8 @@ type Submission struct {
 }
 
 // X-Real-IP and X-Forwarded-By are the incoming request headers
-// ResolveClientIP falls back to when the contact form itself didn't supply
-// an ip.
+// ResolveClientIP reads the caller's IP from - already set by the reverse
+// proxy, so the contact form itself never needs to supply one.
 const (
 	headerXRealIP      = "X-Real-IP"
 	headerXForwardedBy = "X-Forwarded-By"
@@ -50,15 +50,9 @@ const (
 )
 
 // ResolveClientIP determines the X-Client-IP header value to forward to
-// CWCloud's contact-request API: formIP (the contact form's own optional
-// "ip" field, kept out of the JSON body forwarded to CWCloud - see request)
-// when set, otherwise the incoming request's X-Real-IP header, falling back
-// to X-Forwarded-By when that's blank too.
-func ResolveClientIP(formIP string, r *http.Request) string {
-	if utils.IsNotBlank(formIP) {
-		slog.Info("contact form client ip from request body", "ip", formIP)
-		return formIP
-	}
+// CWCloud's contact-request API from the incoming request's X-Real-IP
+// header, falling back to X-Forwarded-By when that's blank too.
+func ResolveClientIP(r *http.Request) string {
 	if r == nil {
 		return utils.EMPTY
 	}
@@ -89,7 +83,7 @@ func New(apiURL, formID string) *Client {
 // ai-instruct-54: "If this variable is not set, a 405 error will be sent")
 // rather than relying on Send to fail.
 func (c *Client) Configured() bool {
-	return utils.IsNotBlank(c.formID)
+	return utils.IsNotBlank(c.formID) && utils.IsNotBlank(c.apiURL)
 }
 
 // Send posts one contact form submission. Returns an error if the request

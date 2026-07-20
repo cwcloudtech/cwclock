@@ -18,18 +18,17 @@ func NewContactHandler(contact *contact.Client) *ContactHandler {
 }
 
 // contactPayload is the JSON body accepted by POST /v1/contact - name and
-// firstname are optional (ai-instruct-54), everything else is required. IP
-// is also optional (ai-instruct-55): when the caller supplies one it's used
-// as-is, otherwise it's resolved from the request's own X-Real-IP/
-// X-Forwarded-By headers (see contact.ResolveClientIP) - either way it's
-// forwarded to CWCloud as the X-Client-IP header, never in the JSON body.
+// firstname are optional (ai-instruct-54), everything else is required. The
+// caller's IP is never part of this payload (ai-instruct-56): it's resolved
+// from the request's own X-Real-IP/X-Forwarded-By headers, already set by
+// the reverse proxy (see contact.ResolveClientIP), and forwarded to CWCloud
+// as the X-Client-IP header.
 type contactPayload struct {
 	Email     string `json:"email"`
 	Subject   string `json:"subject"`
 	Message   string `json:"message"`
 	Name      string `json:"name"`
 	Firstname string `json:"firstname"`
-	IP        string `json:"ip"`
 }
 
 // Create submits the contact form to CWCloud's contact-request API. Answers
@@ -57,7 +56,7 @@ func (h *ContactHandler) Create(w http.ResponseWriter, r *http.Request) {
 	err := h.contact.Send(r.Context(), contact.Submission{
 		Email: p.Email, Subject: p.Subject, Message: p.Message,
 		Name: p.Name, Firstname: p.Firstname,
-		ClientIP: contact.ResolveClientIP(p.IP, r),
+		ClientIP: contact.ResolveClientIP(r),
 	})
 	if err != nil {
 		slog.Error("failed to submit contact form", "error", err)
