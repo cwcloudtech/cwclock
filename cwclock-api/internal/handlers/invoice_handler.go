@@ -349,7 +349,7 @@ func (h *InvoiceHandler) SendEmail(w http.ResponseWriter, r *http.Request) {
 
 	language := models.ClientLanguage(client.Country)
 	reportAttachments := h.invoiceReportAttachments(r.Context(), orgID, client, inv)
-	h.mailer.SendInvoice(r.Context(), recipients, org.ID, org.Name, owner.Email, org.AccountingEmail, number, inv.SelectedBeginDate, inv.SelectedEndDate, language, pdf, reportAttachments)
+	h.mailer.SendInvoice(r.Context(), recipients, org.ID, org.Name, owner.Email, org.AccountingEmail, number, inv.SelectedBeginDate, inv.SelectedEndDate, client.PurchaseOrder, language, pdf, reportAttachments)
 	writeJSON(w, http.StatusOK, map[string]string{"id": invoiceID})
 }
 

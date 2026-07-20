@@ -211,12 +211,14 @@ func formatFRDate(day string) string {
 // department address, when set - always cc'd so a copy of every invoice
 // sent to a client reaches them too. startDay/endDay are the invoice's
 // billed period ("2006-01-02"), shown in parentheses in the subject/title.
-// language is the client_language decision table's result (models.
-// ClientLanguage) - "fr" sends the email in French, anything else in
-// English. reportAttachments are the optional summary/detailed report PDFs
-// for the same period (see models.Client.SendReportsWithInvoice), joined
-// alongside the invoice PDF via CWCloud's email API's attachments list.
-func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgID, orgName, ownerEmail, accountingEmail, invoiceNumber, startDay, endDay, language string, pdf []byte, reportAttachments []Attachment) {
+// purchaseOrder is the client's optional purchase order number
+// (models.Client.PurchaseOrder) - when set, it's appended to the body's
+// period parenthetical. language is the client_language decision table's
+// result (models.ClientLanguage) - "fr" sends the email in French, anything
+// else in English. reportAttachments are the optional summary/detailed
+// report PDFs for the same period (see models.Client.SendReportsWithInvoice),
+// joined alongside the invoice PDF via CWCloud's email API's attachments list.
+func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgID, orgName, ownerEmail, accountingEmail, invoiceNumber, startDay, endDay, purchaseOrder, language string, pdf []byte, reportAttachments []Attachment) {
 	if len(recipients) == 0 {
 		return
 	}
@@ -236,6 +238,10 @@ func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgID, or
 	var body template.HTML
 	if language == "fr" {
 		period := fmt.Sprintf("%s - %s", formatFRDate(startDay), formatFRDate(endDay))
+		details := period
+		if utils.IsNotBlank(purchaseOrder) {
+			details = fmt.Sprintf("période %s, bon de commande %s", period, purchaseOrder)
+		}
 		suffix := "."
 		if withTimesheets {
 			suffix = ", avec les feuilles de temps."
@@ -244,10 +250,14 @@ func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgID, or
 		title = fmt.Sprintf("Votre facture %s de %s", invoiceNumber, orgName)
 		body = template.HTML(fmt.Sprintf(
 			`<p>Veuillez trouver ci-joint la facture <strong>%s</strong> de <strong>%s</strong> (%s)%s</p>`,
-			template.HTMLEscapeString(invoiceNumber), template.HTMLEscapeString(orgName), template.HTMLEscapeString(period), suffix,
+			template.HTMLEscapeString(invoiceNumber), template.HTMLEscapeString(orgName), template.HTMLEscapeString(details), suffix,
 		))
 	} else {
 		period := fmt.Sprintf("%s - %s", formatUSDate(startDay), formatUSDate(endDay))
+		details := period
+		if utils.IsNotBlank(purchaseOrder) {
+			details = fmt.Sprintf("period %s, purchased order %s", period, purchaseOrder)
+		}
 		suffix := "."
 		if withTimesheets {
 			suffix = ", with the timesheets."
@@ -256,7 +266,7 @@ func (s *Sender) SendInvoice(ctx context.Context, recipients []string, orgID, or
 		title = fmt.Sprintf("Your invoice %s from %s", invoiceNumber, orgName)
 		body = template.HTML(fmt.Sprintf(
 			`<p>Please find attached invoice <strong>%s</strong> from <strong>%s</strong> (%s)%s</p>`,
-			template.HTMLEscapeString(invoiceNumber), template.HTMLEscapeString(orgName), template.HTMLEscapeString(period), suffix,
+			template.HTMLEscapeString(invoiceNumber), template.HTMLEscapeString(orgName), template.HTMLEscapeString(details), suffix,
 		))
 	}
 

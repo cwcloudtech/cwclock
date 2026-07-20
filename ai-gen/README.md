@@ -58,3 +58,4 @@
 * [ai-instruct-56](./ai-instruct-56.md)
 * [ai-instruct-57](./ai-instruct-57.md)
 * [ai-instruct-58](./ai-instruct-58.md)
+* [ai-instruct-59](./ai-instruct-59.md)
