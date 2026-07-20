@@ -45,6 +45,21 @@
   flex-shrink: 0;
 }
 
+.AllDayPicker {
+  padding: 8px 10px;
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-sm);
+  background-color: var(--cw-bg-alt);
+  color: var(--cw-text);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.AllDayPicker:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .clock {
   font-variant-numeric: tabular-nums;
   font-size: 1.1rem;

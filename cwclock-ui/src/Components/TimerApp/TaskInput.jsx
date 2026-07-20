@@ -7,6 +7,7 @@ import { postTasksApi, startTask } from "../../Redux/Tasks/Task.actions";
 import useTime from "./useTime";
 import projectLabel from "../common/projectLabel";
 import AutocompleteSelect from "../common/AutocompleteSelect";
+import Tooltip from "../common/Tooltip";
 import padTimeString from "../common/padTimeString";
 import { useI18n } from "../../i18n/I18nContext";
 
@@ -17,12 +18,33 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
   const { hours2, minutes2, seconds2 } = useTime();
   const [name, setName] = useState("");
   const [projectId, setProjectId] = useState("");
+  const [allDayDate, setAllDayDate] = useState("");
   const { start } = useSelector((state) => state.tasks);
   const { user } = useSelector((state) => state.auth);
   const { currentOrgId } = useSelector((state) => state.organizations);
   const { projects } = useSelector((state) => state.projects);
   const { clients } = useSelector((state) => state.clients);
   const dispatch = useDispatch();
+
+  // handleAllDayDate creates an all-day time entry on the picked day for the
+  // currently selected project, as soon as a date is chosen - no separate
+  // "create" click needed (ai-instruct-60).
+  const handleAllDayDate = (e) => {
+    const day = e.target.value;
+    setAllDayDate(day);
+    if (!day) return;
+    const project = projects.find((p) => p.id === projectId);
+    if (!project) return;
+    const taskObj = {
+      text: name || t("timeTracker.defaultTaskName"),
+      day,
+      allDay: true,
+      clientId: project.clientId,
+      projectId: project.id,
+    };
+    dispatch(postTasksApi(taskObj, currentOrgId, user.token));
+    setAllDayDate("");
+  };
 
   const handleSubmit = () => {
     if (timerOn) {
@@ -67,6 +89,16 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
           disabled={timerOn}
         />
         <div className={styles.Timer}>
+          <Tooltip label={t("timeTracker.allDay")} position="bottom">
+            <input
+              type="date"
+              className={styles.AllDayPicker}
+              value={allDayDate}
+              onChange={handleAllDayDate}
+              disabled={!projectId || timerOn}
+              aria-label={t("timeTracker.allDay")}
+            />
+          </Tooltip>
           <span className={styles.clock} title={t("timeTracker.elapsedTime")}>
             {hrs < 10 ? "0" + hrs : hrs}:{min < 10 ? "0" + min : min}:
             {sec < 10 ? "0" + sec : sec}
