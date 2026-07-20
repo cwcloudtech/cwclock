@@ -199,6 +199,8 @@ const fr = {
     editOrganization: "Modifier l'organisation",
     accountingEmail: "Email de la comptabilité",
     accountingEmailPlaceholder: "Optionnel - en copie de chaque email de facture",
+    iban: "IBAN",
+    bic: "BIC",
     editOrgTooltip: "Modifier les informations de cette organisation",
     membersOf: "Membres de {{name}}",
     addMemberPanel: "Ajouter un membre",

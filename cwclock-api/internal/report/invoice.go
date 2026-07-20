@@ -125,6 +125,23 @@ func formatContact(name, email string) string {
 	return cell(fmt.Sprintf("%s: %s", name, email))
 }
 
+// ibanRow builds the bank-details row's label/value (ai-instruct-67): both
+// IBAN and BIC set combines them under "IBAN / BIC"; IBAN alone still shows
+// under plain "IBAN" (a BIC identifies the bank but isn't itself enough to
+// receive a transfer, so BIC alone shows nothing). Both blank returns ("",
+// "") - addRow drops the row entirely on the blank value regardless of
+// label.
+func ibanRow(iban, bic string) (label, value string) {
+	switch {
+	case utils.IsNotBlank(iban) && utils.IsNotBlank(bic):
+		return "IBAN / BIC", cell(fmt.Sprintf("%s / %s", iban, bic))
+	case utils.IsNotBlank(iban):
+		return "IBAN", cell(iban)
+	default:
+		return utils.EMPTY, utils.EMPTY
+	}
+}
+
 // formatAddress joins the non-blank parts of an address into one line,
 // returning "" (dropped entirely by addRow) when nothing is set.
 func formatAddress(address, postalCode, city, country string) string {
@@ -170,6 +187,8 @@ func issuerRows(org models.Organization, invoiceDate, ownerContact string) [][]s
 	rows = addRow(rows, "NAF", cell(org.NAF))
 	rows = addRow(rows, "Date", invoiceDate)
 	rows = addRow(rows, "Contact", ownerContact)
+	ibanLabel, ibanValue := ibanRow(org.IBAN, org.BIC)
+	rows = addRow(rows, ibanLabel, ibanValue)
 	return rows
 }
 

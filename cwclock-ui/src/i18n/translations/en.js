@@ -199,6 +199,8 @@ const en = {
     editOrganization: "Edit organization",
     accountingEmail: "Accounting email",
     accountingEmailPlaceholder: "Optional - cc'd on every invoice email",
+    iban: "IBAN",
+    bic: "BIC",
     editOrgTooltip: "Edit this organization's details",
     membersOf: "Members of {{name}}",
     addMemberPanel: "Add a member",

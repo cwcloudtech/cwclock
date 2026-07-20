@@ -42,6 +42,8 @@ type organizationPayload struct {
 	NAF                  string                      `json:"naf"`
 	MF                   string                      `json:"mf"`
 	IdentificationNumber string                      `json:"identificationNumber"`
+	IBAN                 string                      `json:"iban"`
+	BIC                  string                      `json:"bic"`
 	Picture              string                      `json:"picture"`
 	PictureX             float64                     `json:"pictureX"`
 	PictureY             float64                     `json:"pictureY"`
@@ -124,6 +126,8 @@ func (p organizationPayload) toFields() store.OrganizationFields {
 		NAF:                  p.NAF,
 		MF:                   p.MF,
 		IdentificationNumber: p.IdentificationNumber,
+		IBAN:                 p.IBAN,
+		BIC:                  p.BIC,
 		Picture:              p.Picture,
 		PictureX:             p.PictureX,
 		PictureY:             p.PictureY,

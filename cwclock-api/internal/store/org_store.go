@@ -34,6 +34,8 @@ type orgData struct {
 	NAF                  string                      `json:"naf,omitempty"`
 	MF                   string                      `json:"mf,omitempty"`
 	IdentificationNumber string                      `json:"identificationNumber,omitempty"`
+	IBAN                 string                      `json:"iban,omitempty"`
+	BIC                  string                      `json:"bic,omitempty"`
 	Picture              string                      `json:"picture,omitempty"`
 	PictureX             *float64                    `json:"pictureX,omitempty"`
 	PictureY             *float64                    `json:"pictureY,omitempty"`
@@ -59,6 +61,8 @@ type OrganizationFields struct {
 	NAF                  string
 	MF                   string
 	IdentificationNumber string
+	IBAN                 string
+	BIC                  string
 	Picture              string
 	PictureX             float64
 	PictureY             float64
@@ -90,6 +94,8 @@ func applyOrgData(o *models.Organization, raw []byte) error {
 	o.NAF = d.NAF
 	o.MF = d.MF
 	o.IdentificationNumber = d.IdentificationNumber
+	o.IBAN = d.IBAN
+	o.BIC = d.BIC
 	o.Picture = d.Picture
 	o.PictureX = resolveImagePosition(d.PictureX)
 	o.PictureY = resolveImagePosition(d.PictureY)
@@ -133,6 +139,8 @@ func toOrgData(f OrganizationFields) orgData {
 		NAF:                  f.NAF,
 		MF:                   f.MF,
 		IdentificationNumber: f.IdentificationNumber,
+		IBAN:                 f.IBAN,
+		BIC:                  f.BIC,
 		Picture:              f.Picture,
 		PictureX:             &f.PictureX,
 		PictureY:             &f.PictureY,

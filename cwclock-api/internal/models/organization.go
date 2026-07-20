@@ -20,27 +20,33 @@ type Organization struct {
 	// accounting department, when it has one distinct from the owner) that
 	// always gets a copy of invoice emails sent to a client, alongside the
 	// owner.
-	AccountingEmail      string               `json:"accountingEmail,omitempty"`
-	Address              string               `json:"address"`
-	PostalCode           string               `json:"postalCode"`
-	City                 string               `json:"city"`
-	Country              string               `json:"country"`
-	VATNumber            string               `json:"vatNumber"`
-	SIREN                string               `json:"siren"`
-	SIRET                string               `json:"siret"`
-	NAF                  string               `json:"naf"`
-	MF                   string               `json:"mf"`
-	IdentificationNumber string               `json:"identificationNumber"`
-	Picture              string               `json:"picture,omitempty"`
-	PictureX             float64              `json:"pictureX"`
-	PictureY             float64              `json:"pictureY"`
-	Stamp                string               `json:"stamp,omitempty"`
-	StampX               float64              `json:"stampX"`
-	StampY               float64              `json:"stampY"`
-	Currency             string               `json:"currency"`
-	ExternalConnections  []ExternalConnection `json:"externalConnections"`
-	CreatedAt            time.Time            `json:"createdAt"`
-	UpdatedAt            time.Time            `json:"updatedAt"`
+	AccountingEmail      string `json:"accountingEmail,omitempty"`
+	Address              string `json:"address"`
+	PostalCode           string `json:"postalCode"`
+	City                 string `json:"city"`
+	Country              string `json:"country"`
+	VATNumber            string `json:"vatNumber"`
+	SIREN                string `json:"siren"`
+	SIRET                string `json:"siret"`
+	NAF                  string `json:"naf"`
+	MF                   string `json:"mf"`
+	IdentificationNumber string `json:"identificationNumber"`
+	// IBAN/BIC are optional bank details for wire-transfer payment. Both
+	// must be set for either to appear on an invoice PDF (see
+	// report.formatIBANBIC) - either alone isn't enough to actually pay by
+	// bank transfer.
+	IBAN                string               `json:"iban,omitempty"`
+	BIC                 string               `json:"bic,omitempty"`
+	Picture             string               `json:"picture,omitempty"`
+	PictureX            float64              `json:"pictureX"`
+	PictureY            float64              `json:"pictureY"`
+	Stamp               string               `json:"stamp,omitempty"`
+	StampX              float64              `json:"stampX"`
+	StampY              float64              `json:"stampY"`
+	Currency            string               `json:"currency"`
+	ExternalConnections []ExternalConnection `json:"externalConnections"`
+	CreatedAt           time.Time            `json:"createdAt"`
+	UpdatedAt           time.Time            `json:"updatedAt"`
 }
 
 // ExternalConnectionType is the kind of external storage an organization can
