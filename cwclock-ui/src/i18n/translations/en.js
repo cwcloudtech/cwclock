@@ -80,6 +80,7 @@ const en = {
     accountMenu: "Account menu",
     gitRepository: "Git repository",
     documentation: "Documentation",
+    contactForm: "Contact us",
     editProfile: "Edit profile",
     editProfileTooltip: "Edit your profile and avatar",
     lightMode: "Light mode",

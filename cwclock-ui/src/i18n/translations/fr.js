@@ -80,6 +80,7 @@ const fr = {
     accountMenu: "Menu du compte",
     gitRepository: "Dépôt Git",
     documentation: "Documentation",
+    contactForm: "Nous contacter",
     editProfile: "Modifier le profil",
     editProfileTooltip: "Modifier votre profil et votre avatar",
     lightMode: "Mode clair",

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import styles from "./Styles/Form.module.css";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Spinner from "../spinner/Spinner";
 import { sendContactApi } from "../../Redux/Contact/Contact.actions";
 import { useI18n } from "../../i18n/I18nContext";
@@ -14,10 +14,19 @@ const emptyFields = {
   message: "",
 };
 
+// initialFields presets the email field with the connected user's own
+// address (ai-instruct-57), so a logged-in user reaching this form from the
+// navbar doesn't have to retype an email the app already knows.
+const initialFields = (user) => ({
+  ...emptyFields,
+  email: user?.token ? user.email : "",
+});
+
 const ContactForm = () => {
   const { t } = useI18n();
   const dispatch = useDispatch();
-  const [fields, setFields] = useState(emptyFields);
+  const { user } = useSelector((state) => state.auth);
+  const [fields, setFields] = useState(() => initialFields(user));
   const [isLoading, setIsLoading] = useState(false);
 
   const setField = (key, value) => setFields((f) => ({ ...f, [key]: value }));
@@ -27,7 +36,7 @@ const ContactForm = () => {
     setIsLoading(true);
     try {
       await dispatch(sendContactApi(fields));
-      setFields(emptyFields);
+      setFields(initialFields(user));
     } catch {
       // Error toast already shown by sendContactApi.
     } finally {

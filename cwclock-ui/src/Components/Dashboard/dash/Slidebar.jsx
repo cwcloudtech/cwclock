@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styles from "./STYLE/Slidebar.module.css";
-import { FaChevronLeft, FaChevronRight, FaUserCheck, FaGitAlt, FaBook } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaUserCheck, FaGitAlt, FaBook, FaEnvelope } from "react-icons/fa";
 import { FiLogOut, FiSun, FiMoon, FiGlobe } from "react-icons/fi";
 import { Route, Routes, useNavigate, Link } from "react-router-dom";
 import Dropdown, { DropdownItem, DropdownText, DropdownDivider } from "../../common/Dropdown";
@@ -159,6 +159,11 @@ const Slidebar = () => {
               >
                 <FaGitAlt fontSize="18px" />
               </a>
+            </Tooltip>
+            <Tooltip label={t("nav.contactForm")}>
+              <Link to="/contact" className={styles.gitRepoLink} title={t("nav.contactForm")}>
+                <FaEnvelope fontSize="18px" />
+              </Link>
             </Tooltip>
             <Tooltip label={t("nav.accountMenu")}>
             <Dropdown
