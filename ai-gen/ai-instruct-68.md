@@ -18,3 +18,11 @@ The message of commit will be:
 or
 
 > Remove invoice {INVOICE_ID}
+
+## MFA
+
+I want the user to be able to register MFA (OTP) app like Google Authenticator scanning QR code or device like yubikey.
+
+Then it's required on the login screen.
+
+An admin can disable MFA for a user.
