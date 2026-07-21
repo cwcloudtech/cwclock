@@ -86,7 +86,7 @@ func (g *gitTarget) Upload(ctx context.Context, year string, months []string, fi
 	}
 
 	dir := g.resolveDir(wt, year, months)
-	if dir != "" {
+	if utils.IsNotBlank(dir) {
 		if err := wt.Filesystem.MkdirAll(dir, 0o755); err != nil {
 			return fmt.Errorf("external connection git: could not create %s: %w", dir, err)
 		}

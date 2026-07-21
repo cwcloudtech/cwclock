@@ -18,6 +18,7 @@ import (
 	"cwclock-api/internal/router"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/telemetry"
+	"cwclock-api/internal/utils"
 )
 
 // mfaIssuer is the "issuer" shown by authenticator apps (Google
@@ -62,14 +63,16 @@ func main() {
 	mailer := email.NewSender(cfg.CWCloudAPIURL, cfg.CWCloudAPIKey, cfg.EmailFrom, cfg.APIBaseURL)
 
 	rpID := cfg.UIBaseURL
-	if u, err := url.Parse(cfg.UIBaseURL); err == nil && u.Hostname() != "" {
+	if u, err := url.Parse(cfg.UIBaseURL); err == nil && utils.IsNotBlank(u.Hostname()) {
 		rpID = u.Hostname()
 	}
+
 	waInstance, err := webauthn.New(&webauthn.Config{
 		RPID:          rpID,
 		RPDisplayName: mfaIssuer,
 		RPOrigins:     []string{cfg.UIBaseURL},
 	})
+
 	if err != nil {
 		tel.Logger.Error("failed to configure WebAuthn", "error", err)
 		panic(err)
