@@ -23,6 +23,8 @@ A live version is available at [cwclock.me](https://www.cwclock.me).
 * Light/Dark mode
 * OpenTelemetry & OpenMetrics (Prometheus) observability
 * OIDC integration with Google OIDC, Github and Keycloak
+* MFA with TOTP and Yubikey
+* Contact form
 
 ## Complet documentation
 
