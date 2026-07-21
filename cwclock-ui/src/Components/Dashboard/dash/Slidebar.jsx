@@ -34,8 +34,11 @@ const Slidebar = () => {
   const [appVersion, setAppVersion] = useState(null);
 
   useEffect(() => {
+    // manifest.json is copied next to the built frontend at deploy time (see
+    // Dockerfile), not served by the API, so it's fetched from the app's own
+    // origin instead of REACT_APP_APIURL.
     axios
-      .get(`${process.env.REACT_APP_APIURL}/v1/manifest`)
+      .get("/manifest.json")
       .then(({ data }) => setAppVersion(data.version))
       .catch(() => {});
   }, []);
