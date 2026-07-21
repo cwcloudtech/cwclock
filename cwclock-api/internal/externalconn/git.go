@@ -29,9 +29,10 @@ import (
 // generated/removed infrequently enough that a persistent local clone isn't
 // worth the complexity.
 type gitTarget struct {
-	repoURL string
-	auth    transport.AuthMethod
-	flat    bool
+	repoURL  string
+	auth     transport.AuthMethod
+	flat     bool
+	basePath string
 }
 
 func newGitTarget(conn models.ExternalConnection) (*gitTarget, error) {
@@ -39,7 +40,24 @@ func newGitTarget(conn models.ExternalConnection) (*gitTarget, error) {
 	if err != nil {
 		return nil, fmt.Errorf("external connection git: %w", err)
 	}
-	return &gitTarget{repoURL: conn.RepoURL, auth: auth, flat: conn.FlatDirectory}, nil
+	return &gitTarget{
+		repoURL:  conn.RepoURL,
+		auth:     auth,
+		flat:     conn.FlatDirectory,
+		basePath: cleanBasePath(conn.Path),
+	}, nil
+}
+
+// cleanBasePath normalizes the configured Path (ai-instruct-69) into a form
+// safe to path.Join against - a blank Path (the repo root) stays "" rather
+// than becoming "." like path.Clean("") would, so resolveDir/findExisting
+// can keep treating "no base path" as "no path segment at all".
+func cleanBasePath(p string) string {
+	p = strings.Trim(p, "/")
+	if utils.IsBlank(p) {
+		return utils.EMPTY
+	}
+	return path.Clean(p)
 }
 
 // gitAuthMethod picks SSH key auth when an SSH private key is configured,
@@ -133,35 +151,37 @@ func (g *gitTarget) clone(ctx context.Context) (*git.Repository, *git.Worktree, 
 }
 
 // resolveDir returns the directory Upload should write filename's data
-// into: the repo root in flat mode (ai-instruct-42), or whichever of
-// year/months' candidate folders already exists, defaulting to
-// year/months[0] when none do - the same rule s3Target.resolveKey and
-// driveTarget.ensureTargetFolder apply for their own providers.
+// into: Path itself in flat mode (ai-instruct-42/69, "" meaning the repo
+// root), or whichever of Path/year/months' candidate folders already
+// exists, defaulting to Path/year/months[0] when none do - the same rule
+// s3Target.resolveKey and driveTarget.ensureTargetFolder apply for their own
+// providers.
 func (g *gitTarget) resolveDir(wt *git.Worktree, year string, months []string) string {
 	if g.flat {
-		return ""
+		return g.basePath
 	}
 	for _, month := range months {
-		dir := path.Join(year, month)
+		dir := path.Join(g.basePath, year, month)
 		if info, err := wt.Filesystem.Stat(dir); err == nil && info.IsDir() {
 			return dir
 		}
 	}
-	return path.Join(year, months[0])
+	return path.Join(g.basePath, year, months[0])
 }
 
-// findExisting locates filename already committed under one of months'
-// candidate folders (or at the repo root in flat mode), mirroring
+// findExisting locates filename already committed under one of Path/months'
+// candidate folders (or directly under Path in flat mode), mirroring
 // driveTarget.findTargetFolder/findFile.
 func (g *gitTarget) findExisting(wt *git.Worktree, year string, months []string, filename string) (string, bool) {
 	if g.flat {
-		if _, err := wt.Filesystem.Stat(filename); err == nil {
-			return filename, true
+		p := path.Join(g.basePath, filename)
+		if _, err := wt.Filesystem.Stat(p); err == nil {
+			return p, true
 		}
 		return utils.EMPTY, false
 	}
 	for _, month := range months {
-		p := path.Join(year, month, filename)
+		p := path.Join(g.basePath, year, month, filename)
 		if _, err := wt.Filesystem.Stat(p); err == nil {
 			return p, true
 		}

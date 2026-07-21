@@ -27,6 +27,7 @@ const emptyDraft = {
   password: "",
   sshPrivateKey: "",
   sshPrivateKeyPassphrase: "",
+  path: "",
   flatDirectory: false,
 };
 
@@ -129,7 +130,7 @@ const ExternalConnectionsEditor = ({ value = [], onChange, orgId, token }) => {
     if (conn.type === "s3") {
       base = `${conn.bucketName} (${conn.endpoint})`;
     } else if (conn.type === "git") {
-      base = conn.repoUrl;
+      base = conn.path ? `${conn.repoUrl} (${conn.path})` : conn.repoUrl;
     } else {
       base = `${t("organizations.googleDrive")} - ${conn.folderId}`;
     }
@@ -253,6 +254,18 @@ const ExternalConnectionsEditor = ({ value = [], onChange, orgId, token }) => {
                   value={draft.repoUrl}
                   onChange={(e) => setDraftField("repoUrl", e.target.value)}
                 />
+              </div>
+
+              <div className="cw-field">
+                <label className="cw-label">{t("organizations.gitPath")}</label>
+                <input
+                  className="cw-input"
+                  type="text"
+                  value={draft.path}
+                  placeholder={t("organizations.gitPathPlaceholder")}
+                  onChange={(e) => setDraftField("path", e.target.value)}
+                />
+                <p className={styles.flatDirectoryHint}>{t("organizations.gitPathHint")}</p>
               </div>
 
               <div className="cw-field">
