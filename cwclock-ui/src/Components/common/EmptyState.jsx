@@ -2,11 +2,12 @@ import React from "react";
 import styles from "./Styles/EmptyState.module.css";
 import logo from "../../assets/images/octopus.png";
 
-const EmptyState = ({ title, body }) => (
+const EmptyState = ({ title, body, action }) => (
   <div className={styles.Empty}>
     <img src={logo} alt="" />
-    <h4>{title}</h4>
-    <p>{body}</p>
+    {title && <h4>{title}</h4>}
+    {body && <p>{body}</p>}
+    {action && <div className={styles.action}>{action}</div>}
   </div>
 );
 

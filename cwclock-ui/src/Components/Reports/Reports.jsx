@@ -7,6 +7,7 @@ import DateRangePicker from "../common/DateRangePicker";
 import MultiSelect from "../common/MultiSelect";
 import Dropdown, { DropdownItem } from "../common/Dropdown";
 import Spinner from "../spinner/Spinner";
+import NeedOrganizationEmptyState from "../common/NeedOrganizationEmptyState";
 import memberLabel from "../common/memberLabel";
 import toastOptions from "../../Redux/toastOptions";
 import { listClientsApi } from "../../Redux/Clients/Client.actions";
@@ -118,7 +119,7 @@ const Reports = () => {
   }, [currentOrgId, canAccess, tab, range.start, range.end, clientIds, projectIds, userIds]);
 
   if (!currentOrgId) {
-    return <h1 className="cw-title">{t("organizations.selectOrCreateFirst")}</h1>;
+    return <NeedOrganizationEmptyState body={t("organizations.selectOrCreateFirst")} />;
   }
 
   if (!canAccess) {

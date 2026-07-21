@@ -23,6 +23,12 @@
   height: auto;
 }
 
+.action {
+  margin-top: var(--cw-spacing);
+  display: flex;
+  justify-content: center;
+}
+
 @media only screen and (max-width: 600px) {
   .Empty {
     max-width: calc(100% - 40px);

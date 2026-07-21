@@ -28,6 +28,7 @@ const fr = {
     leaveBlankPassword: "Laisser vide pour conserver le mot de passe actuel",
     switchLanguage: "Changer de langue",
     createOne: "En créer une",
+    createOrganization: "Créer une organisation",
     role: "Rôle",
     confirm: "Confirmer",
     select: "Sélectionner",

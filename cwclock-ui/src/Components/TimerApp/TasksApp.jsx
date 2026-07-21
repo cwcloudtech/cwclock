@@ -6,8 +6,9 @@ import TaskComponent from "./TaskComponent";
 import styles from "./Styles/TaskApp.module.css";
 import EmptyTask from "./EmptyTask";
 import ImportCSVModal from "./ImportCSVModal";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Spinner from "../spinner/Spinner";
+import NeedOrganizationEmptyState from "../common/NeedOrganizationEmptyState";
 import { getTasksApi } from "../../Redux/Tasks/Task.actions";
 import { listOrgsApi, listMembersApi } from "../../Redux/Organizations/Org.actions";
 import { listClientsApi } from "../../Redux/Clients/Client.actions";
@@ -104,12 +105,7 @@ const TasksApp = () => {
   if (!currentOrgId) {
     return (
       <div className={styles.Body1}>
-        <div className={styles.Empty}>
-          <p>
-            {t("timeTracker.needOrganization")}{" "}
-            <Link to="/dashboard/organizations">{t("common.createOne")}</Link>.
-          </p>
-        </div>
+        <NeedOrganizationEmptyState body={t("timeTracker.needOrganization")} />
       </div>
     );
   }

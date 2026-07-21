@@ -13,6 +13,7 @@ import MultiSelect from "../common/MultiSelect";
 import Tooltip from "../common/Tooltip";
 import ConfirmModal from "../common/ConfirmModal";
 import EmptyState from "../common/EmptyState";
+import NeedOrganizationEmptyState from "../common/NeedOrganizationEmptyState";
 import CopyIdButton from "../common/CopyIdButton";
 import EditProjectModal from "./EditProjectModal";
 import { isAdminOrOwner as computeIsAdminOrOwner } from "../common/permissions";
@@ -93,7 +94,7 @@ const Project = () => {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   if (!currentOrgId) {
-    return <h1 className="cw-title">{t("organizations.selectOrCreateFirst")}</h1>;
+    return <NeedOrganizationEmptyState body={t("organizations.selectOrCreateFirst")} />;
   }
 
   if (clients.length === 0) {

@@ -10,6 +10,7 @@ import MultiSelect from "../common/MultiSelect";
 import AutocompleteSelect from "../common/AutocompleteSelect";
 import Spinner from "../spinner/Spinner";
 import EmptyState from "../common/EmptyState";
+import NeedOrganizationEmptyState from "../common/NeedOrganizationEmptyState";
 import Button from "../common/Button";
 import Tooltip from "../common/Tooltip";
 import ConfirmModal from "../common/ConfirmModal";
@@ -234,7 +235,7 @@ const Invoices = () => {
   }, [currentOrgId, clientId, range.start, range.end, isAdminOrOwner]);
 
   if (!currentOrgId) {
-    return <h1 className="cw-title">{t("organizations.selectOrCreateFirst")}</h1>;
+    return <NeedOrganizationEmptyState body={t("organizations.selectOrCreateFirst")} />;
   }
 
   if (!isAdminOrOwner) {

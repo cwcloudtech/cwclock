@@ -28,6 +28,7 @@ const en = {
     leaveBlankPassword: "Leave blank to keep the current password",
     switchLanguage: "Switch language",
     createOne: "Create one",
+    createOrganization: "Create an organization",
     role: "Role",
     confirm: "Confirm",
     select: "Select",

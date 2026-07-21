@@ -10,6 +10,7 @@ import CollapsiblePanel from "../common/CollapsiblePanel";
 import Tooltip from "../common/Tooltip";
 import ConfirmModal from "../common/ConfirmModal";
 import EmptyState from "../common/EmptyState";
+import NeedOrganizationEmptyState from "../common/NeedOrganizationEmptyState";
 import CopyIdButton from "../common/CopyIdButton";
 import EditClientModal from "./EditClientModal";
 import { isAdminOrOwner as computeIsAdminOrOwner } from "../common/permissions";
@@ -125,7 +126,7 @@ const Clients = () => {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   if (!currentOrgId) {
-    return <h1 className="cw-title">{t("organizations.selectOrCreateFirst")}</h1>;
+    return <NeedOrganizationEmptyState body={t("organizations.selectOrCreateFirst")} />;
   }
 
   return (
