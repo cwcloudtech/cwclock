@@ -1,5 +1,5 @@
 import axios from "axios";
-import { error, loading, logout, register, syncUser } from "./Auth.types";
+import { error, loading, logout, register, syncUser, mfaRequired } from "./Auth.types";
 import { toast } from "react-toastify";
 import toastOptions from "../toastOptions";
 import { translate, getStoredLocale, apiErrorMessage } from "../../i18n/translate";
@@ -23,12 +23,57 @@ export const loginApi = (userData) => async (dispatch) => {
   dispatch({ type: loading });
   try {
     const { data } = await axios.post(ENDPOINT + "login", userData);
-    console.log(data);
+    if (data.mfaRequired) {
+      // Password was correct, but a second factor is required (see
+      // ai-instruct-68) - nothing is persisted yet, LoginForm renders the
+      // MFA challenge step next.
+      dispatch({ type: mfaRequired, payload: data });
+      return;
+    }
     dispatch({ type: register, payload: data });
     toast.success(translate(getStoredLocale(), "toasts.loggedIn"), toastOptions);
   } catch (e) {
     toast.error(apiErrorMessage(e, getStoredLocale()), toastOptions);
     dispatch({ type: error, payload: e.message });
+  }
+};
+
+// verifyMfaTotpApi finishes a password login gated by MFA using an
+// authenticator app code.
+export const verifyMfaTotpApi = (challengeToken, code) => async (dispatch) => {
+  dispatch({ type: loading });
+  try {
+    const { data } = await axios.post(`${ENDPOINT}login/mfa/totp`, { challengeToken, code });
+    dispatch({ type: register, payload: data });
+    toast.success(translate(getStoredLocale(), "toasts.loggedIn"), toastOptions);
+    return data;
+  } catch (e) {
+    toast.error(apiErrorMessage(e, getStoredLocale()), toastOptions);
+    dispatch({ type: error, payload: e.message });
+    throw e;
+  }
+};
+
+// beginMfaWebAuthnLoginApi requests the assertion options for finishing a
+// password login gated by MFA using a registered security key.
+export const beginMfaWebAuthnLoginApi = (challengeToken) => async () => {
+  const { data } = await axios.post(`${ENDPOINT}login/mfa/webauthn/begin`, { challengeToken });
+  return data;
+};
+
+// finishMfaWebAuthnLoginApi submits the security key's signed assertion to
+// complete the login.
+export const finishMfaWebAuthnLoginApi = (ceremonyToken, credential) => async (dispatch) => {
+  dispatch({ type: loading });
+  try {
+    const { data } = await axios.post(`${ENDPOINT}login/mfa/webauthn/finish`, { ceremonyToken, credential });
+    dispatch({ type: register, payload: data });
+    toast.success(translate(getStoredLocale(), "toasts.loggedIn"), toastOptions);
+    return data;
+  } catch (e) {
+    toast.error(apiErrorMessage(e, getStoredLocale()), toastOptions);
+    dispatch({ type: error, payload: e.message });
+    throw e;
   }
 };
 

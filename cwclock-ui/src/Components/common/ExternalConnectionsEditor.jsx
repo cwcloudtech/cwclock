@@ -21,12 +21,24 @@ const emptyDraft = {
   serviceAccountBase64: "",
   serviceAccountFileName: "",
   folderId: "",
+  repoUrl: "",
+  gitAuthMethod: "password",
+  username: "",
+  password: "",
+  sshPrivateKey: "",
+  sshPrivateKeyPassphrase: "",
   flatDirectory: false,
 };
 
 const isDraftComplete = (draft) => {
   if (draft.type === "s3") {
     return !!(draft.endpoint && draft.bucketName && draft.region && draft.accessKey && draft.secretKey);
+  }
+  if (draft.type === "git") {
+    return !!(
+      draft.repoUrl &&
+      (draft.gitAuthMethod === "password" ? draft.username && draft.password : draft.sshPrivateKey)
+    );
   }
   return !!(draft.serviceAccountBase64 && draft.folderId);
 };
@@ -69,6 +81,7 @@ const ExternalConnectionsEditor = ({ value = [], onChange, orgId, token }) => {
     setAddError("");
     const connection = { ...draft };
     delete connection.serviceAccountFileName;
+    delete connection.gitAuthMethod;
 
     if (orgId) {
       setSaving(true);
@@ -112,10 +125,14 @@ const ExternalConnectionsEditor = ({ value = [], onChange, orgId, token }) => {
   };
 
   const summaryFor = (conn) => {
-    const base =
-      conn.type === "s3"
-        ? `${conn.bucketName} (${conn.endpoint})`
-        : `${t("organizations.googleDrive")} - ${conn.folderId}`;
+    let base;
+    if (conn.type === "s3") {
+      base = `${conn.bucketName} (${conn.endpoint})`;
+    } else if (conn.type === "git") {
+      base = conn.repoUrl;
+    } else {
+      base = `${t("organizations.googleDrive")} - ${conn.folderId}`;
+    }
     return conn.flatDirectory ? `${base} - ${t("organizations.flatDirectoryBadge")}` : base;
   };
 
@@ -126,7 +143,9 @@ const ExternalConnectionsEditor = ({ value = [], onChange, orgId, token }) => {
           {value.map((conn) => (
             <li key={conn.id} className={styles.row}>
               <span className={styles.typeBadge}>
-                {conn.type === "s3" ? t("organizations.s3") : t("organizations.googleDrive")}
+                {conn.type === "s3" && t("organizations.s3")}
+                {conn.type === "git" && t("organizations.git")}
+                {conn.type !== "s3" && conn.type !== "git" && t("organizations.googleDrive")}
               </span>
               <span className={styles.summary}>{summaryFor(conn)}</span>
               <Tooltip label={t("common.delete")}>
@@ -154,6 +173,7 @@ const ExternalConnectionsEditor = ({ value = [], onChange, orgId, token }) => {
             >
               <option value="s3">{t("organizations.s3")}</option>
               <option value="google_drive">{t("organizations.googleDrive")}</option>
+              <option value="git">{t("organizations.git")}</option>
             </select>
           </div>
 
@@ -219,6 +239,98 @@ const ExternalConnectionsEditor = ({ value = [], onChange, orgId, token }) => {
                   onChange={(e) => setDraftField("secretKey", e.target.value)}
                 />
               </div>
+            </>
+          ) : draft.type === "git" ? (
+            <>
+              <div className="cw-field">
+                <label className="cw-label">
+                  {t("organizations.repoUrl")}
+                  <RequiredMark />
+                </label>
+                <input
+                  className="cw-input"
+                  type="text"
+                  value={draft.repoUrl}
+                  onChange={(e) => setDraftField("repoUrl", e.target.value)}
+                />
+              </div>
+
+              <div className="cw-field">
+                <label className="cw-label">{t("organizations.gitAuthMethod")}</label>
+                <div className={styles.authMethodChoice}>
+                  <label>
+                    <input
+                      type="radio"
+                      name="gitAuthMethod"
+                      checked={draft.gitAuthMethod === "password"}
+                      onChange={() => setDraftField("gitAuthMethod", "password")}
+                    />
+                    {t("organizations.gitAuthMethodPassword")}
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      name="gitAuthMethod"
+                      checked={draft.gitAuthMethod === "sshKey"}
+                      onChange={() => setDraftField("gitAuthMethod", "sshKey")}
+                    />
+                    {t("organizations.gitAuthMethodSshKey")}
+                  </label>
+                </div>
+              </div>
+
+              {draft.gitAuthMethod === "password" ? (
+                <>
+                  <div className="cw-field">
+                    <label className="cw-label">
+                      {t("organizations.gitUsername")}
+                      <RequiredMark />
+                    </label>
+                    <input
+                      className="cw-input"
+                      type="text"
+                      value={draft.username}
+                      onChange={(e) => setDraftField("username", e.target.value)}
+                    />
+                  </div>
+                  <div className="cw-field">
+                    <label className="cw-label">
+                      {t("organizations.gitPassword")}
+                      <RequiredMark />
+                    </label>
+                    <input
+                      className="cw-input"
+                      type="password"
+                      value={draft.password}
+                      onChange={(e) => setDraftField("password", e.target.value)}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="cw-field">
+                    <label className="cw-label">
+                      {t("organizations.sshPrivateKey")}
+                      <RequiredMark />
+                    </label>
+                    <textarea
+                      className="cw-input"
+                      rows={5}
+                      value={draft.sshPrivateKey}
+                      onChange={(e) => setDraftField("sshPrivateKey", e.target.value)}
+                    />
+                  </div>
+                  <div className="cw-field">
+                    <label className="cw-label">{t("organizations.sshPrivateKeyPassphrase")}</label>
+                    <input
+                      className="cw-input"
+                      type="password"
+                      value={draft.sshPrivateKeyPassphrase}
+                      onChange={(e) => setDraftField("sshPrivateKeyPassphrase", e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
             </>
           ) : (
             <>

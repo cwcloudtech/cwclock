@@ -1,4 +1,4 @@
-import { error, loading, login, logout, register, updatePicture, updateProfile, syncUser } from "./Auth.types";
+import { error, loading, login, logout, register, updatePicture, updateProfile, syncUser, mfaRequired } from "./Auth.types";
 
 const user = JSON.parse(localStorage.getItem("User"));
 
@@ -7,6 +7,7 @@ const initialstate = {
   isError: false,
   isLoading: false,
   message: "",
+  mfaChallenge: null,
 };
 
 export const AuthReducer = (state = initialstate, { type, payload }) => {
@@ -24,6 +25,7 @@ export const AuthReducer = (state = initialstate, { type, payload }) => {
         isLoading: false,
         user: { ...payload },
         isError: false,
+        mfaChallenge: null,
       };
     }
     case login: {
@@ -33,11 +35,18 @@ export const AuthReducer = (state = initialstate, { type, payload }) => {
         isLoading: false,
         user: { ...payload },
         isError: false,
+        mfaChallenge: null,
       };
     }
     case logout: {
       localStorage.removeItem("User");
-      return { ...state, isLoading: false, user: {}, isError: false };
+      return { ...state, isLoading: false, user: {}, isError: false, mfaChallenge: null };
+    }
+    // mfaRequired intentionally never touches localStorage/user - the
+    // password was correct but login isn't complete until the second
+    // factor is verified (see Auth.types.js).
+    case mfaRequired: {
+      return { ...state, isLoading: false, isError: false, mfaChallenge: payload };
     }
     case updatePicture: {
       const updatedUser = { ...state.user, picture: payload.picture };

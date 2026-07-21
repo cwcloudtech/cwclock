@@ -4,6 +4,7 @@ import Modal from "./Modal";
 import Button from "./Button";
 import ImagePicker from "./ImagePicker";
 import DropZone from "./DropZone";
+import MfaSettings from "./MfaSettings";
 import { updateProfileApi, updatePictureApi } from "../../Redux/Users/User.actions";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
@@ -126,6 +127,8 @@ const EditProfileModal = ({ show, onClose, user }) => {
           </Button>
         </div>
       </form>
+
+      {show && <MfaSettings token={user.token} />}
     </Modal>
   );
 };

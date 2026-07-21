@@ -14,26 +14,28 @@ import (
 )
 
 type AdminHandler struct {
-	users        *store.UserStore
-	maxImageSize int64
+	users         *store.UserStore
+	webauthnCreds *store.WebAuthnCredentialStore
+	maxImageSize  int64
 }
 
-func NewAdminHandler(users *store.UserStore, maxImageSize int64) *AdminHandler {
-	return &AdminHandler{users: users, maxImageSize: maxImageSize}
+func NewAdminHandler(users *store.UserStore, webauthnCreds *store.WebAuthnCredentialStore, maxImageSize int64) *AdminHandler {
+	return &AdminHandler{users: users, webauthnCreds: webauthnCreds, maxImageSize: maxImageSize}
 }
 
 func toUserMeResponse(u models.User) models.UserMeResponse {
 	return models.UserMeResponse{
-		ID:        u.ID,
-		Email:     u.Email,
-		Name:      u.Name,
-		Surname:   u.Surname,
-		Role:      u.Role,
-		Picture:   u.Picture,
-		PictureX:  u.PictureX,
-		PictureY:  u.PictureY,
-		CreatedAt: u.CreatedAt,
-		UpdatedAt: u.UpdatedAt,
+		ID:         u.ID,
+		Email:      u.Email,
+		Name:       u.Name,
+		Surname:    u.Surname,
+		Role:       u.Role,
+		Picture:    u.Picture,
+		PictureX:   u.PictureX,
+		PictureY:   u.PictureY,
+		MFAEnabled: u.MFAEnabled,
+		CreatedAt:  u.CreatedAt,
+		UpdatedAt:  u.UpdatedAt,
 	}
 }
 
@@ -135,4 +137,27 @@ func (h *AdminHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"id": id})
+}
+
+// DisableMFA turns off every MFA factor (TOTP and any registered WebAuthn
+// security keys) on an account, for when a user is locked out of their
+// authenticator/security key (ai-instruct-68). Unlike UpdateUser this
+// doesn't require the caller to resubmit the account's other fields.
+func (h *AdminHandler) DisableMFA(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	if _, err := h.users.DisableTOTP(r.Context(), id, false); err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	if err := h.webauthnCreds.DeleteAllForUser(r.Context(), id); err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	user, err := h.users.SetMFAEnabled(r.Context(), id, false)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toUserMeResponse(user))
 }

@@ -22,6 +22,7 @@ func New(
 	timeEntryHandler *handlers.TimeEntryHandler,
 	reportHandler *handlers.ReportHandler,
 	adminHandler *handlers.AdminHandler,
+	mfaHandler *handlers.MFAHandler,
 	importHandler *handlers.ImportHandler,
 	apiKeyHandler *handlers.ApiKeyHandler,
 	invoiceHandler *handlers.InvoiceHandler,
@@ -94,6 +95,16 @@ func New(
 			r.Post("/forgot-password", userHandler.ForgotPassword)
 			r.Post("/reset-password", userHandler.ResetPassword)
 
+			// Finishing a password login gated by MFA (see
+			// UserHandler.Login/models.MFAChallengeResponse): these carry
+			// their own short-lived challenge/ceremony token instead of a
+			// session, so they sit outside the Auth() middleware group below.
+			r.Route("/login/mfa", func(r chi.Router) {
+				r.Post("/totp", mfaHandler.LoginTOTP)
+				r.Post("/webauthn/begin", mfaHandler.LoginWebAuthnBegin)
+				r.Post("/webauthn/finish", mfaHandler.LoginWebAuthnFinish)
+			})
+
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.Auth(jwtSecret, apiKeys))
 				r.Get("/me", userHandler.Me)
@@ -109,6 +120,16 @@ func New(
 						r.Post("/", apiKeyHandler.Create)
 						r.Delete("/{id}", apiKeyHandler.Delete)
 					})
+
+					r.Route("/me/mfa", func(r chi.Router) {
+						r.Get("/", mfaHandler.Status)
+						r.Post("/totp/setup", mfaHandler.TOTPSetup)
+						r.Post("/totp/confirm", mfaHandler.TOTPConfirm)
+						r.Delete("/totp", mfaHandler.TOTPDisable)
+						r.Post("/webauthn/register/begin", mfaHandler.WebAuthnRegisterBegin)
+						r.Post("/webauthn/register/finish", mfaHandler.WebAuthnRegisterFinish)
+						r.Delete("/webauthn/{credentialId}", mfaHandler.WebAuthnDelete)
+					})
 				})
 			})
 		})
@@ -120,6 +141,7 @@ func New(
 			r.Get("/", adminHandler.ListUsers)
 			r.Put("/{id}", adminHandler.UpdateUser)
 			r.Delete("/{id}", adminHandler.DeleteUser)
+			r.Post("/{id}/disable-mfa", adminHandler.DisableMFA)
 		})
 
 		r.Route("/admin/organizations", func(r chi.Router) {

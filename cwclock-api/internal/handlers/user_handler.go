@@ -19,8 +19,14 @@ import (
 	"cwclock-api/internal/utils"
 )
 
+// mfaLoginTokenTTL is how long the challenge token returned by Login (when
+// MFA is enabled) stays valid for finishing login via one of the
+// /v1/users/login/mfa/* endpoints.
+const mfaLoginTokenTTL = 5 * time.Minute
+
 type UserHandler struct {
 	users                *store.UserStore
+	webauthnCreds        *store.WebAuthnCredentialStore
 	jwtSecret            string
 	maxImageSize         int64
 	activationMode       string
@@ -30,9 +36,9 @@ type UserHandler struct {
 	confirmationTokenTTL time.Duration
 }
 
-func NewUserHandler(users *store.UserStore, jwtSecret string, maxImageSize int64, activationMode string, mailer *email.Sender, apiBaseURL, uiBaseURL string, confirmationTokenTTL time.Duration) *UserHandler {
+func NewUserHandler(users *store.UserStore, webauthnCreds *store.WebAuthnCredentialStore, jwtSecret string, maxImageSize int64, activationMode string, mailer *email.Sender, apiBaseURL, uiBaseURL string, confirmationTokenTTL time.Duration) *UserHandler {
 	return &UserHandler{
-		users: users, jwtSecret: jwtSecret, maxImageSize: maxImageSize,
+		users: users, webauthnCreds: webauthnCreds, jwtSecret: jwtSecret, maxImageSize: maxImageSize,
 		activationMode: activationMode, mailer: mailer, apiBaseURL: apiBaseURL, uiBaseURL: uiBaseURL,
 		confirmationTokenTTL: confirmationTokenTTL,
 	}
@@ -133,6 +139,11 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if user.MFAEnabled {
+		h.respondMFAChallenge(w, r, user)
+		return
+	}
+
 	token, err := authtoken.Generate(h.jwtSecret, user.ID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
@@ -147,6 +158,32 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// respondMFAChallenge replaces the normal login response when the account
+// has MFA enabled: instead of a usable session token, it mints a short-lived
+// PurposeMFALogin token the client exchanges for one via
+// MFAHandler.LoginTOTP/LoginWebAuthnFinish once the second factor is
+// verified (see ai-instruct-68).
+func (h *UserHandler) respondMFAChallenge(w http.ResponseWriter, r *http.Request, user models.User) {
+	challengeToken, err := authtoken.GeneratePurpose(h.jwtSecret, user.ID, authtoken.PurposeMFALogin, mfaLoginTokenTTL)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
+		return
+	}
+
+	webauthnCount, err := h.webauthnCreds.CountByUser(r.Context(), user.ID)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, models.MFAChallengeResponse{
+		MFARequired:    true,
+		ChallengeToken: challengeToken,
+		HasTOTP:        utils.IsNotBlank(user.MFATOTPSecret),
+		HasWebAuthn:    webauthnCount > 0,
+	})
+}
+
 func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
 	userID, _ := middleware.UserIDFromContext(r.Context())
 
@@ -157,17 +194,18 @@ func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, models.UserMeResponse{
-		ID:        user.ID,
-		Email:     user.Email,
-		Name:      user.Name,
-		I18nCode:  models.I18nCodeForRole(user.Role, h.activationMode),
-		Surname:   user.Surname,
-		Role:      user.Role,
-		Picture:   user.Picture,
-		PictureX:  user.PictureX,
-		PictureY:  user.PictureY,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		ID:         user.ID,
+		Email:      user.Email,
+		Name:       user.Name,
+		I18nCode:   models.I18nCodeForRole(user.Role, h.activationMode),
+		Surname:    user.Surname,
+		Role:       user.Role,
+		Picture:    user.Picture,
+		PictureX:   user.PictureX,
+		PictureY:   user.PictureY,
+		MFAEnabled: user.MFAEnabled,
+		CreatedAt:  user.CreatedAt,
+		UpdatedAt:  user.UpdatedAt,
 	})
 }
 
@@ -200,16 +238,17 @@ func (h *UserHandler) UpdatePicture(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, models.UserMeResponse{
-		ID:        user.ID,
-		Email:     user.Email,
-		Name:      user.Name,
-		Surname:   user.Surname,
-		Role:      user.Role,
-		Picture:   user.Picture,
-		PictureX:  user.PictureX,
-		PictureY:  user.PictureY,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		ID:         user.ID,
+		Email:      user.Email,
+		Name:       user.Name,
+		Surname:    user.Surname,
+		Role:       user.Role,
+		Picture:    user.Picture,
+		PictureX:   user.PictureX,
+		PictureY:   user.PictureY,
+		MFAEnabled: user.MFAEnabled,
+		CreatedAt:  user.CreatedAt,
+		UpdatedAt:  user.UpdatedAt,
 	})
 }
 
@@ -261,16 +300,17 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, models.UserMeResponse{
-		ID:        user.ID,
-		Email:     user.Email,
-		Name:      user.Name,
-		Surname:   user.Surname,
-		Role:      user.Role,
-		Picture:   user.Picture,
-		PictureX:  user.PictureX,
-		PictureY:  user.PictureY,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		ID:         user.ID,
+		Email:      user.Email,
+		Name:       user.Name,
+		Surname:    user.Surname,
+		Role:       user.Role,
+		Picture:    user.Picture,
+		PictureX:   user.PictureX,
+		PictureY:   user.PictureY,
+		MFAEnabled: user.MFAEnabled,
+		CreatedAt:  user.CreatedAt,
+		UpdatedAt:  user.UpdatedAt,
 	})
 }
 

@@ -58,6 +58,8 @@ func BuildTarget(conn models.ExternalConnection) (Target, error) {
 		return newS3Target(conn), nil
 	case models.ExternalConnectionGoogleDrive:
 		return newDriveTarget(conn)
+	case models.ExternalConnectionGit:
+		return newGitTarget(conn)
 	default:
 		return nil, fmt.Errorf("unknown external connection type %q", conn.Type)
 	}

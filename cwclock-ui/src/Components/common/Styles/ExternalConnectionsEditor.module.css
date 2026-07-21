@@ -109,3 +109,17 @@
   font-size: 0.8rem;
   color: var(--cw-text-muted);
 }
+
+.authMethodChoice {
+  display: flex;
+  gap: var(--cw-spacing);
+  font-size: 0.9rem;
+}
+
+.authMethodChoice label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: normal;
+  cursor: pointer;
+}

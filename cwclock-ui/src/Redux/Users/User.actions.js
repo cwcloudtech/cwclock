@@ -45,3 +45,46 @@ export const searchUsersApi = (query, token) => async () => {
     return [];
   }
 };
+
+// MFA self-service enrollment (see ai-instruct-68). None of these touch
+// global auth state directly - callers refetch /me (meApi) afterwards to
+// refresh user.mfaEnabled, the same way other profile edits do.
+const authConfig = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
+
+export const mfaStatusApi = (token) => async () => {
+  const { data } = await axios.get(`${ENDPOINT}me/mfa`, authConfig(token));
+  return data;
+};
+
+export const totpSetupApi = (token) => async () => {
+  const { data } = await axios.post(`${ENDPOINT}me/mfa/totp/setup`, {}, authConfig(token));
+  return data;
+};
+
+export const totpConfirmApi = (code, token) => async () => {
+  const { data } = await axios.post(`${ENDPOINT}me/mfa/totp/confirm`, { code }, authConfig(token));
+  return data;
+};
+
+export const totpDisableApi = (token) => async () => {
+  const { data } = await axios.delete(`${ENDPOINT}me/mfa/totp`, authConfig(token));
+  return data;
+};
+
+export const webauthnRegisterBeginApi = (token) => async () => {
+  const { data } = await axios.post(`${ENDPOINT}me/mfa/webauthn/register/begin`, {}, authConfig(token));
+  return data;
+};
+
+export const webauthnRegisterFinishApi = (ceremonyToken, credential, name, token) => async () => {
+  const { data } = await axios.post(
+    `${ENDPOINT}me/mfa/webauthn/register/finish`,
+    { ceremonyToken, credential, name },
+    authConfig(token)
+  );
+  return data;
+};
+
+export const webauthnDeleteApi = (credentialId, token) => async () => {
+  await axios.delete(`${ENDPOINT}me/mfa/webauthn/${credentialId}`, authConfig(token));
+};

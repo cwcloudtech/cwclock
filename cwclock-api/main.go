@@ -3,7 +3,10 @@ package main
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"runtime"
+
+	"github.com/go-webauthn/webauthn/webauthn"
 
 	"cwclock-api/internal/config"
 	"cwclock-api/internal/contact"
@@ -16,6 +19,10 @@ import (
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/telemetry"
 )
+
+// mfaIssuer is the "issuer" shown by authenticator apps (Google
+// Authenticator, etc.) next to an enrolled TOTP entry.
+const mfaIssuer = "CWClock"
 
 func main() {
 	cfg := config.Load()
@@ -50,15 +57,31 @@ func main() {
 	timeEntryStore := store.NewTimeEntryStore(pool)
 	apiKeyStore := store.NewApiKeyStore(pool)
 	invoiceStore := store.NewInvoiceStore(pool)
+	webauthnCredStore := store.NewWebAuthnCredentialStore(pool)
 
 	mailer := email.NewSender(cfg.CWCloudAPIURL, cfg.CWCloudAPIKey, cfg.EmailFrom, cfg.APIBaseURL)
 
-	userHandler := handlers.NewUserHandler(userStore, cfg.JWTSecret, cfg.MaxImageSize, cfg.ActivationMode, mailer, cfg.APIBaseURL, cfg.UIBaseURL, cfg.ConfirmationEmailTTL)
+	rpID := cfg.UIBaseURL
+	if u, err := url.Parse(cfg.UIBaseURL); err == nil && u.Hostname() != "" {
+		rpID = u.Hostname()
+	}
+	waInstance, err := webauthn.New(&webauthn.Config{
+		RPID:          rpID,
+		RPDisplayName: mfaIssuer,
+		RPOrigins:     []string{cfg.UIBaseURL},
+	})
+	if err != nil {
+		tel.Logger.Error("failed to configure WebAuthn", "error", err)
+		panic(err)
+	}
+
+	userHandler := handlers.NewUserHandler(userStore, webauthnCredStore, cfg.JWTSecret, cfg.MaxImageSize, cfg.ActivationMode, mailer, cfg.APIBaseURL, cfg.UIBaseURL, cfg.ConfirmationEmailTTL)
 	orgHandler := handlers.NewOrganizationHandler(orgStore, userStore, countryStore, currencyStore, cfg.MaxImageSize)
 	clientHandler := handlers.NewClientHandler(clientStore, orgStore, countryStore)
 	projectHandler := handlers.NewProjectHandler(projectStore, clientStore)
 	timeEntryHandler := handlers.NewTimeEntryHandler(timeEntryStore)
-	adminHandler := handlers.NewAdminHandler(userStore, cfg.MaxImageSize)
+	adminHandler := handlers.NewAdminHandler(userStore, webauthnCredStore, cfg.MaxImageSize)
+	mfaHandler := handlers.NewMFAHandler(userStore, webauthnCredStore, cfg.JWTSecret, cfg.ActivationMode, waInstance, mfaIssuer)
 	importHandler := handlers.NewImportHandler(userStore, clientStore, projectStore, timeEntryStore)
 	reportHandler := handlers.NewReportHandler(orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize)
 	apiKeyHandler := handlers.NewApiKeyHandler(apiKeyStore)
@@ -82,7 +105,7 @@ func main() {
 	defer func() { _ = met.Shutdown(context.Background()) }()
 
 	r := router.New(
-		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler, importHandler, apiKeyHandler, invoiceHandler,
+		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler, mfaHandler, importHandler, apiKeyHandler, invoiceHandler,
 		currencyHandler, countryHandler, fieldHandler, oidcHandler, contactHandler,
 		orgStore, userStore, apiKeyStore, cfg.JWTSecret, cfg.ActivationMode, cfg.CorsEnabled, cfg.CorsAllowedOrigins, cfg.Version, cfg.ManifestPath,
 		tel, met.Observe, met.Handler,

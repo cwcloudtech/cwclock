@@ -24,13 +24,15 @@ func NewUserStore(pool *pgxpool.Pool) *UserStore {
 }
 
 type userData struct {
-	Password string   `json:"password"`
-	Name     string   `json:"name,omitempty"`
-	Surname  string   `json:"surname,omitempty"`
-	Role     string   `json:"role,omitempty"`
-	Picture  string   `json:"picture,omitempty"`
-	PictureX *float64 `json:"pictureX,omitempty"`
-	PictureY *float64 `json:"pictureY,omitempty"`
+	Password      string   `json:"password"`
+	Name          string   `json:"name,omitempty"`
+	Surname       string   `json:"surname,omitempty"`
+	Role          string   `json:"role,omitempty"`
+	Picture       string   `json:"picture,omitempty"`
+	PictureX      *float64 `json:"pictureX,omitempty"`
+	PictureY      *float64 `json:"pictureY,omitempty"`
+	MFAEnabled    bool     `json:"mfaEnabled,omitempty"`
+	MFATOTPSecret string   `json:"mfaTotpSecret,omitempty"`
 }
 
 // defaultImagePosition centers a picture/stamp when no position was ever
@@ -65,6 +67,8 @@ func scanUser(row pgx.Row) (models.User, error) {
 	u.Picture = d.Picture
 	u.PictureX = resolveImagePosition(d.PictureX)
 	u.PictureY = resolveImagePosition(d.PictureY)
+	u.MFAEnabled = d.MFAEnabled
+	u.MFATOTPSecret = d.MFATOTPSecret
 	return u, nil
 }
 
@@ -226,6 +230,59 @@ func (s *UserStore) UpdateProfile(ctx context.Context, id, name, surname string,
 // follows their emailed confirmation link (activation mode "email").
 func (s *UserStore) Confirm(ctx context.Context, id string) (models.User, error) {
 	patch, err := json.Marshal(map[string]any{"role": string(models.GlobalRoleConfirmed)})
+	if err != nil {
+		return models.User{}, err
+	}
+	row := s.pool.QueryRow(ctx, `
+		UPDATE users SET data = data || $2::jsonb, updated_at = now()
+		WHERE id = $1
+		RETURNING id, email, data, created_at, updated_at
+	`, id, patch)
+	return scanUser(row)
+}
+
+// SetPendingTOTPSecret stores a freshly generated TOTP secret for id without
+// enabling MFA yet - it only takes effect once ConfirmTOTP verifies the user
+// actually scanned it, so an abandoned setup never locks anyone into MFA.
+func (s *UserStore) SetPendingTOTPSecret(ctx context.Context, id, secret string) (models.User, error) {
+	patch, err := json.Marshal(map[string]any{"mfaTotpSecret": secret})
+	if err != nil {
+		return models.User{}, err
+	}
+	row := s.pool.QueryRow(ctx, `
+		UPDATE users SET data = data || $2::jsonb, updated_at = now()
+		WHERE id = $1
+		RETURNING id, email, data, created_at, updated_at
+	`, id, patch)
+	return scanUser(row)
+}
+
+// ConfirmTOTP turns on MFA for id once its pending TOTP secret (set by
+// SetPendingTOTPSecret) has been verified.
+func (s *UserStore) ConfirmTOTP(ctx context.Context, id string) (models.User, error) {
+	return s.SetMFAEnabled(ctx, id, true)
+}
+
+// DisableTOTP removes id's TOTP secret and, when keepEnabled is false (the
+// user has no other MFA factor left), turns MFA back off entirely.
+func (s *UserStore) DisableTOTP(ctx context.Context, id string, keepEnabled bool) (models.User, error) {
+	patch, err := json.Marshal(map[string]any{"mfaTotpSecret": "", "mfaEnabled": keepEnabled})
+	if err != nil {
+		return models.User{}, err
+	}
+	row := s.pool.QueryRow(ctx, `
+		UPDATE users SET data = data || $2::jsonb, updated_at = now()
+		WHERE id = $1
+		RETURNING id, email, data, created_at, updated_at
+	`, id, patch)
+	return scanUser(row)
+}
+
+// SetMFAEnabled sets id's aggregate MFA flag, used directly by WebAuthn
+// enrollment/removal (to reflect whether any factor is still registered) and
+// by the superuser's disable-MFA action.
+func (s *UserStore) SetMFAEnabled(ctx context.Context, id string, enabled bool) (models.User, error) {
+	patch, err := json.Marshal(map[string]any{"mfaEnabled": enabled})
 	if err != nil {
 		return models.User{}, err
 	}

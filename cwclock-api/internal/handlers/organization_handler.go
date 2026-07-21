@@ -102,6 +102,12 @@ func validateExternalConnections(conns []models.ExternalConnection) error {
 			if _, err := externalconn.DecodeServiceAccount(c.ServiceAccountBase64); err != nil {
 				return fmt.Errorf("google_drive external connection has an invalid service account: %w", err)
 			}
+		case models.ExternalConnectionGit:
+			hasPassword := utils.IsNotBlank(c.Username) && utils.IsNotBlank(c.Password)
+			hasSSHKey := utils.IsNotBlank(c.SSHPrivateKey)
+			if utils.IsBlank(c.RepoURL) || hasPassword == hasSSHKey {
+				return fmt.Errorf("git external connection requires repoUrl and either username+password or an sshPrivateKey")
+			}
 		default:
 			return fmt.Errorf("unknown external connection type %q", c.Type)
 		}
@@ -150,6 +156,9 @@ func redactExternalConnections(conns []models.ExternalConnection) []models.Exter
 		c.AccessKey = ""
 		c.SecretKey = ""
 		c.ServiceAccountBase64 = ""
+		c.Password = ""
+		c.SSHPrivateKey = ""
+		c.SSHPrivateKeyPassphrase = ""
 		redacted[i] = c
 	}
 	return redacted
@@ -354,6 +363,10 @@ func isDuplicateExternalConnection(existing []models.ExternalConnection, conn mo
 			}
 		case models.ExternalConnectionGoogleDrive:
 			if e.FolderID == conn.FolderID {
+				return true
+			}
+		case models.ExternalConnectionGit:
+			if e.RepoURL == conn.RepoURL {
 				return true
 			}
 		}

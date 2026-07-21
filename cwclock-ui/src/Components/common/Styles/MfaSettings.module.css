@@ -1,0 +1,86 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cw-spacing-sm);
+  margin-top: var(--cw-spacing-lg);
+  padding-top: var(--cw-spacing);
+  border-top: 1px solid var(--cw-border);
+}
+
+.heading {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.factor {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cw-spacing-sm);
+}
+
+.factorLabel {
+  font-size: 0.9rem;
+  color: var(--cw-text-muted);
+}
+
+.totpSetup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--cw-spacing-xs);
+}
+
+.qrCode {
+  width: 160px;
+  height: 160px;
+}
+
+.secretHint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--cw-text-muted);
+  word-break: break-all;
+}
+
+.keyList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.keyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cw-spacing-sm);
+  padding: 6px 10px;
+  background-color: var(--cw-primary-tint);
+  border-radius: var(--cw-radius-sm);
+}
+
+.keyName {
+  font-size: 0.9rem;
+  color: var(--cw-text-muted);
+}
+
+.iconBtnDanger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 6px 10px;
+  color: var(--cw-text-muted);
+  border-radius: var(--cw-radius-sm);
+  cursor: pointer;
+  transition: background-color var(--cw-transition), color var(--cw-transition);
+}
+
+.iconBtnDanger:hover {
+  color: var(--cw-danger);
+  background-color: var(--cw-danger-light);
+}

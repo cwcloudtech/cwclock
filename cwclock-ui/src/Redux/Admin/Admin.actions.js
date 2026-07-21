@@ -52,6 +52,22 @@ export const deleteUserApi = (id, token) => async (dispatch) => {
   }
 };
 
+// disableMfaApi turns off every MFA factor on an account (see
+// ai-instruct-68), for when a user is locked out of their authenticator or
+// security key.
+export const disableMfaApi = (id, token) => async (dispatch) => {
+  dispatch({ type: AdminLOADING });
+  try {
+    const { data } = await axios.post(`${USERS_ENDPOINT}${id}/disable-mfa`, {}, authConfig(token));
+    dispatch({ type: AdminUserUpdateSUCCESS, payload: data });
+    toast.success(translate(getStoredLocale(), "toasts.mfaDisabled"), toastOptions);
+    return data;
+  } catch (e) {
+    dispatch({ type: AdminERROR });
+    throw e;
+  }
+};
+
 export const listAllOrganizationsApi = (token) => async (dispatch) => {
   dispatch({ type: AdminLOADING });
   try {

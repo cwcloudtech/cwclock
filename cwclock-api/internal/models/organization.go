@@ -56,13 +56,16 @@ type ExternalConnectionType string
 const (
 	ExternalConnectionS3          ExternalConnectionType = "s3"
 	ExternalConnectionGoogleDrive ExternalConnectionType = "google_drive"
+	ExternalConnectionGit         ExternalConnectionType = "git"
 )
 
 // ExternalConnection is one optional external storage destination an
 // organization's invoices get pushed to (see ai-instruct-39). Only the
 // fields relevant to Type are populated - S3 connections use
 // Endpoint/BucketName/Region/AccessKey/SecretKey, Google Drive connections
-// use ServiceAccountBase64/FolderID.
+// use ServiceAccountBase64/FolderID, git connections use RepoURL plus either
+// Username/Password or SSHPrivateKey/SSHPrivateKeyPassphrase (see
+// ai-instruct-68).
 type ExternalConnection struct {
 	ID                   string                 `json:"id"`
 	Type                 ExternalConnectionType `json:"type"`
@@ -73,6 +76,14 @@ type ExternalConnection struct {
 	SecretKey            string                 `json:"secretKey,omitempty"`
 	ServiceAccountBase64 string                 `json:"serviceAccountBase64,omitempty"`
 	FolderID             string                 `json:"folderId,omitempty"`
+	// RepoURL is the git connection's remote URL - either an https:// URL
+	// (used with Username/Password) or an ssh:// / scp-like URL (used with
+	// SSHPrivateKey/SSHPrivateKeyPassphrase).
+	RepoURL                 string `json:"repoUrl,omitempty"`
+	Username                string `json:"username,omitempty"`
+	Password                string `json:"password,omitempty"`
+	SSHPrivateKey           string `json:"sshPrivateKey,omitempty"`
+	SSHPrivateKeyPassphrase string `json:"sshPrivateKeyPassphrase,omitempty"`
 	// FlatDirectory, when true, uploads invoices directly at the
 	// destination's root instead of nesting them under a "YYYY/MM.MonthName"
 	// folder (ai-instruct-42) - some accounting software watching a Drive

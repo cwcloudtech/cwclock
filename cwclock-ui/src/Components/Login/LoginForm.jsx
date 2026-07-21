@@ -8,12 +8,13 @@ import { loginApi } from "../../Redux/Auth/Auth.actions";
 import { useI18n } from "../../i18n/I18nContext";
 import OidcButtons from "../common/OidcButtons";
 import toastOptions from "../../Redux/toastOptions";
+import MfaChallengeForm from "./MfaChallengeForm";
 
 const LoginForm = () => {
   const { t } = useI18n();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user, isLoading } = useSelector((state) => state.auth);
+  const { user, isLoading, mfaChallenge } = useSelector((state) => state.auth);
   const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
     email: "",
@@ -55,6 +56,9 @@ const LoginForm = () => {
 
   if (isLoading) {
     return <Spinner />;
+  }
+  if (mfaChallenge) {
+    return <MfaChallengeForm challenge={mfaChallenge} />;
   }
   return (
     <div className={styles.form}>
