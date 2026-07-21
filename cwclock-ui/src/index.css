@@ -316,6 +316,12 @@ button {
   margin: 4px 0 0;
 }
 
+.cw-success {
+  color: var(--cw-success);
+  font-size: 0.85rem;
+  margin: 4px 0 0;
+}
+
 .cw-hr {
   border: none;
   border-top: 1px solid var(--cw-border);

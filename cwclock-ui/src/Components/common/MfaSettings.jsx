@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { MdDeleteForever } from "react-icons/md";
 import Button from "./Button";
+import Switch from "./Switch";
 import Tooltip from "./Tooltip";
 import ConfirmModal from "./ConfirmModal";
+import SecurityKeyNameModal from "./SecurityKeyNameModal";
 import {
   mfaStatusApi,
   totpSetupApi,
@@ -32,6 +34,7 @@ const MfaSettings = ({ token }) => {
   const [confirmCode, setConfirmCode] = useState("");
   const [disablingTotp, setDisablingTotp] = useState(false);
   const [deletingCredential, setDeletingCredential] = useState(null);
+  const [pendingWebAuthn, setPendingWebAuthn] = useState(null);
 
   const refresh = async () => {
     try {
@@ -94,8 +97,20 @@ const MfaSettings = ({ token }) => {
     try {
       const beginResponse = await dispatch(webauthnRegisterBeginApi(token));
       const credential = await navigator.credentials.create(preparePublicKeyCreationOptions(beginResponse.options));
-      const name = window.prompt(t("profile.mfaSecurityKeyNamePrompt")) || t("profile.mfaSecurityKeyDefaultName");
-      await dispatch(webauthnRegisterFinishApi(beginResponse.ceremonyToken, attestationToJSON(credential), name, token));
+      setPendingWebAuthn({ ceremonyToken: beginResponse.ceremonyToken, credential: attestationToJSON(credential) });
+    } catch (err) {
+      setError(apiErrorMessage(err, locale));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleConfirmKeyName = async (name) => {
+    setError("");
+    setBusy(true);
+    try {
+      await dispatch(webauthnRegisterFinishApi(pendingWebAuthn.ceremonyToken, pendingWebAuthn.credential, name, token));
+      setPendingWebAuthn(null);
       await refresh();
       dispatch(meApi(token));
     } catch (err) {
@@ -128,15 +143,13 @@ const MfaSettings = ({ token }) => {
 
       <div className={styles.factor}>
         <span className={styles.factorLabel}>{t("profile.mfaTotp")}</span>
-        {status.totpEnabled ? (
-          <Button type="button" size="sm" variant="secondary" onClick={() => setDisablingTotp(true)}>
-            {t("profile.mfaDisable")}
-          </Button>
-        ) : !setup ? (
-          <Button type="button" size="sm" onClick={handleStartTotpSetup} disabled={busy}>
-            {t("profile.mfaEnable")}
-          </Button>
-        ) : null}
+        <Switch
+          checked={status.totpEnabled}
+          disabled={busy || (!status.totpEnabled && !!setup)}
+          onChange={() => (status.totpEnabled ? setDisablingTotp(true) : handleStartTotpSetup())}
+          aria-label={status.totpEnabled ? t("profile.mfaDisable") : t("profile.mfaEnable")}
+          title={status.totpEnabled ? t("profile.mfaDisable") : t("profile.mfaEnable")}
+        />
       </div>
 
       {setup && !status.totpEnabled && (
@@ -190,6 +203,13 @@ const MfaSettings = ({ token }) => {
         confirmLabel={t("profile.mfaDisable")}
         onConfirm={handleDisableTotp}
         onCancel={() => setDisablingTotp(false)}
+      />
+
+      <SecurityKeyNameModal
+        show={!!pendingWebAuthn}
+        busy={busy}
+        onConfirm={handleConfirmKeyName}
+        onCancel={() => setPendingWebAuthn(null)}
       />
 
       <ConfirmModal

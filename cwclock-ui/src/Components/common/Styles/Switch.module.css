@@ -1,0 +1,58 @@
+.track {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.thumb {
+  position: absolute;
+  inset: 0;
+  background-color: var(--cw-border);
+  border-radius: 999px;
+  transition: background-color var(--cw-transition);
+}
+
+.thumb::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background-color: var(--cw-surface);
+  border-radius: 50%;
+  transition: transform var(--cw-transition);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.input:checked + .thumb {
+  background-color: var(--cw-primary);
+}
+
+.input:checked + .thumb::before {
+  transform: translateX(18px);
+}
+
+.input:disabled {
+  cursor: not-allowed;
+}
+
+.input:disabled + .thumb {
+  opacity: 0.6;
+}
+
+.input:focus-visible + .thumb {
+  outline: 2px solid var(--cw-primary);
+  outline-offset: 2px;
+}

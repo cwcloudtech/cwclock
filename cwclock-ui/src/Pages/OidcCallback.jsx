@@ -4,18 +4,20 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import Spinner from "../Components/spinner/Spinner";
-import { oidcLoginApi } from "../Redux/Auth/Auth.actions";
+import { oidcLoginApi, oidcMfaChallengeApi } from "../Redux/Auth/Auth.actions";
 import { useI18n } from "../i18n/I18nContext";
 import toastOptions from "../Redux/toastOptions";
 
 // OidcCallback is where an OIDC login (google/github/keycloak) lands once
 // it's done. Two flows reach it:
-//  - the API's own callback redirects here with ?token= (success) or
-//    ?error= (denied/failed), since it can only redirect, not call the
-//    frontend origin directly;
+//  - the API's own callback redirects here with ?token= (success), ?error=
+//    (denied/failed) or ?mfaChallenge=&hasTotp=&hasWebAuthn= (the account
+//    has MFA enabled - see ai-instruct-70), since it can only redirect, not
+//    call the frontend origin directly;
 //  - when OidcButtons asked for a frontend-bound redirect_uri, the provider
 //    redirects here directly with ?code=&state=, and this page itself calls
-//    the API to complete the exchange and get a token back as JSON.
+//    the API to complete the exchange and get a token (or the same MFA
+//    challenge) back as JSON.
 const OidcCallback = () => {
   const { t } = useI18n();
   const dispatch = useDispatch();
@@ -28,6 +30,7 @@ const OidcCallback = () => {
     const oidcError = searchParams.get("error");
     const code = searchParams.get("code");
     const state = searchParams.get("state");
+    const mfaChallenge = searchParams.get("mfaChallenge");
 
     const fail = () => {
       toast.error(t("errors.oidcFailed"), toastOptions);
@@ -38,6 +41,17 @@ const OidcCallback = () => {
       fail();
       return;
     }
+    if (mfaChallenge) {
+      dispatch(
+        oidcMfaChallengeApi({
+          challengeToken: mfaChallenge,
+          hasTotp: searchParams.get("hasTotp") === "1",
+          hasWebAuthn: searchParams.get("hasWebAuthn") === "1",
+        })
+      );
+      navigate("/login", { replace: true });
+      return;
+    }
     if (token) {
       dispatch(oidcLoginApi(token));
       return;
@@ -46,6 +60,11 @@ const OidcCallback = () => {
       axios
         .get(`${process.env.REACT_APP_APIURL}/v1/oidc/callback`, { params: { code, state } })
         .then(({ data }) => {
+          if (data?.mfaRequired) {
+            dispatch(oidcMfaChallengeApi(data));
+            navigate("/login", { replace: true });
+            return;
+          }
           if (!data?.token) {
             throw new Error("missing token");
           }

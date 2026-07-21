@@ -93,7 +93,7 @@ func main() {
 	countryHandler := handlers.NewCountryHandler(countryStore)
 	fieldHandler := handlers.NewFieldHandler(fieldStore)
 	oidcProviders := oidc.BuildProviders(cfg)
-	oidcHandler := handlers.NewOIDCHandler(oidcProviders, userStore, cfg.JWTSecret, cfg.APIBaseURL, cfg.UIBaseURL, cfg.OIDCKeycloakGroups, cfg.ActivationMode)
+	oidcHandler := handlers.NewOIDCHandler(oidcProviders, userStore, webauthnCredStore, cfg.JWTSecret, cfg.APIBaseURL, cfg.UIBaseURL, cfg.OIDCKeycloakGroups, cfg.ActivationMode)
 	contactHandler := handlers.NewContactHandler(contact.New(cfg.CWCloudAPIURL, cfg.CWCloudContactFormID))
 
 	met, err := metrics.Setup(ctx, metrics.Config{

@@ -99,6 +99,14 @@ export const oidcLoginApi = (token) => async (dispatch) => {
   }
 };
 
+// oidcMfaChallengeApi carries an OIDC login's MFA challenge (see
+// OIDCHandler.Callback/FrontendCallback) into the same mfaChallenge redux
+// state the password flow uses, so MfaChallengeForm renders next regardless
+// of how the first factor was verified.
+export const oidcMfaChallengeApi = (challenge) => (dispatch) => {
+  dispatch({ type: mfaRequired, payload: challenge });
+};
+
 // forgotPasswordApi requests a password-renewal email for the given
 // address. The backend always responds success regardless of whether the
 // address is registered, so this never reveals which emails have accounts.

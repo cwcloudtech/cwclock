@@ -117,6 +117,9 @@ const EditProfileModal = ({ show, onClose, user }) => {
             title={t("common.confirmPassword")}
           />
         </div>
+        {password && confirmPassword && password === confirmPassword && (
+          <p className="cw-success">{t("profile.passwordsMatch")}</p>
+        )}
         {error && <p className="cw-error">{error}</p>}
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
           <Button type="button" variant="secondary" onClick={onClose} title={t("common.discardChanges")}>
