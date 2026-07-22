@@ -4,6 +4,7 @@ import { useI18n } from "../../i18n/I18nContext";
 import Modal from "../common/Modal";
 import MultiSelect from "../common/MultiSelect";
 import InputWithHelper from "../common/InputWithHelper";
+import ExportTargetsEditor from "./ExportTargetsEditor";
 import Button from "../common/Button";
 import RequiredMark from "../common/RequiredMark";
 import styles from "./Styles/ExportJobModal.module.css";
@@ -16,10 +17,13 @@ const REPORT_TYPES = [
 ];
 
 const CRON_HELPERS = [
+  { label: "Every minute", value: "* * * * *" },
+  { label: "Every hour", value: "0 * * * *" },
+  { label: "Every day", value: "0 0 * * *" },
   { label: "Every day at 9am", value: "0 9 * * *" },
+  { label: "Every day at 6pm", value: "0 18 * * *" },
   { label: "Every Monday at 9am", value: "0 9 * * 1" },
   { label: "Every 1st of month at 9am", value: "0 9 1 * *" },
-  { label: "Every day at 6pm", value: "0 18 * * *" },
 ];
 
 const TIME_PERIOD_HELPERS = [
@@ -30,40 +34,44 @@ const TIME_PERIOD_HELPERS = [
   { label: "Last hour", value: "now()-1h" },
 ];
 
+const emptyFormData = {
+  name: "",
+  cronExpression: "",
+  reportTypes: [],
+  timePeriod: "",
+  clientIds: [],
+  projectIds: [],
+  includeFinancial: false,
+  enabled: true,
+  targets: [],
+};
+
+// Targets coming back from the API only carry the fields relevant to their
+// own type (see models.ExportTarget's omitempty tags) - default the rest so
+// ExportTargetsEditor's inputs are always controlled.
+const normalizeTargets = (targets) =>
+  (targets || []).map((target) => ({
+    type: target.type,
+    toEmails: target.toEmails || "",
+    ccEmails: target.ccEmails || "",
+    connection: target.connection || "",
+  }));
+
 const ExportJobModal = ({ show, job, onSave, onClose }) => {
   const { t } = useI18n();
   const { clients } = useSelector((state) => state.clients);
   const { projects } = useSelector((state) => state.projects);
+  const { organizations, currentOrgId } = useSelector((state) => state.organizations);
+  const orgConnections = organizations.find((o) => o.id === currentOrgId)?.externalConnections || [];
 
-  const [formData, setFormData] = useState({
-    name: "",
-    cronExpression: "",
-    reportTypes: [],
-    timePeriod: "",
-    clientIds: [],
-    projectIds: [],
-    includeFinancial: false,
-    enabled: true,
-    targets: [{ type: "email", toEmails: "", ccEmails: "" }],
-  });
-
+  const [formData, setFormData] = useState(emptyFormData);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (job) {
-      setFormData(job);
+      setFormData({ ...job, targets: normalizeTargets(job.targets) });
     } else {
-      setFormData({
-        name: "",
-        cronExpression: "",
-        reportTypes: [],
-        timePeriod: "",
-        clientIds: [],
-        projectIds: [],
-        includeFinancial: false,
-        enabled: true,
-        targets: [{ type: "email", toEmails: "", ccEmails: "" }],
-      });
+      setFormData(emptyFormData);
     }
     setErrors({});
   }, [job, show]);
@@ -82,7 +90,7 @@ const ExportJobModal = ({ show, job, onSave, onClose }) => {
     if (!formData.timePeriod.trim()) {
       newErrors.timePeriod = t("exportJobs.timePeriodRequired");
     }
-    if (formData.targets.length === 0 || !formData.targets[0].toEmails?.trim()) {
+    if (formData.targets.length === 0) {
       newErrors.targets = t("exportJobs.selectTargets");
     }
     return newErrors;
@@ -96,12 +104,6 @@ const ExportJobModal = ({ show, job, onSave, onClose }) => {
       return;
     }
     onSave(formData);
-  };
-
-  const handleTargetEmailChange = (index, field, value) => {
-    const newTargets = [...formData.targets];
-    newTargets[index][field] = value;
-    setFormData({ ...formData, targets: newTargets });
   };
 
   if (!show) return null;
@@ -204,38 +206,15 @@ const ExportJobModal = ({ show, job, onSave, onClose }) => {
 
         <div className="cw-field">
           <label className="cw-label">
-            {t("exportJobs.emailTargets")}
+            {t("exportJobs.targetsLabel")}
             <RequiredMark />
           </label>
-          <div className={styles.targetSection}>
-            <div className="cw-field">
-              <label htmlFor="toEmails" className="cw-label">
-                {t("exportJobs.toEmails")}
-              </label>
-              <input
-                id="toEmails"
-                type="text"
-                className="cw-input"
-                value={formData.targets[0]?.toEmails || ""}
-                onChange={(e) => handleTargetEmailChange(0, "toEmails", e.target.value)}
-                placeholder="email1@example.com, email2@example.com"
-              />
-            </div>
-            <div className="cw-field">
-              <label htmlFor="ccEmails" className="cw-label">
-                {t("exportJobs.ccEmails")}
-              </label>
-              <input
-                id="ccEmails"
-                type="text"
-                className="cw-input"
-                value={formData.targets[0]?.ccEmails || ""}
-                onChange={(e) => handleTargetEmailChange(0, "ccEmails", e.target.value)}
-                placeholder="cc@example.com"
-              />
-            </div>
-          </div>
-          {errors.targets && <p className="cw-error">{errors.targets}</p>}
+          <ExportTargetsEditor
+            targets={formData.targets}
+            onChange={(targets) => setFormData({ ...formData, targets })}
+            connections={orgConnections}
+            error={errors.targets}
+          />
         </div>
 
         <div className="cw-field">

@@ -3,16 +3,6 @@
   flex-direction: column;
 }
 
-.targetSection {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: var(--cw-spacing);
-  background-color: var(--cw-bg-alt);
-  border: 1px solid var(--cw-border);
-  border-radius: var(--cw-radius-sm);
-}
-
 .actions {
   display: flex;
   gap: 10px;
