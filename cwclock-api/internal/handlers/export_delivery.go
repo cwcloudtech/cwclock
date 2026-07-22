@@ -29,10 +29,10 @@ func NewExportDeliveryService(mailer *email.Sender, orgs *store.OrgStore) *Expor
 	return &ExportDeliveryService{mailer: mailer, orgs: orgs}
 }
 
-func (d *ExportDeliveryService) Deliver(ctx context.Context, orgID, jobName string, target models.ExportTarget, reports []scheduler.ExportReportFile) error {
+func (d *ExportDeliveryService) Deliver(ctx context.Context, orgID, jobName, startDate, endDate string, target models.ExportTarget, reports []scheduler.ExportReportFile) error {
 	switch target.Type {
 	case "email":
-		return d.deliverEmail(ctx, orgID, jobName, target, reports)
+		return d.deliverEmail(ctx, orgID, jobName, startDate, endDate, target, reports)
 	case "s3", "google_drive", "git":
 		return d.deliverExternalConnection(ctx, orgID, target, reports)
 	default:
@@ -40,7 +40,7 @@ func (d *ExportDeliveryService) Deliver(ctx context.Context, orgID, jobName stri
 	}
 }
 
-func (d *ExportDeliveryService) deliverEmail(ctx context.Context, orgID, jobName string, target models.ExportTarget, reports []scheduler.ExportReportFile) error {
+func (d *ExportDeliveryService) deliverEmail(ctx context.Context, orgID, jobName, startDate, endDate string, target models.ExportTarget, reports []scheduler.ExportReportFile) error {
 	to := utils.SplitList(target.ToEmails)
 	if len(to) == 0 {
 		return fmt.Errorf("email target has no recipients")
@@ -55,7 +55,7 @@ func (d *ExportDeliveryService) deliverEmail(ctx context.Context, orgID, jobName
 	for i, r := range reports {
 		attachments[i] = email.Attachment{MimeType: r.MimeType, FileName: r.Filename, B64: base64.StdEncoding.EncodeToString(r.Data)}
 	}
-	d.mailer.SendExportJob(ctx, to, utils.SplitList(target.CCEmails), org.ID, org.Name, jobName, attachments)
+	d.mailer.SendExportJob(ctx, to, utils.SplitList(target.CCEmails), org.ID, org.Name, jobName, startDate, endDate, attachments)
 	return nil
 }
 

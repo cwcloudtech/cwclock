@@ -23,15 +23,20 @@ type ExportReportFile struct {
 
 // ExportReportGenerator produces one report attachment for an export job's
 // reportType ("summary-pdf", "summary-csv", "detailed-pdf", "detailed-csv").
+// startDate/endDate are already-resolved "YYYY-MM-DD" bounds (see
+// ParseTimePeriod) - resolved once per run so every report and the
+// delivery email agree on the exact same range.
 type ExportReportGenerator interface {
-	GenerateReport(ctx context.Context, reportType string, orgID string, clientIDs, projectIDs []string, timePeriod string, includeFinancial bool) (ExportReportFile, error)
+	GenerateReport(ctx context.Context, reportType string, orgID string, clientIDs, projectIDs []string, startDate, endDate string, includeFinancial bool) (ExportReportFile, error)
 }
 
 // ExportDeliveryService delivers a set of already-generated reports to one
 // export target - by email, or by pushing them to the organization's
 // S3/Google Drive/git external connection (see models.ExportTarget.Type).
+// startDate/endDate are the run's resolved period, for the delivery email's
+// subject/body.
 type ExportDeliveryService interface {
-	Deliver(ctx context.Context, orgID, jobName string, target models.ExportTarget, reports []ExportReportFile) error
+	Deliver(ctx context.Context, orgID, jobName, startDate, endDate string, target models.ExportTarget, reports []ExportReportFile) error
 }
 
 // ExportJobScheduler runs every organization's enabled export jobs on their
@@ -129,9 +134,15 @@ func (s *ExportJobScheduler) UnscheduleJob(jobID string) {
 func (s *ExportJobScheduler) executeJob(ctx context.Context, job models.ExportJob) {
 	log.Printf("export job %s: starting", job.ID)
 
+	startDate, endDate, err := ParseTimePeriod(job.TimePeriod)
+	if err != nil {
+		log.Printf("export job %s: invalid time period %q: %v", job.ID, job.TimePeriod, err)
+		return
+	}
+
 	reports := make([]ExportReportFile, 0, len(job.ReportTypes))
 	for _, reportType := range job.ReportTypes {
-		file, err := s.reports.GenerateReport(ctx, reportType, job.OrganizationID, job.ClientIDs, job.ProjectIDs, job.TimePeriod, job.IncludeFinancial)
+		file, err := s.reports.GenerateReport(ctx, reportType, job.OrganizationID, job.ClientIDs, job.ProjectIDs, startDate, endDate, job.IncludeFinancial)
 		if err != nil {
 			log.Printf("export job %s: failed to generate %s report: %v", job.ID, reportType, err)
 			continue
@@ -144,7 +155,7 @@ func (s *ExportJobScheduler) executeJob(ctx context.Context, job models.ExportJo
 	}
 
 	for _, target := range job.Targets {
-		if err := s.delivery.Deliver(ctx, job.OrganizationID, job.Name, target, reports); err != nil {
+		if err := s.delivery.Deliver(ctx, job.OrganizationID, job.Name, startDate, endDate, target, reports); err != nil {
 			log.Printf("export job %s: failed to deliver to %s target: %v", job.ID, target.Type, err)
 		}
 	}

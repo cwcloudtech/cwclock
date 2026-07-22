@@ -20,6 +20,14 @@ const MultiSelect = ({ label, options, selected, onChange }) => {
     onChange(selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value]);
   };
 
+  // Selects every currently filtered option (merged with whatever's already
+  // selected outside the search), so typing a query first then "select all"
+  // picks just that subset instead of everything.
+  const selectAllFiltered = () => {
+    onChange(Array.from(new Set([...selected, ...filtered.map((o) => o.value)])));
+  };
+  const allFilteredSelected = filtered.length > 0 && filtered.every((o) => selected.includes(o.value));
+
   const summary =
     selected.length === 0
       ? t("common.all")
@@ -57,11 +65,20 @@ const MultiSelect = ({ label, options, selected, onChange }) => {
               </label>
             ))}
           </div>
-          {selected.length > 0 && (
-            <button type="button" className={styles.clear} onClick={() => onChange([])}>
-              {t("common.clearFilter")}
-            </button>
-          )}
+          {(!allFilteredSelected && filtered.length > 0) || selected.length > 0 ? (
+            <div className={styles.actions}>
+              {!allFilteredSelected && filtered.length > 0 && (
+                <button type="button" className={styles.clear} onClick={selectAllFiltered}>
+                  {t("common.selectAll")}
+                </button>
+              )}
+              {selected.length > 0 && (
+                <button type="button" className={styles.clear} onClick={() => onChange([])}>
+                  {t("common.clearFilter")}
+                </button>
+              )}
+            </div>
+          ) : null}
         </div>
       )}
     </Dropdown>

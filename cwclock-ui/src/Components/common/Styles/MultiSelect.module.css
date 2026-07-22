@@ -61,8 +61,13 @@
   background-color: var(--cw-bg-alt);
 }
 
-.clear {
+.actions {
+  display: flex;
   align-self: flex-start;
+  gap: 4px;
+}
+
+.clear {
   background: none;
   border: none;
   color: var(--cw-primary-600);

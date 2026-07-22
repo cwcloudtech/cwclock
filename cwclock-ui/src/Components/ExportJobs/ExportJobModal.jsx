@@ -106,6 +106,24 @@ const ExportJobModal = ({ show, job, onSave, onClose }) => {
     onSave(formData);
   };
 
+  // Projects narrow to the selected clients (like the Projects screen's own
+  // client filter) - selecting clients drops any already-picked project
+  // that's no longer in that set instead of silently keeping a hidden one.
+  const filteredProjects = projects.filter(
+    (p) => formData.clientIds.length === 0 || formData.clientIds.includes(p.clientId)
+  );
+
+  const handleClientsChange = (clientIds) => {
+    const validProjectIds = new Set(
+      projects.filter((p) => clientIds.length === 0 || clientIds.includes(p.clientId)).map((p) => p.id)
+    );
+    setFormData({
+      ...formData,
+      clientIds,
+      projectIds: formData.projectIds.filter((id) => validProjectIds.has(id)),
+    });
+  };
+
   if (!show) return null;
 
   return (
@@ -178,7 +196,7 @@ const ExportJobModal = ({ show, job, onSave, onClose }) => {
           <MultiSelect
             options={clients.map((c) => ({ value: c.id, label: c.name }))}
             selected={formData.clientIds}
-            onChange={(selected) => setFormData({ ...formData, clientIds: selected })}
+            onChange={handleClientsChange}
             placeholder={t("exportJobs.allClientsSelected")}
           />
         </div>
@@ -186,7 +204,7 @@ const ExportJobModal = ({ show, job, onSave, onClose }) => {
         <div className="cw-field">
           <label className="cw-label">{t("exportJobs.projects")}</label>
           <MultiSelect
-            options={projects.map((p) => ({ value: p.id, label: p.name }))}
+            options={filteredProjects.map((p) => ({ value: p.id, label: p.name }))}
             selected={formData.projectIds}
             onChange={(selected) => setFormData({ ...formData, projectIds: selected })}
             placeholder={t("exportJobs.allProjectsSelected")}
