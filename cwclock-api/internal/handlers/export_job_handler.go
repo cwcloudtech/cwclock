@@ -37,10 +37,10 @@ type exportJobPayload struct {
 }
 
 type exportJobTargetPayload struct {
-	Type       string `json:"type"`
-	ToEmails   string `json:"toEmails,omitempty"`
-	CCEmails   string `json:"ccEmails,omitempty"`
-	Connection string `json:"connection,omitempty"`
+	Type       string                     `json:"type"`
+	ToEmails   string                     `json:"toEmails,omitempty"`
+	CCEmails   string                     `json:"ccEmails,omitempty"`
+	Connection *models.ExternalConnection `json:"connection,omitempty"`
 }
 
 func (p exportJobPayload) nameValid() bool {
@@ -51,23 +51,38 @@ func (p exportJobPayload) cronExpressionValid() bool {
 	return utils.IsNotBlank(p.CronExpression) && scheduler.ValidCronExpression(p.CronExpression)
 }
 
+// targetsValid checks every target's shape, and - for a non-"email" target -
+// validates and normalizes its embedded connection through the same
+// per-type rules an organization's own external connections use (see
+// validateExternalConnections), since it's the exact same struct captured
+// through the exact same form fields, just stored independently in the
+// job's own data instead of the organization's connections list.
 func (p exportJobPayload) targetsValid() bool {
 	if len(p.Targets) == 0 {
 		return false
 	}
-	for _, t := range p.Targets {
-		allowedTypes := []string{"s3", "google_drive", "git", "email"}
+	allowedTypes := []string{"s3", "google_drive", "git", "email"}
+	for i := range p.Targets {
+		t := &p.Targets[i]
 		if !slices.Contains(allowedTypes, t.Type) {
 			return false
 		}
 
-		if t.Type == "email" && len(utils.SplitList(t.ToEmails)) == 0 {
-			return false
+		if t.Type == "email" {
+			if len(utils.SplitList(t.ToEmails)) == 0 {
+				return false
+			}
+			continue
 		}
 
-		if t.Type != "email" && utils.IsBlank(t.Connection) {
+		if t.Connection == nil {
 			return false
 		}
+		conns := []models.ExternalConnection{*t.Connection}
+		if err := validateExternalConnections(conns); err != nil {
+			return false
+		}
+		*t.Connection = conns[0]
 	}
 	return true
 }

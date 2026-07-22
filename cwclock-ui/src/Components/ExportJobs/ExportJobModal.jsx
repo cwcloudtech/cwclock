@@ -29,7 +29,6 @@ const CRON_HELPERS = [
 ];
 
 const TIME_PERIOD_HELPERS = [
-  { label: "now()", value: "now()" },
   { label: "Last 24 hours", value: "now()-1d" },
   { label: "Last 7 days", value: "now()-7d" },
   { label: "Last 30 days", value: "now()-30d" },
@@ -48,33 +47,16 @@ const emptyFormData = {
   targets: [],
 };
 
-// Targets coming back from the API only carry the fields relevant to their
-// own type (see models.ExportTarget's omitempty tags) - default the rest so
-// ExportTargetsEditor's inputs are always controlled.
-const normalizeTargets = (targets) =>
-  (targets || []).map((target) => ({
-    type: target.type,
-    toEmails: target.toEmails || "",
-    ccEmails: target.ccEmails || "",
-    connection: target.connection || "",
-  }));
-
 const ExportJobModal = ({ show, job, onSave, onClose }) => {
   const { t } = useI18n();
   const { clients } = useSelector((state) => state.clients);
   const { projects } = useSelector((state) => state.projects);
-  const { organizations, currentOrgId } = useSelector((state) => state.organizations);
-  const orgConnections = organizations.find((o) => o.id === currentOrgId)?.externalConnections || [];
 
   const [formData, setFormData] = useState(emptyFormData);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    if (job) {
-      setFormData({ ...job, targets: normalizeTargets(job.targets) });
-    } else {
-      setFormData(emptyFormData);
-    }
+    setFormData(job || emptyFormData);
     setErrors({});
   }, [job, show]);
 
@@ -232,7 +214,6 @@ const ExportJobModal = ({ show, job, onSave, onClose }) => {
           <ExportTargetsEditor
             targets={formData.targets}
             onChange={(targets) => setFormData({ ...formData, targets })}
-            connections={orgConnections}
             error={errors.targets}
           />
         </div>
@@ -253,7 +234,7 @@ const ExportJobModal = ({ show, job, onSave, onClose }) => {
             {t("common.cancel")}
           </Button>
           <Button type="submit" variant="primary">
-            {job ? t("common.update") : t("common.create")}
+            {job ? t("common.edit") : t("common.create")}
           </Button>
         </div>
       </form>

@@ -2,14 +2,34 @@ import React, { useState } from "react";
 import { MdDeleteForever } from "react-icons/md";
 import Button from "../common/Button";
 import RequiredMark from "../common/RequiredMark";
-import AutocompleteSelect from "../common/AutocompleteSelect";
 import Tooltip from "../common/Tooltip";
+import fileToBase64 from "../common/fileToBase64";
 import { useI18n } from "../../i18n/I18nContext";
 import styles from "./Styles/ExportTargetsEditor.module.css";
 
 const TARGET_TYPES = ["email", "s3", "google_drive", "git"];
 
-const emptyDraft = { type: "email", toEmails: "", ccEmails: "", connection: "" };
+const emptyDraft = {
+  type: "email",
+  toEmails: "",
+  ccEmails: "",
+  endpoint: "",
+  bucketName: "",
+  region: "",
+  accessKey: "",
+  secretKey: "",
+  serviceAccountBase64: "",
+  serviceAccountFileName: "",
+  folderId: "",
+  repoUrl: "",
+  gitAuthMethod: "password",
+  username: "",
+  password: "",
+  sshPrivateKey: "",
+  sshPrivateKeyPassphrase: "",
+  path: "",
+  flatDirectory: false,
+};
 
 const typeLabel = (t, type) => {
   if (type === "email") return t("exportJobs.targetTypeEmail");
@@ -19,32 +39,90 @@ const typeLabel = (t, type) => {
 };
 
 // Mirrors ExternalConnectionsEditor's summaryFor, minus the flatDirectory
-// badge (not relevant to picking an existing connection).
+// badge.
 const connectionSummary = (conn) => {
-  if (!conn) return null;
+  if (!conn) return "";
   if (conn.type === "s3") return `${conn.bucketName} (${conn.endpoint})`;
   if (conn.type === "git") return conn.path ? `${conn.repoUrl} (${conn.path})` : conn.repoUrl;
   return conn.folderId;
 };
 
+const isDraftComplete = (d) => {
+  if (d.type === "email") return !!d.toEmails.trim();
+  if (d.type === "s3") return !!(d.endpoint && d.bucketName && d.region && d.accessKey && d.secretKey);
+  if (d.type === "git") {
+    return !!(d.repoUrl && (d.gitAuthMethod === "password" ? d.username && d.password : d.sshPrivateKey));
+  }
+  return !!(d.serviceAccountBase64 && d.folderId);
+};
+
+// Builds the final target object saved onto the job from an add-form draft:
+// an "email" target, or a target carrying its own S3/Google Drive/git
+// connection - the same shape as models.ExternalConnection, captured
+// through the same fields as ExternalConnectionsEditor, but stored directly
+// on the target instead of referencing one of the organization's own
+// connections (see ai-instruct-77 - a job can push to a different bucket
+// than the one configured for invoices, and isn't affected by that
+// connection later being edited or removed).
+const buildTarget = (draft) => {
+  if (draft.type === "email") {
+    return { type: "email", toEmails: draft.toEmails, ccEmails: draft.ccEmails };
+  }
+  return {
+    type: draft.type,
+    connection: {
+      type: draft.type,
+      endpoint: draft.endpoint,
+      bucketName: draft.bucketName,
+      region: draft.region,
+      accessKey: draft.accessKey,
+      secretKey: draft.secretKey,
+      serviceAccountBase64: draft.serviceAccountBase64,
+      folderId: draft.folderId,
+      repoUrl: draft.repoUrl,
+      username: draft.gitAuthMethod === "password" ? draft.username : "",
+      password: draft.gitAuthMethod === "password" ? draft.password : "",
+      sshPrivateKey: draft.gitAuthMethod === "sshKey" ? draft.sshPrivateKey : "",
+      sshPrivateKeyPassphrase: draft.gitAuthMethod === "sshKey" ? draft.sshPrivateKeyPassphrase : "",
+      path: draft.path,
+      flatDirectory: draft.flatDirectory,
+    },
+  };
+};
+
 // Manages an export job's `targets` list: as many targets as wanted, each
-// either an "email" (a To/CC address list, entered directly) or a reference
-// to one of the organization's existing S3/Google Drive/git external
-// connections (see common/ExternalConnectionsEditor, ai-instruct-39/40) -
-// targets never hold their own credentials, only the connection's id.
-const ExportTargetsEditor = ({ targets, onChange, connections, error }) => {
+// either an "email" (a To/CC address list) or its own independent
+// S3/Google Drive/git connection (see buildTarget). The connection
+// sub-form is the same one ExternalConnectionsEditor uses for an
+// organization's external connections - reused here field-for-field, but
+// the result is kept on the target itself rather than added to the
+// organization.
+const ExportTargetsEditor = ({ targets, onChange, error }) => {
   const { t } = useI18n();
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
+  const [fileError, setFileError] = useState("");
 
-  const connectionsByType = (type) => connections.filter((c) => c.type === type);
+  const setDraftField = (key, val) => setDraft((d) => ({ ...d, [key]: val }));
 
-  const isDraftComplete = (d) => (d.type === "email" ? !!d.toEmails.trim() : !!d.connection);
+  const handleServiceAccountFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFileError("");
+    try {
+      const dataUrl = await fileToBase64(file);
+      const base64 = dataUrl.split(",")[1] || "";
+      setDraft((d) => ({ ...d, serviceAccountBase64: base64, serviceAccountFileName: file.name }));
+    } catch {
+      setFileError(t("organizations.serviceAccountReadError"));
+    }
+  };
 
   const handleAdd = () => {
     if (!isDraftComplete(draft)) return;
-    onChange([...targets, draft]);
+    onChange([...targets, buildTarget(draft)]);
     setDraft(emptyDraft);
+    setFileError("");
     setAdding(false);
   };
 
@@ -56,7 +134,7 @@ const ExportTargetsEditor = ({ targets, onChange, connections, error }) => {
     if (target.type === "email") {
       return target.ccEmails ? `${target.toEmails} (cc: ${target.ccEmails})` : target.toEmails;
     }
-    return connectionSummary(connections.find((c) => c.id === target.connection)) || t("exportJobs.connectionNotFound");
+    return connectionSummary(target.connection);
   };
 
   return (
@@ -98,7 +176,7 @@ const ExportTargetsEditor = ({ targets, onChange, connections, error }) => {
             </select>
           </div>
 
-          {draft.type === "email" ? (
+          {draft.type === "email" && (
             <>
               <div className="cw-field">
                 <label className="cw-label">
@@ -109,7 +187,7 @@ const ExportTargetsEditor = ({ targets, onChange, connections, error }) => {
                   className="cw-input"
                   type="text"
                   value={draft.toEmails}
-                  onChange={(e) => setDraft({ ...draft, toEmails: e.target.value })}
+                  onChange={(e) => setDraftField("toEmails", e.target.value)}
                   placeholder="email1@example.com, email2@example.com"
                 />
               </div>
@@ -119,26 +197,224 @@ const ExportTargetsEditor = ({ targets, onChange, connections, error }) => {
                   className="cw-input"
                   type="text"
                   value={draft.ccEmails}
-                  onChange={(e) => setDraft({ ...draft, ccEmails: e.target.value })}
+                  onChange={(e) => setDraftField("ccEmails", e.target.value)}
                   placeholder="cc@example.com"
                 />
               </div>
             </>
-          ) : connectionsByType(draft.type).length === 0 ? (
-            <p className={styles.hint}>{t("exportJobs.noConnectionsForType", { type: typeLabel(t, draft.type) })}</p>
-          ) : (
-            <div className="cw-field">
-              <label className="cw-label">
-                {t("exportJobs.selectConnection")}
-                <RequiredMark />
+          )}
+
+          {draft.type === "s3" && (
+            <>
+              <div className="cw-field">
+                <label className="cw-label">
+                  {t("organizations.endpoint")}
+                  <RequiredMark />
+                </label>
+                <input
+                  className="cw-input"
+                  type="text"
+                  value={draft.endpoint}
+                  onChange={(e) => setDraftField("endpoint", e.target.value)}
+                />
+              </div>
+              <div className="cw-field">
+                <label className="cw-label">
+                  {t("organizations.bucketName")}
+                  <RequiredMark />
+                </label>
+                <input
+                  className="cw-input"
+                  type="text"
+                  value={draft.bucketName}
+                  onChange={(e) => setDraftField("bucketName", e.target.value)}
+                />
+              </div>
+              <div className="cw-field">
+                <label className="cw-label">
+                  {t("organizations.region")}
+                  <RequiredMark />
+                </label>
+                <input
+                  className="cw-input"
+                  type="text"
+                  value={draft.region}
+                  onChange={(e) => setDraftField("region", e.target.value)}
+                />
+              </div>
+              <div className="cw-field">
+                <label className="cw-label">
+                  {t("organizations.accessKey")}
+                  <RequiredMark />
+                </label>
+                <input
+                  className="cw-input"
+                  type="text"
+                  value={draft.accessKey}
+                  onChange={(e) => setDraftField("accessKey", e.target.value)}
+                />
+              </div>
+              <div className="cw-field">
+                <label className="cw-label">
+                  {t("organizations.secretKey")}
+                  <RequiredMark />
+                </label>
+                <input
+                  className="cw-input"
+                  type="password"
+                  value={draft.secretKey}
+                  onChange={(e) => setDraftField("secretKey", e.target.value)}
+                />
+              </div>
+            </>
+          )}
+
+          {draft.type === "git" && (
+            <>
+              <div className="cw-field">
+                <label className="cw-label">
+                  {t("organizations.repoUrl")}
+                  <RequiredMark />
+                </label>
+                <input
+                  className="cw-input"
+                  type="text"
+                  value={draft.repoUrl}
+                  onChange={(e) => setDraftField("repoUrl", e.target.value)}
+                />
+              </div>
+
+              <div className="cw-field">
+                <label className="cw-label">{t("organizations.gitPath")}</label>
+                <input
+                  className="cw-input"
+                  type="text"
+                  value={draft.path}
+                  placeholder={t("organizations.gitPathPlaceholder")}
+                  onChange={(e) => setDraftField("path", e.target.value)}
+                />
+                <p className={styles.hint}>{t("organizations.gitPathHint")}</p>
+              </div>
+
+              <div className="cw-field">
+                <label className="cw-label">{t("organizations.gitAuthMethod")}</label>
+                <div className={styles.authMethodChoice}>
+                  <label>
+                    <input
+                      type="radio"
+                      name="exportTargetGitAuthMethod"
+                      checked={draft.gitAuthMethod === "password"}
+                      onChange={() => setDraftField("gitAuthMethod", "password")}
+                    />
+                    {t("organizations.gitAuthMethodPassword")}
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      name="exportTargetGitAuthMethod"
+                      checked={draft.gitAuthMethod === "sshKey"}
+                      onChange={() => setDraftField("gitAuthMethod", "sshKey")}
+                    />
+                    {t("organizations.gitAuthMethodSshKey")}
+                  </label>
+                </div>
+              </div>
+
+              {draft.gitAuthMethod === "password" ? (
+                <>
+                  <div className="cw-field">
+                    <label className="cw-label">
+                      {t("organizations.gitUsername")}
+                      <RequiredMark />
+                    </label>
+                    <input
+                      className="cw-input"
+                      type="text"
+                      value={draft.username}
+                      onChange={(e) => setDraftField("username", e.target.value)}
+                    />
+                  </div>
+                  <div className="cw-field">
+                    <label className="cw-label">
+                      {t("organizations.gitPassword")}
+                      <RequiredMark />
+                    </label>
+                    <input
+                      className="cw-input"
+                      type="password"
+                      value={draft.password}
+                      onChange={(e) => setDraftField("password", e.target.value)}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="cw-field">
+                    <label className="cw-label">
+                      {t("organizations.sshPrivateKey")}
+                      <RequiredMark />
+                    </label>
+                    <textarea
+                      className="cw-input"
+                      rows={5}
+                      value={draft.sshPrivateKey}
+                      onChange={(e) => setDraftField("sshPrivateKey", e.target.value)}
+                    />
+                  </div>
+                  <div className="cw-field">
+                    <label className="cw-label">{t("organizations.sshPrivateKeyPassphrase")}</label>
+                    <input
+                      className="cw-input"
+                      type="password"
+                      value={draft.sshPrivateKeyPassphrase}
+                      onChange={(e) => setDraftField("sshPrivateKeyPassphrase", e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+            </>
+          )}
+
+          {draft.type === "google_drive" && (
+            <>
+              <div className="cw-field">
+                <label className="cw-label">
+                  {t("organizations.serviceAccount")}
+                  <RequiredMark />
+                </label>
+                <input className="cw-input" type="file" accept=".json" onChange={handleServiceAccountFile} />
+                {draft.serviceAccountFileName && (
+                  <span className={styles.fileName}>{draft.serviceAccountFileName}</span>
+                )}
+                {fileError && <p className="cw-error">{fileError}</p>}
+              </div>
+              <div className="cw-field">
+                <label className="cw-label">
+                  {t("organizations.folderId")}
+                  <RequiredMark />
+                </label>
+                <input
+                  className="cw-input"
+                  type="text"
+                  value={draft.folderId}
+                  onChange={(e) => setDraftField("folderId", e.target.value)}
+                />
+              </div>
+            </>
+          )}
+
+          {draft.type !== "email" && (
+            <>
+              <label className={`cw-checkbox ${styles.flatDirectoryField}`}>
+                <input
+                  type="checkbox"
+                  checked={draft.flatDirectory}
+                  onChange={(e) => setDraftField("flatDirectory", e.target.checked)}
+                />
+                {t("organizations.flatDirectory")}
               </label>
-              <AutocompleteSelect
-                options={connectionsByType(draft.type).map((c) => ({ value: c.id, label: connectionSummary(c) }))}
-                value={draft.connection}
-                onChange={(value) => setDraft({ ...draft, connection: value })}
-                placeholder={t("exportJobs.selectConnection")}
-              />
-            </div>
+              <p className={styles.hint}>{t("organizations.flatDirectoryHint")}</p>
+            </>
           )}
 
           <div className={styles.addFormActions}>
@@ -152,6 +428,7 @@ const ExportTargetsEditor = ({ targets, onChange, connections, error }) => {
               onClick={() => {
                 setAdding(false);
                 setDraft(emptyDraft);
+                setFileError("");
               }}
             >
               {t("common.cancel")}

@@ -31,12 +31,13 @@ type ExportReportGenerator interface {
 }
 
 // ExportDeliveryService delivers a set of already-generated reports to one
-// export target - by email, or by pushing them to the organization's
-// S3/Google Drive/git external connection (see models.ExportTarget.Type).
-// startDate/endDate are the run's resolved period, for the delivery email's
-// subject/body.
+// export target - by email, or by pushing them to the target's own
+// S3/Google Drive/git connection (see models.ExportTarget.Connection).
+// startTime/endTime are the run's resolved period, for the delivery
+// email's subject/body (in full ISO precision, since a period can be as
+// short as an hour - a bare date would be misleading).
 type ExportDeliveryService interface {
-	Deliver(ctx context.Context, orgID, jobName, startDate, endDate string, target models.ExportTarget, reports []ExportReportFile) error
+	Deliver(ctx context.Context, orgID, jobName string, startTime, endTime time.Time, target models.ExportTarget, reports []ExportReportFile) error
 }
 
 // ExportJobScheduler runs every organization's enabled export jobs on their
@@ -134,11 +135,18 @@ func (s *ExportJobScheduler) UnscheduleJob(jobID string) {
 func (s *ExportJobScheduler) executeJob(ctx context.Context, job models.ExportJob) {
 	log.Printf("export job %s: starting", job.ID)
 
-	startDate, endDate, err := ParseTimePeriod(job.TimePeriod)
+	startTime, endTime, err := ParseTimePeriod(job.TimePeriod)
 	if err != nil {
 		log.Printf("export job %s: invalid time period %q: %v", job.ID, job.TimePeriod, err)
 		return
 	}
+	// The report filter only understands day granularity (see
+	// store.ReportFilter/reportWhereClause) - the email delivered alongside
+	// it keeps the full startTime/endTime precision (see
+	// ExportDeliveryService), since a sub-day period would otherwise show
+	// as the same date twice.
+	startDate := startTime.Format("2006-01-02")
+	endDate := endTime.Format("2006-01-02")
 
 	reports := make([]ExportReportFile, 0, len(job.ReportTypes))
 	for _, reportType := range job.ReportTypes {
@@ -155,7 +163,7 @@ func (s *ExportJobScheduler) executeJob(ctx context.Context, job models.ExportJo
 	}
 
 	for _, target := range job.Targets {
-		if err := s.delivery.Deliver(ctx, job.OrganizationID, job.Name, startDate, endDate, target, reports); err != nil {
+		if err := s.delivery.Deliver(ctx, job.OrganizationID, job.Name, startTime, endTime, target, reports); err != nil {
 			log.Printf("export job %s: failed to deliver to %s target: %v", job.ID, target.Type, err)
 		}
 	}
@@ -163,13 +171,12 @@ func (s *ExportJobScheduler) executeJob(ctx context.Context, job models.ExportJo
 	log.Printf("export job %s: completed", job.ID)
 }
 
-// ParseTimePeriod converts a time period expression like "now()-1d" to actual dates
-func ParseTimePeriod(period string) (startDate, endDate string, err error) {
+// ParseTimePeriod converts a time period expression like "now()-1d" to
+// actual start/end instants.
+func ParseTimePeriod(period string) (startTime, endTime time.Time, err error) {
 	period = strings.TrimSpace(period)
 
-	now := time.Now()
-	endTime := now
-	var startTime time.Time
+	endTime = time.Now()
 
 	if strings.HasPrefix(period, "now()-") {
 		// Parse expressions like "now()-1d", "now()-1h", "now()-30m", etc.
@@ -179,32 +186,31 @@ func ParseTimePeriod(period string) (startDate, endDate string, err error) {
 			daysStr := strings.TrimSuffix(suffix, "d")
 			var days int
 			if _, err := fmt.Sscanf(daysStr, "%d", &days); err != nil {
-				return "", "", fmt.Errorf("invalid day count: %s", daysStr)
+				return time.Time{}, time.Time{}, fmt.Errorf("invalid day count: %s", daysStr)
 			}
-			startTime = now.AddDate(0, 0, -days)
+			startTime = endTime.AddDate(0, 0, -days)
 		} else if strings.HasSuffix(suffix, "h") {
 			hoursStr := strings.TrimSuffix(suffix, "h")
 			var hours int
 			if _, err := fmt.Sscanf(hoursStr, "%d", &hours); err != nil {
-				return "", "", fmt.Errorf("invalid hour count: %s", hoursStr)
+				return time.Time{}, time.Time{}, fmt.Errorf("invalid hour count: %s", hoursStr)
 			}
-			startTime = now.Add(-time.Duration(hours) * time.Hour)
+			startTime = endTime.Add(-time.Duration(hours) * time.Hour)
 		} else if strings.HasSuffix(suffix, "m") {
 			minutesStr := strings.TrimSuffix(suffix, "m")
 			var minutes int
 			if _, err := fmt.Sscanf(minutesStr, "%d", &minutes); err != nil {
-				return "", "", fmt.Errorf("invalid minute count: %s", minutesStr)
+				return time.Time{}, time.Time{}, fmt.Errorf("invalid minute count: %s", minutesStr)
 			}
-			startTime = now.Add(-time.Duration(minutes) * time.Minute)
+			startTime = endTime.Add(-time.Duration(minutes) * time.Minute)
 		} else {
-			return "", "", fmt.Errorf("unsupported time period format: %s", period)
+			return time.Time{}, time.Time{}, fmt.Errorf("unsupported time period format: %s", period)
 		}
 	} else if strings.HasPrefix(period, "now()") {
-		startTime = now
+		startTime = endTime
 	} else {
-		return "", "", fmt.Errorf("unsupported time period format: %s", period)
+		return time.Time{}, time.Time{}, fmt.Errorf("unsupported time period format: %s", period)
 	}
 
-	// Return dates in YYYY-MM-DD format
-	return startTime.Format("2006-01-02"), endTime.Format("2006-01-02"), nil
+	return startTime, endTime, nil
 }
