@@ -33,6 +33,7 @@ type s3Target struct {
 	accessKey  string
 	secretKey  string
 	flat       bool
+	basePath   string
 	httpClient *http.Client
 }
 
@@ -44,6 +45,7 @@ func newS3Target(conn models.ExternalConnection) *s3Target {
 		accessKey:  conn.AccessKey,
 		secretKey:  conn.SecretKey,
 		flat:       conn.FlatDirectory,
+		basePath:   cleanBasePath(conn.Path),
 		httpClient: &http.Client{Timeout: 15 * time.Second},
 	}
 }
@@ -69,14 +71,21 @@ func (s *s3Target) Delete(ctx context.Context, year string, months []string, fil
 // alternate-language month folder gets replaced/deleted in place rather
 // than duplicated), falling back to the first (default) candidate's key if
 // none of them currently hold the file. In flat mode (ai-instruct-42) the
-// key is always just the filename at the bucket's root, with no
-// year/month lookup at all.
+// key is always just the filename at the bucket's root (or basePath, if
+// set), with no year/month lookup at all. basePath, when set, prefixes
+// every key (ai-instruct-78), the same optional subfolder git connections
+// already support.
 func (s *s3Target) resolveKey(ctx context.Context, year string, months []string, filename string) (string, error) {
+	prefix := utils.EMPTY
+	if utils.IsNotBlank(s.basePath) {
+		prefix = s.basePath + "/"
+	}
+
 	if s.flat {
-		return filename, nil
+		return prefix + filename, nil
 	}
 	for _, month := range months {
-		key := year + "/" + month + "/" + filename
+		key := prefix + year + "/" + month + "/" + filename
 		found, err := s.exists(ctx, key)
 		if err != nil {
 			return utils.EMPTY, err
@@ -86,7 +95,7 @@ func (s *s3Target) resolveKey(ctx context.Context, year string, months []string,
 			return key, nil
 		}
 	}
-	return year + "/" + months[0] + "/" + filename, nil
+	return prefix + year + "/" + months[0] + "/" + filename, nil
 }
 
 // exists reports whether key is already present in the bucket, via a signed

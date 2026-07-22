@@ -93,6 +93,7 @@ type driveTarget struct {
 	privateKey *rsa.PrivateKey
 	rootFolder string
 	flat       bool
+	basePath   string
 	httpClient *http.Client
 }
 
@@ -106,8 +107,48 @@ func newDriveTarget(conn models.ExternalConnection) (*driveTarget, error) {
 		privateKey: privateKey,
 		rootFolder: conn.FolderID,
 		flat:       conn.FlatDirectory,
+		basePath:   cleanBasePath(conn.Path),
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 	}, nil
+}
+
+// pathSegments splits basePath into the individual folder names Drive's
+// find-or-create-by-name API needs one call per level for (Drive addresses
+// folders by id, not by a path string like S3/git).
+func (d *driveTarget) pathSegments() []string {
+	if utils.IsBlank(d.basePath) {
+		return nil
+	}
+	return strings.Split(d.basePath, "/")
+}
+
+// ensureBaseFolder walks pathSegments from rootFolder, creating whichever
+// level is missing (ai-instruct-78), the same optional subfolder git/S3
+// connections already support.
+func (d *driveTarget) ensureBaseFolder(ctx context.Context, token string) (string, error) {
+	folder := d.rootFolder
+	for _, segment := range d.pathSegments() {
+		next, err := d.ensureFolder(ctx, token, segment, folder)
+		if err != nil {
+			return utils.EMPTY, err
+		}
+		folder = next
+	}
+	return folder, nil
+}
+
+// findBaseFolder is ensureBaseFolder's search-only counterpart, used by
+// Delete: stops (not found) as soon as any path segment doesn't exist.
+func (d *driveTarget) findBaseFolder(ctx context.Context, token string) (string, bool, error) {
+	folder := d.rootFolder
+	for _, segment := range d.pathSegments() {
+		next, found, err := d.findFolder(ctx, token, segment, folder)
+		if err != nil || !found {
+			return utils.EMPTY, false, err
+		}
+		folder = next
+	}
+	return folder, true, nil
 }
 
 func (d *driveTarget) Upload(ctx context.Context, year string, months []string, filename string, data []byte) error {
@@ -148,15 +189,19 @@ func (d *driveTarget) Delete(ctx context.Context, year string, months []string, 
 	return d.deleteFile(ctx, token, fileID)
 }
 
-// ensureTargetFolder resolves the folder invoices are uploaded into: the
-// root folder directly in flat mode (ai-instruct-42, for accounting
-// software that needs a flat listing with no subfolders), or the
+// ensureTargetFolder resolves the folder invoices are uploaded into:
+// basePath (if set) directly in flat mode (ai-instruct-42, for accounting
+// software that needs a flat listing with no subfolders), or basePath's
 // year/month folder chain (creating whichever level is missing) otherwise.
 func (d *driveTarget) ensureTargetFolder(ctx context.Context, token, year string, months []string) (string, error) {
-	if d.flat {
-		return d.rootFolder, nil
+	base, err := d.ensureBaseFolder(ctx, token)
+	if err != nil {
+		return utils.EMPTY, err
 	}
-	yearFolder, err := d.ensureFolder(ctx, token, year, d.rootFolder)
+	if d.flat {
+		return base, nil
+	}
+	yearFolder, err := d.ensureFolder(ctx, token, year, base)
 	if err != nil {
 		return utils.EMPTY, err
 	}
@@ -164,13 +209,17 @@ func (d *driveTarget) ensureTargetFolder(ctx context.Context, token, year string
 }
 
 // findTargetFolder is ensureTargetFolder's search-only counterpart, used by
-// Delete: the root folder directly in flat mode, or the year/month folder
-// chain if every level of it already exists.
+// Delete: basePath directly in flat mode, or its year/month folder chain if
+// every level of it already exists.
 func (d *driveTarget) findTargetFolder(ctx context.Context, token, year string, months []string) (string, bool, error) {
-	if d.flat {
-		return d.rootFolder, true, nil
+	base, found, err := d.findBaseFolder(ctx, token)
+	if err != nil || !found {
+		return utils.EMPTY, false, err
 	}
-	yearFolder, found, err := d.findFolder(ctx, token, year, d.rootFolder)
+	if d.flat {
+		return base, true, nil
+	}
+	yearFolder, found, err := d.findFolder(ctx, token, year, base)
 	if err != nil || !found {
 		return utils.EMPTY, false, err
 	}

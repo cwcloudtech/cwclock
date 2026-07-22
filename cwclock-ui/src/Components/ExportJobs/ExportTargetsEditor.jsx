@@ -42,9 +42,11 @@ const typeLabel = (t, type) => {
 // badge.
 const connectionSummary = (conn) => {
   if (!conn) return "";
-  if (conn.type === "s3") return `${conn.bucketName} (${conn.endpoint})`;
-  if (conn.type === "git") return conn.path ? `${conn.repoUrl} (${conn.path})` : conn.repoUrl;
-  return conn.folderId;
+  let base;
+  if (conn.type === "s3") base = `${conn.bucketName} (${conn.endpoint})`;
+  else if (conn.type === "git") base = conn.repoUrl;
+  else base = conn.folderId;
+  return conn.path ? `${base} - ${conn.path}` : base;
 };
 
 const isDraftComplete = (d) => {
@@ -285,18 +287,6 @@ const ExportTargetsEditor = ({ targets, onChange, error }) => {
               </div>
 
               <div className="cw-field">
-                <label className="cw-label">{t("organizations.gitPath")}</label>
-                <input
-                  className="cw-input"
-                  type="text"
-                  value={draft.path}
-                  placeholder={t("organizations.gitPathPlaceholder")}
-                  onChange={(e) => setDraftField("path", e.target.value)}
-                />
-                <p className={styles.hint}>{t("organizations.gitPathHint")}</p>
-              </div>
-
-              <div className="cw-field">
                 <label className="cw-label">{t("organizations.gitAuthMethod")}</label>
                 <div className={styles.authMethodChoice}>
                   <label>
@@ -405,6 +395,18 @@ const ExportTargetsEditor = ({ targets, onChange, error }) => {
 
           {draft.type !== "email" && (
             <>
+              <div className="cw-field">
+                <label className="cw-label">{t("organizations.subfolderPath")}</label>
+                <input
+                  className="cw-input"
+                  type="text"
+                  value={draft.path}
+                  placeholder={t("organizations.subfolderPathPlaceholder")}
+                  onChange={(e) => setDraftField("path", e.target.value)}
+                />
+                <p className={styles.hint}>{t("organizations.subfolderPathHint")}</p>
+              </div>
+
               <label className={`cw-checkbox ${styles.flatDirectoryField}`}>
                 <input
                   type="checkbox"

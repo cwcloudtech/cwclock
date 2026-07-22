@@ -130,10 +130,11 @@ const ExternalConnectionsEditor = ({ value = [], onChange, orgId, token }) => {
     if (conn.type === "s3") {
       base = `${conn.bucketName} (${conn.endpoint})`;
     } else if (conn.type === "git") {
-      base = conn.path ? `${conn.repoUrl} (${conn.path})` : conn.repoUrl;
+      base = conn.repoUrl;
     } else {
       base = `${t("organizations.googleDrive")} - ${conn.folderId}`;
     }
+    if (conn.path) base = `${base} - ${conn.path}`;
     return conn.flatDirectory ? `${base} - ${t("organizations.flatDirectoryBadge")}` : base;
   };
 
@@ -257,18 +258,6 @@ const ExternalConnectionsEditor = ({ value = [], onChange, orgId, token }) => {
               </div>
 
               <div className="cw-field">
-                <label className="cw-label">{t("organizations.gitPath")}</label>
-                <input
-                  className="cw-input"
-                  type="text"
-                  value={draft.path}
-                  placeholder={t("organizations.gitPathPlaceholder")}
-                  onChange={(e) => setDraftField("path", e.target.value)}
-                />
-                <p className={styles.flatDirectoryHint}>{t("organizations.gitPathHint")}</p>
-              </div>
-
-              <div className="cw-field">
                 <label className="cw-label">{t("organizations.gitAuthMethod")}</label>
                 <div className={styles.authMethodChoice}>
                   <label>
@@ -372,6 +361,18 @@ const ExternalConnectionsEditor = ({ value = [], onChange, orgId, token }) => {
               </div>
             </>
           )}
+
+          <div className="cw-field">
+            <label className="cw-label">{t("organizations.subfolderPath")}</label>
+            <input
+              className="cw-input"
+              type="text"
+              value={draft.path}
+              placeholder={t("organizations.subfolderPathPlaceholder")}
+              onChange={(e) => setDraftField("path", e.target.value)}
+            />
+            <p className={styles.flatDirectoryHint}>{t("organizations.subfolderPathHint")}</p>
+          </div>
 
           <label className={`cw-checkbox ${styles.flatDirectoryField}`}>
             <input

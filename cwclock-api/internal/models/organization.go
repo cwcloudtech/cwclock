@@ -84,10 +84,11 @@ type ExternalConnection struct {
 	Password                string `json:"password,omitempty"`
 	SSHPrivateKey           string `json:"sshPrivateKey,omitempty"`
 	SSHPrivateKeyPassphrase string `json:"sshPrivateKeyPassphrase,omitempty"`
-	// Path is an optional directory within the git repo invoices are written
-	// under (ai-instruct-69) - empty means the repo root. It's applied
-	// underneath FlatDirectory/year/month, i.e. it's always the outermost
-	// folder: "{Path}", "{Path}/YYYY/MM.MonthName", etc.
+	// Path is an optional subfolder invoices are written under - within the
+	// repo for git (ai-instruct-69), the bucket for S3, or the FolderID for
+	// google_drive (ai-instruct-78) - empty means that destination's root.
+	// It's applied underneath FlatDirectory/year/month, i.e. it's always
+	// the outermost folder: "{Path}", "{Path}/YYYY/MM.MonthName", etc.
 	Path string `json:"path,omitempty"`
 	// FlatDirectory, when true, uploads invoices directly at the
 	// destination's root instead of nesting them under a "YYYY/MM.MonthName"
