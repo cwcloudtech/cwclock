@@ -60,12 +60,13 @@ const (
 )
 
 // ExternalConnection is one optional external storage destination an
-// organization's invoices get pushed to (see ai-instruct-39). Only the
-// fields relevant to Type are populated - S3 connections use
-// Endpoint/BucketName/Region/AccessKey/SecretKey, Google Drive connections
-// use ServiceAccountBase64/FolderID, git connections use RepoURL plus either
-// Username/Password or SSHPrivateKey/SSHPrivateKeyPassphrase (see
-// ai-instruct-68).
+// organization's invoices get pushed to (see ai-instruct-39), or an export
+// job's generated reports (see models.ExportTarget.Connection,
+// ai-instruct-77). Only the fields relevant to Type are populated - S3
+// connections use Endpoint/BucketName/Region/AccessKey/SecretKey, Google
+// Drive connections use ServiceAccountBase64/FolderID, git connections use
+// RepoURL plus either Username/Password or
+// SSHPrivateKey/SSHPrivateKeyPassphrase (see ai-instruct-68).
 type ExternalConnection struct {
 	ID                   string                 `json:"id"`
 	Type                 ExternalConnectionType `json:"type"`
@@ -84,18 +85,18 @@ type ExternalConnection struct {
 	Password                string `json:"password,omitempty"`
 	SSHPrivateKey           string `json:"sshPrivateKey,omitempty"`
 	SSHPrivateKeyPassphrase string `json:"sshPrivateKeyPassphrase,omitempty"`
-	// Path is an optional subfolder invoices are written under - within the
+	// Path is an optional subfolder files are written under - within the
 	// repo for git (ai-instruct-69), the bucket for S3, or the FolderID for
 	// google_drive (ai-instruct-78) - empty means that destination's root.
 	// It's applied underneath FlatDirectory/year/month, i.e. it's always
 	// the outermost folder: "{Path}", "{Path}/YYYY/MM.MonthName", etc.
 	Path string `json:"path,omitempty"`
-	// FlatDirectory, when true, uploads invoices directly at the
-	// destination's root instead of nesting them under a "YYYY/MM.MonthName"
-	// folder (ai-instruct-42) - some accounting software watching a Drive
-	// folder or S3 bucket requires a flat listing with no subfolders. False
-	// (the zero value, so existing connections keep today's behavior) nests
-	// by year/month as before.
+	// FlatDirectory, when true, uploads files directly at the destination's
+	// root instead of nesting them under a "YYYY/MM.MonthName" folder
+	// (ai-instruct-42) - some accounting software watching a Drive folder
+	// or S3 bucket requires a flat listing with no subfolders. False (the
+	// zero value, so existing connections keep today's behavior) nests by
+	// year/month as before.
 	FlatDirectory bool `json:"flatDirectory,omitempty"`
 }
 
