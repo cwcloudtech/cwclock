@@ -30,7 +30,7 @@
 
 .jobRow {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 150px 100px;
+  grid-template-columns: 1fr 1fr 1fr 160px 100px 100px;
   gap: 16px;
   align-items: center;
   padding: 16px;
@@ -52,6 +52,11 @@
 
 .jobReports {
   font-size: 12px;
+}
+
+.jobNextRun {
+  font-size: 12px;
+  color: #666;
 }
 
 .jobStatus {
@@ -106,6 +111,11 @@
 
   .jobReports::before {
     content: "Reports: ";
+    font-weight: 600;
+  }
+
+  .jobNextRun::before {
+    content: "Next run: ";
     font-weight: 600;
   }
 

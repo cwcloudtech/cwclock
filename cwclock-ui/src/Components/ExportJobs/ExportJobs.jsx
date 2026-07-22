@@ -43,6 +43,7 @@ const ExportJobRow = ({ job, orgId, token, onDelete, onEdit }) => {
         <div className={styles.jobName}>{job.name}</div>
         <div className={styles.jobCron}>{job.cronExpression}</div>
         <div className={styles.jobReports}>{job.reportTypes.join(", ")}</div>
+        <div className={styles.jobNextRun}>{job.nextRunAt ? new Date(job.nextRunAt).toLocaleString() : "—"}</div>
         <div className={styles.jobStatus}>
           {job.enabled ? (
             <span className={styles.statusEnabled}>{t("exportJobs.enabled")}</span>

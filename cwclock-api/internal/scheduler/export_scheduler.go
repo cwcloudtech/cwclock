@@ -92,6 +92,22 @@ func ValidCronExpression(expr string) bool {
 	return err == nil
 }
 
+// NextRunAt computes the next time expr will fire after now, purely from
+// the cron expression itself - it doesn't consult a running scheduler's
+// entries, so it works the same whether or not this process is the one
+// actually running the job (e.g. right after a create/update, before
+// ScheduleJob's own entry would reflect it). Returns nil for an expression
+// that fails to parse, which shouldn't happen for anything that already
+// passed ValidCronExpression.
+func NextRunAt(cronExpression string) *time.Time {
+	schedule, err := cron.ParseStandard(cronExpression)
+	if err != nil {
+		return nil
+	}
+	next := schedule.Next(time.Now())
+	return &next
+}
+
 func (s *ExportJobScheduler) Stop() {
 	<-s.cron.Stop().Done()
 }

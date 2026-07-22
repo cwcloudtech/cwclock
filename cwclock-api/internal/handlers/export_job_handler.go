@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"slices"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -128,6 +129,24 @@ func (p exportJobPayload) toFields() store.ExportJobFields {
 	}
 }
 
+// exportJobResponse adds the job's next scheduled run to the JSON response
+// - computed on the fly from its cron expression (see scheduler.NextRunAt)
+// rather than stored, so it's always accurate as of the response and never
+// needs to be kept in sync with edits. Only set for an enabled job: a
+// disabled one has no next run to report.
+type exportJobResponse struct {
+	models.ExportJob
+	NextRunAt *time.Time `json:"nextRunAt,omitempty"`
+}
+
+func toExportJobResponse(job models.ExportJob) exportJobResponse {
+	resp := exportJobResponse{ExportJob: job}
+	if job.Enabled {
+		resp.NextRunAt = scheduler.NextRunAt(job.CronExpression)
+	}
+	return resp
+}
+
 func convertTargets(payloadTargets []exportJobTargetPayload) []models.ExportTarget {
 	targets := make([]models.ExportTarget, len(payloadTargets))
 	for i, t := range payloadTargets {
@@ -149,7 +168,11 @@ func (h *ExportJobHandler) List(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, jobs)
+	resp := make([]exportJobResponse, len(jobs))
+	for i, job := range jobs {
+		resp[i] = toExportJobResponse(job)
+	}
+	writeJSON(w, http.StatusOK, resp)
 }
 
 func (h *ExportJobHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -190,7 +213,7 @@ func (h *ExportJobHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err := h.scheduler.ScheduleJob(job); err != nil {
 		slog.Error("failed to schedule export job", "error", err, "jobId", job.ID)
 	}
-	writeJSON(w, http.StatusCreated, job)
+	writeJSON(w, http.StatusCreated, toExportJobResponse(job))
 }
 
 func (h *ExportJobHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -231,7 +254,7 @@ func (h *ExportJobHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if err := h.scheduler.ScheduleJob(job); err != nil {
 		slog.Error("failed to reschedule export job", "error", err, "jobId", job.ID)
 	}
-	writeJSON(w, http.StatusOK, job)
+	writeJSON(w, http.StatusOK, toExportJobResponse(job))
 }
 
 func (h *ExportJobHandler) Delete(w http.ResponseWriter, r *http.Request) {
