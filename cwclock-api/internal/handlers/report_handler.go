@@ -226,6 +226,31 @@ func (h *ReportHandler) GenerateSummaryPDF(ctx context.Context, orgID string, fi
 	return data, filename, err
 }
 
+// GenerateDetailedCSV is GenerateDetailedPDF's CSV counterpart - see its
+// doc comment.
+func (h *ReportHandler) GenerateDetailedCSV(ctx context.Context, orgID string, filter store.ReportFilter, canSeeAmount bool) (data []byte, filename string, err error) {
+	org, entries, _, err := h.loadEnrichedEntries(ctx, orgID, filter, canSeeAmount)
+	if err != nil {
+		return nil, "", err
+	}
+	data, err = report.DetailedCSV(entries, canSeeAmount, org.Currency)
+	filename = fmt.Sprintf("CWClock_Time_Report_Detailed_%s-%s.csv", exportFilenameDate(filter.Start), exportFilenameDate(filter.End))
+	return data, filename, err
+}
+
+// GenerateSummaryCSV is GenerateSummaryPDF's CSV counterpart - see its doc
+// comment.
+func (h *ReportHandler) GenerateSummaryCSV(ctx context.Context, orgID string, filter store.ReportFilter, canSeeAmount bool) (data []byte, filename string, err error) {
+	org, entries, _, err := h.loadEnrichedEntries(ctx, orgID, filter, canSeeAmount)
+	if err != nil {
+		return nil, "", err
+	}
+	rows := report.SummaryRows(entries, canSeeAmount)
+	data, err = report.SummaryCSV(rows, canSeeAmount, org.Currency)
+	filename = fmt.Sprintf("CWClock_Time_Report_Summary_%s-%s.csv", exportFilenameDate(filter.Start), exportFilenameDate(filter.End))
+	return data, filename, err
+}
+
 func writeExportFile(w http.ResponseWriter, contentType, filename string, data []byte, err error) {
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)

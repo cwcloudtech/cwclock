@@ -16,6 +16,7 @@ import (
 	"cwclock-api/internal/metrics"
 	"cwclock-api/internal/oidc"
 	"cwclock-api/internal/router"
+	"cwclock-api/internal/scheduler"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/telemetry"
 	"cwclock-api/internal/utils"
@@ -96,7 +97,16 @@ func main() {
 	oidcProviders := oidc.BuildProviders(cfg)
 	oidcHandler := handlers.NewOIDCHandler(oidcProviders, userStore, webauthnCredStore, cfg.JWTSecret, cfg.APIBaseURL, cfg.UIBaseURL, cfg.OIDCKeycloakGroups, cfg.ActivationMode)
 	contactHandler := handlers.NewContactHandler(contact.New(cfg.CWCloudAPIURL, cfg.CWCloudContactFormID))
-	exportJobHandler := handlers.NewExportJobHandler(exportJobStore)
+
+	exportReportGenerator := handlers.NewExportReportGenerator(reportHandler)
+	exportDelivery := handlers.NewExportDeliveryService(mailer, orgStore)
+	exportScheduler := scheduler.NewExportJobScheduler(exportJobStore, exportReportGenerator, exportDelivery)
+	if err := exportScheduler.Start(ctx); err != nil {
+		tel.Logger.Error("failed to start export job scheduler", "error", err)
+		panic(err)
+	}
+	defer exportScheduler.Stop()
+	exportJobHandler := handlers.NewExportJobHandler(exportJobStore, exportScheduler)
 
 	met, err := metrics.Setup(ctx, metrics.Config{
 		Endpoint: cfg.OtelEndpoint,

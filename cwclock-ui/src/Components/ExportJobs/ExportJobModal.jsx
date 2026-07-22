@@ -43,7 +43,7 @@ const ExportJobModal = ({ show, job, onSave, onClose }) => {
     projectIds: [],
     includeFinancial: false,
     enabled: true,
-    targets: [{ type: "email", toEmails: [], ccEmails: [] }],
+    targets: [{ type: "email", toEmails: "", ccEmails: "" }],
   });
 
   const [errors, setErrors] = useState({});
@@ -61,7 +61,7 @@ const ExportJobModal = ({ show, job, onSave, onClose }) => {
         projectIds: [],
         includeFinancial: false,
         enabled: true,
-        targets: [{ type: "email", toEmails: [], ccEmails: [] }],
+        targets: [{ type: "email", toEmails: "", ccEmails: "" }],
       });
     }
     setErrors({});
@@ -81,7 +81,7 @@ const ExportJobModal = ({ show, job, onSave, onClose }) => {
     if (!formData.timePeriod.trim()) {
       newErrors.timePeriod = t("exportJobs.timePeriodRequired");
     }
-    if (formData.targets.length === 0 || formData.targets[0].toEmails.length === 0) {
+    if (formData.targets.length === 0 || !formData.targets[0].toEmails?.trim()) {
       newErrors.targets = t("exportJobs.selectTargets");
     }
     return newErrors;
@@ -99,18 +99,14 @@ const ExportJobModal = ({ show, job, onSave, onClose }) => {
 
   const handleTargetEmailChange = (index, field, value) => {
     const newTargets = [...formData.targets];
-    if (field === "toEmails" || field === "ccEmails") {
-      newTargets[index][field] = value.split(",").map((e) => e.trim());
-    } else {
-      newTargets[index][field] = value;
-    }
+    newTargets[index][field] = value;
     setFormData({ ...formData, targets: newTargets });
   };
 
   if (!show) return null;
 
   return (
-    <Modal title={job ? t("exportJobs.editJob") : t("exportJobs.newJob")} onClose={onClose}>
+    <Modal show={show} title={job ? t("exportJobs.editJob") : t("exportJobs.newJob")} onClose={onClose}>
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.formGroup}>
           <label htmlFor="name">{t("common.name")} *</label>
@@ -243,7 +239,7 @@ const ExportJobModal = ({ show, job, onSave, onClose }) => {
               <input
                 id="toEmails"
                 type="text"
-                value={(formData.targets[0]?.toEmails || []).join(", ")}
+                value={formData.targets[0]?.toEmails || ""}
                 onChange={(e) => handleTargetEmailChange(0, "toEmails", e.target.value)}
                 placeholder="email1@example.com, email2@example.com"
               />
@@ -253,7 +249,7 @@ const ExportJobModal = ({ show, job, onSave, onClose }) => {
               <input
                 id="ccEmails"
                 type="text"
-                value={(formData.targets[0]?.ccEmails || []).join(", ")}
+                value={formData.targets[0]?.ccEmails || ""}
                 onChange={(e) => handleTargetEmailChange(0, "ccEmails", e.target.value)}
                 placeholder="cc@example.com"
               />

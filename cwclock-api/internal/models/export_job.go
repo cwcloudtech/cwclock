@@ -21,8 +21,11 @@ type ExportJob struct {
 
 // ExportTarget defines where reports should be sent.
 type ExportTarget struct {
-	Type       string   `json:"type"` // "email", "s3", "google_drive"
-	ToEmails   []string `json:"toEmails,omitempty"`
-	CCEmails   []string `json:"ccEmails,omitempty"`
-	Connection string   `json:"connection,omitempty"` // Connection ID for S3/Google Drive
+	Type string `json:"type"` // "email", "s3", "google_drive", "git"
+	// ToEmails/CCEmails are raw comma/semicolon-separated address lists, the
+	// same format as models.Client.InvoiceEmails - split with
+	// utils.SplitList at send time (see handlers.ExportDeliveryService).
+	ToEmails   string `json:"toEmails,omitempty"`
+	CCEmails   string `json:"ccEmails,omitempty"`
+	Connection string `json:"connection,omitempty"` // Connection ID for S3/Google Drive/git
 }

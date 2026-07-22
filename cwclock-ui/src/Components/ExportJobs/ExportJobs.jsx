@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-toastify";
-import { FaRegEdit, FaPlus } from "react-icons/fa";
+import { FaRegEdit } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";
 import { useI18n } from "../../i18n/I18nContext";
 import Spinner from "../spinner/Spinner";
@@ -10,7 +9,6 @@ import NeedOrganizationEmptyState from "../common/NeedOrganizationEmptyState";
 import Button from "../common/Button";
 import Tooltip from "../common/Tooltip";
 import ConfirmModal from "../common/ConfirmModal";
-import toastOptions from "../../Redux/toastOptions";
 import { listClientsApi } from "../../Redux/Clients/Client.actions";
 import { listProjectsApi } from "../../Redux/Projects/Project.actions";
 import { listMembersApi } from "../../Redux/Organizations/Org.actions";
@@ -21,7 +19,6 @@ import {
   deleteExportJobApi,
 } from "../../Redux/ExportJobs/ExportJob.actions";
 import { isAdminOrOwner as computeIsAdminOrOwner } from "../common/permissions";
-import { apiErrorMessage } from "../../i18n/translate";
 import styles from "./Styles/ExportJobs.module.css";
 import ExportJobModal from "./ExportJobModal";
 
@@ -31,10 +28,13 @@ const ExportJobRow = ({ job, orgId, token, onDelete, onEdit }) => {
   const dispatch = useDispatch();
 
   const handleDelete = async () => {
-    await dispatch(deleteExportJobApi(orgId, job.id, token));
-    toast.success(t("exportJobs.deletedSuccessfully"), toastOptions);
     setShowDeleteConfirm(false);
-    onDelete();
+    try {
+      await dispatch(deleteExportJobApi(orgId, job.id, token));
+      onDelete();
+    } catch (e) {
+      // error toast already shown by deleteExportJobApi
+    }
   };
 
   return (
@@ -125,17 +125,23 @@ const ExportJobs = () => {
     );
   }
 
-  const handleCreate = (jobData) => {
-    dispatch(createExportJobApi(currentOrgId, jobData, user.token));
-    toast.success(t("exportJobs.createdSuccessfully"), toastOptions);
-    setShowModal(false);
+  const handleCreate = async (jobData) => {
+    try {
+      await dispatch(createExportJobApi(currentOrgId, jobData, user.token));
+      setShowModal(false);
+    } catch (e) {
+      // error toast already shown by createExportJobApi
+    }
   };
 
-  const handleUpdate = (jobData) => {
-    dispatch(updateExportJobApi(currentOrgId, editingJob.id, jobData, user.token));
-    toast.success(t("exportJobs.updatedSuccessfully"), toastOptions);
-    setShowModal(false);
-    setEditingJob(null);
+  const handleUpdate = async (jobData) => {
+    try {
+      await dispatch(updateExportJobApi(currentOrgId, editingJob.id, jobData, user.token));
+      setShowModal(false);
+      setEditingJob(null);
+    } catch (e) {
+      // error toast already shown by updateExportJobApi
+    }
   };
 
   const handleEdit = (job) => {
@@ -148,19 +154,20 @@ const ExportJobs = () => {
     setEditingJob(null);
   };
 
+  const openCreateModal = () => {
+    setEditingJob(null);
+    setShowModal(true);
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h2>{t("exportJobs.title")}</h2>
-        <Button
-          onClick={() => {
-            setEditingJob(null);
-            setShowModal(true);
-          }}
-          className={styles.createBtn}
-        >
-          <FaPlus /> {t("exportJobs.create")}
-        </Button>
+        {exportJobs.length > 0 && (
+          <Button onClick={openCreateModal} className={styles.createBtn}>
+            {t("exportJobs.create")}
+          </Button>
+        )}
       </div>
 
       {exportJobs.length === 0 ? (
@@ -168,6 +175,7 @@ const ExportJobs = () => {
           icon="📊"
           title={t("exportJobs.emptyTitle")}
           body={t("exportJobs.emptyBody")}
+          action={<Button onClick={openCreateModal}>{t("exportJobs.create")}</Button>}
         />
       ) : (
         <ul className={styles.jobsList}>

@@ -147,6 +147,30 @@ func (s *ExportJobStore) ListEnabled(ctx context.Context, orgID string) ([]model
 	return jobs, rows.Err()
 }
 
+// ListAllEnabled returns every enabled export job across all organizations,
+// for the scheduler to resume on startup (see scheduler.ExportJobScheduler.Start).
+func (s *ExportJobStore) ListAllEnabled(ctx context.Context) ([]models.ExportJob, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, organization_id, data, created_at, updated_at
+		FROM export_jobs WHERE (data->>'enabled')::boolean = true
+		ORDER BY created_at DESC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	jobs := []models.ExportJob{}
+	for rows.Next() {
+		j, err := scanExportJob(rows)
+		if err != nil {
+			return nil, err
+		}
+		jobs = append(jobs, j)
+	}
+	return jobs, rows.Err()
+}
+
 func (s *ExportJobStore) Update(ctx context.Context, id string, f ExportJobFields) (models.ExportJob, error) {
 	data, err := json.Marshal(toExportJobData(f))
 	if err != nil {

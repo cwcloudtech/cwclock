@@ -2,22 +2,25 @@ package handlers
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/scheduler"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/utils"
 )
 
 type ExportJobHandler struct {
-	jobs *store.ExportJobStore
+	jobs      *store.ExportJobStore
+	scheduler *scheduler.ExportJobScheduler
 }
 
-func NewExportJobHandler(jobs *store.ExportJobStore) *ExportJobHandler {
-	return &ExportJobHandler{jobs: jobs}
+func NewExportJobHandler(jobs *store.ExportJobStore, sched *scheduler.ExportJobScheduler) *ExportJobHandler {
+	return &ExportJobHandler{jobs: jobs, scheduler: sched}
 }
 
 type exportJobPayload struct {
@@ -33,10 +36,10 @@ type exportJobPayload struct {
 }
 
 type exportJobTargetPayload struct {
-	Type       string   `json:"type"`
-	ToEmails   []string `json:"toEmails,omitempty"`
-	CCEmails   []string `json:"ccEmails,omitempty"`
-	Connection string   `json:"connection,omitempty"`
+	Type       string `json:"type"`
+	ToEmails   string `json:"toEmails,omitempty"`
+	CCEmails   string `json:"ccEmails,omitempty"`
+	Connection string `json:"connection,omitempty"`
 }
 
 func (p exportJobPayload) nameValid() bool {
@@ -44,7 +47,7 @@ func (p exportJobPayload) nameValid() bool {
 }
 
 func (p exportJobPayload) cronExpressionValid() bool {
-	return utils.IsNotBlank(p.CronExpression)
+	return utils.IsNotBlank(p.CronExpression) && scheduler.ValidCronExpression(p.CronExpression)
 }
 
 func (p exportJobPayload) targetsValid() bool {
@@ -52,10 +55,10 @@ func (p exportJobPayload) targetsValid() bool {
 		return false
 	}
 	for _, t := range p.Targets {
-		if t.Type != "email" && t.Type != "s3" && t.Type != "google_drive" {
+		if t.Type != "email" && t.Type != "s3" && t.Type != "google_drive" && t.Type != "git" {
 			return false
 		}
-		if t.Type == "email" && len(t.ToEmails) == 0 {
+		if t.Type == "email" && len(utils.SplitList(t.ToEmails)) == 0 {
 			return false
 		}
 		if t.Type != "email" && utils.IsBlank(t.Connection) {
@@ -139,7 +142,7 @@ func (h *ExportJobHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !p.cronExpressionValid() {
-		writeError(w, http.StatusBadRequest, "Please fill in the Cron Expression field", CodeInvalidRequestBody)
+		writeError(w, http.StatusBadRequest, "Please provide a valid cron expression", CodeInvalidRequestBody)
 		return
 	}
 	if !p.targetsValid() {
@@ -160,6 +163,9 @@ func (h *ExportJobHandler) Create(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	if err := h.scheduler.ScheduleJob(job); err != nil {
+		slog.Error("failed to schedule export job", "error", err, "jobId", job.ID)
+	}
 	writeJSON(w, http.StatusCreated, job)
 }
 
@@ -177,7 +183,7 @@ func (h *ExportJobHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !p.cronExpressionValid() {
-		writeError(w, http.StatusBadRequest, "Please fill in the Cron Expression field", CodeInvalidRequestBody)
+		writeError(w, http.StatusBadRequest, "Please provide a valid cron expression", CodeInvalidRequestBody)
 		return
 	}
 	if !p.targetsValid() {
@@ -198,6 +204,9 @@ func (h *ExportJobHandler) Update(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	if err := h.scheduler.ScheduleJob(job); err != nil {
+		slog.Error("failed to reschedule export job", "error", err, "jobId", job.ID)
+	}
 	writeJSON(w, http.StatusOK, job)
 }
 
@@ -208,5 +217,6 @@ func (h *ExportJobHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	h.scheduler.UnscheduleJob(id)
 	writeJSON(w, http.StatusOK, map[string]string{"id": id})
 }
