@@ -36,9 +36,9 @@ const (
 //
 // A smaller table font than the library's default: mdtopdf makes no attempt
 // to auto-fit column widths (a documented limitation), so this is the
-// practical way to keep cells legible - landscape report tables default to
-// it for their column count (see RenderReportTablePDF's portrait param),
-// but drawTable's own width-driven wrapping keeps portrait legible too.
+// practical way to keep cells legible - drawTable's own width-driven
+// wrapping is what actually keeps a wide report table's cells readable in
+// RenderReportTablePDF's fixed A4 portrait (see its doc comment).
 //
 // cp1252 covers accented Latin characters (French included, the other
 // language this app supports); without it, any non-ASCII rune is written
@@ -110,13 +110,12 @@ func RenderMarkdownPDF(markdown string, logoData []byte, logoType string) ([]byt
 // table is drawn directly with fpdf (see drawTable) rather than through a
 // markdown table: mdtopdf sizes columns from the header cell alone and
 // can't wrap body text, so a long value would overflow its column and get
-// clipped by the next one's background fill instead of wrapping. portrait
-// selects A4 portrait (like invoices) over the default landscape - either
-// way drawTable sizes columns from the actual usable page width, so a
-// portrait report just wraps cell text onto more lines instead of
-// clipping it.
-func RenderReportTablePDF(headerMarkdown string, chartPNG []byte, donutPNG []byte, projectDurations []models.ReportProjectDuration, columns []tableColumn, rows [][]string, logoData []byte, logoType string, portrait bool) ([]byte, error) {
-	renderer := newPdfRenderer(utils.If(portrait, "P", "L"))
+// clipped by the next one's background fill instead of wrapping. Always A4
+// portrait (like invoices) - drawTable sizes columns from the actual usable
+// page width, so it just wraps cell text onto more lines than landscape
+// would rather than clipping it.
+func RenderReportTablePDF(headerMarkdown string, chartPNG []byte, donutPNG []byte, projectDurations []models.ReportProjectDuration, columns []tableColumn, rows [][]string, logoData []byte, logoType string) ([]byte, error) {
+	renderer := newPdfRenderer("P")
 	addFooter(renderer.Pdf)
 
 	if len(logoData) > 0 {

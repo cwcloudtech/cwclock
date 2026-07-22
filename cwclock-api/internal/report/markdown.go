@@ -43,9 +43,9 @@ var headerTemplate = template.Must(template.New("header").Parse(templates.Header
 // SummaryPDF renders the summary report as a PDF: a header with totals, the
 // daily duration chart as an image, then one table row per (project,
 // description) group. logoData/logoType (see ResolveLogo) are placed in the
-// header's top-right corner. portrait selects A4 portrait (like invoices)
-// over the default landscape (see RenderReportTablePDF).
-func SummaryPDF(orgName, start, end string, report models.SummaryReport, logoData []byte, logoType string, portrait bool) ([]byte, error) {
+// header's top-right corner. Always A4 portrait, like invoices (see
+// RenderReportTablePDF).
+func SummaryPDF(orgName, start, end string, report models.SummaryReport, logoData []byte, logoType string) ([]byte, error) {
 	var headerBuf strings.Builder
 	if err := headerTemplate.Execute(&headerBuf, newReportHeader("Summary report", orgName, start, end, report.Totals)); err != nil {
 		return nil, err
@@ -82,15 +82,14 @@ func SummaryPDF(orgName, start, end string, report models.SummaryReport, logoDat
 
 	chartPNG := DailyChartPNG(report.Daily)
 	donutPNG := ProjectDonutPNG(report.ProjectDurations)
-	return RenderReportTablePDF(headerBuf.String(), chartPNG, donutPNG, report.ProjectDurations, columns, rows, logoData, logoType, portrait)
+	return RenderReportTablePDF(headerBuf.String(), chartPNG, donutPNG, report.ProjectDurations, columns, rows, logoData, logoType)
 }
 
 // DetailedPDF renders the detailed report as a PDF: a header with totals
 // followed by one table row per time entry. logoData/logoType (see
-// ResolveLogo) are placed in the header's top-right corner. portrait
-// selects A4 portrait (like invoices) over the default landscape (see
-// RenderReportTablePDF).
-func DetailedPDF(orgName, start, end string, report models.DetailedReport, logoData []byte, logoType string, portrait bool) ([]byte, error) {
+// ResolveLogo) are placed in the header's top-right corner. Always A4
+// portrait, like invoices (see RenderReportTablePDF).
+func DetailedPDF(orgName, start, end string, report models.DetailedReport, logoData []byte, logoType string) ([]byte, error) {
 	var headerBuf strings.Builder
 	if err := headerTemplate.Execute(&headerBuf, newReportHeader("Detailed report", orgName, start, end, report.Totals)); err != nil {
 		return nil, err
@@ -141,5 +140,5 @@ func DetailedPDF(orgName, start, end string, report models.DetailedReport, logoD
 		rows = append(rows, row)
 	}
 
-	return RenderReportTablePDF(headerBuf.String(), nil, nil, nil, columns, rows, logoData, logoType, portrait)
+	return RenderReportTablePDF(headerBuf.String(), nil, nil, nil, columns, rows, logoData, logoType)
 }

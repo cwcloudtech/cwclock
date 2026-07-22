@@ -58,21 +58,18 @@ const filenameFromDisposition = (disposition, fallback) => {
   return match ? match[1] : fallback;
 };
 
-// format is "csv", "pdf", or "pdf-portrait" (A4 portrait, like invoices,
-// instead of the default landscape - see report.newPdfRenderer).
+// format is "csv" or "pdf" (always A4 portrait, like invoices - see
+// report.newPdfRenderer).
 export const exportReportApi = (orgId, filters, format, token) => async () => {
   try {
-    const portrait = format === "pdf-portrait";
-    const exportType = portrait ? "PDF" : format.toUpperCase();
+    const exportType = format.toUpperCase();
     const payload = { ...toPayload(filters), exportType };
-    if (portrait) payload.pdfOrientation = "portrait";
 
     const response = await axios.post(ENDPOINT(orgId, filters.type), payload, {
       ...authConfig(token),
       responseType: "blob",
     });
-    const extension = portrait ? "pdf" : format;
-    const filename = filenameFromDisposition(response.headers["content-disposition"], `report.${extension}`);
+    const filename = filenameFromDisposition(response.headers["content-disposition"], `report.${format}`);
     const url = window.URL.createObjectURL(response.data);
     const link = document.createElement("a");
     link.href = url;

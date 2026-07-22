@@ -73,8 +73,7 @@ func (s *s3Target) Delete(ctx context.Context, year string, months []string, fil
 // none of them currently hold the file. In flat mode (ai-instruct-42) the
 // key is always just the filename at the bucket's root (or basePath, if
 // set), with no year/month lookup at all. basePath, when set, prefixes
-// every key (ai-instruct-78), the same optional subfolder git connections
-// already support.
+// every key, the same optional subfolder git connections already support.
 func (s *s3Target) resolveKey(ctx context.Context, year string, months []string, filename string) (string, error) {
 	prefix := utils.EMPTY
 	if utils.IsNotBlank(s.basePath) {

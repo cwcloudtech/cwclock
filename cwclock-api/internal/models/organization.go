@@ -87,7 +87,7 @@ type ExternalConnection struct {
 	SSHPrivateKeyPassphrase string `json:"sshPrivateKeyPassphrase,omitempty"`
 	// Path is an optional subfolder files are written under - within the
 	// repo for git (ai-instruct-69), the bucket for S3, or the FolderID for
-	// google_drive (ai-instruct-78) - empty means that destination's root.
+	// google_drive - empty means that destination's root.
 	// It's applied underneath FlatDirectory/year/month, i.e. it's always
 	// the outermost folder: "{Path}", "{Path}/YYYY/MM.MonthName", etc.
 	Path string `json:"path,omitempty"`
@@ -96,7 +96,12 @@ type ExternalConnection struct {
 	// (ai-instruct-42) - some accounting software watching a Drive folder
 	// or S3 bucket requires a flat listing with no subfolders. False (the
 	// zero value, so existing connections keep today's behavior) nests by
-	// year/month as before.
+	// year/month as before. An export job's target connection always forces
+	// this true server-side regardless of what's submitted (see
+	// exportJobPayload.targetsValid) - a job's reports are already
+	// individually named/timestamped by the export, so year/month nesting
+	// would just be redundant, and the UI doesn't expose the checkbox for a
+	// target at all.
 	FlatDirectory bool `json:"flatDirectory,omitempty"`
 }
 

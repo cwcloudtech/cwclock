@@ -123,8 +123,8 @@ func (d *driveTarget) pathSegments() []string {
 }
 
 // ensureBaseFolder walks pathSegments from rootFolder, creating whichever
-// level is missing (ai-instruct-78), the same optional subfolder git/S3
-// connections already support.
+// level is missing, the same optional subfolder git/S3 connections already
+// support.
 func (d *driveTarget) ensureBaseFolder(ctx context.Context, token string) (string, error) {
 	folder := d.rootFolder
 	for _, segment := range d.pathSegments() {

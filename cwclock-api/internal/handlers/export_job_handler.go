@@ -56,7 +56,11 @@ func (p exportJobPayload) cronExpressionValid() bool {
 // per-type rules an organization's own external connections use (see
 // validateExternalConnections), since it's the exact same struct captured
 // through the exact same form fields, just stored independently in the
-// job's own data instead of the organization's connections list.
+// job's own data instead of the organization's connections list. Unlike an
+// organization's own connections, an export job target's connection is
+// always forced flat (ai-instruct-78): the UI doesn't even offer the
+// checkbox for a target, and a job's reports are named/timestamped by the
+// export itself, so nesting them under YYYY/MM would just be redundant.
 func (p exportJobPayload) targetsValid() bool {
 	if len(p.Targets) == 0 {
 		return false
@@ -82,6 +86,7 @@ func (p exportJobPayload) targetsValid() bool {
 		if err := validateExternalConnections(conns); err != nil {
 			return false
 		}
+		conns[0].FlatDirectory = true
 		*t.Connection = conns[0]
 	}
 	return true
@@ -92,12 +97,10 @@ func (p exportJobPayload) reportTypesValid() bool {
 		return false
 	}
 	validTypes := map[string]bool{
-		"summary-pdf":           true,
-		"summary-pdf-portrait":  true,
-		"summary-csv":           true,
-		"detailed-pdf":          true,
-		"detailed-pdf-portrait": true,
-		"detailed-csv":          true,
+		"summary-pdf":  true,
+		"summary-csv":  true,
+		"detailed-pdf": true,
+		"detailed-csv": true,
 	}
 	for _, rt := range p.ReportTypes {
 		if !validTypes[rt] {

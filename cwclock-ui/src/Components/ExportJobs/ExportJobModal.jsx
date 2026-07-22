@@ -11,10 +11,8 @@ import styles from "./Styles/ExportJobModal.module.css";
 
 const REPORT_TYPES = [
   { value: "summary-pdf", label: "summary-pdf" },
-  { value: "summary-pdf-portrait", label: "summary-pdf-portrait" },
   { value: "summary-csv", label: "summary-csv" },
   { value: "detailed-pdf", label: "detailed-pdf" },
-  { value: "detailed-pdf-portrait", label: "detailed-pdf-portrait" },
   { value: "detailed-csv", label: "detailed-csv" },
 ];
 

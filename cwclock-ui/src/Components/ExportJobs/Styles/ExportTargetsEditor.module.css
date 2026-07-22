@@ -90,32 +90,3 @@
   display: flex;
   gap: var(--cw-spacing-sm);
 }
-
-.hint {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--cw-text-muted);
-}
-
-.fileName {
-  font-size: 0.85rem;
-  color: var(--cw-text-muted);
-}
-
-.flatDirectoryField {
-  margin-top: var(--cw-spacing-sm);
-}
-
-.authMethodChoice {
-  display: flex;
-  gap: var(--cw-spacing);
-  font-size: 0.9rem;
-}
-
-.authMethodChoice label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: normal;
-  cursor: pointer;
-}
