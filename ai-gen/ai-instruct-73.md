@@ -4,9 +4,9 @@
 
 I'd like the invoices PDF to be in A4 format.
 
-## Jobs
+## Export jobs
 
-I want `exports_job` (new table) with:
+I want `export_jobs` (new table) with:
 * a cron expr and a helper with shortcuts
 * a target
 * a checkbox with all type of report (we can send multiple types):
@@ -26,7 +26,7 @@ I want a new screen with icon in the sidebar.
 
 Use a go cron scheduler lib.
 
-## Targets
+### Targets
 
 Target can be:
 * a list of emails in `to` and a list of emails in `cc` separated with `,` or `;` as it's already done in the invoice's email field (reuse the same utils function)

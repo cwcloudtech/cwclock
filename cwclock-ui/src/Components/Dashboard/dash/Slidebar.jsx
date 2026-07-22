@@ -20,6 +20,7 @@ import Organizationsdiv from "../pages/Organizations";
 import Projectsdiv from "../pages/Projects";
 import Reportsdiv from "../pages/Reports";
 import Invoicesdiv from "../pages/Invoices";
+import ExportJobsdiv from "../pages/ExportJobs";
 import Admindiv from "../pages/Admin";
 import AdminOrganizationsdiv from "../pages/AdminOrganizations";
 import ApiKeysdiv from "../pages/ApiKeys";
@@ -266,6 +267,7 @@ const Slidebar = () => {
             <Route path="/projects" element={<Projectsdiv />}></Route>
             <Route path="/api-keys" element={<ApiKeysdiv />}></Route>
             {showInvoices && <Route path="/invoices" element={<Invoicesdiv />}></Route>}
+            {showInvoices && <Route path="/export-jobs" element={<ExportJobsdiv />}></Route>}
             {isSuperuser && <Route path="/admin" element={<Admindiv />}></Route>}
             {isSuperuser && (
               <Route path="/admin/organizations" element={<AdminOrganizationsdiv />}></Route>

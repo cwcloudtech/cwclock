@@ -50,6 +50,19 @@ func newRenderer() *mdtopdf.PdfRenderer {
 	return renderer
 }
 
+// newInvoiceRenderer builds a portrait A4 PDF renderer for invoices.
+//
+// cp1252 covers accented Latin characters (French included, the other
+// language this app supports); without it, any non-ASCII rune is written
+// as raw UTF-8 bytes into a cp1252-encoded font and renders as mojibake.
+func newInvoiceRenderer() *mdtopdf.PdfRenderer {
+	opts := []mdtopdf.RenderOption{mdtopdf.WithUnicodeTranslator("cp1252")}
+	renderer := mdtopdf.NewPdfRenderer("P", "A4", utils.EMPTY, utils.EMPTY, opts, mdtopdf.LIGHT)
+	renderer.THeader.Size = 9
+	renderer.TBody.Size = 9
+	return renderer
+}
+
 // addFooter registers a footer drawing function on the fpdf instance that
 // prints a small, italic, light-grey attribution line at the bottom of every
 // page. Must be called before the first page is closed (i.e. before

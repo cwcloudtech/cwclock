@@ -1,7 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { FiClock, FiKey } from "react-icons/fi";
-import { FaFileAlt, FaRegUserCircle, FaBuilding, FaUserShield, FaChartBar, FaFileInvoiceDollar } from "react-icons/fa";
+import { FaFileAlt, FaRegUserCircle, FaBuilding, FaUserShield, FaChartBar, FaFileInvoiceDollar, FaDownload } from "react-icons/fa";
 import { FaBuildingShield } from "react-icons/fa6";
 import Tooltip from "../../common/Tooltip";
 import { useI18n } from "../../../i18n/I18nContext";
@@ -17,6 +17,7 @@ const items = [
 ];
 
 const invoicesItem = { to: "/dashboard/invoices", labelKey: "nav.invoices", Icon: FaFileInvoiceDollar };
+const exportJobsItem = { to: "/dashboard/export-jobs", labelKey: "nav.exportJobs", Icon: FaDownload };
 
 const adminItems = [
   { to: "/dashboard/admin", labelKey: "nav.users", Icon: FaUserShield },
@@ -25,12 +26,14 @@ const adminItems = [
 
 // Single sidebar nav that renders either as an icon rail or an expanded
 // rail with labels, replacing the previously separate Slideopen/Slideclose
-// components that duplicated the same link list. Invoices only shows for an
-// admin/owner of the current organization (showInvoices), unlike the admin
-// section below which is global-superuser-only (isSuperuser).
+// components that duplicated the same link list. Invoices and Export Jobs
+// only show for an admin/owner of the current organization (showInvoices),
+// unlike the admin section below which is global-superuser-only (isSuperuser).
 const SidebarNav = ({ expanded, isSuperuser, showInvoices }) => {
   const { t } = useI18n();
-  let links = showInvoices ? [...items.slice(0, 2), invoicesItem, ...items.slice(2)] : items;
+  let links = showInvoices
+    ? [...items.slice(0, 2), invoicesItem, exportJobsItem, ...items.slice(2)]
+    : items;
   if (isSuperuser) links = [...links, ...adminItems];
   return (
     <nav className={styles.nav}>

@@ -8,6 +8,7 @@ import { AdminReducer } from "./Admin/Admin.reducer";
 import { ReportReducer } from "./Reports/Report.reducer";
 import { ApiKeyReducer } from "./ApiKeys/ApiKey.reducer";
 import { InvoiceReducer } from "./Invoices/Invoice.reducer";
+import ExportJobReducer from "./ExportJobs/ExportJob.reducer";
 import thunk from "redux-thunk";
 
 const rootRuducer = combineReducers({
@@ -20,6 +21,7 @@ const rootRuducer = combineReducers({
   reports: ReportReducer,
   apiKeys: ApiKeyReducer,
   invoices: InvoiceReducer,
+  exportJobs: ExportJobReducer,
 });
 
 export const Store = legacy_createStore(rootRuducer, applyMiddleware(thunk));

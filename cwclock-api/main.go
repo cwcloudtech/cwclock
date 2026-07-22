@@ -59,6 +59,7 @@ func main() {
 	apiKeyStore := store.NewApiKeyStore(pool)
 	invoiceStore := store.NewInvoiceStore(pool)
 	webauthnCredStore := store.NewWebAuthnCredentialStore(pool)
+	exportJobStore := store.NewExportJobStore(pool)
 
 	mailer := email.NewSender(cfg.CWCloudAPIURL, cfg.CWCloudAPIKey, cfg.EmailFrom, cfg.APIBaseURL)
 
@@ -95,6 +96,7 @@ func main() {
 	oidcProviders := oidc.BuildProviders(cfg)
 	oidcHandler := handlers.NewOIDCHandler(oidcProviders, userStore, webauthnCredStore, cfg.JWTSecret, cfg.APIBaseURL, cfg.UIBaseURL, cfg.OIDCKeycloakGroups, cfg.ActivationMode)
 	contactHandler := handlers.NewContactHandler(contact.New(cfg.CWCloudAPIURL, cfg.CWCloudContactFormID))
+	exportJobHandler := handlers.NewExportJobHandler(exportJobStore)
 
 	met, err := metrics.Setup(ctx, metrics.Config{
 		Endpoint: cfg.OtelEndpoint,
@@ -109,7 +111,7 @@ func main() {
 
 	r := router.New(
 		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler, mfaHandler, importHandler, apiKeyHandler, invoiceHandler,
-		currencyHandler, countryHandler, fieldHandler, oidcHandler, contactHandler,
+		currencyHandler, countryHandler, fieldHandler, oidcHandler, contactHandler, exportJobHandler,
 		orgStore, userStore, apiKeyStore, cfg.JWTSecret, cfg.ActivationMode, cfg.CorsEnabled, cfg.CorsAllowedOrigins, cfg.Version, cfg.ManifestPath,
 		tel, met.Observe, met.Handler,
 	)

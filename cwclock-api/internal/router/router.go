@@ -31,6 +31,7 @@ func New(
 	fieldHandler *handlers.FieldHandler,
 	oidcHandler *handlers.OIDCHandler,
 	contactHandler *handlers.ContactHandler,
+	exportJobHandler *handlers.ExportJobHandler,
 	orgs *store.OrgStore,
 	users *store.UserStore,
 	apiKeys middleware.ApiKeyVerifier,
@@ -224,6 +225,15 @@ func New(
 					r.Post("/{invoiceId}/send", invoiceHandler.SendEmail)
 					r.Put("/{invoiceId}", invoiceHandler.UpdateStatus)
 					r.Delete("/{invoiceId}", invoiceHandler.Delete)
+				})
+
+				// Export jobs are owner/admin-only for managing schedules
+				r.Route("/export-jobs", func(r chi.Router) {
+					r.Use(middleware.RequireRole(models.RoleAdmin))
+					r.Get("/", exportJobHandler.List)
+					r.Post("/", exportJobHandler.Create)
+					r.Put("/{jobId}", exportJobHandler.Update)
+					r.Delete("/{jobId}", exportJobHandler.Delete)
 				})
 			})
 		})

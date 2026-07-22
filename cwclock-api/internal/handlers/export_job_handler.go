@@ -1,0 +1,212 @@
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+
+	"cwclock-api/internal/middleware"
+	"cwclock-api/internal/models"
+	"cwclock-api/internal/store"
+	"cwclock-api/internal/utils"
+)
+
+type ExportJobHandler struct {
+	jobs *store.ExportJobStore
+}
+
+func NewExportJobHandler(jobs *store.ExportJobStore) *ExportJobHandler {
+	return &ExportJobHandler{jobs: jobs}
+}
+
+type exportJobPayload struct {
+	Name             string                   `json:"name"`
+	CronExpression   string                   `json:"cronExpression"`
+	Targets          []exportJobTargetPayload `json:"targets"`
+	ReportTypes      []string                 `json:"reportTypes"`
+	TimePeriod       string                   `json:"timePeriod"`
+	ClientIDs        []string                 `json:"clientIds"`
+	ProjectIDs       []string                 `json:"projectIds"`
+	IncludeFinancial bool                     `json:"includeFinancial"`
+	Enabled          bool                     `json:"enabled"`
+}
+
+type exportJobTargetPayload struct {
+	Type       string   `json:"type"`
+	ToEmails   []string `json:"toEmails,omitempty"`
+	CCEmails   []string `json:"ccEmails,omitempty"`
+	Connection string   `json:"connection,omitempty"`
+}
+
+func (p exportJobPayload) nameValid() bool {
+	return utils.IsNotBlank(p.Name)
+}
+
+func (p exportJobPayload) cronExpressionValid() bool {
+	return utils.IsNotBlank(p.CronExpression)
+}
+
+func (p exportJobPayload) targetsValid() bool {
+	if len(p.Targets) == 0 {
+		return false
+	}
+	for _, t := range p.Targets {
+		if t.Type != "email" && t.Type != "s3" && t.Type != "google_drive" {
+			return false
+		}
+		if t.Type == "email" && len(t.ToEmails) == 0 {
+			return false
+		}
+		if t.Type != "email" && utils.IsBlank(t.Connection) {
+			return false
+		}
+	}
+	return true
+}
+
+func (p exportJobPayload) reportTypesValid() bool {
+	if len(p.ReportTypes) == 0 {
+		return false
+	}
+	validTypes := map[string]bool{
+		"summary-pdf":  true,
+		"summary-csv":  true,
+		"detailed-pdf": true,
+		"detailed-csv": true,
+	}
+	for _, rt := range p.ReportTypes {
+		if !validTypes[rt] {
+			return false
+		}
+	}
+	return true
+}
+
+func (p exportJobPayload) timePeriodValid() bool {
+	return utils.IsNotBlank(p.TimePeriod)
+}
+
+func (p exportJobPayload) toFields() store.ExportJobFields {
+	return store.ExportJobFields{
+		Name:             p.Name,
+		CronExpression:   p.CronExpression,
+		Targets:          convertTargets(p.Targets),
+		ReportTypes:      p.ReportTypes,
+		TimePeriod:       p.TimePeriod,
+		ClientIDs:        p.ClientIDs,
+		ProjectIDs:       p.ProjectIDs,
+		IncludeFinancial: p.IncludeFinancial,
+		Enabled:          p.Enabled,
+	}
+}
+
+func convertTargets(payloadTargets []exportJobTargetPayload) []models.ExportTarget {
+	targets := make([]models.ExportTarget, len(payloadTargets))
+	for i, t := range payloadTargets {
+		targets[i] = models.ExportTarget{
+			Type:       t.Type,
+			ToEmails:   t.ToEmails,
+			CCEmails:   t.CCEmails,
+			Connection: t.Connection,
+		}
+	}
+	return targets
+}
+
+func (h *ExportJobHandler) List(w http.ResponseWriter, r *http.Request) {
+	orgID, _ := middleware.OrgIDFromContext(r.Context())
+
+	jobs, err := h.jobs.List(r.Context(), orgID)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, jobs)
+}
+
+func (h *ExportJobHandler) Create(w http.ResponseWriter, r *http.Request) {
+	orgID, _ := middleware.OrgIDFromContext(r.Context())
+
+	var p exportJobPayload
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid request body", CodeInvalidRequestBody)
+		return
+	}
+
+	if !p.nameValid() {
+		writeError(w, http.StatusBadRequest, "Please fill in the Name field", CodeNameRequired)
+		return
+	}
+	if !p.cronExpressionValid() {
+		writeError(w, http.StatusBadRequest, "Please fill in the Cron Expression field", CodeInvalidRequestBody)
+		return
+	}
+	if !p.targetsValid() {
+		writeError(w, http.StatusBadRequest, "Please add at least one valid target", CodeInvalidRequestBody)
+		return
+	}
+	if !p.reportTypesValid() {
+		writeError(w, http.StatusBadRequest, "Please select at least one report type", CodeInvalidRequestBody)
+		return
+	}
+	if !p.timePeriodValid() {
+		writeError(w, http.StatusBadRequest, "Please fill in the Time Period field", CodeInvalidRequestBody)
+		return
+	}
+
+	job, err := h.jobs.Create(r.Context(), orgID, p.toFields())
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, job)
+}
+
+func (h *ExportJobHandler) Update(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "jobId")
+
+	var p exportJobPayload
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid request body", CodeInvalidRequestBody)
+		return
+	}
+
+	if !p.nameValid() {
+		writeError(w, http.StatusBadRequest, "Please fill in the Name field", CodeNameRequired)
+		return
+	}
+	if !p.cronExpressionValid() {
+		writeError(w, http.StatusBadRequest, "Please fill in the Cron Expression field", CodeInvalidRequestBody)
+		return
+	}
+	if !p.targetsValid() {
+		writeError(w, http.StatusBadRequest, "Please add at least one valid target", CodeInvalidRequestBody)
+		return
+	}
+	if !p.reportTypesValid() {
+		writeError(w, http.StatusBadRequest, "Please select at least one report type", CodeInvalidRequestBody)
+		return
+	}
+	if !p.timePeriodValid() {
+		writeError(w, http.StatusBadRequest, "Please fill in the Time Period field", CodeInvalidRequestBody)
+		return
+	}
+
+	job, err := h.jobs.Update(r.Context(), id, p.toFields())
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, job)
+}
+
+func (h *ExportJobHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "jobId")
+
+	if err := h.jobs.Delete(r.Context(), id); err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"id": id})
+}
