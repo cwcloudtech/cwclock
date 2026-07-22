@@ -1,0 +1,34 @@
+.group {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+}
+
+.inputError {
+  border-color: var(--cw-danger) !important;
+}
+
+.trigger {
+  flex-shrink: 0;
+  padding: 0 12px;
+  justify-content: center;
+}
+
+.panel {
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.list {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}

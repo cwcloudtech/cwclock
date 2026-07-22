@@ -53,6 +53,7 @@ const fr = {
     search: "Rechercher...",
     noResults: "Aucun résultat",
     clearFilter: "Effacer",
+    suggestions: "Suggestions",
     cropImageTitle: "Ajustez votre image",
     copy: "Copier",
     copied: "Copié dans le presse-papiers",
