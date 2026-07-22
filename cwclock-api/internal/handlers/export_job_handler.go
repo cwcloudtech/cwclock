@@ -77,10 +77,12 @@ func (p exportJobPayload) reportTypesValid() bool {
 		return false
 	}
 	validTypes := map[string]bool{
-		"summary-pdf":  true,
-		"summary-csv":  true,
-		"detailed-pdf": true,
-		"detailed-csv": true,
+		"summary-pdf":           true,
+		"summary-pdf-portrait":  true,
+		"summary-csv":           true,
+		"detailed-pdf":          true,
+		"detailed-pdf-portrait": true,
+		"detailed-csv":          true,
 	}
 	for _, rt := range p.ReportTypes {
 		if !validTypes[rt] {

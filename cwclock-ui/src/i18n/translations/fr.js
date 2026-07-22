@@ -471,6 +471,7 @@ const fr = {
     export: "Exporter",
     exportCsv: "Exporter en CSV",
     exportPdf: "Exporter en PDF",
+    exportPdfPortrait: "Exporter en PDF (Portrait)",
     total: "Total",
     billable: "Facturable",
     days: "Jours",

@@ -190,6 +190,14 @@ const Reports = () => {
               >
                 {t("reports.exportPdf")}
               </DropdownItem>
+              <DropdownItem
+                onClick={() => {
+                  handleExport("pdf-portrait");
+                  close();
+                }}
+              >
+                {t("reports.exportPdfPortrait")}
+              </DropdownItem>
             </>
           )}
         </Dropdown>

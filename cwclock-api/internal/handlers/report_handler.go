@@ -61,13 +61,22 @@ type detailedFilter struct {
 // .../reports/summary, shaped after the payload cwclock's own export
 // scripts already send to a Clockify-compatible reports API.
 type exportRequest struct {
-	ExportType     string          `json:"exportType"`
+	ExportType string `json:"exportType"`
+	// PDFOrientation is optional and only read for ExportType "PDF" - "portrait"
+	// selects A4 portrait (like invoices), anything else (including absent,
+	// the default for cwclock's own Clockify-compatible export scripts)
+	// keeps the existing landscape layout.
+	PDFOrientation string          `json:"pdfOrientation,omitempty"`
 	DateRangeStart string          `json:"dateRangeStart"`
 	DateRangeEnd   string          `json:"dateRangeEnd"`
 	Clients        *idFilter       `json:"clients"`
 	Projects       *idFilter       `json:"projects"`
 	Users          *idFilter       `json:"users"`
 	DetailedFilter *detailedFilter `json:"detailedFilter"`
+}
+
+func (req exportRequest) pdfPortrait() bool {
+	return strings.EqualFold(req.PDFOrientation, "portrait")
 }
 
 // dayPart extracts the leading "YYYY-MM-DD" from a full timestamp like
@@ -187,27 +196,35 @@ func exportFilenameDate(day string) string {
 	return d.Format(report.FilenameDateLayout)
 }
 
+// pdfFilenameSuffix distinguishes a portrait PDF's filename from its
+// default-landscape counterpart, so selecting both in the same export job
+// (or emailing both from the same invoice) never collides on one filename.
+func pdfFilenameSuffix(portrait bool) string {
+	return utils.If(portrait, "_Portrait", "")
+}
+
 // GenerateDetailedPDF renders the same detailed-report PDF the Detailed
 // endpoint's PDF export produces, without the surrounding HTTP request -
 // for embedding as an email attachment (see InvoiceHandler.SendEmail's
 // "send reports along with the invoice" client flag,
 // models.Client.SendReportsWithInvoice). Callers are responsible for their
-// own report-size check (see checkReportSize) before calling this.
-func (h *ReportHandler) GenerateDetailedPDF(ctx context.Context, orgID string, filter store.ReportFilter, canSeeAmount bool) (data []byte, filename string, err error) {
+// own report-size check (see checkReportSize) before calling this. portrait
+// selects A4 portrait (like invoices) over the default landscape.
+func (h *ReportHandler) GenerateDetailedPDF(ctx context.Context, orgID string, filter store.ReportFilter, canSeeAmount, portrait bool) (data []byte, filename string, err error) {
 	org, entries, _, err := h.loadEnrichedEntries(ctx, orgID, filter, canSeeAmount)
 	if err != nil {
 		return nil, "", err
 	}
 	totals := report.Totals(entries, canSeeAmount, org.Currency)
 	logoData, logoType := report.ResolveLogo(org.Picture)
-	data, err = report.DetailedPDF(org.Name, filter.Start, filter.End, models.DetailedReport{Totals: totals, Entries: entries}, logoData, logoType)
-	filename = fmt.Sprintf("CWClock_Time_Report_Detailed_%s-%s.pdf", exportFilenameDate(filter.Start), exportFilenameDate(filter.End))
+	data, err = report.DetailedPDF(org.Name, filter.Start, filter.End, models.DetailedReport{Totals: totals, Entries: entries}, logoData, logoType, portrait)
+	filename = fmt.Sprintf("CWClock_Time_Report_Detailed_%s-%s%s.pdf", exportFilenameDate(filter.Start), exportFilenameDate(filter.End), pdfFilenameSuffix(portrait))
 	return data, filename, err
 }
 
 // GenerateSummaryPDF is GenerateDetailedPDF's summary-report counterpart -
 // see its doc comment.
-func (h *ReportHandler) GenerateSummaryPDF(ctx context.Context, orgID string, filter store.ReportFilter, canSeeAmount bool) (data []byte, filename string, err error) {
+func (h *ReportHandler) GenerateSummaryPDF(ctx context.Context, orgID string, filter store.ReportFilter, canSeeAmount, portrait bool) (data []byte, filename string, err error) {
 	org, entries, lk, err := h.loadEnrichedEntries(ctx, orgID, filter, canSeeAmount)
 	if err != nil {
 		return nil, "", err
@@ -221,8 +238,8 @@ func (h *ReportHandler) GenerateSummaryPDF(ctx context.Context, orgID string, fi
 		ProjectDurations: report.ProjectDurations(entries, lk),
 	}
 	logoData, logoType := report.ResolveLogo(org.Picture)
-	data, err = report.SummaryPDF(org.Name, filter.Start, filter.End, summary, logoData, logoType)
-	filename = fmt.Sprintf("CWClock_Time_Report_Summary_%s-%s.pdf", exportFilenameDate(filter.Start), exportFilenameDate(filter.End))
+	data, err = report.SummaryPDF(org.Name, filter.Start, filter.End, summary, logoData, logoType, portrait)
+	filename = fmt.Sprintf("CWClock_Time_Report_Summary_%s-%s%s.pdf", exportFilenameDate(filter.Start), exportFilenameDate(filter.End), pdfFilenameSuffix(portrait))
 	return data, filename, err
 }
 
@@ -293,9 +310,10 @@ func (h *ReportHandler) Detailed(w http.ResponseWriter, r *http.Request) {
 
 	switch strings.ToUpper(req.ExportType) {
 	case "PDF":
+		portrait := req.pdfPortrait()
 		logoData, logoType := report.ResolveLogo(org.Picture)
-		data, err := report.DetailedPDF(org.Name, filter.Start, filter.End, models.DetailedReport{Totals: totals, Entries: entries}, logoData, logoType)
-		filename := fmt.Sprintf("CWClock_Time_Report_Detailed_%s-%s.pdf", exportFilenameDate(filter.Start), exportFilenameDate(filter.End))
+		data, err := report.DetailedPDF(org.Name, filter.Start, filter.End, models.DetailedReport{Totals: totals, Entries: entries}, logoData, logoType, portrait)
+		filename := fmt.Sprintf("CWClock_Time_Report_Detailed_%s-%s%s.pdf", exportFilenameDate(filter.Start), exportFilenameDate(filter.End), pdfFilenameSuffix(portrait))
 		writeExportFile(w, "application/pdf", filename, data, err)
 	case "CSV":
 		data, err := report.DetailedCSV(entries, canSeeAmount, org.Currency)
@@ -349,9 +367,10 @@ func (h *ReportHandler) Summary(w http.ResponseWriter, r *http.Request) {
 
 	switch strings.ToUpper(req.ExportType) {
 	case "PDF":
+		portrait := req.pdfPortrait()
 		logoData, logoType := report.ResolveLogo(org.Picture)
-		data, err := report.SummaryPDF(org.Name, filter.Start, filter.End, summary, logoData, logoType)
-		filename := fmt.Sprintf("CWClock_Time_Report_Summary_%s-%s.pdf", exportFilenameDate(filter.Start), exportFilenameDate(filter.End))
+		data, err := report.SummaryPDF(org.Name, filter.Start, filter.End, summary, logoData, logoType, portrait)
+		filename := fmt.Sprintf("CWClock_Time_Report_Summary_%s-%s%s.pdf", exportFilenameDate(filter.Start), exportFilenameDate(filter.End), pdfFilenameSuffix(portrait))
 		writeExportFile(w, "application/pdf", filename, data, err)
 	case "CSV":
 		data, err := report.SummaryCSV(summary.Rows, canSeeAmount, org.Currency)

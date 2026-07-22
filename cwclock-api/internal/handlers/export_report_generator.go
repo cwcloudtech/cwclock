@@ -37,13 +37,19 @@ func (g *ExportReportGenerator) GenerateReport(ctx context.Context, reportType, 
 	var err error
 	switch reportType {
 	case "summary-pdf":
-		data, filename, err = g.reports.GenerateSummaryPDF(ctx, orgID, filter, includeFinancial)
+		data, filename, err = g.reports.GenerateSummaryPDF(ctx, orgID, filter, includeFinancial, false)
+		mimeType = "application/pdf"
+	case "summary-pdf-portrait":
+		data, filename, err = g.reports.GenerateSummaryPDF(ctx, orgID, filter, includeFinancial, true)
 		mimeType = "application/pdf"
 	case "summary-csv":
 		data, filename, err = g.reports.GenerateSummaryCSV(ctx, orgID, filter, includeFinancial)
 		mimeType = "text/csv"
 	case "detailed-pdf":
-		data, filename, err = g.reports.GenerateDetailedPDF(ctx, orgID, filter, includeFinancial)
+		data, filename, err = g.reports.GenerateDetailedPDF(ctx, orgID, filter, includeFinancial, false)
+		mimeType = "application/pdf"
+	case "detailed-pdf-portrait":
+		data, filename, err = g.reports.GenerateDetailedPDF(ctx, orgID, filter, includeFinancial, true)
 		mimeType = "application/pdf"
 	case "detailed-csv":
 		data, filename, err = g.reports.GenerateDetailedCSV(ctx, orgID, filter, includeFinancial)

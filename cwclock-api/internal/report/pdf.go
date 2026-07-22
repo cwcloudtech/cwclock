@@ -31,33 +31,21 @@ const (
 	footerURL  = "https://www.cwcloud.me"
 )
 
-// newRenderer builds the shared mdtopdf renderer both RenderMarkdownPDF and
-// RenderReportTablePDF start from.
+// newPdfRenderer builds the shared mdtopdf renderer report and invoice PDFs
+// all start from, in the given A4 orientation ("L" landscape, "P" portrait).
 //
-// Landscape, with a smaller table font than the library's default: report
-// tables have too many columns to fit readably in portrait at 12pt, and
-// mdtopdf makes no attempt to auto-fit column widths (a documented
-// limitation), so this is the practical way to keep cells legible.
-//
-// cp1252 covers accented Latin characters (French included, the other
-// language this app supports); without it, any non-ASCII rune is written
-// as raw UTF-8 bytes into a cp1252-encoded font and renders as mojibake.
-func newRenderer() *mdtopdf.PdfRenderer {
-	opts := []mdtopdf.RenderOption{mdtopdf.WithUnicodeTranslator("cp1252")}
-	renderer := mdtopdf.NewPdfRenderer("L", "A4", utils.EMPTY, utils.EMPTY, opts, mdtopdf.LIGHT)
-	renderer.THeader.Size = 9
-	renderer.TBody.Size = 9
-	return renderer
-}
-
-// newInvoiceRenderer builds a portrait A4 PDF renderer for invoices.
+// A smaller table font than the library's default: mdtopdf makes no attempt
+// to auto-fit column widths (a documented limitation), so this is the
+// practical way to keep cells legible - landscape report tables default to
+// it for their column count (see RenderReportTablePDF's portrait param),
+// but drawTable's own width-driven wrapping keeps portrait legible too.
 //
 // cp1252 covers accented Latin characters (French included, the other
 // language this app supports); without it, any non-ASCII rune is written
 // as raw UTF-8 bytes into a cp1252-encoded font and renders as mojibake.
-func newInvoiceRenderer() *mdtopdf.PdfRenderer {
+func newPdfRenderer(orientation string) *mdtopdf.PdfRenderer {
 	opts := []mdtopdf.RenderOption{mdtopdf.WithUnicodeTranslator("cp1252")}
-	renderer := mdtopdf.NewPdfRenderer("P", "A4", utils.EMPTY, utils.EMPTY, opts, mdtopdf.LIGHT)
+	renderer := mdtopdf.NewPdfRenderer(orientation, "A4", utils.EMPTY, utils.EMPTY, opts, mdtopdf.LIGHT)
 	renderer.THeader.Size = 9
 	renderer.TBody.Size = 9
 	return renderer
@@ -98,7 +86,7 @@ func outputPDF(pdf *fpdf.Fpdf) ([]byte, error) {
 // rendering can neither wrap long cell text nor tolerate a blank header
 // cell (see drawTable's doc comment).
 func RenderMarkdownPDF(markdown string, logoData []byte, logoType string) ([]byte, error) {
-	renderer := newRenderer()
+	renderer := newPdfRenderer("L")
 	addFooter(renderer.Pdf)
 
 	// Placed before Run() writes any markdown: fpdf can't add content to an
@@ -122,9 +110,13 @@ func RenderMarkdownPDF(markdown string, logoData []byte, logoType string) ([]byt
 // table is drawn directly with fpdf (see drawTable) rather than through a
 // markdown table: mdtopdf sizes columns from the header cell alone and
 // can't wrap body text, so a long value would overflow its column and get
-// clipped by the next one's background fill instead of wrapping.
-func RenderReportTablePDF(headerMarkdown string, chartPNG []byte, donutPNG []byte, projectDurations []models.ReportProjectDuration, columns []tableColumn, rows [][]string, logoData []byte, logoType string) ([]byte, error) {
-	renderer := newRenderer()
+// clipped by the next one's background fill instead of wrapping. portrait
+// selects A4 portrait (like invoices) over the default landscape - either
+// way drawTable sizes columns from the actual usable page width, so a
+// portrait report just wraps cell text onto more lines instead of
+// clipping it.
+func RenderReportTablePDF(headerMarkdown string, chartPNG []byte, donutPNG []byte, projectDurations []models.ReportProjectDuration, columns []tableColumn, rows [][]string, logoData []byte, logoType string, portrait bool) ([]byte, error) {
+	renderer := newPdfRenderer(utils.If(portrait, "P", "L"))
 	addFooter(renderer.Pdf)
 
 	if len(logoData) > 0 {

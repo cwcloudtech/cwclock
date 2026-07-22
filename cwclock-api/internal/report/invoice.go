@@ -228,7 +228,7 @@ func totalsRows(client models.Client, totalHT, totalVAT, totalTTC, vatRate float
 // SIRET set) are dropped entirely. When set, the organization's stamp is
 // placed below everything.
 func RenderInvoicePDF(org models.Organization, client models.Client, owner models.User, invoiceNumber string, items []InvoiceLineItem, totalHT, totalVAT, totalTTC float64, startDay, endDay string) ([]byte, error) {
-	renderer := newInvoiceRenderer()
+	renderer := newPdfRenderer("P")
 	addFooter(renderer.Pdf)
 
 	logoData, logoType := ResolveLogo(org.Picture)

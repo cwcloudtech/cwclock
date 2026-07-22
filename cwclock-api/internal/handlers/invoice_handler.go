@@ -369,12 +369,12 @@ func (h *InvoiceHandler) invoiceReportAttachments(ctx context.Context, orgID str
 	}
 
 	var attachments []email.Attachment
-	if data, filename, err := h.reports.GenerateSummaryPDF(ctx, orgID, filter, true); err != nil {
+	if data, filename, err := h.reports.GenerateSummaryPDF(ctx, orgID, filter, true, false); err != nil {
 		slog.Error("failed to generate summary report for invoice email, sending without it", "error", err, "invoiceId", inv.ID)
 	} else {
 		attachments = append(attachments, email.Attachment{MimeType: "application/pdf", FileName: filename, B64: base64.StdEncoding.EncodeToString(data)})
 	}
-	if data, filename, err := h.reports.GenerateDetailedPDF(ctx, orgID, filter, true); err != nil {
+	if data, filename, err := h.reports.GenerateDetailedPDF(ctx, orgID, filter, true, false); err != nil {
 		slog.Error("failed to generate detailed report for invoice email, sending without it", "error", err, "invoiceId", inv.ID)
 	} else {
 		attachments = append(attachments, email.Attachment{MimeType: "application/pdf", FileName: filename, B64: base64.StdEncoding.EncodeToString(data)})
