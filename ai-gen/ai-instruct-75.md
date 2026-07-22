@@ -1,11 +1,7 @@
 # AI instruction 75
 
-## UX/UI
+## Export job
 
-I want the "Create Export Job" button to be centered in the "No export job yet" panel exactly like it's done for other screens like organizations. And keep consistency on the labels (no "+").
+The emails fields shouldn't be displayed directly but as a target (which is similar to organization's external connections). We want to add targets of type s3/git/drive or emails as many as we want in a export job.
 
-## Bug
-
-The button "Create export job" do nothing and I have this error in the browser console:
-
-> Uncaught (in promise) Error: Uncaught Error: No Listener: tabs:outgoing.message.ready
+I want also "every minute", "every hour", "every day" in the cron helper.
