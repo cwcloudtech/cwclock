@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"slices"
 
 	"github.com/go-chi/chi/v5"
 
@@ -55,12 +56,15 @@ func (p exportJobPayload) targetsValid() bool {
 		return false
 	}
 	for _, t := range p.Targets {
-		if t.Type != "email" && t.Type != "s3" && t.Type != "google_drive" && t.Type != "git" {
+		allowedTypes := []string{"s3", "google_drive", "git", "email"}
+		if !slices.Contains(allowedTypes, t.Type) {
 			return false
 		}
+
 		if t.Type == "email" && len(utils.SplitList(t.ToEmails)) == 0 {
 			return false
 		}
+
 		if t.Type != "email" && utils.IsBlank(t.Connection) {
 			return false
 		}
