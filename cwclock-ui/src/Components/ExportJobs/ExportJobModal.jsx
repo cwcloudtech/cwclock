@@ -199,15 +199,14 @@ const ExportJobModal = ({ show, job, onSave, onClose }) => {
           />
         </div>
 
-        <div className="cw-field">
-          <label className="cw-checkbox">
-            <input
-              type="checkbox"
-              checked={formData.includeFinancial}
-              onChange={(e) => setFormData({ ...formData, includeFinancial: e.target.checked })}
-            />
-            {t("exportJobs.includeFinancialData")}
-          </label>
+        <div className={styles.switchField}>
+          <Switch
+            checked={formData.includeFinancial}
+            onChange={(e) => setFormData({ ...formData, includeFinancial: e.target.checked })}
+            aria-label={t("exportJobs.includeFinancialData")}
+            title={t("exportJobs.includeFinancialData")}
+          />
+          <span className="cw-label">{t("exportJobs.includeFinancialData")}</span>
         </div>
 
         <div className="cw-field">
@@ -222,14 +221,14 @@ const ExportJobModal = ({ show, job, onSave, onClose }) => {
           />
         </div>
 
-        <div className={styles.enabledField}>
-          <span className="cw-label">{formData.enabled ? t("exportJobs.enabled") : t("exportJobs.disabled")}</span>
+        <div className={styles.switchField}>
           <Switch
             checked={formData.enabled}
             onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
             aria-label={formData.enabled ? t("exportJobs.disable") : t("exportJobs.enable")}
             title={formData.enabled ? t("exportJobs.disable") : t("exportJobs.enable")}
           />
+          <span className="cw-label">{formData.enabled ? t("exportJobs.enabled") : t("exportJobs.disabled")}</span>
         </div>
 
         <div className={styles.actions}>
