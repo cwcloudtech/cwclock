@@ -335,6 +335,21 @@ func (s *OrgStore) RemoveExternalConnection(ctx context.Context, id, connID stri
 	return scanOrganization(row)
 }
 
+// IsOwnedBySuperuser reports whether orgID's owner has the superuser global
+// role, used to exempt superuser-owned organizations from the monthly
+// invoice/export-job mail counter (ai-instruct-83).
+func (s *OrgStore) IsOwnedBySuperuser(ctx context.Context, orgID string) (bool, error) {
+	var isSuperuser bool
+	err := s.pool.QueryRow(ctx, `
+		SELECT EXISTS (
+			SELECT 1 FROM organizations o
+			JOIN users u ON u.id = o.owner_id
+			WHERE o.id = $1 AND u.data->>'role' = $2
+		)
+	`, orgID, string(models.GlobalRoleSuperuser)).Scan(&isSuperuser)
+	return isSuperuser, err
+}
+
 func (s *OrgStore) Delete(ctx context.Context, id string) error {
 	tag, err := s.pool.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, id)
 	if err != nil {

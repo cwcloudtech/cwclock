@@ -26,6 +26,7 @@ type Config struct {
 	OtelProto                string
 	MaxImageSize             int64
 	MaxReportSize            int
+	MailLimit                int
 	APIBaseURL               string
 	UIBaseURL                string
 	OIDCGoogleClientID       string
@@ -58,6 +59,11 @@ const defaultMaxReportSize int = 5000
 // of hours; it bounds how long an account-confirmation or password-reset
 // link emailed to a user stays usable.
 const defaultConfirmationEmailExpirationHours int = 24
+
+// defaultMailLimit is applied when CWCLOCK_LIMIT_MAIL is unset or isn't a
+// parsable number; it caps how many invoice/export-job emails a non-
+// superuser-owned organization may send per calendar month (ai-instruct-83).
+const defaultMailLimit int = 100
 
 func Load() Config {
 	user := os.Getenv("POSTGRES_USER")
@@ -98,6 +104,11 @@ func Load() Config {
 		confirmationEmailExpirationHours = defaultConfirmationEmailExpirationHours
 	}
 
+	mailLimit, err := strconv.Atoi(os.Getenv("CWCLOCK_LIMIT_MAIL"))
+	if err != nil || mailLimit <= 0 {
+		mailLimit = defaultMailLimit
+	}
+
 	return Config{
 		Port:                     utils.GetEnv("PORT", "8080"),
 		DatabaseURL:              fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, pass, host, port, db, sslmode),
@@ -112,6 +123,7 @@ func Load() Config {
 		OtelProto:                utils.GetEnv("CWCLOCK_OTEL_PROTO", "otlp/grpc"),
 		MaxImageSize:             maxImageSize,
 		MaxReportSize:            maxReportSize,
+		MailLimit:                mailLimit,
 		APIBaseURL:               utils.GetBaseUrlFromEnvWithFallback("CWCLOCK_API_URL", "http://localhost:8080"),
 		UIBaseURL:                utils.GetBaseUrlFromEnvWithFallback("CWCLOCK_UI_URL", "http://localhost:3000"),
 		OIDCGoogleClientID:       os.Getenv("CWCLOCK_OIDC_GOOGLE_CLIENT_ID"),

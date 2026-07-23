@@ -455,6 +455,7 @@ const en = {
     invoiceNumberExists: "An invoice with this number already exists.",
     invalidToken: "This link is invalid or has expired.",
     noInvoiceRecipient: "This client has no email address to send the invoice to.",
+    mailLimitExceeded: "This organization has reached its monthly email limit. Please try again once it resets.",
     passwordTooShort: "Password must be at least 8 characters long.",
     passwordNoUpper: "Password must contain an uppercase letter.",
     passwordNoLower: "Password must contain a lowercase letter.",

@@ -61,6 +61,7 @@ func main() {
 	invoiceStore := store.NewInvoiceStore(pool)
 	webauthnCredStore := store.NewWebAuthnCredentialStore(pool)
 	exportJobStore := store.NewExportJobStore(pool)
+	mailCounterStore := store.NewMailCounterStore(pool)
 
 	mailer := email.NewSender(cfg.CWCloudAPIURL, cfg.CWCloudAPIKey, cfg.EmailFrom, cfg.APIBaseURL)
 
@@ -90,7 +91,7 @@ func main() {
 	importHandler := handlers.NewImportHandler(userStore, clientStore, projectStore, timeEntryStore)
 	reportHandler := handlers.NewReportHandler(orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize)
 	apiKeyHandler := handlers.NewApiKeyHandler(apiKeyStore)
-	invoiceHandler := handlers.NewInvoiceHandler(invoiceStore, orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize, mailer, reportHandler)
+	invoiceHandler := handlers.NewInvoiceHandler(invoiceStore, orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize, mailer, reportHandler, mailCounterStore, cfg.MailLimit)
 	currencyHandler := handlers.NewCurrencyHandler(currencyStore)
 	countryHandler := handlers.NewCountryHandler(countryStore)
 	fieldHandler := handlers.NewFieldHandler(fieldStore)
@@ -99,7 +100,7 @@ func main() {
 	contactHandler := handlers.NewContactHandler(contact.New(cfg.CWCloudAPIURL, cfg.CWCloudContactFormID))
 
 	exportReportGenerator := handlers.NewExportReportGenerator(reportHandler, invoiceStore)
-	exportDelivery := handlers.NewExportDeliveryService(mailer, orgStore)
+	exportDelivery := handlers.NewExportDeliveryService(mailer, orgStore, mailCounterStore, cfg.MailLimit)
 	exportScheduler := scheduler.NewExportJobScheduler(exportJobStore, exportReportGenerator, exportDelivery)
 	if err := exportScheduler.Start(ctx); err != nil {
 		tel.Logger.Error("failed to start export job scheduler", "error", err)

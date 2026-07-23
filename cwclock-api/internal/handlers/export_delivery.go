@@ -24,10 +24,15 @@ import (
 type ExportDeliveryService struct {
 	mailer *email.Sender
 	orgs   *store.OrgStore
+	// mailCounters and mailLimit gate email delivery behind the
+	// organization's monthly invoice/export-job email limit (see
+	// mailAllowed, ai-instruct-83).
+	mailCounters *store.MailCounterStore
+	mailLimit    int
 }
 
-func NewExportDeliveryService(mailer *email.Sender, orgs *store.OrgStore) *ExportDeliveryService {
-	return &ExportDeliveryService{mailer: mailer, orgs: orgs}
+func NewExportDeliveryService(mailer *email.Sender, orgs *store.OrgStore, mailCounters *store.MailCounterStore, mailLimit int) *ExportDeliveryService {
+	return &ExportDeliveryService{mailer: mailer, orgs: orgs, mailCounters: mailCounters, mailLimit: mailLimit}
 }
 
 func (d *ExportDeliveryService) Deliver(ctx context.Context, orgID, jobName string, startTime, endTime time.Time, target models.ExportTarget, reports []scheduler.ExportReportFile) error {
@@ -50,6 +55,14 @@ func (d *ExportDeliveryService) deliverEmail(ctx context.Context, orgID, jobName
 	org, err := d.orgs.FindByID(ctx, orgID)
 	if err != nil {
 		return err
+	}
+
+	allowed, err := mailAllowed(ctx, d.orgs, d.mailCounters, orgID, d.mailLimit)
+	if err != nil {
+		return err
+	}
+	if !allowed {
+		return store.ErrMailLimitExceeded
 	}
 
 	var hasReports, hasInvoices bool

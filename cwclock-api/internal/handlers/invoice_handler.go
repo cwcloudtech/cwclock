@@ -31,6 +31,10 @@ type InvoiceHandler struct {
 	// invoice email when the client has SendReportsWithInvoice set (see
 	// SendEmail).
 	reports *ReportHandler
+	// mailCounters and mailLimit gate SendEmail behind the organization's
+	// monthly invoice/export-job email limit (see mailAllowed, ai-instruct-83).
+	mailCounters *store.MailCounterStore
+	mailLimit    int
 }
 
 func NewInvoiceHandler(
@@ -43,8 +47,10 @@ func NewInvoiceHandler(
 	maxSize int,
 	mailer *email.Sender,
 	reports *ReportHandler,
+	mailCounters *store.MailCounterStore,
+	mailLimit int,
 ) *InvoiceHandler {
-	return &InvoiceHandler{invoices: invoices, orgs: orgs, clients: clients, projects: projects, entries: entries, users: users, maxSize: maxSize, mailer: mailer, reports: reports}
+	return &InvoiceHandler{invoices: invoices, orgs: orgs, clients: clients, projects: projects, entries: entries, users: users, maxSize: maxSize, mailer: mailer, reports: reports, mailCounters: mailCounters, mailLimit: mailLimit}
 }
 
 // invoiceRequest is the JSON body accepted by the preview/generate
@@ -344,6 +350,16 @@ func (h *InvoiceHandler) SendEmail(w http.ResponseWriter, r *http.Request) {
 	pdf, number, err := h.invoices.GetPDF(r.Context(), invoiceID)
 	if err != nil {
 		writeStoreError(w, err)
+		return
+	}
+
+	allowed, err := mailAllowed(r.Context(), h.orgs, h.mailCounters, orgID, h.mailLimit)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	if !allowed {
+		writeStoreError(w, store.ErrMailLimitExceeded)
 		return
 	}
 

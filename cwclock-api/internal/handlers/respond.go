@@ -67,6 +67,7 @@ const (
 	CodeContactMessageTooShort      = "errors.contactMessageTooShort"
 	CodeContactGibberish            = "errors.contactGibberish"
 	CodeInvalidMFACode              = "errors.invalidMfaCode"
+	CodeMailLimitExceeded           = "errors.mailLimitExceeded"
 )
 
 func writeJSON(w http.ResponseWriter, status int, body any) {
@@ -117,6 +118,10 @@ func writeStoreError(w http.ResponseWriter, err error) {
 	}
 	if errors.Is(err, store.ErrInvoiceNumberExists) {
 		writeError(w, http.StatusConflict, "An invoice with this number already exists", CodeInvoiceNumberExists)
+		return
+	}
+	if errors.Is(err, store.ErrMailLimitExceeded) {
+		writeError(w, http.StatusTooManyRequests, "This organization has reached its monthly email limit", CodeMailLimitExceeded)
 		return
 	}
 	slog.Error("unhandled store error", "error", err)
