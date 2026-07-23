@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { MdDeleteForever } from "react-icons/md";
+import { FaRegCopy } from "react-icons/fa";
+import { toast } from "react-toastify";
 import Button from "../common/Button";
 import RequiredMark from "../common/RequiredMark";
 import Tooltip from "../common/Tooltip";
 import ConnectionFields from "../common/ConnectionFields";
 import fileToBase64 from "../common/fileToBase64";
 import { useI18n } from "../../i18n/I18nContext";
+import toastOptions from "../../Redux/toastOptions";
 import styles from "./Styles/ExportTargetsEditor.module.css";
 
 const TARGET_TYPES = ["email", "s3", "google_drive", "git"];
@@ -133,6 +136,12 @@ const ExportTargetsEditor = ({ targets, onChange, error }) => {
     onChange(targets.filter((_, i) => i !== index));
   };
 
+  const handleCopyToEmails = (toEmails) => {
+    navigator.clipboard.writeText(toEmails).then(() => {
+      toast.success(t("common.copied"), toastOptions);
+    });
+  };
+
   const rowSummary = (target) => {
     if (target.type === "email") {
       return target.ccEmails ? `${target.toEmails} (cc: ${target.ccEmails})` : target.toEmails;
@@ -148,6 +157,17 @@ const ExportTargetsEditor = ({ targets, onChange, error }) => {
             <li key={index} className={styles.row}>
               <span className={styles.typeBadge}>{typeLabel(t, target.type)}</span>
               <span className={styles.summary}>{rowSummary(target)}</span>
+              {target.type === "email" && (
+                <Tooltip label={t("common.copy")}>
+                  <button
+                    type="button"
+                    className={styles.iconBtn}
+                    onClick={() => handleCopyToEmails(target.toEmails)}
+                  >
+                    <FaRegCopy style={{ fontSize: "16px" }} />
+                  </button>
+                </Tooltip>
+              )}
               <Tooltip label={t("exportJobs.removeTarget")}>
                 <button
                   type="button"
