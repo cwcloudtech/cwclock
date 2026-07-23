@@ -14,6 +14,7 @@ const REPORT_TYPES = [
   { value: "summary-csv", label: "summary-csv" },
   { value: "detailed-pdf", label: "detailed-pdf" },
   { value: "detailed-csv", label: "detailed-csv" },
+  { value: "invoices-pdf", label: "invoices-pdf" },
 ];
 
 const CRON_HELPERS = [

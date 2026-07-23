@@ -21,13 +21,18 @@ type ExportReportFile struct {
 	Data     []byte
 }
 
-// ExportReportGenerator produces one report attachment for an export job's
-// reportType ("summary-pdf", "summary-csv", "detailed-pdf", "detailed-csv").
-// startDate/endDate are already-resolved "YYYY-MM-DD" bounds (see
-// ParseTimePeriod) - resolved once per run so every report and the
-// delivery email agree on the exact same range.
+// ExportReportGenerator produces the attachment(s) for one of an export
+// job's reportType values ("summary-pdf", "summary-csv", "detailed-pdf",
+// "detailed-csv", "invoices-pdf"). startDate/endDate are already-resolved
+// "YYYY-MM-DD" bounds (see ParseTimePeriod) - resolved once per run so
+// every report and the delivery email agree on the exact same range. Most
+// report types produce exactly one file, but "invoices-pdf" doesn't
+// generate anything new - it attaches every already-existing invoice whose
+// selected period falls in range for the job's selected clients (projectIDs
+// is ignored for it, invoices aren't scoped by project), which can be zero,
+// one, or many files.
 type ExportReportGenerator interface {
-	GenerateReport(ctx context.Context, reportType string, orgID string, clientIDs, projectIDs []string, startDate, endDate string, includeFinancial bool) (ExportReportFile, error)
+	GenerateReport(ctx context.Context, reportType string, orgID string, clientIDs, projectIDs []string, startDate, endDate string, includeFinancial bool) ([]ExportReportFile, error)
 }
 
 // ExportDeliveryService delivers a set of already-generated reports to one
@@ -166,12 +171,12 @@ func (s *ExportJobScheduler) executeJob(ctx context.Context, job models.ExportJo
 
 	reports := make([]ExportReportFile, 0, len(job.ReportTypes))
 	for _, reportType := range job.ReportTypes {
-		file, err := s.reports.GenerateReport(ctx, reportType, job.OrganizationID, job.ClientIDs, job.ProjectIDs, startDate, endDate, job.IncludeFinancial)
+		files, err := s.reports.GenerateReport(ctx, reportType, job.OrganizationID, job.ClientIDs, job.ProjectIDs, startDate, endDate, job.IncludeFinancial)
 		if err != nil {
 			log.Printf("export job %s: failed to generate %s report: %v", job.ID, reportType, err)
 			continue
 		}
-		reports = append(reports, file)
+		reports = append(reports, files...)
 	}
 	if len(reports) == 0 {
 		log.Printf("export job %s: no reports generated, skipping delivery", job.ID)

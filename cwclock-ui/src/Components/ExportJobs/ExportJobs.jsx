@@ -22,43 +22,47 @@ import { isAdminOrOwner as computeIsAdminOrOwner } from "../common/permissions";
 import styles from "./Styles/ExportJobs.module.css";
 import ExportJobModal from "./ExportJobModal";
 
-// Formats the time remaining until targetMs as a single decreasing unit -
-// "3d", "2h", "1 min", "30s" - dropping to the next smaller unit once the
-// current one hits zero, rather than a fixed-width "Xd Xh Xm Xs" breakdown,
-// so it stays glanceable in a narrow list column.
-const formatCountdown = (targetMs, nowMs, nowLabel) => {
-  const diffSeconds = Math.floor((targetMs - nowMs) / 1000);
-  if (diffSeconds <= 0) return nowLabel;
-  if (diffSeconds >= 86400) return `${Math.floor(diffSeconds / 86400)}d`;
-  if (diffSeconds >= 3600) return `${Math.floor(diffSeconds / 3600)}h`;
-  if (diffSeconds >= 60) return `${Math.floor(diffSeconds / 60)} min`;
-  return `${diffSeconds}s`;
+// Formats a remaining duration as a single decreasing unit - "3d", "2h",
+// "1 min", "30s" - dropping to the next smaller unit once the current one
+// hits zero, rather than a fixed-width "Xd Xh Xm Xs" breakdown, so it stays
+// glanceable in a narrow list column.
+const formatCountdown = (totalSeconds, nowLabel) => {
+  if (totalSeconds <= 0) return nowLabel;
+  if (totalSeconds >= 86400) return `${Math.floor(totalSeconds / 86400)}d`;
+  if (totalSeconds >= 3600) return `${Math.floor(totalSeconds / 3600)}h`;
+  if (totalSeconds >= 60) return `${Math.floor(totalSeconds / 60)} min`;
+  return `${totalSeconds}s`;
 };
 
-// Ticks its own countdown every second rather than the whole row/list
-// re-rendering on a shared interval, and stops ticking on unmount.
-const NextRunCell = ({ nextRunAt }) => {
+// Seeds its countdown from nextRunInSeconds - the exact remaining duration
+// the API computed from its own clock (see exportJobHandler.toExportJobResponse,
+// ai-instruct-79) - then ticks it down by exactly one second locally.
+// Diffing nextRunAt against the browser's own clock instead would drift
+// whenever the client's clock isn't in sync with the server's; counting
+// down a single server-provided duration sidesteps that entirely. Ticks its
+// own interval rather than the whole row/list re-rendering on a shared one,
+// and stops ticking on unmount.
+const NextRunCell = ({ nextRunInSeconds }) => {
   const { t } = useI18n();
-  const [now, setNow] = useState(Date.now());
+  const [remaining, setRemaining] = useState(nextRunInSeconds);
 
   useEffect(() => {
-    if (!nextRunAt) return undefined;
-    const id = setInterval(() => setNow(Date.now()), 1000);
+    setRemaining(nextRunInSeconds);
+    if (nextRunInSeconds == null) return undefined;
+    const id = setInterval(() => setRemaining((r) => (r == null ? r : Math.max(0, r - 1))), 1000);
     return () => clearInterval(id);
-  }, [nextRunAt]);
+  }, [nextRunInSeconds]);
 
-  if (!nextRunAt) {
+  if (remaining == null) {
     return <div className={styles.jobNextRun}>—</div>;
   }
-
-  const targetMs = new Date(nextRunAt).getTime();
 
   return (
     <div className={styles.jobNextRun}>
       <Tooltip label={t("exportJobs.nextRunTooltip")}>
         <FaRegHourglass className={styles.nextRunIcon} />
       </Tooltip>
-      <span>{formatCountdown(targetMs, now, t("exportJobs.nextRunNow"))}</span>
+      <span>{formatCountdown(remaining, t("exportJobs.nextRunNow"))}</span>
     </div>
   );
 };
@@ -84,7 +88,7 @@ const ExportJobRow = ({ job, orgId, token, onDelete, onEdit }) => {
         <div className={styles.jobName}>{job.name}</div>
         <div className={styles.jobCron}>{job.cronExpression}</div>
         <div className={styles.jobReports}>{job.reportTypes.join(", ")}</div>
-        <NextRunCell nextRunAt={job.nextRunAt} />
+        <NextRunCell nextRunInSeconds={job.nextRunInSeconds} />
         <div className={styles.jobStatus}>
           {job.enabled ? (
             <span className={styles.statusEnabled}>{t("exportJobs.enabled")}</span>

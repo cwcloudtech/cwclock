@@ -98,7 +98,7 @@ func main() {
 	oidcHandler := handlers.NewOIDCHandler(oidcProviders, userStore, webauthnCredStore, cfg.JWTSecret, cfg.APIBaseURL, cfg.UIBaseURL, cfg.OIDCKeycloakGroups, cfg.ActivationMode)
 	contactHandler := handlers.NewContactHandler(contact.New(cfg.CWCloudAPIURL, cfg.CWCloudContactFormID))
 
-	exportReportGenerator := handlers.NewExportReportGenerator(reportHandler)
+	exportReportGenerator := handlers.NewExportReportGenerator(reportHandler, invoiceStore)
 	exportDelivery := handlers.NewExportDeliveryService(mailer, orgStore)
 	exportScheduler := scheduler.NewExportJobScheduler(exportJobStore, exportReportGenerator, exportDelivery)
 	if err := exportScheduler.Start(ctx); err != nil {

@@ -229,7 +229,7 @@ func (h *InvoiceHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	invoices, err := h.invoices.List(r.Context(), orgID, clientID, start, end)
+	invoices, err := h.invoices.List(r.Context(), orgID, []string{clientID}, start, end)
 	if err != nil {
 		writeStoreError(w, err)
 		return

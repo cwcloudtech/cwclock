@@ -102,6 +102,7 @@ func (p exportJobPayload) reportTypesValid() bool {
 		"summary-csv":  true,
 		"detailed-pdf": true,
 		"detailed-csv": true,
+		"invoices-pdf": true,
 	}
 	for _, rt := range p.ReportTypes {
 		if !validTypes[rt] {
@@ -133,17 +134,29 @@ func (p exportJobPayload) toFields() store.ExportJobFields {
 // - computed on the fly from its cron expression (see scheduler.NextRunAt)
 // rather than stored, so it's always accurate as of the response and never
 // needs to be kept in sync with edits. Only set for an enabled job: a
-// disabled one has no next run to report.
+// disabled one has no next run to report. NextRunInSeconds is the exact
+// remaining duration as computed by this same server clock (ai-instruct-79)
+// - the frontend counts down from it locally instead of diffing its own
+// clock against NextRunAt, which would drift if the browser's clock isn't
+// in sync with the server's.
 type exportJobResponse struct {
 	models.ExportJob
-	NextRunAt *time.Time `json:"nextRunAt,omitempty"`
+	NextRunAt        *time.Time `json:"nextRunAt,omitempty"`
+	NextRunInSeconds *int64     `json:"nextRunInSeconds,omitempty"`
 }
 
 func toExportJobResponse(job models.ExportJob) exportJobResponse {
 	resp := exportJobResponse{ExportJob: job}
-	if job.Enabled {
-		resp.NextRunAt = scheduler.NextRunAt(job.CronExpression)
+	if !job.Enabled {
+		return resp
 	}
+	next := scheduler.NextRunAt(job.CronExpression)
+	if next == nil {
+		return resp
+	}
+	resp.NextRunAt = next
+	seconds := max(int64(time.Until(*next).Round(time.Second).Seconds()), 0)
+	resp.NextRunInSeconds = &seconds
 	return resp
 }
 
