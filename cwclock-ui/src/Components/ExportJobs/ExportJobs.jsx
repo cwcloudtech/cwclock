@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { FaRegEdit, FaRegHourglass } from "react-icons/fa";
+import { FaRegEdit, FaRegHourglass, FaPlay } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";
 import { useI18n } from "../../i18n/I18nContext";
 import Spinner from "../spinner/Spinner";
@@ -18,6 +18,7 @@ import {
   createExportJobApi,
   updateExportJobApi,
   deleteExportJobApi,
+  runExportJobApi,
 } from "../../Redux/ExportJobs/ExportJob.actions";
 import { isAdminOrOwner as computeIsAdminOrOwner } from "../common/permissions";
 import styles from "./Styles/ExportJobs.module.css";
@@ -71,6 +72,7 @@ const NextRunCell = ({ nextRunInSeconds }) => {
 const ExportJobRow = ({ job, orgId, token, onDelete, onEdit }) => {
   const { t } = useI18n();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [running, setRunning] = useState(false);
   const dispatch = useDispatch();
 
   const handleDelete = async () => {
@@ -92,6 +94,17 @@ const ExportJobRow = ({ job, orgId, token, onDelete, onEdit }) => {
     }
   };
 
+  const handleRunNow = async () => {
+    setRunning(true);
+    try {
+      await dispatch(runExportJobApi(orgId, job.id, token));
+    } catch (e) {
+      // error toast already shown by runExportJobApi
+    } finally {
+      setRunning(false);
+    }
+  };
+
   return (
     <>
       <li className={`cw-list-item ${styles.jobRow}`}>
@@ -108,6 +121,16 @@ const ExportJobRow = ({ job, orgId, token, onDelete, onEdit }) => {
           </span>
         </div>
         <div className={styles.jobActions}>
+          <Tooltip label={t("exportJobs.runNow")} position="bottom">
+            <button
+              className={styles.actionBtn}
+              onClick={handleRunNow}
+              disabled={running}
+              title={t("exportJobs.runNow")}
+            >
+              <FaPlay />
+            </button>
+          </Tooltip>
           <Tooltip label={t("common.edit")} position="bottom">
             <button
               className={styles.actionBtn}

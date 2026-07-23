@@ -234,6 +234,7 @@ func New(
 					r.Post("/", exportJobHandler.Create)
 					r.Put("/{jobId}", exportJobHandler.Update)
 					r.Delete("/{jobId}", exportJobHandler.Delete)
+					r.Post("/{jobId}/run", exportJobHandler.RunNow)
 				})
 			})
 		})

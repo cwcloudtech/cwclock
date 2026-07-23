@@ -56,6 +56,24 @@ export const updateExportJobApi = (orgId, jobId, jobData, token) => async (dispa
   }
 };
 
+// runExportJobApi triggers jobId's "run now" endpoint - it doesn't change
+// the job itself (no schedule/state to update), so unlike the other actions
+// here it doesn't touch ExportJobLOADING/the exportJobs list, only reports
+// success/failure via toast (mirrors sendInvoiceEmailApi).
+export const runExportJobApi = (orgId, jobId, token) => async () => {
+  try {
+    await axios.post(
+      `${process.env.REACT_APP_APIURL}/v1/organizations/${orgId}/export-jobs/${jobId}/run`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    toast.success(translate(getStoredLocale(), "exportJobs.runNowSuccess"), toastOptions);
+  } catch (e) {
+    toast.error(apiErrorMessage(e, getStoredLocale()), toastOptions);
+    throw e;
+  }
+};
+
 export const deleteExportJobApi = (orgId, jobId, token) => async (dispatch) => {
   dispatch({ type: ExportJobLOADING });
   try {

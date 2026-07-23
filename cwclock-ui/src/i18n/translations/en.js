@@ -541,6 +541,8 @@ const en = {
     disabled: "Disabled",
     enable: "Enable this job",
     disable: "Disable this job",
+    runNow: "Run now",
+    runNowSuccess: "Export job started",
     nextRunTooltip: "Next execution time",
     nextRunNow: "now",
     needOrganization: "Please select an organization to manage export jobs.",

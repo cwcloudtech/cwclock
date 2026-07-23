@@ -541,6 +541,8 @@ const fr = {
     disabled: "Désactivé",
     enable: "Activer cette tâche",
     disable: "Désactiver cette tâche",
+    runNow: "Exécuter maintenant",
+    runNowSuccess: "Tâche d'export démarrée",
     nextRunTooltip: "Heure de la prochaine exécution",
     nextRunNow: "maintenant",
     needOrganization: "Veuillez sélectionner une organisation pour gérer les tâches d'export.",

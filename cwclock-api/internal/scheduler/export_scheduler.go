@@ -130,6 +130,17 @@ func (s *ExportJobScheduler) Stop() {
 	<-s.cron.Stop().Done()
 }
 
+// RunNow executes job immediately, outside its normal cron schedule - for
+// the "run now" button, so an admin can verify a job's reports/targets are
+// configured correctly without waiting for its next scheduled fire. Runs
+// the exact same executeJob path a real cron trigger uses (so delivery and
+// error logging behave identically either way), synchronously in the
+// caller's own goroutine/context, unlike a scheduled run which always fires
+// on the cron runner's own goroutine with context.Background().
+func (s *ExportJobScheduler) RunNow(ctx context.Context, job models.ExportJob) {
+	s.executeJob(ctx, job)
+}
+
 // ScheduleJob (re)schedules job on its cron expression, replacing any
 // entry already scheduled for the same job ID - so it's safe to call again
 // after an update. A disabled job is only unscheduled (a no-op if it wasn't

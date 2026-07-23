@@ -271,6 +271,31 @@ func (h *ExportJobHandler) Update(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toExportJobResponse(job))
 }
 
+// RunNow executes an export job immediately, outside its normal cron
+// schedule - for a "run now" button, so an admin can verify a job's
+// reports/targets are configured correctly without waiting for its next
+// scheduled fire. Runs synchronously, using the exact same delivery path
+// (and best-effort, log-only error handling) a real cron-triggered run
+// uses, so the response just confirms the run was started - see
+// scheduler.ExportJobScheduler.RunNow.
+func (h *ExportJobHandler) RunNow(w http.ResponseWriter, r *http.Request) {
+	orgID, _ := middleware.OrgIDFromContext(r.Context())
+	id := chi.URLParam(r, "jobId")
+
+	job, err := h.jobs.FindByID(r.Context(), id)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	if job.OrganizationID != orgID {
+		writeError(w, http.StatusNotFound, "Resource not found", CodeNotFound)
+		return
+	}
+
+	h.scheduler.RunNow(r.Context(), job)
+	writeJSON(w, http.StatusOK, map[string]string{"id": job.ID})
+}
+
 func (h *ExportJobHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "jobId")
 
