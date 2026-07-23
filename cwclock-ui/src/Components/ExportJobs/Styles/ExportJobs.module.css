@@ -34,11 +34,11 @@
   gap: 16px;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--cw-border);
 }
 
 .jobRow:hover {
-  background-color: #f5f5f5;
+  background-color: var(--cw-bg-alt);
 }
 
 .jobName {
@@ -55,8 +55,16 @@
 }
 
 .jobNextRun {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
-  color: #666;
+  color: var(--cw-text-muted);
+}
+
+.nextRunIcon {
+  flex-shrink: 0;
+  color: var(--cw-text-muted);
 }
 
 .jobStatus {
@@ -64,12 +72,12 @@
 }
 
 .statusEnabled {
-  color: #4caf50;
+  color: var(--cw-success);
   font-weight: 500;
 }
 
 .statusDisabled {
-  color: #999;
+  color: var(--cw-text-muted);
   font-weight: 500;
 }
 
@@ -85,12 +93,12 @@
   cursor: pointer;
   font-size: 16px;
   padding: 4px;
-  color: #666;
-  transition: color 0.2s;
+  color: var(--cw-text-muted);
+  transition: color var(--cw-transition);
 }
 
 .actionBtn:hover {
-  color: #333;
+  color: var(--cw-text);
 }
 
 @media (max-width: 768px) {

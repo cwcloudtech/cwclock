@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { FaRegEdit } from "react-icons/fa";
+import { FaRegEdit, FaRegHourglass } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";
 import { useI18n } from "../../i18n/I18nContext";
 import Spinner from "../spinner/Spinner";
@@ -21,6 +21,47 @@ import {
 import { isAdminOrOwner as computeIsAdminOrOwner } from "../common/permissions";
 import styles from "./Styles/ExportJobs.module.css";
 import ExportJobModal from "./ExportJobModal";
+
+// Formats the time remaining until targetMs as a single decreasing unit -
+// "3d", "2h", "1 min", "30s" - dropping to the next smaller unit once the
+// current one hits zero, rather than a fixed-width "Xd Xh Xm Xs" breakdown,
+// so it stays glanceable in a narrow list column.
+const formatCountdown = (targetMs, nowMs, nowLabel) => {
+  const diffSeconds = Math.floor((targetMs - nowMs) / 1000);
+  if (diffSeconds <= 0) return nowLabel;
+  if (diffSeconds >= 86400) return `${Math.floor(diffSeconds / 86400)}d`;
+  if (diffSeconds >= 3600) return `${Math.floor(diffSeconds / 3600)}h`;
+  if (diffSeconds >= 60) return `${Math.floor(diffSeconds / 60)} min`;
+  return `${diffSeconds}s`;
+};
+
+// Ticks its own countdown every second rather than the whole row/list
+// re-rendering on a shared interval, and stops ticking on unmount.
+const NextRunCell = ({ nextRunAt }) => {
+  const { t } = useI18n();
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (!nextRunAt) return undefined;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [nextRunAt]);
+
+  if (!nextRunAt) {
+    return <div className={styles.jobNextRun}>—</div>;
+  }
+
+  const targetMs = new Date(nextRunAt).getTime();
+
+  return (
+    <div className={styles.jobNextRun}>
+      <Tooltip label={t("exportJobs.nextRunTooltip")}>
+        <FaRegHourglass className={styles.nextRunIcon} />
+      </Tooltip>
+      <span>{formatCountdown(targetMs, now, t("exportJobs.nextRunNow"))}</span>
+    </div>
+  );
+};
 
 const ExportJobRow = ({ job, orgId, token, onDelete, onEdit }) => {
   const { t } = useI18n();
@@ -43,7 +84,7 @@ const ExportJobRow = ({ job, orgId, token, onDelete, onEdit }) => {
         <div className={styles.jobName}>{job.name}</div>
         <div className={styles.jobCron}>{job.cronExpression}</div>
         <div className={styles.jobReports}>{job.reportTypes.join(", ")}</div>
-        <div className={styles.jobNextRun}>{job.nextRunAt ? new Date(job.nextRunAt).toLocaleString() : "—"}</div>
+        <NextRunCell nextRunAt={job.nextRunAt} />
         <div className={styles.jobStatus}>
           {job.enabled ? (
             <span className={styles.statusEnabled}>{t("exportJobs.enabled")}</span>

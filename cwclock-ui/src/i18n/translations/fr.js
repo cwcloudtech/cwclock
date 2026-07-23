@@ -539,6 +539,8 @@ const fr = {
     emptyBody: "Créez-en une ci-dessus pour planifier des exports de rapports automatisés.",
     enabled: "Activé",
     disabled: "Désactivé",
+    nextRunTooltip: "Heure de la prochaine exécution",
+    nextRunNow: "maintenant",
     needOrganization: "Veuillez sélectionner une organisation pour gérer les tâches d'export.",
     needAdminAccess: "Seuls les administrateurs peuvent gérer les tâches d'export.",
     cronExpression: "Expression Cron",
