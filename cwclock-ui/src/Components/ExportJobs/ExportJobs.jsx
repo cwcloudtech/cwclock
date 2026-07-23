@@ -8,6 +8,7 @@ import EmptyState from "../common/EmptyState";
 import NeedOrganizationEmptyState from "../common/NeedOrganizationEmptyState";
 import Button from "../common/Button";
 import Tooltip from "../common/Tooltip";
+import Switch from "../common/Switch";
 import ConfirmModal from "../common/ConfirmModal";
 import { listClientsApi } from "../../Redux/Clients/Client.actions";
 import { listProjectsApi } from "../../Redux/Projects/Project.actions";
@@ -82,6 +83,15 @@ const ExportJobRow = ({ job, orgId, token, onDelete, onEdit }) => {
     }
   };
 
+  const handleToggleEnabled = async () => {
+    const jobData = { ...job, enabled: !job.enabled };
+    try {
+      await dispatch(updateExportJobApi(orgId, job.id, jobData, token));
+    } catch (e) {
+      // error toast already shown by updateExportJobApi
+    }
+  };
+
   return (
     <>
       <li className={`cw-list-item ${styles.jobRow}`}>
@@ -90,11 +100,12 @@ const ExportJobRow = ({ job, orgId, token, onDelete, onEdit }) => {
         <div className={styles.jobReports}>{job.reportTypes.join(", ")}</div>
         <NextRunCell nextRunInSeconds={job.nextRunInSeconds} />
         <div className={styles.jobStatus}>
-          {job.enabled ? (
-            <span className={styles.statusEnabled}>{t("exportJobs.enabled")}</span>
-          ) : (
-            <span className={styles.statusDisabled}>{t("exportJobs.disabled")}</span>
-          )}
+          <Tooltip label={job.enabled ? t("exportJobs.disable") : t("exportJobs.enable")}>
+            <Switch checked={job.enabled} onChange={handleToggleEnabled} />
+          </Tooltip>
+          <span className={`${styles.statusBadge} ${job.enabled ? styles.statusEnabled : styles.statusDisabled}`}>
+            {job.enabled ? t("exportJobs.enabled") : t("exportJobs.disabled")}
+          </span>
         </div>
         <div className={styles.jobActions}>
           <Tooltip label={t("common.edit")} position="bottom">

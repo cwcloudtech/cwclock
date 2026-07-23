@@ -68,7 +68,7 @@ func (g *ExportReportGenerator) GenerateReport(ctx context.Context, reportType, 
 	if err != nil {
 		return nil, err
 	}
-	return []scheduler.ExportReportFile{{Filename: filename, MimeType: mimeType, Data: data}}, nil
+	return []scheduler.ExportReportFile{{Filename: filename, MimeType: mimeType, Data: data, Kind: scheduler.ExportFileKindReport}}, nil
 }
 
 // generateInvoicesPDFs attaches every invoice already generated for orgID
@@ -96,6 +96,7 @@ func (g *ExportReportGenerator) generateInvoicesPDFs(ctx context.Context, orgID 
 			Filename: number + ".pdf",
 			MimeType: "application/pdf",
 			Data:     pdf,
+			Kind:     scheduler.ExportFileKindInvoice,
 		})
 	}
 	return files, nil

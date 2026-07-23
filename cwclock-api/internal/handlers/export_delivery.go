@@ -52,11 +52,17 @@ func (d *ExportDeliveryService) deliverEmail(ctx context.Context, orgID, jobName
 		return err
 	}
 
+	var hasReports, hasInvoices bool
 	attachments := make([]email.Attachment, len(reports))
 	for i, r := range reports {
 		attachments[i] = email.Attachment{MimeType: r.MimeType, FileName: r.Filename, B64: base64.StdEncoding.EncodeToString(r.Data)}
+		if r.Kind == scheduler.ExportFileKindInvoice {
+			hasInvoices = true
+		} else {
+			hasReports = true
+		}
 	}
-	d.mailer.SendExportJob(ctx, to, utils.SplitList(target.CCEmails), org.ID, org.Name, jobName, startTime, endTime, attachments)
+	d.mailer.SendExportJob(ctx, to, utils.SplitList(target.CCEmails), org.ID, org.Name, jobName, startTime, endTime, attachments, hasReports, hasInvoices)
 	return nil
 }
 

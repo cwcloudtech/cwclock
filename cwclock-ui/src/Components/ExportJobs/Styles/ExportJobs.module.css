@@ -30,7 +30,7 @@
 
 .jobRow {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 160px 100px 100px;
+  grid-template-columns: 1fr 1fr 1fr 160px 140px 100px;
   gap: 16px;
   align-items: center;
   padding: 16px;
@@ -68,17 +68,26 @@
 }
 
 .jobStatus {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.statusBadge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
 .statusEnabled {
+  background-color: var(--cw-success-tint);
   color: var(--cw-success);
-  font-weight: 500;
 }
 
 .statusDisabled {
+  background-color: var(--cw-bg-alt);
   color: var(--cw-text-muted);
-  font-weight: 500;
 }
 
 .jobActions {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 	"time"
 
@@ -13,12 +14,23 @@ import (
 	"cwclock-api/internal/store"
 )
 
+// ExportFileKindReport and ExportFileKindInvoice tag an ExportReportFile as
+// either a freshly generated report or an attached, already-existing
+// invoice (see ExportReportGenerator) - ExportDeliveryService's email
+// delivery uses the mix present in one run to word its body appropriately
+// (ai-instruct-81).
+const (
+	ExportFileKindReport  = "report"
+	ExportFileKindInvoice = "invoice"
+)
+
 // ExportReportFile is one generated report attachment ready for delivery to
 // an export job's targets.
 type ExportReportFile struct {
 	Filename string
 	MimeType string
 	Data     []byte
+	Kind     string // ExportFileKindReport or ExportFileKindInvoice
 }
 
 // ExportReportGenerator produces the attachment(s) for one of an export
@@ -170,8 +182,9 @@ func (s *ExportJobScheduler) executeJob(ctx context.Context, job models.ExportJo
 	startDate := startTime.Format("2006-01-02")
 	endDate := endTime.Format("2006-01-02")
 
-	reports := make([]ExportReportFile, 0, len(job.ReportTypes))
-	for _, reportType := range job.ReportTypes {
+	reportTypes := effectiveReportTypes(job.ReportTypes)
+	reports := make([]ExportReportFile, 0, len(reportTypes))
+	for _, reportType := range reportTypes {
 		files, err := s.reports.GenerateReport(ctx, reportType, job.OrganizationID, job.ClientIDs, job.ProjectIDs, startDate, endDate, job.IncludeFinancial)
 		if err != nil {
 			log.Printf("export job %s: failed to generate %s report: %v", job.ID, reportType, err)
@@ -191,6 +204,25 @@ func (s *ExportJobScheduler) executeJob(ctx context.Context, job models.ExportJo
 	}
 
 	log.Printf("export job %s: completed", job.ID)
+}
+
+// effectiveReportTypes drops "unpaid-invoices" when "all-invoices" is also
+// selected: "all-invoices" already includes every unpaid one, so running
+// both would attach every unpaid invoice twice (ai-instruct-81).
+func effectiveReportTypes(reportTypes []string) []string {
+	hasAll := slices.Contains(reportTypes, "all-invoices")
+	hasUnpaid := slices.Contains(reportTypes, "unpaid-invoices")
+	if !hasAll || !hasUnpaid {
+		return reportTypes
+	}
+
+	filtered := make([]string, 0, len(reportTypes))
+	for _, rt := range reportTypes {
+		if rt != "unpaid-invoices" {
+			filtered = append(filtered, rt)
+		}
+	}
+	return filtered
 }
 
 // ParseTimePeriod converts a time period expression like "now()-1d" to

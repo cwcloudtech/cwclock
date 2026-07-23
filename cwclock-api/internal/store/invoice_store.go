@@ -173,17 +173,20 @@ func (s *InvoiceStore) PeekNextNumber(ctx context.Context, orgID, clientName str
 	return fmt.Sprintf("%s%d", prefix, count+1), nil
 }
 
-// List returns an organization's invoices whose selected period falls
-// within [start, end] (both "YYYY-MM-DD"), most recent first, optionally
-// narrowed to one or more clients (an empty clientIDs matches every client)
-// and/or one status (an empty status matches every status).
+// List returns an organization's invoices whose selected period overlaps
+// [start, end] (both "YYYY-MM-DD") - not necessarily falling entirely
+// inside it, since callers like an export job's rolling time period
+// (ai-instruct-81) rarely line up exactly with an invoice's own
+// begin/end - most recent first, optionally narrowed to one or more
+// clients (an empty clientIDs matches every client) and/or one status (an
+// empty status matches every status).
 func (s *InvoiceStore) List(ctx context.Context, orgID string, clientIDs []string, status, start, end string) ([]models.Invoice, error) {
 	query := `
 		SELECT id, organization_id, client_id, data, selected_begin_date, selected_end_date, created_at, updated_at
 		FROM invoices
 		WHERE organization_id = $1
-		  AND selected_begin_date >= $2::date
-		  AND selected_end_date <= $3::date
+		  AND selected_begin_date <= $3::date
+		  AND selected_end_date >= $2::date
 	`
 	args := []any{orgID, start, end}
 	if len(clientIDs) > 0 {

@@ -539,6 +539,8 @@ const fr = {
     emptyBody: "Créez-en une ci-dessus pour planifier des exports de rapports automatisés.",
     enabled: "Activé",
     disabled: "Désactivé",
+    enable: "Activer cette tâche",
+    disable: "Désactiver cette tâche",
     nextRunTooltip: "Heure de la prochaine exécution",
     nextRunNow: "maintenant",
     needOrganization: "Veuillez sélectionner une organisation pour gérer les tâches d'export.",

@@ -80,3 +80,4 @@
 * [ai-instruct-78](./ai-instruct-78.md)
 * [ai-instruct-79](./ai-instruct-79.md)
 * [ai-instruct-80](./ai-instruct-80.md)
+* [ai-instruct-81](./ai-instruct-81.md)

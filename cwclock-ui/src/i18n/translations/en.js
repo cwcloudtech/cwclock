@@ -539,6 +539,8 @@ const en = {
     emptyBody: "Create one above to schedule automated report exports.",
     enabled: "Enabled",
     disabled: "Disabled",
+    enable: "Enable this job",
+    disable: "Disable this job",
     nextRunTooltip: "Next execution time",
     nextRunNow: "now",
     needOrganization: "Please select an organization to manage export jobs.",
