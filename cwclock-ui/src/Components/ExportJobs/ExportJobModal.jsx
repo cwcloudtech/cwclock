@@ -7,6 +7,7 @@ import InputWithHelper from "../common/InputWithHelper";
 import ExportTargetsEditor from "./ExportTargetsEditor";
 import Button from "../common/Button";
 import RequiredMark from "../common/RequiredMark";
+import Switch from "../common/Switch";
 import styles from "./Styles/ExportJobModal.module.css";
 
 const REPORT_TYPES = [
@@ -30,6 +31,9 @@ const CRON_HELPERS = [
 
 const TIME_PERIOD_HELPERS = [
   { label: "Last 24 hours", value: "now()-1d" },
+  { label: "Last 48 hours", value: "now()-2d" },
+  { label: "Last 72 hours", value: "now()-3d" },
+  { label: "Last 4 days", value: "now()-4d" },
   { label: "Last 7 days", value: "now()-7d" },
   { label: "Last 30 days", value: "now()-30d" },
   { label: "Last hour", value: "now()-1h" },
@@ -218,15 +222,14 @@ const ExportJobModal = ({ show, job, onSave, onClose }) => {
           />
         </div>
 
-        <div className="cw-field">
-          <label className="cw-checkbox">
-            <input
-              type="checkbox"
-              checked={formData.enabled}
-              onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
-            />
-            {t("exportJobs.enabled")}
-          </label>
+        <div className={styles.enabledField}>
+          <span className="cw-label">{formData.enabled ? t("exportJobs.enabled") : t("exportJobs.disabled")}</span>
+          <Switch
+            checked={formData.enabled}
+            onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
+            aria-label={formData.enabled ? t("exportJobs.disable") : t("exportJobs.enable")}
+            title={formData.enabled ? t("exportJobs.disable") : t("exportJobs.enable")}
+          />
         </div>
 
         <div className={styles.actions}>

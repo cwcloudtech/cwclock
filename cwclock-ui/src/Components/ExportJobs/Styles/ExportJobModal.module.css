@@ -3,6 +3,13 @@
   flex-direction: column;
 }
 
+.enabledField {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--cw-spacing-sm);
+}
+
 .actions {
   display: flex;
   gap: 10px;

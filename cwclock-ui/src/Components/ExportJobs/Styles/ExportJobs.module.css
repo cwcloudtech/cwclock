@@ -86,8 +86,8 @@
 }
 
 .statusDisabled {
-  background-color: var(--cw-bg-alt);
-  color: var(--cw-text-muted);
+  background-color: var(--cw-danger-light);
+  color: var(--cw-danger);
 }
 
 .jobActions {
