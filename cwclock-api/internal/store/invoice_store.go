@@ -175,9 +175,9 @@ func (s *InvoiceStore) PeekNextNumber(ctx context.Context, orgID, clientName str
 
 // List returns an organization's invoices whose selected period falls
 // within [start, end] (both "YYYY-MM-DD"), most recent first, optionally
-// narrowed to one or more clients (an empty clientIDs matches every
-// client).
-func (s *InvoiceStore) List(ctx context.Context, orgID string, clientIDs []string, start, end string) ([]models.Invoice, error) {
+// narrowed to one or more clients (an empty clientIDs matches every client)
+// and/or one status (an empty status matches every status).
+func (s *InvoiceStore) List(ctx context.Context, orgID string, clientIDs []string, status, start, end string) ([]models.Invoice, error) {
 	query := `
 		SELECT id, organization_id, client_id, data, selected_begin_date, selected_end_date, created_at, updated_at
 		FROM invoices
@@ -189,6 +189,10 @@ func (s *InvoiceStore) List(ctx context.Context, orgID string, clientIDs []strin
 	if len(clientIDs) > 0 {
 		args = append(args, clientIDs)
 		query += fmt.Sprintf(" AND client_id = ANY($%d)", len(args))
+	}
+	if utils.IsNotBlank(status) {
+		args = append(args, status)
+		query += fmt.Sprintf(" AND data->>'status' = $%d", len(args))
 	}
 	query += " ORDER BY created_at DESC"
 

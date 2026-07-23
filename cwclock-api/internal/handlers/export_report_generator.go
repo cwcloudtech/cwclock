@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"cwclock-api/internal/models"
 	"cwclock-api/internal/scheduler"
 	"cwclock-api/internal/store"
+	"cwclock-api/internal/utils"
 )
 
 // ExportReportGenerator adapts ReportHandler's report builders (and the
-// existing InvoiceStore, for "invoices-pdf") to the
+// existing InvoiceStore, for "unpaid-invoices"/"all-invoices") to the
 // scheduler.ExportReportGenerator interface, so a scheduled export job can
 // produce the same summary/detailed PDF/CSV reports the Reports screen and
 // invoice emails already generate, or attach already-generated invoices.
@@ -28,12 +30,15 @@ func NewExportReportGenerator(reports *ReportHandler, invoices *store.InvoiceSto
 // amounts, so it's the job's own choice to include them or not.
 // startDate/endDate are already resolved by the scheduler (see
 // ParseTimePeriod), so every report type in the same run shares the exact
-// same range. "invoices-pdf" is handled separately (see
-// generateInvoicesPDFs) - it doesn't touch time entries at all, so it skips
+// same range. "unpaid-invoices"/"all-invoices" are handled separately (see
+// generateInvoicesPDFs) - they don't touch time entries at all, so they skip
 // the report-size check and can return any number of files, not just one.
 func (g *ExportReportGenerator) GenerateReport(ctx context.Context, reportType, orgID string, clientIDs, projectIDs []string, startDate, endDate string, includeFinancial bool) ([]scheduler.ExportReportFile, error) {
-	if reportType == "invoices-pdf" {
-		return g.generateInvoicesPDFs(ctx, orgID, clientIDs, startDate, endDate)
+	switch reportType {
+	case "unpaid-invoices":
+		return g.generateInvoicesPDFs(ctx, orgID, clientIDs, string(models.InvoiceStatusUnpaid), startDate, endDate)
+	case "all-invoices":
+		return g.generateInvoicesPDFs(ctx, orgID, clientIDs, utils.EMPTY, startDate, endDate)
 	}
 
 	filter := store.ReportFilter{Start: startDate, End: endDate, ClientIDs: clientIDs, ProjectIDs: projectIDs}
@@ -68,13 +73,15 @@ func (g *ExportReportGenerator) GenerateReport(ctx context.Context, reportType, 
 
 // generateInvoicesPDFs attaches every invoice already generated for orgID
 // whose selected period falls within [startDate, endDate], narrowed to
-// clientIDs (empty means every client) - never a new one, per
-// ai-instruct-79: the job just forwards what invoicing already produced,
-// the same way a human would attach existing invoices to an email. Unlike
-// the other report types, projectIDs plays no part here: an invoice isn't
-// scoped to individual projects.
-func (g *ExportReportGenerator) generateInvoicesPDFs(ctx context.Context, orgID string, clientIDs []string, startDate, endDate string) ([]scheduler.ExportReportFile, error) {
-	invoices, err := g.invoices.List(ctx, orgID, clientIDs, startDate, endDate)
+// clientIDs (empty means every client) and status (empty means every
+// status, used by "all-invoices"; models.InvoiceStatusUnpaid for
+// "unpaid-invoices") - never a new one, per ai-instruct-79: the job just
+// forwards what invoicing already produced, the same way a human would
+// attach existing invoices to an email. Unlike the other report types,
+// projectIDs plays no part here: an invoice isn't scoped to individual
+// projects.
+func (g *ExportReportGenerator) generateInvoicesPDFs(ctx context.Context, orgID string, clientIDs []string, status, startDate, endDate string) ([]scheduler.ExportReportFile, error) {
+	invoices, err := g.invoices.List(ctx, orgID, clientIDs, status, startDate, endDate)
 	if err != nil {
 		return nil, err
 	}

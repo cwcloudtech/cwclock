@@ -23,14 +23,15 @@ type ExportReportFile struct {
 
 // ExportReportGenerator produces the attachment(s) for one of an export
 // job's reportType values ("summary-pdf", "summary-csv", "detailed-pdf",
-// "detailed-csv", "invoices-pdf"). startDate/endDate are already-resolved
-// "YYYY-MM-DD" bounds (see ParseTimePeriod) - resolved once per run so
-// every report and the delivery email agree on the exact same range. Most
-// report types produce exactly one file, but "invoices-pdf" doesn't
-// generate anything new - it attaches every already-existing invoice whose
-// selected period falls in range for the job's selected clients (projectIDs
-// is ignored for it, invoices aren't scoped by project), which can be zero,
-// one, or many files.
+// "detailed-csv", "unpaid-invoices", "all-invoices"). startDate/endDate are
+// already-resolved "YYYY-MM-DD" bounds (see ParseTimePeriod) - resolved
+// once per run so every report and the delivery email agree on the exact
+// same range. Most report types produce exactly one file, but
+// "unpaid-invoices"/"all-invoices" don't generate anything new - they
+// attach every already-existing invoice (unpaid-only, or every status)
+// whose selected period falls in range for the job's selected clients
+// (projectIDs is ignored for them, invoices aren't scoped by project),
+// which can be zero, one, or many files.
 type ExportReportGenerator interface {
 	GenerateReport(ctx context.Context, reportType string, orgID string, clientIDs, projectIDs []string, startDate, endDate string, includeFinancial bool) ([]ExportReportFile, error)
 }

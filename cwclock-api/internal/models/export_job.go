@@ -9,7 +9,7 @@ type ExportJob struct {
 	Name             string         `json:"name"`
 	CronExpression   string         `json:"cronExpression"`
 	Targets          []ExportTarget `json:"targets"`
-	ReportTypes      []string       `json:"reportTypes"` // "summary-pdf", "summary-csv", "detailed-pdf", "detailed-csv", "invoices-pdf"
+	ReportTypes      []string       `json:"reportTypes"` // "summary-pdf", "summary-csv", "detailed-pdf", "detailed-csv", "unpaid-invoices", "all-invoices"
 	TimePeriod       string         `json:"timePeriod"`  // e.g., "now()", "now()-1d", "now()-1h"
 	ClientIDs        []string       `json:"clientIds"`   // Empty = all clients
 	ProjectIDs       []string       `json:"projectIds"`  // Empty = all projects
