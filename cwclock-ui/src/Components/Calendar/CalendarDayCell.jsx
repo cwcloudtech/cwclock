@@ -6,7 +6,10 @@ import styles from "./Styles/CalendarDayCell.module.css";
 // Every cell renders at the same fixed height regardless of content (even an
 // empty day) - entries beyond what fits are collapsed into a "+N more"
 // indicator rather than growing the box or scrolling it (ai-instruct-86).
-const MAX_VISIBLE_ENTRIES = 3;
+// Kept low enough that 2 chips plus the "+N more" label itself always fit
+// under the cell's fixed height without the now-strict overflow:hidden
+// clipping the indicator too.
+const MAX_VISIBLE_ENTRIES = 2;
 
 // One month-grid cell: clicking empty space opens the "add a time record"
 // modal for this day (defaulting to 9am-10am, ai-instruct-86), clicking an

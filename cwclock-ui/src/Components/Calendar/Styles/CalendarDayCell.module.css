@@ -1,5 +1,12 @@
 .cell {
   height: 110px;
+  /* A grid item defaults to min-height:auto, which floors its size at its
+     content's natural (min-content) height and overrides the explicit
+     height above once a day has enough entries to need more room - only an
+     overflow value other than the default "visible" resets that floor to 0,
+     which is what actually makes every cell the same height regardless of
+     content. */
+  overflow: hidden;
   padding: 6px;
   border-right: 1px solid var(--cw-border);
   border-bottom: 1px solid var(--cw-border);

@@ -8,6 +8,15 @@
   align-items: center;
   gap: 4px;
   width: 100%;
+  /* A flex item (this chip sits inside the Tooltip wrapper's own inline-flex
+     row) defaults to min-width:auto, which floors its size at its content's
+     natural width and silently ignores width:100% once that content (a long
+     label) is wider than the cell - min-width:0 is what actually lets it
+     shrink so the label span's text-overflow:ellipsis below gets a chance to
+     kick in at all. */
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   padding: 2px 4px 2px 6px;
   border-radius: var(--cw-radius-sm);
   font-size: 0.75rem;
