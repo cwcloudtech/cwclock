@@ -3,6 +3,17 @@
   min-width: 0;
 }
 
+/* Chips normally paint in plain DOM order, so a later day/cell can cover an
+   earlier one's tooltip bubble even though the bubble's own z-index is high
+   - that z-index only ranks against content inside this same wrapper. Only
+   elevating the wrapper itself (and only while its tooltip is actually
+   showing) lets it win against sibling chips too, without permanently
+   floating idle chips above everything else (ai-instruct-87). */
+.chipTooltip:hover,
+.chipTooltip:has(:focus-visible) {
+  z-index: 40;
+}
+
 .eventChip {
   display: flex;
   align-items: center;

@@ -115,9 +115,20 @@
 }
 
 .hourCell {
-  border-bottom: 1px solid var(--cw-border);
   box-sizing: border-box;
   cursor: pointer;
+}
+
+/* The boundary at the top of the hour (after a :00-:30 slot) stays a solid
+   line matching the hour axis; the halfway boundary (after a :30-:00 slot)
+   is a lighter dashed line, just enough to show the box is split in half
+   without competing with the hour gridlines (ai-instruct-87). */
+.hourBoundary {
+  border-bottom: 1px solid var(--cw-border);
+}
+
+.halfHourBoundary {
+  border-bottom: 1px dashed var(--cw-border);
 }
 
 .hourCell:hover {
@@ -134,4 +145,15 @@
   right: 2px;
   display: flex;
   z-index: 1;
+}
+
+/* Raises this entry (and its tooltip) above every sibling entry/day column -
+   all of which otherwise share the same base z-index - so hovering it always
+   shows its full label on top instead of being covered by a later-painted
+   neighbor (ai-instruct-87). :hover on the wrapper also matches while a
+   descendant (the chip, the tooltip bubble) is hovered, since :hover bubbles
+   up through ancestors. */
+.timedEntryWrapper:hover,
+.timedEntryWrapper:has(:focus-visible) {
+  z-index: 40;
 }

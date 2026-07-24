@@ -154,17 +154,17 @@ const Calendar = () => {
     [weeks, weekdayLabels]
   );
 
-  // fromHour/toHour come from the week view's drag-to-select-hours gesture;
-  // the month view's click-to-add still omits them, so the modal falls back
-  // to its own 9am-10am default (ai-instruct-86).
-  const handleAddEntry = (date, fromHour, toHour) => {
+  // fromTime/toTime ("HH:MM:SS") come from the week view's drag-to-select
+  // gesture, snapped to the half hour (ai-instruct-87); the month view's
+  // click-to-add still omits them, so the modal falls back to its own
+  // 9am-10am default (ai-instruct-86).
+  const handleAddEntry = (date, fromTime, toTime) => {
     const day = toISODate(date);
-    if (fromHour == null) {
+    if (fromTime == null) {
       setModalState({ day });
       return;
     }
-    const pad = (h) => String(h).padStart(2, "0");
-    setModalState({ day, startTime: `${pad(fromHour)}:00:00`, endTime: `${pad(toHour)}:00:00` });
+    setModalState({ day, startTime: fromTime, endTime: toTime });
   };
   const handleEditEntry = (entry) => setModalState({ entry });
   const handleCloseModal = () => setModalState(null);

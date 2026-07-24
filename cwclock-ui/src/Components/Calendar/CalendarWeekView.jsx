@@ -5,6 +5,10 @@ import styles from "./Styles/CalendarWeekView.module.css";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const HOUR_HEIGHT = 48;
+const HALF_HOUR_HEIGHT = HOUR_HEIGHT / 2;
+// Selection granularity: each day column is 48 half-hour slots rather than
+// 24 hour slots, so dragging can start/end on the half hour (ai-instruct-87).
+const SLOTS = Array.from({ length: 24 * 2 }, (_, i) => i);
 // Weekly views scroll to this hour on open so working hours are visible
 // without the user having to scroll up from midnight (ai-instruct-86).
 const INITIAL_SCROLL_HOUR = 7;
@@ -15,16 +19,27 @@ const minutesOfDay = (hms) => {
   return (h || 0) * 60 + (m || 0);
 };
 
+// Converts a half-hour slot index back into a "HH:MM:SS" time string. Slot
+// 48 (the end of a selection reaching all the way to midnight) has no valid
+// 24:00 hour, so it's reported as the last second of the day instead.
+const slotToTime = (slot) => {
+  if (slot >= SLOTS.length) return "23:59:59";
+  const hour = Math.floor(slot / 2);
+  const minute = (slot % 2) * 30;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
+};
+
 // CalendarWeekView is the week view's hour-by-hour grid (ai-instruct-86):
 // each day is a 24h column instead of the month view's small box. Dragging
-// down across hour cells in a single column selects that exact time range
-// and opens the "add a time record" modal prefilled with it, instead of the
-// month view's fixed 9am-10am default. Existing entries can still be dragged
-// onto another day's column to reschedule them (same day-level move as the
-// month view - the hour they're dropped on doesn't change their time).
+// down across half-hour cells in a single column selects that exact time
+// range (snapped to the half hour, ai-instruct-87) and opens the "add a time
+// record" modal prefilled with it, instead of the month view's fixed
+// 9am-10am default. Existing entries can still be dragged onto another
+// day's column to reschedule them (same day-level move as the month view -
+// the hour they're dropped on doesn't change their time).
 const CalendarWeekView = ({ days, entriesByDay, projects, todayIso, onAddEntry, onEditEntry, onDropEntry }) => {
   const { t } = useI18n();
-  const [dragSelection, setDragSelection] = useState(null); // { date, iso, startHour, endHour }
+  const [dragSelection, setDragSelection] = useState(null); // { date, iso, startSlot, endSlot }
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -32,17 +47,17 @@ const CalendarWeekView = ({ days, entriesByDay, projects, todayIso, onAddEntry, 
   }, []);
 
   // A plain click (mousedown+mouseup with no mouseenter into another cell)
-  // leaves startHour === endHour, which finishDrag turns into a single
-  // 1-hour block - the same gesture handles both "click one hour" and
+  // leaves startSlot === endSlot, which finishDrag turns into a single
+  // half-hour block - the same gesture handles both "click one slot" and
   // "drag across several".
   useEffect(() => {
     if (!dragSelection) return;
     const handleMouseUp = () => {
       setDragSelection((sel) => {
         if (sel) {
-          const from = Math.min(sel.startHour, sel.endHour);
-          const to = Math.max(sel.startHour, sel.endHour) + 1;
-          onAddEntry(sel.date, from, to);
+          const from = Math.min(sel.startSlot, sel.endSlot);
+          const to = Math.max(sel.startSlot, sel.endSlot) + 1;
+          onAddEntry(sel.date, slotToTime(from), slotToTime(to));
         }
         return null;
       });
@@ -52,11 +67,11 @@ const CalendarWeekView = ({ days, entriesByDay, projects, todayIso, onAddEntry, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dragSelection]);
 
-  const isHourSelected = (iso, hour) => {
+  const isSlotSelected = (iso, slot) => {
     if (!dragSelection || dragSelection.iso !== iso) return false;
-    const lo = Math.min(dragSelection.startHour, dragSelection.endHour);
-    const hi = Math.max(dragSelection.startHour, dragSelection.endHour);
-    return hour >= lo && hour <= hi;
+    const lo = Math.min(dragSelection.startSlot, dragSelection.endSlot);
+    const hi = Math.max(dragSelection.startSlot, dragSelection.endSlot);
+    return slot >= lo && slot <= hi;
   };
 
   const handleDayDrop = (e, date) => {
@@ -117,14 +132,16 @@ const CalendarWeekView = ({ days, entriesByDay, projects, todayIso, onAddEntry, 
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => handleDayDrop(e, d.date)}
             >
-              {HOURS.map((h) => (
+              {SLOTS.map((slot) => (
                 <div
-                  key={h}
-                  className={`${styles.hourCell} ${isHourSelected(d.iso, h) ? styles.hourCellSelected : ""}`}
-                  style={{ height: HOUR_HEIGHT }}
-                  onMouseDown={() => setDragSelection({ date: d.date, iso: d.iso, startHour: h, endHour: h })}
+                  key={slot}
+                  className={`${styles.hourCell} ${slot % 2 === 0 ? styles.halfHourBoundary : styles.hourBoundary} ${
+                    isSlotSelected(d.iso, slot) ? styles.hourCellSelected : ""
+                  }`}
+                  style={{ height: HALF_HOUR_HEIGHT }}
+                  onMouseDown={() => setDragSelection({ date: d.date, iso: d.iso, startSlot: slot, endSlot: slot })}
                   onMouseEnter={() =>
-                    setDragSelection((sel) => (sel && sel.iso === d.iso ? { ...sel, endHour: h } : sel))
+                    setDragSelection((sel) => (sel && sel.iso === d.iso ? { ...sel, endSlot: slot } : sel))
                   }
                 />
               ))}
