@@ -15,6 +15,7 @@ import logo from "../../../assets/images/cwclock-logo.svg";
 import TimeTracker from "../pages/TimeTracker";
 import SidebarNav from "./SidebarNav";
 
+import Calendardiv from "../pages/Calendar";
 import Clientdiv from "../pages/Client";
 import Organizationsdiv from "../pages/Organizations";
 import Projectsdiv from "../pages/Projects";
@@ -261,6 +262,7 @@ const Slidebar = () => {
         <div className={styles.pages}>
           <Routes>
             <Route path="/timetracker" element={<TimeTracker />}></Route>
+            <Route path="/calendar" element={<Calendardiv />}></Route>
             <Route path="/reports" element={<Reportsdiv />}></Route>
             <Route path="/organizations" element={<Organizationsdiv />}></Route>
             <Route path="/clients" element={<Clientdiv />}></Route>

@@ -1,5 +1,6 @@
 import { legacy_createStore, combineReducers, applyMiddleware } from "redux";
 import { TaskReducer } from "./Tasks/TaskReducer";
+import { CalendarReducer } from "./Calendar/Calendar.reducer";
 import { AuthReducer } from "./Auth/Auth.Reducer";
 import { OrgReducer } from "./Organizations/Org.reducer";
 import { ClientReducer } from "./Clients/Client.reducer";
@@ -13,6 +14,7 @@ import thunk from "redux-thunk";
 
 const rootRuducer = combineReducers({
   tasks: TaskReducer,
+  calendar: CalendarReducer,
   auth: AuthReducer,
   organizations: OrgReducer,
   clients: ClientReducer,

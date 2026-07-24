@@ -1,0 +1,75 @@
+.body {
+  background-color: var(--cw-bg);
+  min-height: 100vh;
+  padding: var(--cw-spacing-lg) var(--cw-spacing-lg) var(--cw-spacing-xl);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1100px;
+  margin: 0 auto var(--cw-spacing);
+}
+
+.monthLabel {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--cw-text);
+  text-transform: capitalize;
+}
+
+.navButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background-color: var(--cw-surface);
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-sm);
+  color: var(--cw-text);
+  cursor: pointer;
+}
+
+.navButton:hover {
+  background-color: var(--cw-bg-alt);
+}
+
+.weekdayRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.weekdayCell {
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--cw-text-muted);
+  text-transform: uppercase;
+}
+
+.grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  border-top: 1px solid var(--cw-border);
+  border-left: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-sm);
+  overflow: hidden;
+  background-color: var(--cw-surface);
+}
+
+.weekRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}

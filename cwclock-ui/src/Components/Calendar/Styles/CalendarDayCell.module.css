@@ -1,0 +1,59 @@
+.cell {
+  min-height: 110px;
+  padding: 6px;
+  border-right: 1px solid var(--cw-border);
+  border-bottom: 1px solid var(--cw-border);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cell:hover {
+  background-color: var(--cw-bg-alt);
+}
+
+.outsideMonth {
+  background-color: var(--cw-bg);
+  opacity: 0.55;
+}
+
+.dateNumber {
+  align-self: flex-start;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--cw-text-muted);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.today {
+  background-color: var(--cw-primary);
+  color: #ffffff;
+}
+
+.events {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.eventChip {
+  padding: 2px 6px;
+  border-radius: var(--cw-radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: grab;
+}
+
+.eventChip:active {
+  cursor: grabbing;
+}

@@ -105,6 +105,28 @@ func (h *TimeEntryHandler) List(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// ListRange returns the caller's own time entries within a [start, end] day
+// range, unpaginated - used by the Calendar view to load a whole visible
+// month/week grid in one call instead of paging through List like the
+// classic time tracker screen does.
+func (h *TimeEntryHandler) ListRange(w http.ResponseWriter, r *http.Request) {
+	orgID, _ := middleware.OrgIDFromContext(r.Context())
+	userID, _ := middleware.UserIDFromContext(r.Context())
+	start := r.URL.Query().Get("start")
+	end := r.URL.Query().Get("end")
+	if utils.IsBlank(start) || utils.IsBlank(end) {
+		writeError(w, http.StatusBadRequest, "Please provide start and end query parameters", CodeInvalidRequestBody)
+		return
+	}
+
+	entries, err := h.entries.ListByRange(r.Context(), orgID, userID, start, end)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": entries})
+}
+
 func (h *TimeEntryHandler) Create(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
 	userID, _ := middleware.UserIDFromContext(r.Context())

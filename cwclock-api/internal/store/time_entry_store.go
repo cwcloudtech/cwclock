@@ -143,6 +143,34 @@ func (s *TimeEntryStore) List(ctx context.Context, orgID, userID string, limit, 
 	return entries, hasMore, nil
 }
 
+// ListByRange returns a user's own time entries whose day falls within
+// [start, end] (inclusive, "YYYY-MM-DD"), earliest day/start first - used by
+// the Calendar view to load a whole visible month/week grid in one
+// unpaginated call, unlike List which pages through every entry newest-first.
+func (s *TimeEntryStore) ListByRange(ctx context.Context, orgID, userID, start, end string) ([]models.TimeEntry, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, organization_id, client_id, project_id, user_id, data, created_at, updated_at
+		FROM time_entries
+		WHERE organization_id = $1 AND user_id = $2
+		  AND data->>'day' >= $3 AND data->>'day' <= $4
+		ORDER BY data->>'day' ASC, data->>'start' ASC
+	`, orgID, userID, start, end)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	entries := []models.TimeEntry{}
+	for rows.Next() {
+		t, err := scanTimeEntry(rows)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, t)
+	}
+	return entries, rows.Err()
+}
+
 // TimeEntryReassignment holds the optional relational reassignments applied
 // on top of a field update. Empty strings mean "leave unchanged".
 type TimeEntryReassignment struct {

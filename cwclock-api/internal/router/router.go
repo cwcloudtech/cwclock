@@ -197,6 +197,7 @@ func New(
 
 				r.Route("/time-entries", func(r chi.Router) {
 					r.Get("/", timeEntryHandler.List)
+					r.Get("/range", timeEntryHandler.ListRange)
 					r.With(middleware.RequireRole(models.RoleMember)).Post("/", timeEntryHandler.Create)
 					r.With(middleware.RequireRole(models.RoleMember)).Put("/{id}", timeEntryHandler.Update)
 					r.With(middleware.RequireRole(models.RoleMember)).Delete("/{id}", timeEntryHandler.Delete)

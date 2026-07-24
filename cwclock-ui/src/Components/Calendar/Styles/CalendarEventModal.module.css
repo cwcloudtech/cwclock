@@ -1,0 +1,24 @@
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+.switchField {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--cw-spacing-sm);
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: var(--cw-text-muted);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: var(--cw-spacing-sm);
+}

@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { FiClock, FiKey } from "react-icons/fi";
+import { FiClock, FiKey, FiCalendar } from "react-icons/fi";
 import { FaFileAlt, FaRegUserCircle, FaBuilding, FaUserShield, FaChartBar, FaFileInvoiceDollar, FaDownload } from "react-icons/fa";
 import { FaBuildingShield } from "react-icons/fa6";
 import Tooltip from "../../common/Tooltip";
@@ -9,6 +9,7 @@ import styles from "./STYLE/SidebarNav.module.css";
 
 const items = [
   { to: "/dashboard/timetracker", labelKey: "nav.timeTracker", Icon: FiClock },
+  { to: "/dashboard/calendar", labelKey: "nav.calendar", Icon: FiCalendar },
   { to: "/dashboard/reports", labelKey: "nav.reports", Icon: FaChartBar },
   { to: "/dashboard/organizations", labelKey: "nav.organizations", Icon: FaBuilding },
   { to: "/dashboard/clients", labelKey: "nav.clients", Icon: FaRegUserCircle },
@@ -32,7 +33,7 @@ const adminItems = [
 const SidebarNav = ({ expanded, isSuperuser, showInvoices }) => {
   const { t } = useI18n();
   let links = showInvoices
-    ? [...items.slice(0, 2), invoicesItem, exportJobsItem, ...items.slice(2)]
+    ? [...items.slice(0, 3), invoicesItem, exportJobsItem, ...items.slice(3)]
     : items;
   if (isSuperuser) links = [...links, ...adminItems];
   return (
