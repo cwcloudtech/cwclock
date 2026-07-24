@@ -108,6 +108,7 @@ func main() {
 	}
 	defer exportScheduler.Stop()
 	exportJobHandler := handlers.NewExportJobHandler(exportJobStore, exportScheduler)
+	calendarFeedHandler := handlers.NewCalendarFeedHandler(userStore, timeEntryStore, projectStore, clientStore, cfg.APIBaseURL)
 
 	met, err := metrics.Setup(ctx, metrics.Config{
 		Endpoint: cfg.OtelEndpoint,
@@ -122,7 +123,7 @@ func main() {
 
 	r := router.New(
 		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler, mfaHandler, importHandler, apiKeyHandler, invoiceHandler,
-		currencyHandler, countryHandler, fieldHandler, oidcHandler, contactHandler, exportJobHandler,
+		currencyHandler, countryHandler, fieldHandler, oidcHandler, contactHandler, exportJobHandler, calendarFeedHandler,
 		orgStore, userStore, apiKeyStore, cfg.JWTSecret, cfg.ActivationMode, cfg.CorsEnabled, cfg.CorsAllowedOrigins, cfg.Version, cfg.ManifestPath,
 		tel, met.Observe, met.Handler,
 	)

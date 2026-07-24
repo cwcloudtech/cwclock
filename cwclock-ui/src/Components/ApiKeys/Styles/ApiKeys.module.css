@@ -4,6 +4,19 @@
   margin: 0 auto;
 }
 
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--cw-spacing);
+  margin-bottom: var(--cw-spacing-lg);
+}
+
+.swaggerLink {
+  text-decoration: none;
+}
+
 .intro {
   color: var(--cw-text-muted);
   margin-bottom: var(--cw-spacing-lg);

@@ -181,12 +181,20 @@ const en = {
     today: "Today",
     previousMonth: "Previous month",
     nextMonth: "Next month",
+    monthView: "Month",
+    weekView: "Week",
     addTimeRecord: "Add a time record",
     editTimeRecord: "Edit time record",
     start: "Start",
     end: "End",
     endSameDayHint: "End must be on the same day as start - multi-day entries aren't supported yet.",
     fillRequiredFields: "Please fill in the description, project and date fields.",
+    shareTitle: "Share calendar",
+    shareIntro: "Subscribe to your time entries from Outlook or Google Calendar using this personal feed link.",
+    shareEnable: "Enable calendar sharing",
+    shareRegenerate: "Generate a new link",
+    shareHint:
+      'Anyone with this link can see your time entries. In Google Calendar: Settings > Add calendar > "From URL". In Outlook: Add calendar > "Subscribe from web".',
   },
   profile: {
     editProfileTitle: "Edit profile",
@@ -376,6 +384,7 @@ const en = {
     createdWarning: "Copy this key now - for your security, it won't be shown again.",
     deleteKeyTitle: "Revoke API key",
     deleteKeyBody: 'Revoke "{{description}}"? Any script using it will stop working immediately.',
+    openSwagger: "API documentation",
   },
   toasts: {
     orgCreated: "Organization created.",

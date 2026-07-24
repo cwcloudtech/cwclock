@@ -8,6 +8,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--cw-spacing-sm);
   max-width: 1100px;
   margin: 0 auto var(--cw-spacing);
 }
@@ -41,6 +43,42 @@
 
 .navButton:hover {
   background-color: var(--cw-bg-alt);
+}
+
+.viewToggle {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-sm);
+  overflow: hidden;
+  margin-right: 4px;
+}
+
+.viewButton {
+  padding: 7px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background-color: var(--cw-surface);
+  color: var(--cw-text-muted);
+  border: none;
+  cursor: pointer;
+}
+
+.viewButton:not(:first-child) {
+  border-left: 1px solid var(--cw-border);
+}
+
+.viewButton:hover {
+  background-color: var(--cw-bg-alt);
+}
+
+.viewButtonActive {
+  background-color: var(--cw-primary);
+  color: #ffffff;
+}
+
+.viewButtonActive:hover {
+  background-color: var(--cw-primary-dark);
 }
 
 .weekdayRow {

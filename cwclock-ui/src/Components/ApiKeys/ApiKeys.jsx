@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { MdDeleteForever } from "react-icons/md";
-import { FaRegCopy } from "react-icons/fa";
+import { FaRegCopy, FaExternalLinkAlt } from "react-icons/fa";
 import { toast } from "react-toastify";
 import ConfigForm from "../common/ConfigForm";
 import CollapsiblePanel from "../common/CollapsiblePanel";
@@ -68,7 +68,19 @@ const ApiKeys = () => {
 
   return (
     <div className={styles.main}>
-      <h1 className="cw-title">{t("apiKeys.title")}</h1>
+      <div className={styles.titleRow}>
+        <h1 className="cw-title" style={{ marginBottom: 0 }}>{t("apiKeys.title")}</h1>
+        <a
+          href={process.env.REACT_APP_APIURL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`cw-button cw-button--secondary cw-button--sm ${styles.swaggerLink}`}
+          title={t("apiKeys.openSwagger")}
+        >
+          <FaExternalLinkAlt style={{ fontSize: "13px" }} />
+          {t("apiKeys.openSwagger")}
+        </a>
+      </div>
       <p className={styles.intro}>{t("apiKeys.intro")}</p>
 
       <CollapsiblePanel title={t("apiKeys.createKey")}>

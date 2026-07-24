@@ -88,3 +88,27 @@ export const webauthnRegisterFinishApi = (ceremonyToken, credential, name, token
 export const webauthnDeleteApi = (credentialId, token) => async () => {
   await axios.delete(`${ENDPOINT}me/mfa/webauthn/${credentialId}`, authConfig(token));
 };
+
+// Calendar-sharing feed self-service (see ai-instruct-85): an ICS URL the
+// user can subscribe to from Outlook/Google Calendar. Like the MFA calls
+// above, these don't touch global state - the Calendar view's share modal
+// keeps the {enabled, url} status in its own local state.
+export const calendarFeedStatusApi = (token) => async () => {
+  const { data } = await axios.get(`${ENDPOINT}me/calendar-feed`, authConfig(token));
+  return data;
+};
+
+export const calendarFeedEnableApi = (token) => async () => {
+  const { data } = await axios.post(`${ENDPOINT}me/calendar-feed/enable`, {}, authConfig(token));
+  return data;
+};
+
+export const calendarFeedDisableApi = (token) => async () => {
+  const { data } = await axios.post(`${ENDPOINT}me/calendar-feed/disable`, {}, authConfig(token));
+  return data;
+};
+
+export const calendarFeedRegenerateApi = (token) => async () => {
+  const { data } = await axios.post(`${ENDPOINT}me/calendar-feed/regenerate`, {}, authConfig(token));
+  return data;
+};

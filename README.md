@@ -13,12 +13,14 @@ A live version is available at [cwclock.me](https://www.cwclock.me).
 ## Features
 
 * Track time spent on tasks
+* Connect to your Google or Outlook calendar
 * Manage organizations, clients and project
 * Export in PDF or CSV with format compliant with Clockify format
 * Export API compliant with Clockify
 * Reimport Clockify CSV export files
 * Print invoices with daily rates and VAT
-* Synchronize you invoices with Google drive or S3/object storage
+* Synchronize you invoices with Google drive or S3/object storage or git repositories
+* Automated export job that can send the exports and/or invoices by email or Google drive, S3/object storage or git repositories
 * I18N (English and French for now)
 * Light/Dark mode
 * OpenTelemetry & OpenMetrics (Prometheus) observability

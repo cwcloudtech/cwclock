@@ -1,0 +1,53 @@
+.intro {
+  margin: 0 0 var(--cw-spacing);
+  color: var(--cw-text-muted);
+  font-size: 0.9rem;
+}
+
+.switchField {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--cw-spacing);
+}
+
+.urlBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: var(--cw-spacing-sm);
+  background-color: var(--cw-bg-alt);
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-sm);
+}
+
+.url {
+  flex: 1;
+  overflow-wrap: anywhere;
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 6px 10px;
+  color: var(--cw-text-muted);
+  border-radius: var(--cw-radius-sm);
+  cursor: pointer;
+}
+
+.iconBtn:hover {
+  color: var(--cw-primary-700);
+  background-color: var(--cw-primary-tint);
+}
+
+.hint {
+  margin: var(--cw-spacing-sm) 0 0;
+  color: var(--cw-text-muted);
+  font-size: 0.8rem;
+}

@@ -181,12 +181,20 @@ const fr = {
     today: "Aujourd'hui",
     previousMonth: "Mois précédent",
     nextMonth: "Mois suivant",
+    monthView: "Mois",
+    weekView: "Semaine",
     addTimeRecord: "Ajouter une entrée de temps",
     editTimeRecord: "Modifier l'entrée de temps",
     start: "Début",
     end: "Fin",
     endSameDayHint: "La fin doit être le même jour que le début - les entrées sur plusieurs jours ne sont pas encore prises en charge.",
     fillRequiredFields: "Veuillez renseigner la description, le projet et la date.",
+    shareTitle: "Partager le calendrier",
+    shareIntro: "Abonnez-vous à vos entrées de temps depuis Outlook ou Google Agenda grâce à ce lien personnel.",
+    shareEnable: "Activer le partage du calendrier",
+    shareRegenerate: "Générer un nouveau lien",
+    shareHint:
+      "Toute personne disposant de ce lien peut voir vos entrées de temps. Dans Google Agenda : Paramètres > Ajouter un agenda > « À partir de l'URL ». Dans Outlook : Ajouter un calendrier > « S'abonner depuis le web ».",
   },
   profile: {
     editProfileTitle: "Modifier le profil",
@@ -376,6 +384,7 @@ const fr = {
     createdWarning: "Copiez cette clé maintenant - pour votre sécurité, elle ne sera plus jamais affichée.",
     deleteKeyTitle: "Révoquer la clé API",
     deleteKeyBody: "Révoquer « {{description}} » ? Tout script qui l'utilise cessera de fonctionner immédiatement.",
+    openSwagger: "Documentation de l'API",
   },
   toasts: {
     orgCreated: "Organisation créée.",

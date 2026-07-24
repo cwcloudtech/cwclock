@@ -35,9 +35,18 @@ type User struct {
 	// MFATOTPSecret is the base32-encoded TOTP shared secret. It's written as
 	// soon as enrollment starts (handlers.MFAHandler.SetupTOTP) but MFAEnabled
 	// stays false until the user confirms a code generated from it.
-	MFATOTPSecret string    `json:"-"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
+	MFATOTPSecret string `json:"-"`
+	// CalendarFeedToken authenticates the public, unauthenticated calendar
+	// feed URL (see ai-instruct-85's "share the calendar with Outlook or
+	// Google Calendar" - a subscribable ICS feed, since neither provider can
+	// send an Authorization header when polling a subscribed calendar).
+	// CalendarFeedEnabled gates the feed even once a token exists, so
+	// disabling sharing doesn't require throwing away (and needing to
+	// re-share) the URL.
+	CalendarFeedToken   string    `json:"-"`
+	CalendarFeedEnabled bool      `json:"-"`
+	CreatedAt           time.Time `json:"createdAt"`
+	UpdatedAt           time.Time `json:"updatedAt"`
 }
 
 type UserResponse struct {

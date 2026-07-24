@@ -24,15 +24,17 @@ func NewUserStore(pool *pgxpool.Pool) *UserStore {
 }
 
 type userData struct {
-	Password      string   `json:"password"`
-	Name          string   `json:"name,omitempty"`
-	Surname       string   `json:"surname,omitempty"`
-	Role          string   `json:"role,omitempty"`
-	Picture       string   `json:"picture,omitempty"`
-	PictureX      *float64 `json:"pictureX,omitempty"`
-	PictureY      *float64 `json:"pictureY,omitempty"`
-	MFAEnabled    bool     `json:"mfaEnabled,omitempty"`
-	MFATOTPSecret string   `json:"mfaTotpSecret,omitempty"`
+	Password            string   `json:"password"`
+	Name                string   `json:"name,omitempty"`
+	Surname             string   `json:"surname,omitempty"`
+	Role                string   `json:"role,omitempty"`
+	Picture             string   `json:"picture,omitempty"`
+	PictureX            *float64 `json:"pictureX,omitempty"`
+	PictureY            *float64 `json:"pictureY,omitempty"`
+	MFAEnabled          bool     `json:"mfaEnabled,omitempty"`
+	MFATOTPSecret       string   `json:"mfaTotpSecret,omitempty"`
+	CalendarFeedToken   string   `json:"calendarFeedToken,omitempty"`
+	CalendarFeedEnabled bool     `json:"calendarFeedEnabled,omitempty"`
 }
 
 // defaultImagePosition centers a picture/stamp when no position was ever
@@ -69,6 +71,8 @@ func scanUser(row pgx.Row) (models.User, error) {
 	u.PictureY = resolveImagePosition(d.PictureY)
 	u.MFAEnabled = d.MFAEnabled
 	u.MFATOTPSecret = d.MFATOTPSecret
+	u.CalendarFeedToken = d.CalendarFeedToken
+	u.CalendarFeedEnabled = d.CalendarFeedEnabled
 	return u, nil
 }
 
@@ -292,6 +296,76 @@ func (s *UserStore) SetMFAEnabled(ctx context.Context, id string, enabled bool) 
 		RETURNING id, email, data, created_at, updated_at
 	`, id, patch)
 	return scanUser(row)
+}
+
+// SetCalendarFeedEnabled turns the caller's calendar sharing feed on or off.
+// Enabling it for the first time also mints a token (kept stable across
+// later enable/disable toggles, so a URL the user already shared with
+// Outlook/Google keeps working once re-enabled); disabling leaves the token
+// in place but FindByCalendarFeedToken/the feed handler must still refuse it.
+func (s *UserStore) SetCalendarFeedEnabled(ctx context.Context, id string, enabled bool) (models.User, error) {
+	patch := map[string]any{"calendarFeedEnabled": enabled}
+	if enabled {
+		user, err := s.FindByID(ctx, id)
+		if err != nil {
+			return models.User{}, err
+		}
+		if utils.IsBlank(user.CalendarFeedToken) {
+			token, err := generateToken()
+			if err != nil {
+				return models.User{}, err
+			}
+			patch["calendarFeedToken"] = token
+		}
+	}
+	data, err := json.Marshal(patch)
+	if err != nil {
+		return models.User{}, err
+	}
+	row := s.pool.QueryRow(ctx, `
+		UPDATE users SET data = data || $2::jsonb, updated_at = now()
+		WHERE id = $1
+		RETURNING id, email, data, created_at, updated_at
+	`, id, data)
+	return scanUser(row)
+}
+
+// RegenerateCalendarFeedToken replaces the caller's calendar feed token,
+// invalidating any URL previously shared with Outlook/Google Calendar.
+func (s *UserStore) RegenerateCalendarFeedToken(ctx context.Context, id string) (models.User, error) {
+	token, err := generateToken()
+	if err != nil {
+		return models.User{}, err
+	}
+	patch, err := json.Marshal(map[string]any{"calendarFeedToken": token})
+	if err != nil {
+		return models.User{}, err
+	}
+	row := s.pool.QueryRow(ctx, `
+		UPDATE users SET data = data || $2::jsonb, updated_at = now()
+		WHERE id = $1
+		RETURNING id, email, data, created_at, updated_at
+	`, id, patch)
+	return scanUser(row)
+}
+
+// FindByCalendarFeedToken resolves the public ICS feed URL's token back to
+// its owner. Disabled feeds are reported as ErrNotFound too (not a separate
+// "forbidden"), so a disabled feed's URL looks indistinguishable from an
+// unknown one to whoever's polling it.
+func (s *UserStore) FindByCalendarFeedToken(ctx context.Context, token string) (models.User, error) {
+	row := s.pool.QueryRow(ctx, `
+		SELECT id, email, data, created_at, updated_at
+		FROM users WHERE data->>'calendarFeedToken' = $1
+	`, token)
+	user, err := scanUser(row)
+	if err != nil {
+		return models.User{}, err
+	}
+	if !user.CalendarFeedEnabled {
+		return models.User{}, ErrNotFound
+	}
+	return user, nil
 }
 
 // ErrDuplicateEmail is returned when an admin edit would collide with

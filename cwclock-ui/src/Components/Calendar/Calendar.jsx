@@ -1,10 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FaPlug } from "react-icons/fa";
 import Spinner from "../spinner/Spinner";
 import NeedOrganizationEmptyState from "../common/NeedOrganizationEmptyState";
+import Tooltip from "../common/Tooltip";
 import CalendarDayCell from "./CalendarDayCell";
 import CalendarEventModal from "./CalendarEventModal";
+import CalendarShareModal from "./CalendarShareModal";
 import {
   getCalendarEntriesApi,
   createCalendarEntryApi,
@@ -31,6 +34,17 @@ const addDays = (d, n) => {
 // i18n "days" dictionary and dateRangeShortcuts.js, both 0 = Sunday).
 const startOfWeek = (d) => addDays(startOfDay(d), -d.getDay());
 
+// Moves d by delta months, clamping the day-of-month to the target month's
+// last day instead of letting native Date overflow into the month after
+// (e.g. Jan 31 minus one month would otherwise silently land on Mar 3, since
+// February has no 31st).
+const shiftMonth = (d, delta) => {
+  const target = new Date(d.getFullYear(), d.getMonth() + delta, 1);
+  const lastDayOfTarget = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+  target.setDate(Math.min(d.getDate(), lastDayOfTarget));
+  return target;
+};
+
 // Calendar is the month-grid time tracking view (ai-instruct-84): same idea
 // as Google Calendar/Teams calendar - click an empty day to add a time
 // record, drag an existing one onto another day to reschedule it, and each
@@ -38,11 +52,10 @@ const startOfWeek = (d) => addDays(startOfDay(d), -d.getDay());
 const Calendar = () => {
   const { t, locale } = useI18n();
   const dispatch = useDispatch();
-  const [currentMonth, setCurrentMonth] = useState(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  });
+  const [anchorDate, setAnchorDate] = useState(() => startOfDay(new Date()));
+  const [viewMode, setViewMode] = useState("month"); // "month" | "week"
   const [modalState, setModalState] = useState(null); // null | { day } | { entry }
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const { entries, isLoading } = useSelector((state) => state.calendar);
   const { user } = useSelector((state) => state.auth);
@@ -57,12 +70,25 @@ const Calendar = () => {
     }
   }, [dispatch, currentOrgId, user.token]);
 
-  const monthEnd = useMemo(
-    () => new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0),
-    [currentMonth]
+  const monthStart = useMemo(
+    () => new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1),
+    [anchorDate]
   );
-  const gridStart = useMemo(() => startOfWeek(currentMonth), [currentMonth]);
-  const gridEnd = useMemo(() => addDays(startOfWeek(monthEnd), 6), [monthEnd]);
+  const monthEnd = useMemo(
+    () => new Date(anchorDate.getFullYear(), anchorDate.getMonth() + 1, 0),
+    [anchorDate]
+  );
+  // Week view shows just the 7-day week containing anchorDate, month view
+  // shows every full week overlapping the month - both render through the
+  // same grid/cell components at the same size (ai-instruct-85).
+  const gridStart = useMemo(
+    () => (viewMode === "week" ? startOfWeek(anchorDate) : startOfWeek(monthStart)),
+    [viewMode, anchorDate, monthStart]
+  );
+  const gridEnd = useMemo(
+    () => (viewMode === "week" ? addDays(gridStart, 6) : addDays(startOfWeek(monthEnd), 6)),
+    [viewMode, gridStart, monthEnd]
+  );
 
   const weeks = useMemo(() => {
     const days = [];
@@ -90,10 +116,15 @@ const Calendar = () => {
 
   const todayIso = toISODate(startOfDay(new Date()));
 
-  const monthLabel = useMemo(() => {
-    const fmt = new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", { month: "long", year: "numeric" });
-    return fmt.format(currentMonth);
-  }, [currentMonth, locale]);
+  const rangeLabel = useMemo(() => {
+    const intlLocale = locale === "fr" ? "fr-FR" : "en-US";
+    if (viewMode === "week") {
+      const dayFmt = new Intl.DateTimeFormat(intlLocale, { day: "numeric", month: "short" });
+      const yearFmt = new Intl.DateTimeFormat(intlLocale, { year: "numeric" });
+      return `${dayFmt.format(gridStart)} - ${dayFmt.format(gridEnd)} ${yearFmt.format(gridEnd)}`;
+    }
+    return new Intl.DateTimeFormat(intlLocale, { month: "long", year: "numeric" }).format(monthStart);
+  }, [viewMode, gridStart, gridEnd, monthStart, locale]);
 
   const weekdayLabels = useMemo(() => [0, 1, 2, 3, 4, 5, 6].map((i) => t(`days.${i}`).slice(0, 3)), [t]);
 
@@ -136,22 +167,35 @@ const Calendar = () => {
   return (
     <div className={styles.body}>
       <div className={styles.header}>
-        <h2 className={styles.monthLabel}>{monthLabel}</h2>
+        <h2 className={styles.monthLabel}>{rangeLabel}</h2>
         <div className={styles.navButtons}>
+          <div className={styles.viewToggle}>
+            <button
+              type="button"
+              className={`${styles.viewButton} ${viewMode === "month" ? styles.viewButtonActive : ""}`}
+              onClick={() => setViewMode("month")}
+            >
+              {t("calendar.monthView")}
+            </button>
+            <button
+              type="button"
+              className={`${styles.viewButton} ${viewMode === "week" ? styles.viewButtonActive : ""}`}
+              onClick={() => setViewMode("week")}
+            >
+              {t("calendar.weekView")}
+            </button>
+          </div>
           <button
             type="button"
             className="cw-button cw-button--secondary cw-button--sm"
-            onClick={() => {
-              const now = new Date();
-              setCurrentMonth(new Date(now.getFullYear(), now.getMonth(), 1));
-            }}
+            onClick={() => setAnchorDate(startOfDay(new Date()))}
           >
             {t("calendar.today")}
           </button>
           <button
             type="button"
             className={styles.navButton}
-            onClick={() => setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
+            onClick={() => setAnchorDate((d) => (viewMode === "week" ? addDays(d, -7) : shiftMonth(d, -1)))}
             aria-label={t("calendar.previousMonth")}
             title={t("calendar.previousMonth")}
           >
@@ -160,12 +204,22 @@ const Calendar = () => {
           <button
             type="button"
             className={styles.navButton}
-            onClick={() => setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
+            onClick={() => setAnchorDate((d) => (viewMode === "week" ? addDays(d, 7) : shiftMonth(d, 1)))}
             aria-label={t("calendar.nextMonth")}
             title={t("calendar.nextMonth")}
           >
             <FiChevronRight />
           </button>
+          <Tooltip label={t("calendar.shareTitle")} position="bottom">
+            <button
+              type="button"
+              className={styles.navButton}
+              onClick={() => setShowShareModal(true)}
+              aria-label={t("calendar.shareTitle")}
+            >
+              <FaPlug />
+            </button>
+          </Tooltip>
         </div>
       </div>
 
@@ -186,7 +240,7 @@ const Calendar = () => {
                 <CalendarDayCell
                   key={iso}
                   date={date}
-                  isCurrentMonth={date.getMonth() === currentMonth.getMonth()}
+                  isCurrentMonth={viewMode === "week" || date.getMonth() === monthStart.getMonth()}
                   isToday={iso === todayIso}
                   entries={entriesByDay[iso] || []}
                   projects={projects}
@@ -212,6 +266,8 @@ const Calendar = () => {
         onSave={handleSave}
         onDelete={handleDelete}
       />
+
+      <CalendarShareModal show={showShareModal} onClose={() => setShowShareModal(false)} />
     </div>
   );
 };

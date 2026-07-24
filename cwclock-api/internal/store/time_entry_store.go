@@ -171,6 +171,33 @@ func (s *TimeEntryStore) ListByRange(ctx context.Context, orgID, userID, start, 
 	return entries, rows.Err()
 }
 
+// ListAllForUser returns every time entry userID owns, across every
+// organization they belong to, oldest first - used to build their personal
+// calendar-sharing ICS feed (ai-instruct-85), which isn't scoped to a single
+// organization the way the Calendar view itself is.
+func (s *TimeEntryStore) ListAllForUser(ctx context.Context, userID string) ([]models.TimeEntry, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, organization_id, client_id, project_id, user_id, data, created_at, updated_at
+		FROM time_entries
+		WHERE user_id = $1
+		ORDER BY data->>'day' ASC, data->>'start' ASC
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	entries := []models.TimeEntry{}
+	for rows.Next() {
+		t, err := scanTimeEntry(rows)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, t)
+	}
+	return entries, rows.Err()
+}
+
 // TimeEntryReassignment holds the optional relational reassignments applied
 // on top of a field update. Empty strings mean "leave unchanged".
 type TimeEntryReassignment struct {

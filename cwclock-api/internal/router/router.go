@@ -32,6 +32,7 @@ func New(
 	oidcHandler *handlers.OIDCHandler,
 	contactHandler *handlers.ContactHandler,
 	exportJobHandler *handlers.ExportJobHandler,
+	calendarFeedHandler *handlers.CalendarFeedHandler,
 	orgs *store.OrgStore,
 	users *store.UserStore,
 	apiKeys middleware.ApiKeyVerifier,
@@ -79,6 +80,11 @@ func New(
 		r.Get("/assets/logo.png", handlers.AssetsLogo)
 		r.Get("/organizations/{orgId}/logo", orgHandler.PublicLogo)
 
+		// Public calendar-sharing feed (no auth): Outlook/Google Calendar poll
+		// this URL directly once subscribed and can't send an Authorization
+		// header, so the per-user secret token in the path is the only guard.
+		r.Get("/calendar-feed/{token}", calendarFeedHandler.Feed)
+
 		r.Route("/oidc", func(r chi.Router) {
 			r.Get("/", oidcHandler.ListProviders)
 			r.Get("/callback", oidcHandler.FrontendCallback)
@@ -120,6 +126,13 @@ func New(
 						r.Get("/", apiKeyHandler.List)
 						r.Post("/", apiKeyHandler.Create)
 						r.Delete("/{id}", apiKeyHandler.Delete)
+					})
+
+					r.Route("/me/calendar-feed", func(r chi.Router) {
+						r.Get("/", calendarFeedHandler.Status)
+						r.Post("/enable", calendarFeedHandler.Enable)
+						r.Post("/disable", calendarFeedHandler.Disable)
+						r.Post("/regenerate", calendarFeedHandler.Regenerate)
 					})
 
 					r.Route("/me/mfa", func(r chi.Router) {
