@@ -189,6 +189,8 @@ const en = {
     end: "End",
     endSameDayHint: "End must be on the same day as start - multi-day entries aren't supported yet.",
     fillRequiredFields: "Please fill in the description, project and date fields.",
+    moreEntries: "+{{count}} more",
+    allDayRowLabel: "All day",
     shareTitle: "Share calendar",
     shareIntro: "Subscribe to your time entries from Outlook or Google Calendar using this personal feed link.",
     shareEnable: "Enable calendar sharing",

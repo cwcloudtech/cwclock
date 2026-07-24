@@ -189,6 +189,8 @@ const fr = {
     end: "Fin",
     endSameDayHint: "La fin doit être le même jour que le début - les entrées sur plusieurs jours ne sont pas encore prises en charge.",
     fillRequiredFields: "Veuillez renseigner la description, le projet et la date.",
+    moreEntries: "+{{count}} de plus",
+    allDayRowLabel: "Toute la journée",
     shareTitle: "Partager le calendrier",
     shareIntro: "Abonnez-vous à vos entrées de temps depuis Outlook ou Google Agenda grâce à ce lien personnel.",
     shareEnable: "Activer le partage du calendrier",

@@ -1,0 +1,137 @@
+.weekGrid {
+  max-width: 1100px;
+  margin: 0 auto;
+  user-select: none;
+}
+
+.headerRow,
+.allDayRow,
+.hourBody {
+  display: grid;
+  grid-template-columns: 56px repeat(7, 1fr);
+}
+
+.axisCell,
+.axisAllDayLabel {
+  border-right: 1px solid var(--cw-border);
+}
+
+.axisAllDayLabel {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  color: var(--cw-text-muted);
+}
+
+.dayHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border-left: 1px solid var(--cw-border);
+  border-bottom: 1px solid var(--cw-border);
+  background-color: var(--cw-surface);
+}
+
+.dayHeaderName {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cw-text-muted);
+  text-transform: uppercase;
+}
+
+.dayHeaderNumber {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--cw-text);
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.dayHeader.today .dayHeaderNumber {
+  background-color: var(--cw-primary);
+  color: #ffffff;
+}
+
+.dayHeader.weekend {
+  background-color: var(--cw-bg-alt);
+}
+
+.allDayRow {
+  border-bottom: 2px solid var(--cw-border);
+  background-color: var(--cw-surface);
+}
+
+.allDayCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 3px;
+  min-height: 22px;
+  border-left: 1px solid var(--cw-border);
+}
+
+.allDayCell.weekend {
+  background-color: var(--cw-bg-alt);
+}
+
+.hourScroll {
+  max-height: 600px;
+  overflow-y: auto;
+  border: 1px solid var(--cw-border);
+  border-top: none;
+}
+
+.hourAxis {
+  border-right: 1px solid var(--cw-border);
+}
+
+.hourLabel {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 2px 8px 0 0;
+  font-size: 0.7rem;
+  color: var(--cw-text-muted);
+  box-sizing: border-box;
+  transform: translateY(-6px);
+}
+
+.dayColumn {
+  position: relative;
+  border-left: 1px solid var(--cw-border);
+  background-color: var(--cw-surface);
+}
+
+.dayColumn.weekend {
+  background-color: var(--cw-bg-alt);
+}
+
+.hourCell {
+  border-bottom: 1px solid var(--cw-border);
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.hourCell:hover {
+  background-color: var(--cw-primary-tint);
+}
+
+.hourCellSelected {
+  background-color: var(--cw-primary-tint);
+}
+
+.timedEntryWrapper {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  display: flex;
+  z-index: 1;
+}

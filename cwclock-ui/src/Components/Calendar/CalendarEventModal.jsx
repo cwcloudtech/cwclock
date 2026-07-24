@@ -11,7 +11,7 @@ import styles from "./Styles/CalendarEventModal.module.css";
 
 const timeOnly = (hhmmss) => (hhmmss || "").slice(0, 5);
 
-const fieldsFromEntry = (entry, defaultDay) => {
+const fieldsFromEntry = (entry, defaultDay, defaultStart, defaultEnd) => {
   if (entry) {
     return {
       text: entry.text,
@@ -22,28 +22,35 @@ const fieldsFromEntry = (entry, defaultDay) => {
       allDay: entry.allDay,
     };
   }
-  return { text: "", projectId: "", day: defaultDay, startTime: "09:00:00", endTime: "10:00:00", allDay: false };
+  return {
+    text: "",
+    projectId: "",
+    day: defaultDay,
+    startTime: defaultStart || "09:00:00",
+    endTime: defaultEnd || "10:00:00",
+    allDay: false,
+  };
 };
 
 // CalendarEventModal is the Calendar view's "add/edit a meeting" popup - two
 // date pickers (Start, End), a project autocomplete (client is derived from
 // the chosen project, same convention as the classic time tracker screen),
 // a label, and an all-day switch (ai-instruct-84).
-const CalendarEventModal = ({ show, entry, defaultDay, projects, clients, onClose, onSave, onDelete }) => {
+const CalendarEventModal = ({ show, entry, defaultDay, defaultStart, defaultEnd, projects, clients, onClose, onSave, onDelete }) => {
   const { t } = useI18n();
-  const [form, setForm] = useState(() => fieldsFromEntry(entry, defaultDay));
+  const [form, setForm] = useState(() => fieldsFromEntry(entry, defaultDay, defaultStart, defaultEnd));
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (show) {
-      setForm(fieldsFromEntry(entry, defaultDay));
+      setForm(fieldsFromEntry(entry, defaultDay, defaultStart, defaultEnd));
       setError("");
       setShowDeleteConfirm(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [show, entry, defaultDay]);
+  }, [show, entry, defaultDay, defaultStart, defaultEnd]);
 
   const handleStartChange = (value) => {
     if (!value) return;

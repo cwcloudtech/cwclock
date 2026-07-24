@@ -6,6 +6,7 @@ import Spinner from "../spinner/Spinner";
 import NeedOrganizationEmptyState from "../common/NeedOrganizationEmptyState";
 import Tooltip from "../common/Tooltip";
 import CalendarDayCell from "./CalendarDayCell";
+import CalendarWeekView from "./CalendarWeekView";
 import CalendarEventModal from "./CalendarEventModal";
 import CalendarShareModal from "./CalendarShareModal";
 import {
@@ -30,9 +31,21 @@ const addDays = (d, n) => {
   x.setDate(x.getDate() + n);
   return x;
 };
-// Weeks are Sunday-first, matching this app's day-of-week indexing (see the
-// i18n "days" dictionary and dateRangeShortcuts.js, both 0 = Sunday).
-const startOfWeek = (d) => addDays(startOfDay(d), -d.getDay());
+// The calendar grid itself is Monday-first (ai-instruct-86), unlike the rest
+// of the app - the i18n "days" dictionary and dateRangeShortcuts.js both
+// stay Sunday-first (0 = Sunday), so weekday labels below are read out of
+// "days" in a reordered sequence instead of changing that shared dictionary.
+const startOfWeekMonday = (d) => {
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  return addDays(startOfDay(d), diff);
+};
+
+// Column order for the grid: Monday..Sunday, as indices into the (Sunday
+// -first) i18n "days" dictionary.
+const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+
+const isWeekendDate = (date) => date.getDay() === 0 || date.getDay() === 6;
 
 // Moves d by delta months, clamping the day-of-month to the target month's
 // last day instead of letting native Date overflow into the month after
@@ -79,14 +92,14 @@ const Calendar = () => {
     [anchorDate]
   );
   // Week view shows just the 7-day week containing anchorDate, month view
-  // shows every full week overlapping the month - both render through the
-  // same grid/cell components at the same size (ai-instruct-85).
+  // shows every full week overlapping the month - both render through
+  // fixed-size cells (ai-instruct-85/86).
   const gridStart = useMemo(
-    () => (viewMode === "week" ? startOfWeek(anchorDate) : startOfWeek(monthStart)),
+    () => (viewMode === "week" ? startOfWeekMonday(anchorDate) : startOfWeekMonday(monthStart)),
     [viewMode, anchorDate, monthStart]
   );
   const gridEnd = useMemo(
-    () => (viewMode === "week" ? addDays(gridStart, 6) : addDays(startOfWeek(monthEnd), 6)),
+    () => (viewMode === "week" ? addDays(gridStart, 6) : addDays(startOfWeekMonday(monthEnd), 6)),
     [viewMode, gridStart, monthEnd]
   );
 
@@ -126,9 +139,33 @@ const Calendar = () => {
     return new Intl.DateTimeFormat(intlLocale, { month: "long", year: "numeric" }).format(monthStart);
   }, [viewMode, gridStart, gridEnd, monthStart, locale]);
 
-  const weekdayLabels = useMemo(() => [0, 1, 2, 3, 4, 5, 6].map((i) => t(`days.${i}`).slice(0, 3)), [t]);
+  const weekdayLabels = useMemo(() => WEEKDAY_ORDER.map((i) => t(`days.${i}`).slice(0, 3)), [t]);
 
-  const handleAddEntry = (date) => setModalState({ day: toISODate(date) });
+  // Week view is always a single row of the same grid (weeks[0]), enriched
+  // with the label/weekend flag its hourly columns need.
+  const weekViewDays = useMemo(
+    () =>
+      (weeks[0] || []).map((date, i) => ({
+        date,
+        iso: toISODate(date),
+        label: weekdayLabels[i],
+        isWeekend: isWeekendDate(date),
+      })),
+    [weeks, weekdayLabels]
+  );
+
+  // fromHour/toHour come from the week view's drag-to-select-hours gesture;
+  // the month view's click-to-add still omits them, so the modal falls back
+  // to its own 9am-10am default (ai-instruct-86).
+  const handleAddEntry = (date, fromHour, toHour) => {
+    const day = toISODate(date);
+    if (fromHour == null) {
+      setModalState({ day });
+      return;
+    }
+    const pad = (h) => String(h).padStart(2, "0");
+    setModalState({ day, startTime: `${pad(fromHour)}:00:00`, endTime: `${pad(toHour)}:00:00` });
+  };
   const handleEditEntry = (entry) => setModalState({ entry });
   const handleCloseModal = () => setModalState(null);
 
@@ -223,36 +260,51 @@ const Calendar = () => {
         </div>
       </div>
 
-      <div className={styles.weekdayRow}>
-        {weekdayLabels.map((label, i) => (
-          <div key={i} className={styles.weekdayCell}>
-            {label}
+      {viewMode === "week" ? (
+        <CalendarWeekView
+          days={weekViewDays}
+          entriesByDay={entriesByDay}
+          projects={projects}
+          todayIso={todayIso}
+          onAddEntry={handleAddEntry}
+          onEditEntry={handleEditEntry}
+          onDropEntry={handleDropEntry}
+        />
+      ) : (
+        <>
+          <div className={styles.weekdayRow}>
+            {weekdayLabels.map((label, i) => (
+              <div key={i} className={styles.weekdayCell}>
+                {label}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <div className={styles.grid}>
-        {weeks.map((week, wi) => (
-          <div key={wi} className={styles.weekRow}>
-            {week.map((date) => {
-              const iso = toISODate(date);
-              return (
-                <CalendarDayCell
-                  key={iso}
-                  date={date}
-                  isCurrentMonth={viewMode === "week" || date.getMonth() === monthStart.getMonth()}
-                  isToday={iso === todayIso}
-                  entries={entriesByDay[iso] || []}
-                  projects={projects}
-                  onAddEntry={handleAddEntry}
-                  onEditEntry={handleEditEntry}
-                  onDropEntry={handleDropEntry}
-                />
-              );
-            })}
+          <div className={styles.grid}>
+            {weeks.map((week, wi) => (
+              <div key={wi} className={styles.weekRow}>
+                {week.map((date) => {
+                  const iso = toISODate(date);
+                  return (
+                    <CalendarDayCell
+                      key={iso}
+                      date={date}
+                      isCurrentMonth={date.getMonth() === monthStart.getMonth()}
+                      isToday={iso === todayIso}
+                      isWeekend={isWeekendDate(date)}
+                      entries={entriesByDay[iso] || []}
+                      projects={projects}
+                      onAddEntry={handleAddEntry}
+                      onEditEntry={handleEditEntry}
+                      onDropEntry={handleDropEntry}
+                    />
+                  );
+                })}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
 
       {isLoading && <Spinner />}
 
@@ -260,6 +312,8 @@ const Calendar = () => {
         show={!!modalState}
         entry={modalState?.entry || null}
         defaultDay={modalState?.day || todayIso}
+        defaultStart={modalState?.startTime}
+        defaultEnd={modalState?.endTime}
         projects={projects}
         clients={clients}
         onClose={handleCloseModal}
