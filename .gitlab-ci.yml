@@ -19,7 +19,7 @@ build:
   only:
     refs:
       - /^main$/
-    changes:
+    changes: &deploy_trigger
       - ci/**/*
       - cwclock-api/**/*
       - cwclock-ui/**/*
@@ -33,10 +33,14 @@ build:
 
 scan:
   stage: deploy
+  needs:
+    - build
   tags:
     - imagesbuilder
   only:
-    - /^main$/
+    refs:
+      - /^main$/
+    changes: *deploy_trigger
   script:
     - ././ci/prune.sh
     - ./ci/scan.sh
@@ -50,6 +54,8 @@ deploy:
     - ./ci/deploy.sh
     - ./ci/notif.sh
   only:
-    - /^main$/
+    refs:
+      - /^main$/
+    changes: *deploy_trigger
   tags:
     - cwclock
