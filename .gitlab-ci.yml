@@ -1,14 +1,69 @@
 stages:
+  - validate
+  - pre-release
   - publish
   - build
   - deploy
+  - post
+
+cli-test:
+  stage: validate
+  rules: &cli_validate_rules
+    - if: $CI_COMMIT_BRANCH =~ /^(main|develop)$/ && $CI_COMMIT_MESSAGE !~ /Brew formula update/i
+      changes: &cli_trigger
+        - ci/common/**/*
+        - ci/cli/**/*
+        - cwclock-cli/**/*
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_MESSAGE !~ /Brew formula update/i
+      changes: *cli_trigger
+  script:
+    - docker compose -f cwclock-cli/docker-compose-validate.yml up tests --build --force-recreate
+  tags:
+    - imagesbuilder
+
+cli-lint:
+  stage: validate
+  rules: *cli_validate_rules
+  script:
+    - docker compose -f cwclock-cli/docker-compose-validate.yml up linter --build --force-recreate
+  tags:
+    - imagesbuilder
+
+cli-pre-release-cleanup:
+  stage: pre-release
+  image: alpine:latest
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - setsid ./ci/cli/pre-release-cleanup.sh
+  rules: &cli_validate_release
+    - if: $CI_COMMIT_MESSAGE !~ /Brew formula update/i && $CI_COMMIT_BRANCH =~ /^(main|develop)$/
+      changes: *cli_trigger
+      when: always
+  tags:
+    - imagesbuilder
+
+#? test-release is just for testing
+#? It does not release artifacts but simulates the process
+cli-test-release:
+  stage: pre-release
+  image: docker:stable
+  services:
+    - docker:dind
+  variables:
+    GIT_DEPTH: 0
+  rules: *cli_validate_release
+  script:
+    - setsid ./ci/cli/test-release.sh
+  tags:
+    - imagesbuilder
 
 mirror:
   stage: publish
   script:
-    - setsid ./ci/mirror.sh
-  only:
-    - /^main$/
+    - setsid ./ci/common/mirror.sh
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ /^main$/ && $CI_COMMIT_MESSAGE !~ /Brew formula update/i
   tags:
     - mirror
 
@@ -16,20 +71,20 @@ build:
   stage: build
   tags:
     - imagesbuilder
-  only:
-    refs:
-      - /^main$/
-    changes: &deploy_trigger
-      - ci/**/*
-      - cwclock-api/**/*
-      - cwclock-ui/**/*
-      - .docker/**/*
-      - Dockerfile
-      - docker-compose*.yml
-      - VERSION
+  rules: &app_deploy_rules
+    - if: $CI_COMMIT_BRANCH =~ /^main$/ && $CI_COMMIT_MESSAGE !~ /Brew formula update/i
+      changes:
+        - ci/common/**/*
+        - ci/app/**/*
+        - cwclock-api/**/*
+        - cwclock-ui/**/*
+        - .docker/**/*
+        - Dockerfile
+        - docker-compose*.yml
+        - VERSION
   script:
-    - ./ci/prune.sh
-    - ./ci/deliver.sh
+    - setsid ./ci/app/prune.sh
+    - setsid ./ci/app/deliver.sh
 
 scan:
   stage: deploy
@@ -37,13 +92,10 @@ scan:
     - build
   tags:
     - imagesbuilder
-  only:
-    refs:
-      - /^main$/
-    changes: *deploy_trigger
+  rules: *app_deploy_rules
   script:
-    - ././ci/prune.sh
-    - ./ci/scan.sh
+    - setsid ./ci/app/prune.sh
+    - setsid ./ci/app/scan.sh
 
 deploy:
   stage: deploy
@@ -51,11 +103,43 @@ deploy:
     - build
     - scan
   script:
-    - ./ci/deploy.sh
-    - ./ci/notif.sh
-  only:
-    refs:
-      - /^main$/
-    changes: *deploy_trigger
+    - setsid ./ci/app/deploy.sh
+    - setsid ./ci/common/notif.sh "api" ${VERSION}
+    - setsid ./ci/common/notif.sh "ui" ${VERSION}
+  rules: *app_deploy_rules
   tags:
     - cwclock
+
+cli-release:
+  stage: deploy
+  image: docker:stable
+  services:
+    - docker:dind
+  variables:
+    GIT_DEPTH: 0
+  rules: &cli_release
+    - if: $CI_COMMIT_TAG
+  script:
+    - setsid ./ci/cli/release.sh
+    - setsid ./ci/common/notif.sh "cli" ${VERSION}
+  tags:
+    - imagesbuilder
+
+post-release-cleanup:
+  stage: post
+  image: alpine:latest
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - setsid ./ci/cli/post-release-cleanup.sh
+  rules: *cli_release
+  tags:
+    - imagesbuilder
+
+cleanup:
+  stage: post
+  rules: *cli_release
+  script:
+    - setsid ./ci/cli/cleanup.sh
+  tags:
+    - imagesbuilder

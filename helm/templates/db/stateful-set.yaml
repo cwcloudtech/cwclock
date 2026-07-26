@@ -1,0 +1,50 @@
+{{- if $.Values.db.enabled -}}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cwclock-db
+  labels:
+    app: cwclock-db
+  {{- include "cwclock-chart.labels" . | nindent 4 }}
+spec:
+  serviceName: cwclock-db
+  replicas: {{ .Values.db.replicas }}
+  selector:
+    matchLabels:
+      app: cwclock-db
+    {{- include "cwclock-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: cwclock-db
+      {{- include "cwclock-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: cwclock-db
+        image: {{ .Values.db.image.repository }}:{{ .Values.db.image.tag }}
+        ports:
+          - containerPort: 5432
+            protocol: TCP
+        envFrom:
+          - configMapRef:
+              name: {{ include "cwclock-chart.fullname" . }}-db-env-cm
+          - secretRef:
+              name: {{ include "cwclock-chart.fullname" . }}-db-env-secret
+        resources: {}
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: cwclouddata
+      restartPolicy: Always
+  volumeClaimTemplates:
+  - metadata:
+      name: cwclouddata
+      labels:
+        app: cwclock-db
+      {{- include "cwclock-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: {{ .Values.db.size | quote }}
+{{- end -}}

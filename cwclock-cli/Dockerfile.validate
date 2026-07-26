@@ -1,0 +1,31 @@
+# Stage unit tests
+
+FROM golang:1.22 AS tests
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+
+RUN go mod download
+
+COPY . .
+
+VOLUME ["/app"]
+
+CMD ["go", "test", "-v", "./..."]
+
+# Stage linter
+
+FROM golang:latest AS linter
+
+RUN apt-get update && apt-get install -y git
+
+WORKDIR /go/src/app
+
+RUN git clone https://github.com/mgechev/revive.git
+
+WORKDIR /go/src/app/revive
+
+RUN go install github.com/mgechev/revive
+
+ENTRYPOINT ["/go/bin/revive"]

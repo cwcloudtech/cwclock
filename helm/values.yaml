@@ -1,0 +1,59 @@
+---
+image:
+  repository: rg.fr-par.scw.cloud/cwclock-t8d7th
+  pullPolicy: IfNotPresent
+  tag: 1.13.4
+
+public:
+  scheme: http
+  api: localhost:8000
+  ui: localhost:3000
+
+api_version: v1
+
+otel:
+  enaled: false
+  endpoint: changeit:4317
+  proto: otlp/grpc
+
+api:
+  port: 8000
+  replicas: 1
+  ingress:
+    enabled: false
+    ssl_redirect: true
+  jwt: whatever
+  extra_env:
+    CWCLOCK_CORS_ENABLED: "off"
+    CWCLOCK_MAX_IMAGE_SIZE: 2097152
+    CWCLOCK_MAX_REPORT_SIZE: 5000
+    CWCLOCK_ACTIVATION_MODE: email
+    CWCLOCK_LIMIT_MAIL: 100
+
+db:
+  enabled: true
+  image:
+    repository: postgres
+    tag: '13'
+  port: 5432
+  name: ${{tenant-name}}
+  user: ${{tenant-name}}
+  password: ${{tenant-password}}
+  size: 200Mi
+  replicas: 1
+
+migrate:
+  backoffLimit: 6
+  image:
+    repository: flyway/flyway
+    tag: 7.15.0
+    pullPolicy: IfNotPresent
+
+ui:
+  port: 3000
+  replicas: 1
+  ingress:
+    enabled: false
+    ssl_redirect: true
+  extra_env:
+    CWCLOCK_MAX_IMAGE_SIZE: 2097152

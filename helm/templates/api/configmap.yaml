@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "cwclock-chart.fullname" . }}-api-env-cm
+  labels:
+  {{- include "cwclock-chart.labels" . | nindent 4 }}
+data:
+  CWCLOCK_UI_URL: {{ print $.Values.public.scheme "://" $.Values.public.ui }}
+  CWCLOCK_API_URL: {{ print $.Values.public.scheme "://" $.Values.public.api }}
+
+  {{- if .Values.otel.enabled }}
+  OTEL_COLLECTOR_ENDPOINT: {{ $.Values.otel.endpoint }}
+  CWCLOCK_OTEL_PROTO: {{ $.Values.otel.proto }}
+  {{- end }}
+
+  {{- range $key, $value := .Values.api.extra_env }}
+  {{ $key }}: {{ quote $value }}
+  {{- end }}

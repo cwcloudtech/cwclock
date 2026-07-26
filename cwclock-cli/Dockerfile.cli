@@ -1,0 +1,3 @@
+FROM scratch
+COPY cwclock /usr/bin/cwclock
+ENTRYPOINT ["/usr/bin/cwclock"]

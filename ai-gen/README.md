@@ -86,3 +86,7 @@
 * [ai-instruct-84](./ai-instruct-84.md)
 * [ai-instruct-85](./ai-instruct-85.md)
 * [ai-instruct-86](./ai-instruct-86.md)
+* [ai-instruct-87](./ai-instruct-87.md)
+* [ai-instruct-88](./ai-instruct-88.md)
+* [ai-instruct-89](./ai-instruct-89.md)
+* [ai-instruct-90](./ai-instruct-90.md)
