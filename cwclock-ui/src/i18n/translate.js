@@ -14,7 +14,9 @@ export const LANGUAGES = [
 
 export const getStoredLocale = () => {
   const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored && dictionaries[stored]) return stored;
+  if (stored && dictionaries[stored]) {
+    return stored;
+  }
   const browserLocale = (navigator.language || "en").slice(0, 2).toLowerCase();
   return dictionaries[browserLocale] ? browserLocale : "en";
 };
