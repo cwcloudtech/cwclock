@@ -144,6 +144,35 @@ func (c *Client) DeleteOrganization(id string) error {
 	return err
 }
 
+// transferOwnershipPayload mirrors cwclock-api's transferOwnershipPayload:
+// the new owner is identified by email, not by ID - the API resolves it to
+// a user itself.
+type transferOwnershipPayload struct {
+	Email string `json:"email"`
+}
+
+func (c *Client) TransferOrganizationOwnership(orgID string, newOwnerEmail string) (Organization, error) {
+	encoded, err := json.Marshal(transferOwnershipPayload{Email: newOwnerEmail})
+	if err != nil {
+		return Organization{}, err
+	}
+
+	var body bytes.Buffer
+	body.Write(encoded)
+
+	responseBody, err := c.httpRequest(organizationPath(orgID)+"/owner", "PUT", body)
+	if err != nil {
+		return Organization{}, err
+	}
+	defer responseBody.Close()
+
+	var org Organization
+	if err := json.NewDecoder(responseBody).Decode(&org); err != nil {
+		return Organization{}, fmt.Errorf("failed to decode organization response: %w", err)
+	}
+	return org, nil
+}
+
 func (c *Client) AddOrganizationExternalConnection(orgID string, conn ExternalConnection) (Organization, error) {
 	encoded, err := json.Marshal(conn)
 	if err != nil {

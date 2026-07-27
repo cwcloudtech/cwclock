@@ -92,7 +92,7 @@ func matchesMetricNameFilter(metricName string, filterName string) bool {
 		return strings.HasPrefix(strings.ToLower(metricName), prefix)
 	}
 
-	return strings.ToLower(metricName) == strings.ToLower(filterName)
+	return strings.EqualFold(metricName, filterName)
 }
 
 func parseLabelFilter(filter string) (string, string, error) {

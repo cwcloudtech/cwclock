@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"cwclock/cmd/admin"
 	"cwclock/cmd/ai"
 	"cwclock/cmd/bootstrap"
 	"cwclock/cmd/client"
@@ -60,4 +61,5 @@ func init() {
 	rootCmd.AddCommand(client.ClientCmd)
 	rootCmd.AddCommand(project.ProjectCmd)
 	rootCmd.AddCommand(job.JobCmd)
+	rootCmd.AddCommand(admin.AdminCmd)
 }
