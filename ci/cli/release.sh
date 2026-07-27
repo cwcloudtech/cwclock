@@ -4,11 +4,11 @@ set -e
 
 source ./ci/cli/compute-env.sh
 
-echo "Starting release process for version $CI_COMMIT_TAG..."
+echo "Starting release process for version ${VERSION}..."
 
 #? Verify this is a new version
-if curl --silent "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/releases" | grep -q "\"tag_name\":\"$CI_COMMIT_TAG\""; then
-  echo "❌ Release $CI_COMMIT_TAG already exists!"
+if curl --silent "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/releases" | grep -q "\"tag_name\":\"$VERSION\""; then
+  echo "❌ Release ${VERSION} already exists!"
   exit 1
 fi
 

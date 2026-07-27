@@ -11,3 +11,6 @@ export CWCLOCK_OTEL_PROTO="otlp/grpc"
 export CWCLOCK_MAX_REPORT_SIZE=5000
 export CWCLOCK_ACTIVATION_MODE="email"
 export CWCLOCK_LIMIT_MAIL=100
+
+echo "VERSION=${VERSION}" > .env.ci
+echo "VERSION_SHA=${VERSION_SHA}" >> .env.ci
