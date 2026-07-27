@@ -144,14 +144,6 @@ func GetOrgID() string {
 	return GetConfigValue("org_id", "")
 }
 
-func GetClientID() string {
-	return GetConfigValue("client_id", "")
-}
-
-func GetProjectID() string {
-	return GetConfigValue("project_id", "")
-}
-
 func GetCorsEnabled() bool {
 	return utils.IsTrue(GetConfigValue("cors_enabled", "false"))
 }

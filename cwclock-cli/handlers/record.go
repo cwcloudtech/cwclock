@@ -61,9 +61,6 @@ func resolveOrgID(override string) (string, error) {
 func resolveClientID(override string) (string, error) {
 	clientID := strings.TrimSpace(override)
 	if utils.IsBlank(clientID) {
-		clientID = config.GetClientID()
-	}
-	if utils.IsBlank(clientID) {
 		return "", fmt.Errorf("client id is required: set it with 'cwclock configure set client_id <id>' or use --client")
 	}
 	return clientID, nil
@@ -71,9 +68,6 @@ func resolveClientID(override string) (string, error) {
 
 func resolveProjectID(override string) (string, error) {
 	projectID := strings.TrimSpace(override)
-	if utils.IsBlank(projectID) {
-		projectID = config.GetProjectID()
-	}
 	if utils.IsBlank(projectID) {
 		return "", fmt.Errorf("project id is required: set it with 'cwclock configure set project_id <id>' or use --project")
 	}

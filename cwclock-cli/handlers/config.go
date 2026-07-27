@@ -19,7 +19,6 @@ var availableConfigKeys = []string{
 	"anthropic_base_url",
 	"api_key",
 	"api_url",
-	"client_id",
 	"deepseek_api_key",
 	"deepseek_base_url",
 	"default_helm_directory",
@@ -33,7 +32,6 @@ var availableConfigKeys = []string{
 	"mistral_api_key",
 	"mistral_base_url",
 	"org_id",
-	"project_id",
 	"repo_branch",
 	"repo_url",
 }

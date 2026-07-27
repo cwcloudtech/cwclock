@@ -45,20 +45,6 @@ The configure command takes no arguments it will prompt you for each default val
 				config.SetOrgID(newOrgID)
 			}
 
-			defaultClientID := config.GetClientID()
-			fmt.Printf("Client ID [%s]: ", defaultClientID)
-			newClientID := utils.PromptUserForValue()
-			if utils.IsNotBlank(newClientID) {
-				config.SetClientID(newClientID)
-			}
-
-			defaultProjectID := config.GetProjectID()
-			fmt.Printf("Project ID [%s]: ", defaultProjectID)
-			newProjectID := utils.PromptUserForValue()
-			if utils.IsNotBlank(newProjectID) {
-				config.SetProjectID(newProjectID)
-			}
-
 			default_format := config.GetDefaultFormat("")
 			fmt.Printf("Default output format [%s]: ", default_format)
 			new_default_format := utils.PromptUserForValue()
