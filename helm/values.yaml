@@ -24,7 +24,7 @@ api:
     ssl_redirect: true
   jwt: whatever
   extra_env:
-    CWCLOCK_CORS_ENABLED: "on"
+    CWCLOCK_CORS_ENABLED: "true"
     CWCLOCK_MAX_IMAGE_SIZE: 2097152
     CWCLOCK_MAX_REPORT_SIZE: 5000
     CWCLOCK_ACTIVATION_MODE: admin
