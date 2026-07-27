@@ -35,7 +35,7 @@ cli-pre-release-cleanup:
   variables:
     GIT_STRATEGY: none
   script:
-    - setsid ./ci/cli/pre-release-cleanup.sh
+    - setsid ./ci/cli/release-cleanup.sh
   rules: &cli_validate_release
     - if: $CI_COMMIT_MESSAGE !~ /Brew formula update/i && $CI_COMMIT_BRANCH =~ /^(main|develop)$/
       changes: *cli_trigger
@@ -132,7 +132,7 @@ post-release-cleanup:
   variables:
     GIT_STRATEGY: none
   script:
-    - setsid ./ci/cli/post-release-cleanup.sh
+    - setsid ./ci/cli/release-cleanup.sh
   rules: *cli_release
   tags:
     - imagesbuilder
