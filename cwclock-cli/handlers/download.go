@@ -30,7 +30,7 @@ func resolveDateRangeParams(beginExpr string, endExpr string, toExpr string) (st
 	if err != nil {
 		return utils.EMPTY, utils.EMPTY, fmt.Errorf("invalid begin date: %w", err)
 	}
-	endTime, err := utils.ParseTimeExpr(effectiveEnd)
+	endTime, err := utils.ParseEndTimeExpr(effectiveEnd)
 	if err != nil {
 		return utils.EMPTY, utils.EMPTY, fmt.Errorf("invalid end date: %w", err)
 	}

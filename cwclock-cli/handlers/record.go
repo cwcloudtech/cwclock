@@ -195,13 +195,17 @@ func HandleRecordStop(orgOverride string, textOverride string, formatOverride st
 	return nil
 }
 
-func HandleRecordCreateRange(orgOverride string, clientOverride string, projectOverride string, text string, beginExpr string, endExpr string, formatOverride string) error {
+func HandleRecordCreateRange(orgOverride string, clientOverride string, projectOverride string, text string, beginExpr string, endExpr string, allDay bool, formatOverride string) error {
+	if allDay {
+		return handleRecordCreateAllDay(orgOverride, clientOverride, projectOverride, text, beginExpr, endExpr, formatOverride)
+	}
+
 	begin, err := utils.ParseTimeExpr(beginExpr)
 	if err != nil {
 		return fmt.Errorf("invalid begin date: %w", err)
 	}
 
-	end, err := utils.ParseTimeExpr(endExpr)
+	end, err := utils.ParseEndTimeExpr(endExpr)
 	if err != nil {
 		return fmt.Errorf("invalid end date: %w", err)
 	}
@@ -229,6 +233,41 @@ func HandleRecordCreateRange(orgOverride string, clientOverride string, projectO
 	return nil
 }
 
+// handleRecordCreateAllDay creates a whole-day time record - only a single
+// date is needed (--begin/--from), which --all-day treats as covering the
+// entire day rather than a specific begin/end time (see ai-instruct-101).
+func handleRecordCreateAllDay(orgOverride string, clientOverride string, projectOverride string, text string, beginExpr string, endExpr string, formatOverride string) error {
+	if utils.IsBlank(strings.TrimSpace(beginExpr)) {
+		return fmt.Errorf("a date is required: use --begin or --from")
+	}
+	if utils.IsNotBlank(strings.TrimSpace(endExpr)) {
+		return fmt.Errorf("--end/--to cannot be combined with --all-day: it always covers the entire day given by --begin/--from")
+	}
+
+	day, err := utils.ParseTimeExpr(beginExpr)
+	if err != nil {
+		return fmt.Errorf("invalid date: %w", err)
+	}
+
+	orgID, err := resolveOrgID(orgOverride)
+	if err != nil {
+		return err
+	}
+
+	clientID, projectID, resolvedText, err := resolveTimeEntryDefaults(orgID, clientOverride, projectOverride, text)
+	if err != nil {
+		return err
+	}
+
+	entry, err := createAllDayTimeEntry(orgID, clientID, projectID, resolvedText, day)
+	if err != nil {
+		return err
+	}
+
+	renderTimeEntry(entry, formatOverride)
+	return nil
+}
+
 func createTimeEntryFromRange(orgID string, clientID string, projectID string, text string, begin time.Time, end time.Time) (client.TimeEntry, error) {
 	cli, err := client.NewClient()
 	if err != nil {
@@ -246,6 +285,25 @@ func createTimeEntryFromRange(orgID string, clientID string, projectID string, t
 		Start:     &start,
 		End:       &stop,
 		AllDay:    false,
+	}
+
+	return cli.CreateTimeEntry(orgID, payload)
+}
+
+// createAllDayTimeEntry creates a time record with no specific start/end
+// time-of-day - see handleRecordCreateAllDay.
+func createAllDayTimeEntry(orgID string, clientID string, projectID string, text string, day time.Time) (client.TimeEntry, error) {
+	cli, err := client.NewClient()
+	if err != nil {
+		return client.TimeEntry{}, err
+	}
+
+	payload := client.CreateTimeEntryPayload{
+		ClientID:  clientID,
+		ProjectID: projectID,
+		Text:      text,
+		Day:       day.Format(dayLayout),
+		AllDay:    true,
 	}
 
 	return cli.CreateTimeEntry(orgID, payload)
