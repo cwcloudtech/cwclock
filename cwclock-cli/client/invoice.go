@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"cwclock/utils"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -57,7 +58,7 @@ func encodeInvoiceRequest(req InvoiceRequest) (bytes.Buffer, error) {
 func (c *Client) PreviewInvoice(orgID string, req InvoiceRequest) (data []byte, filename string, err error) {
 	body, err := encodeInvoiceRequest(req)
 	if err != nil {
-		return nil, "", err
+		return nil, utils.EMPTY, err
 	}
 	return c.httpRequestFile(invoicesPath(orgID)+"/preview", "POST", body)
 }
@@ -68,7 +69,7 @@ func (c *Client) PreviewInvoice(orgID string, req InvoiceRequest) (data []byte, 
 func (c *Client) GenerateInvoice(orgID string, req InvoiceRequest) (data []byte, filename string, err error) {
 	body, err := encodeInvoiceRequest(req)
 	if err != nil {
-		return nil, "", err
+		return nil, utils.EMPTY, err
 	}
 	return c.httpRequestFile(invoicesPath(orgID), "POST", body)
 }

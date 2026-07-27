@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"cwclock/utils"
 	"encoding/json"
 	"net/url"
 )
@@ -33,7 +34,7 @@ func reportPath(orgID string, reportType string) string {
 func (c *Client) GenerateReport(orgID string, reportType string, req ReportRequest) (data []byte, filename string, err error) {
 	encoded, err := json.Marshal(req)
 	if err != nil {
-		return nil, "", err
+		return nil, utils.EMPTY, err
 	}
 	var body bytes.Buffer
 	body.Write(encoded)

@@ -53,37 +53,60 @@ func resolveProjectID(override string) (string, error) {
 	return projectID, nil
 }
 
-// resolveClientAndProject resolves the mandatory project id and, when
-// clientOverride is blank, infers its client by looking the project up
-// server-side (a project belongs to exactly one client, so the client id
-// doesn't need to be repeated on the command line - see ai-instruct-96).
-func resolveClientAndProject(orgID string, clientOverride string, projectOverride string) (clientID string, projectID string, err error) {
-	projectID, err = resolveProjectID(projectOverride)
-	if err != nil {
-		return utils.EMPTY, utils.EMPTY, err
-	}
-
-	if trimmed := strings.TrimSpace(clientOverride); utils.IsNotBlank(trimmed) {
-		return trimmed, projectID, nil
-	}
-
+// findProjectByID looks up a single project by id (there's no dedicated "get
+// project" endpoint, only list) - used to infer a time record's client and/
+// or default text from its project (see resolveTimeEntryDefaults).
+func findProjectByID(orgID string, projectID string) (client.Project, error) {
 	cli, err := client.NewClient()
 	if err != nil {
-		return utils.EMPTY, utils.EMPTY, err
+		return client.Project{}, err
 	}
 
 	projects, err := cli.ListProjects(orgID, utils.EMPTY)
 	if err != nil {
-		return utils.EMPTY, utils.EMPTY, err
+		return client.Project{}, err
 	}
 
 	for _, p := range projects {
 		if p.ID == projectID {
-			return p.ClientID, projectID, nil
+			return p, nil
 		}
 	}
 
-	return utils.EMPTY, utils.EMPTY, fmt.Errorf("could not find project %q to infer its client: use --client", projectID)
+	return client.Project{}, fmt.Errorf("could not find project %q", projectID)
+}
+
+// resolveTimeEntryDefaults resolves the mandatory project id and, with a
+// single project lookup when either is needed, fills in the client id
+// (inferred from the project - a project belongs to exactly one client, see
+// ai-instruct-96) and the entry text (defaults to the project's own name,
+// matching the web app's TaskInput.jsx "name || project.name" behavior, see
+// ai-instruct-97) whenever their overrides are left blank.
+func resolveTimeEntryDefaults(orgID string, clientOverride string, projectOverride string, textOverride string) (clientID string, projectID string, text string, err error) {
+	projectID, err = resolveProjectID(projectOverride)
+	if err != nil {
+		return utils.EMPTY, utils.EMPTY, utils.EMPTY, err
+	}
+
+	clientID = strings.TrimSpace(clientOverride)
+	text = strings.TrimSpace(textOverride)
+	if utils.IsNotBlank(clientID) && utils.IsNotBlank(text) {
+		return clientID, projectID, text, nil
+	}
+
+	project, err := findProjectByID(orgID, projectID)
+	if err != nil {
+		return utils.EMPTY, utils.EMPTY, utils.EMPTY, err
+	}
+
+	if utils.IsBlank(clientID) {
+		clientID = project.ClientID
+	}
+	if utils.IsBlank(text) {
+		text = project.Name
+	}
+
+	return clientID, projectID, text, nil
 }
 
 func HandleRecordStart(orgOverride string, text string, clientOverride string, projectOverride string) error {
@@ -101,14 +124,14 @@ func HandleRecordStart(orgOverride string, text string, clientOverride string, p
 		return err
 	}
 
-	clientID, projectID, err := resolveClientAndProject(orgID, clientOverride, projectOverride)
+	clientID, projectID, resolvedText, err := resolveTimeEntryDefaults(orgID, clientOverride, projectOverride, text)
 	if err != nil {
 		return err
 	}
 
 	state := timerState{
 		StartedAt: time.Now().Format(time.RFC3339),
-		Text:      strings.TrimSpace(text),
+		Text:      resolvedText,
 		ClientID:  clientID,
 		ProjectID: projectID,
 	}
@@ -147,17 +170,24 @@ func HandleRecordStop(orgOverride string, textOverride string, formatOverride st
 		return fmt.Errorf("failed to parse the running timer start time: %w", err)
 	}
 
-	text := state.Text
-	if utils.IsNotBlank(textOverride) {
-		text = strings.TrimSpace(textOverride)
-	}
-	if utils.IsBlank(text) {
-		return fmt.Errorf("text is required: pass --text when starting or stopping the timer")
-	}
-
 	orgID, err := resolveOrgID(orgOverride)
 	if err != nil {
 		return err
+	}
+
+	text := strings.TrimSpace(textOverride)
+	if utils.IsBlank(text) {
+		text = strings.TrimSpace(state.Text)
+	}
+	if utils.IsBlank(text) {
+		// Not expected once a record started with HandleRecordStart, which
+		// already defaults text to the project's name - this only covers a
+		// pre-existing timer.json written before that defaulting existed.
+		project, err := findProjectByID(orgID, state.ProjectID)
+		if err != nil {
+			return err
+		}
+		text = project.Name
 	}
 
 	entry, err := createTimeEntryFromRange(orgID, state.ClientID, state.ProjectID, text, startedAt, time.Now())
@@ -174,10 +204,6 @@ func HandleRecordStop(orgOverride string, textOverride string, formatOverride st
 }
 
 func HandleRecordCreateRange(orgOverride string, clientOverride string, projectOverride string, text string, beginExpr string, endExpr string, formatOverride string) error {
-	if utils.IsBlank(text) {
-		return fmt.Errorf("text is required: use --text")
-	}
-
 	begin, err := utils.ParseTimeExpr(beginExpr)
 	if err != nil {
 		return fmt.Errorf("invalid begin date: %w", err)
@@ -197,12 +223,12 @@ func HandleRecordCreateRange(orgOverride string, clientOverride string, projectO
 		return err
 	}
 
-	clientID, projectID, err := resolveClientAndProject(orgID, clientOverride, projectOverride)
+	clientID, projectID, resolvedText, err := resolveTimeEntryDefaults(orgID, clientOverride, projectOverride, text)
 	if err != nil {
 		return err
 	}
 
-	entry, err := createTimeEntryFromRange(orgID, clientID, projectID, strings.TrimSpace(text), begin, end)
+	entry, err := createTimeEntryFromRange(orgID, clientID, projectID, resolvedText, begin, end)
 	if err != nil {
 		return err
 	}
