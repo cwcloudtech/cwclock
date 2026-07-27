@@ -6,7 +6,7 @@ metadata:
   labels:
   {{- include "cwclock-chart.labels" . | nindent 4 }}
 data:
-{{ (.Files.Glob "./migrations/*").AsConfig | indent 2 }}
+{{ (.Files.Glob "migrations/*").AsConfig | indent 2 }}
 ---
 apiVersion: v1
 kind: ConfigMap
