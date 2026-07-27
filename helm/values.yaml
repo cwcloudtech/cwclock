@@ -17,7 +17,7 @@ otel:
   proto: otlp/grpc
 
 api:
-  port: 8000
+  port: 8080
   replicas: 1
   ingress:
     enabled: false

@@ -1,8 +1,8 @@
 ---
 pfwConfigs:
   - name: "cwclock-api"
-    port: 8000
-    targetPort: 8000
+    port: 8080
+    targetPort: 8080
   - name: "cwclock-ui"
     port: 3000
     targetPort: 3000
