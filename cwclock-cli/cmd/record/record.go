@@ -85,8 +85,8 @@ func init() {
 	RecordCmd.Flags().StringVar(&from, "from", utils.EMPTY, "Alias of --begin")
 	RecordCmd.Flags().StringVar(&to, "to", utils.EMPTY, "Alias of --end")
 	RecordCmd.Flags().StringVarP(&text, "text", "t", utils.EMPTY, "Time record description")
-	RecordCmd.Flags().StringVarP(&clientID, "client", "c", utils.EMPTY, "Client ID (overrides configured client_id)")
-	RecordCmd.Flags().StringVarP(&projectID, "project", "p", utils.EMPTY, "Project ID (overrides configured project_id)")
+	RecordCmd.Flags().StringVarP(&clientID, "client", "c", utils.EMPTY, "Client ID")
+	RecordCmd.Flags().StringVarP(&projectID, "project", "p", utils.EMPTY, "Project ID")
 	RecordCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
 	RecordCmd.Flags().StringVarP(&format, "format", "f", utils.EMPTY, "Output format override: pretty|json")
 

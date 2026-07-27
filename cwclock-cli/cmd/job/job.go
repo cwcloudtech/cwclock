@@ -4,6 +4,7 @@ import (
 	"cwclock/cmd/job/create"
 	"cwclock/cmd/job/delete"
 	"cwclock/cmd/job/ls"
+	"cwclock/cmd/job/run"
 	"cwclock/cmd/job/target"
 	"cwclock/cmd/job/update"
 
@@ -25,5 +26,6 @@ func init() {
 	JobCmd.AddCommand(create.CreateCmd)
 	JobCmd.AddCommand(update.UpdateCmd)
 	JobCmd.AddCommand(delete.DeleteCmd)
+	JobCmd.AddCommand(run.RunCmd)
 	JobCmd.AddCommand(target.TargetCmd)
 }

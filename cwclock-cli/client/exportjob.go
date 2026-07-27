@@ -126,3 +126,17 @@ func (c *Client) DeleteExportJob(orgID string, id string) error {
 	_, err = io.ReadAll(responseBody)
 	return err
 }
+
+// RunExportJob triggers an immediate, out-of-schedule run of an export job -
+// see cwclock-api's ExportJobHandler.RunNow. It runs synchronously
+// server-side, so a nil error confirms the run completed.
+func (c *Client) RunExportJob(orgID string, id string) error {
+	responseBody, err := c.httpRequest(exportJobPath(orgID, id)+"/run", "POST", bytes.Buffer{})
+	if err != nil {
+		return err
+	}
+	defer responseBody.Close()
+
+	_, err = io.ReadAll(responseBody)
+	return err
+}

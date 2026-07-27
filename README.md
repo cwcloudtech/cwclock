@@ -27,6 +27,7 @@ A live version is available at [cwclock.me](https://www.cwclock.me).
 * OIDC integration with Google OIDC, Github and Keycloak
 * MFA with TOTP and Yubikey
 * Contact form
+* Cli suitable for humain or AI agents with MCP server and web agent modes
 
 ## Complet documentation
 

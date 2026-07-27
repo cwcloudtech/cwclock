@@ -93,3 +93,5 @@
 * [ai-instruct-91](./ai-instruct-91.md)
 * [ai-instruct-92](./ai-instruct-92.md)
 * [ai-instruct-93](./ai-instruct-93.md)
+* [ai-instruct-94](./ai-instruct-94.md)
+* [ai-instruct-95](./ai-instruct-95.md)

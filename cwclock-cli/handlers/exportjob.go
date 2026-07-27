@@ -292,6 +292,32 @@ func HandleJobDelete(orgOverride string, id string) error {
 	return nil
 }
 
+// HandleJobRun triggers an immediate, out-of-schedule run of an export job -
+// see client.RunExportJob.
+func HandleJobRun(orgOverride string, id string) error {
+	trimmedID := strings.TrimSpace(id)
+	if utils.IsBlank(trimmedID) {
+		return fmt.Errorf("job id is required: use -i or --id")
+	}
+
+	orgID, err := resolveOrgID(orgOverride)
+	if err != nil {
+		return err
+	}
+
+	cli, err := client.NewClient()
+	if err != nil {
+		return err
+	}
+
+	if err := cli.RunExportJob(orgID, trimmedID); err != nil {
+		return err
+	}
+
+	fmt.Printf("id = %v\n", trimmedID)
+	return nil
+}
+
 func HandleJobTargetList(orgOverride string, jobID string, formatOverride string) error {
 	trimmedID := strings.TrimSpace(jobID)
 	if utils.IsBlank(trimmedID) {

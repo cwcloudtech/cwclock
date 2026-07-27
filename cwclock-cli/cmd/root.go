@@ -6,6 +6,8 @@ import (
 	"cwclock/cmd/bootstrap"
 	"cwclock/cmd/client"
 	"cwclock/cmd/configure"
+	"cwclock/cmd/export"
+	"cwclock/cmd/invoice"
 	"cwclock/cmd/job"
 	"cwclock/cmd/metrics"
 	"cwclock/cmd/organization"
@@ -57,9 +59,11 @@ func init() {
 	rootCmd.AddCommand(bootstrap.BootstrapCmd)
 	rootCmd.AddCommand(metrics.MetricsCmd)
 	rootCmd.AddCommand(record.RecordCmd)
+	rootCmd.AddCommand(export.ExportCmd)
 	rootCmd.AddCommand(organization.OrganizationCmd)
 	rootCmd.AddCommand(client.ClientCmd)
 	rootCmd.AddCommand(project.ProjectCmd)
 	rootCmd.AddCommand(job.JobCmd)
+	rootCmd.AddCommand(invoice.InvoiceCmd)
 	rootCmd.AddCommand(admin.AdminCmd)
 }
