@@ -50,7 +50,7 @@ docker compose up --build --force-recreate
 
 This will:
 1. Start a PostgreSQL database.
-2. Run the SQL migrations from [cwclock-db](./cwclock-db) with Flyway.
+2. Run the SQL migrations from [helm/migrations](./helm/migrations) with Flyway.
 3. Build and start the Go backend, listening on `http://localhost:8080`.
 4. Build the React frontend and serve it through nginx on
    `http://localhost:3000`, calling the backend directly at the `CWCLOCK_API_URL`

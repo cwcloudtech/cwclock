@@ -11,7 +11,7 @@ services:
       -connectRetries=10
       migrate
     volumes:
-      - ./cwclock-db/migrations:/flyway/sql
+      - ./helm/migrations:/flyway/sql
 
   api:
     image: ${CI_REGISTRY}/cwclock-api:${VERSION}
