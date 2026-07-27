@@ -6,7 +6,7 @@ image:
 
 public:
   scheme: http
-  api: localhost:8000
+  api: localhost:8080
   ui: localhost:3000
 
 api_version: v1
