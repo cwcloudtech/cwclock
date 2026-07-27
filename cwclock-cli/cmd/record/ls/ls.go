@@ -27,5 +27,5 @@ func init() {
 	LsCmd.DisableFlagsInUseLine = true
 	LsCmd.Flags().IntVar(&max, "max", 10, "Maximum number of records to display")
 	LsCmd.Flags().StringVarP(&format, "format", "f", utils.EMPTY, "Output format override: pretty|json")
-	LsCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
+	LsCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID or name (overrides configured org_id)")
 }

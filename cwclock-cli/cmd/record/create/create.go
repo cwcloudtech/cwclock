@@ -47,9 +47,9 @@ func init() {
 	CreateCmd.Flags().StringVar(&from, "from", utils.EMPTY, "Alias of --begin")
 	CreateCmd.Flags().StringVar(&to, "to", utils.EMPTY, "Alias of --end")
 	CreateCmd.Flags().StringVarP(&text, "text", "t", utils.EMPTY, "Time record description (optional; defaults to the project's name)")
-	CreateCmd.Flags().StringVarP(&clientID, "client", "c", utils.EMPTY, "Client ID (optional; inferred from --project when omitted)")
-	CreateCmd.Flags().StringVarP(&projectID, "project", "p", utils.EMPTY, "Project ID (required)")
-	CreateCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
+	CreateCmd.Flags().StringVarP(&clientID, "client", "c", utils.EMPTY, "Client ID or name (optional; inferred from --project when omitted)")
+	CreateCmd.Flags().StringVarP(&projectID, "project", "p", utils.EMPTY, "Project ID or name (required)")
+	CreateCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID or name (overrides configured org_id)")
 	CreateCmd.Flags().StringVarP(&format, "format", "f", utils.EMPTY, "Output format override: pretty|json")
 
 	CreateCmd.Example = fmt.Sprintf(

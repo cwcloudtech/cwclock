@@ -24,6 +24,6 @@ var RunCmd = &cobra.Command{
 
 func init() {
 	RunCmd.DisableFlagsInUseLine = true
-	RunCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
+	RunCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID or name (overrides configured org_id)")
 	RunCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "Job ID to run (required)")
 }

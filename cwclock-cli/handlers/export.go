@@ -46,16 +46,25 @@ func HandleExport(orgOverride string, clientIDs []string, projectIDs []string, b
 		return err
 	}
 
+	resolvedClientIDs, err := resolveClientIDs(orgID, clientIDs)
+	if err != nil {
+		return err
+	}
+	resolvedProjectIDs, err := resolveProjectIDs(orgID, projectIDs)
+	if err != nil {
+		return err
+	}
+
 	req := client.ReportRequest{
 		ExportType:     strings.ToUpper(normalizedFormat),
 		DateRangeStart: start,
 		DateRangeEnd:   end,
 	}
-	if normalizedClientIDs := normalizeIDs(clientIDs); len(normalizedClientIDs) > 0 {
-		req.Clients = &client.ReportIDFilter{IDs: normalizedClientIDs}
+	if len(resolvedClientIDs) > 0 {
+		req.Clients = &client.ReportIDFilter{IDs: resolvedClientIDs}
 	}
-	if normalizedProjectIDs := normalizeIDs(projectIDs); len(normalizedProjectIDs) > 0 {
-		req.Projects = &client.ReportIDFilter{IDs: normalizedProjectIDs}
+	if len(resolvedProjectIDs) > 0 {
+		req.Projects = &client.ReportIDFilter{IDs: resolvedProjectIDs}
 	}
 
 	data, filename, err := cli.GenerateReport(orgID, normalizedType, req)

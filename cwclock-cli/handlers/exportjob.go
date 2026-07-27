@@ -91,18 +91,27 @@ func (f ExportTargetFields) toTarget() (client.ExportTarget, error) {
 	}
 }
 
-func (f ExportJobFields) toPayload(targets []client.ExportTarget) client.ExportJobPayload {
+func (f ExportJobFields) toPayload(orgID string, targets []client.ExportTarget) (client.ExportJobPayload, error) {
+	clientIDs, err := resolveClientIDs(orgID, f.ClientIDs)
+	if err != nil {
+		return client.ExportJobPayload{}, err
+	}
+	projectIDs, err := resolveProjectIDs(orgID, f.ProjectIDs)
+	if err != nil {
+		return client.ExportJobPayload{}, err
+	}
+
 	return client.ExportJobPayload{
 		Name:             f.Name,
 		CronExpression:   f.Cron,
 		Targets:          targets,
 		ReportTypes:      parseCommaList(f.ReportTypes),
 		TimePeriod:       f.TimePeriod,
-		ClientIDs:        normalizeIDs(f.ClientIDs),
-		ProjectIDs:       normalizeIDs(f.ProjectIDs),
+		ClientIDs:        clientIDs,
+		ProjectIDs:       projectIDs,
 		IncludeFinancial: f.IncludeFinancial,
 		Enabled:          f.Enabled,
-	}
+	}, nil
 }
 
 func exportJobToPayload(job client.ExportJob) client.ExportJobPayload {
@@ -119,7 +128,7 @@ func exportJobToPayload(job client.ExportJob) client.ExportJobPayload {
 	}
 }
 
-func mergeExportJobFields(current client.ExportJob, fields ExportJobFields, changed map[string]bool) client.ExportJobPayload {
+func mergeExportJobFields(orgID string, current client.ExportJob, fields ExportJobFields, changed map[string]bool) (client.ExportJobPayload, error) {
 	payload := exportJobToPayload(current)
 
 	if changed["name"] {
@@ -135,10 +144,18 @@ func mergeExportJobFields(current client.ExportJob, fields ExportJobFields, chan
 		payload.TimePeriod = fields.TimePeriod
 	}
 	if changed["client"] {
-		payload.ClientIDs = normalizeIDs(fields.ClientIDs)
+		clientIDs, err := resolveClientIDs(orgID, fields.ClientIDs)
+		if err != nil {
+			return client.ExportJobPayload{}, err
+		}
+		payload.ClientIDs = clientIDs
 	}
 	if changed["project"] {
-		payload.ProjectIDs = normalizeIDs(fields.ProjectIDs)
+		projectIDs, err := resolveProjectIDs(orgID, fields.ProjectIDs)
+		if err != nil {
+			return client.ExportJobPayload{}, err
+		}
+		payload.ProjectIDs = projectIDs
 	}
 	if changed["include-financial"] {
 		payload.IncludeFinancial = fields.IncludeFinancial
@@ -147,7 +164,7 @@ func mergeExportJobFields(current client.ExportJob, fields ExportJobFields, chan
 		payload.Enabled = fields.Enabled
 	}
 
-	return payload
+	return payload, nil
 }
 
 func validateExportJobPayload(payload client.ExportJobPayload) error {
@@ -204,13 +221,16 @@ func HandleJobCreate(orgOverride string, fields ExportJobFields, targetFields Ex
 		return err
 	}
 
-	payload := fields.toPayload([]client.ExportTarget{target})
-	if err := validateExportJobPayload(payload); err != nil {
+	orgID, err := resolveOrgID(orgOverride)
+	if err != nil {
 		return err
 	}
 
-	orgID, err := resolveOrgID(orgOverride)
+	payload, err := fields.toPayload(orgID, []client.ExportTarget{target})
 	if err != nil {
+		return err
+	}
+	if err := validateExportJobPayload(payload); err != nil {
 		return err
 	}
 
@@ -254,7 +274,10 @@ func HandleJobUpdate(orgOverride string, id string, fields ExportJobFields, chan
 		return fmt.Errorf("job %q not found", trimmedID)
 	}
 
-	payload := mergeExportJobFields(current, fields, changed)
+	payload, err := mergeExportJobFields(orgID, current, fields, changed)
+	if err != nil {
+		return err
+	}
 	if err := validateExportJobPayload(payload); err != nil {
 		return err
 	}

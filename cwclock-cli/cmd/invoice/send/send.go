@@ -24,6 +24,6 @@ var SendCmd = &cobra.Command{
 
 func init() {
 	SendCmd.DisableFlagsInUseLine = true
-	SendCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
-	SendCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "Invoice ID to send (required)")
+	SendCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID or name (overrides configured org_id)")
+	SendCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "Invoice ID or number to send (required)")
 }

@@ -26,8 +26,8 @@ var StartCmd = &cobra.Command{
 
 func init() {
 	StartCmd.DisableFlagsInUseLine = true
-	StartCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
-	StartCmd.Flags().StringVarP(&clientID, "client", "c", utils.EMPTY, "Client ID (optional; inferred from --project when omitted)")
-	StartCmd.Flags().StringVarP(&projectID, "project", "p", utils.EMPTY, "Project ID (required)")
+	StartCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID or name (overrides configured org_id)")
+	StartCmd.Flags().StringVarP(&clientID, "client", "c", utils.EMPTY, "Client ID or name (optional; inferred from --project when omitted)")
+	StartCmd.Flags().StringVarP(&projectID, "project", "p", utils.EMPTY, "Project ID or name (required)")
 	StartCmd.Flags().StringVarP(&text, "text", "t", utils.EMPTY, "Time record description (optional; defaults to the project's name)")
 }

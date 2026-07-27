@@ -25,5 +25,5 @@ var DeleteCmd = &cobra.Command{
 func init() {
 	DeleteCmd.DisableFlagsInUseLine = true
 	DeleteCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "Time record ID to delete")
-	DeleteCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
+	DeleteCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID or name (overrides configured org_id)")
 }

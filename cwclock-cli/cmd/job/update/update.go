@@ -53,14 +53,14 @@ var UpdateCmd = &cobra.Command{
 
 func init() {
 	UpdateCmd.DisableFlagsInUseLine = true
-	UpdateCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
+	UpdateCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID or name (overrides configured org_id)")
 	UpdateCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "Job ID to update (required)")
 	UpdateCmd.Flags().StringVar(&name, "name", utils.EMPTY, "Job name")
 	UpdateCmd.Flags().StringVar(&cron, "cron", utils.EMPTY, "Cron expression")
 	UpdateCmd.Flags().StringVar(&reportTypes, "report-types", utils.EMPTY, "Comma-separated report types: summary-pdf, summary-csv, detailed-pdf, detailed-csv, unpaid-invoices, all-invoices")
 	UpdateCmd.Flags().StringVar(&timePeriod, "time-period", utils.EMPTY, "Time period covered by each run, e.g. now(), now()-1d, now()-1h")
-	UpdateCmd.Flags().StringArrayVarP(&clientIDs, "client", "c", nil, "Client ID to include (repeatable; empty = all)")
-	UpdateCmd.Flags().StringArrayVarP(&projectIDs, "project", "p", nil, "Project ID to include (repeatable; empty = all)")
+	UpdateCmd.Flags().StringArrayVarP(&clientIDs, "client", "c", nil, "Client ID or name to include (repeatable; empty = all)")
+	UpdateCmd.Flags().StringArrayVarP(&projectIDs, "project", "p", nil, "Project ID or name to include (repeatable; empty = all)")
 	UpdateCmd.Flags().BoolVar(&includeFinancial, "include-financial", false, "Include financial figures in the exported reports")
 	UpdateCmd.Flags().BoolVar(&enabled, "enabled", false, "Whether the job is enabled")
 	UpdateCmd.Flags().StringVarP(&format, "format", "f", utils.EMPTY, "Output format override: pretty|json")

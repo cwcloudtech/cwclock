@@ -39,8 +39,8 @@ var CreateCmd = &cobra.Command{
 
 func init() {
 	CreateCmd.DisableFlagsInUseLine = true
-	CreateCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
-	CreateCmd.Flags().StringVarP(&clientID, "client", "c", utils.EMPTY, "Client ID (required)")
+	CreateCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID or name (overrides configured org_id)")
+	CreateCmd.Flags().StringVarP(&clientID, "client", "c", utils.EMPTY, "Client ID or name (required)")
 	CreateCmd.Flags().StringVar(&name, "name", utils.EMPTY, "Project name (required)")
 	CreateCmd.Flags().StringVar(&color, "color", utils.EMPTY, "Project color")
 	CreateCmd.Flags().Float64Var(&dailyRate, "daily-rate", 0, "Daily rate")

@@ -43,6 +43,11 @@ Prefer dynamic tools named `cwclock_<command_path>` for direct execution.
 - `invoice generate` and `export` actually download a file; when the user doesn't give
   `--output`/`-o`, the command still saves it (using the server's suggested filename, or a sane
   default like `invoice.pdf`/`summary.pdf`) and prints the path it wrote to.
+- `--org`, `--client`, `--project` (everywhere above) and invoice's `-i`/`--id` all accept either
+  the real id **or** the resource's name (invoice's `-i` accepts its number instead of a name) -
+  case-insensitively, first match wins. So if the user gives a name instead of a uuid (e.g. "for
+  client Acme" or "org Idriss's Org"), just pass it straight through as the flag value - no need to
+  look up the real id first.
 
 ## Examples
 
@@ -56,9 +61,9 @@ Prefer dynamic tools named `cwclock_<command_path>` for direct execution.
 - `delete record abc123` -> `cwclock record delete -i abc123`
 - `run job abc123 now` -> `cwclock job run -i abc123`
 - `create an export job named "Weekly summary" every monday at 9am emailed to a@b.com for clients c1 and c2` -> `cwclock job create --name "Weekly summary" --cron "0 9 * * 1" --report-types summary-pdf --time-period now()-7d --to a@b.com --client c1 --client c2`
-- `preview an invoice for client c1 from Jan 15 9am to Jan 15 noon 2024` -> `cwclock invoice preview --client c1 --begin 2024-01-15T09:00:00 --end 2024-01-15T12:00:00`
+- `preview an invoice for client Acme from Jan 15 9am to Jan 15 noon 2024` (client given by name) -> `cwclock invoice preview --client Acme --begin 2024-01-15T09:00:00 --end 2024-01-15T12:00:00`
 - `generate an invoice for client c1 for project p1 only, from now()-30d to now(), save it as invoice.pdf` -> `cwclock invoice generate --client c1 --project p1 --begin now()-30d --end now() -o invoice.pdf`
-- `email invoice inv123 to its client` -> `cwclock invoice send -i inv123`
+- `email invoice INV-2024-0007 to its client` (invoice given by number instead of id) -> `cwclock invoice send -i INV-2024-0007`
 - `reupload invoice inv123 to external connections` -> `cwclock invoice upload -i inv123`
 - `delete invoice inv123` -> `cwclock invoice delete -i inv123`
 - `export a summary report as pdf for the last 30 days` -> `cwclock export --begin now()-30d --end now()`

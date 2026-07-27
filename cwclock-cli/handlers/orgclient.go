@@ -216,19 +216,9 @@ func HandleOrgClientUpdate(orgOverride string, id string, fields OrgClientFields
 		return err
 	}
 
-	cli, err := client.NewClient()
+	current, err := resolveClient(orgID, trimmedID)
 	if err != nil {
 		return err
-	}
-
-	clients, err := cli.ListOrgClients(orgID)
-	if err != nil {
-		return err
-	}
-
-	current, found := findOrgClient(clients, trimmedID)
-	if !found {
-		return fmt.Errorf("client %q not found", trimmedID)
 	}
 
 	payload := mergeOrgClientFields(current, fields, changed)
@@ -239,7 +229,12 @@ func HandleOrgClientUpdate(orgOverride string, id string, fields OrgClientFields
 		return fmt.Errorf("country is required: use --country")
 	}
 
-	updated, err := cli.UpdateOrgClient(orgID, trimmedID, payload)
+	cli, err := client.NewClient()
+	if err != nil {
+		return err
+	}
+
+	updated, err := cli.UpdateOrgClient(orgID, current.ID, payload)
 	if err != nil {
 		return err
 	}
@@ -259,26 +254,22 @@ func HandleOrgClientDelete(orgOverride string, id string) error {
 		return err
 	}
 
+	current, err := resolveClient(orgID, trimmedID)
+	if err != nil {
+		return err
+	}
+
 	cli, err := client.NewClient()
 	if err != nil {
 		return err
 	}
 
-	if err := cli.DeleteOrgClient(orgID, trimmedID); err != nil {
+	if err := cli.DeleteOrgClient(orgID, current.ID); err != nil {
 		return err
 	}
 
-	fmt.Printf("id = %v\n", trimmedID)
+	fmt.Printf("id = %v\n", current.ID)
 	return nil
-}
-
-func findOrgClient(clients []client.OrgClient, id string) (client.OrgClient, bool) {
-	for _, c := range clients {
-		if c.ID == id {
-			return c, true
-		}
-	}
-	return client.OrgClient{}, false
 }
 
 func renderOrgClient(orgClient client.OrgClient, formatOverride string) {

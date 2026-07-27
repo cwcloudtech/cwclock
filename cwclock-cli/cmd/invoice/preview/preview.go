@@ -30,9 +30,9 @@ var PreviewCmd = &cobra.Command{
 
 func init() {
 	PreviewCmd.DisableFlagsInUseLine = true
-	PreviewCmd.Flags().StringVar(&orgID, "org", utils.EMPTY, "Organization ID (overrides configured org_id)")
-	PreviewCmd.Flags().StringVarP(&clientID, "client", "c", utils.EMPTY, "Client ID (required)")
-	PreviewCmd.Flags().StringArrayVarP(&projectIDs, "project", "p", nil, "Project ID to include (repeatable; empty = every project)")
+	PreviewCmd.Flags().StringVar(&orgID, "org", utils.EMPTY, "Organization ID or name (overrides configured org_id)")
+	PreviewCmd.Flags().StringVarP(&clientID, "client", "c", utils.EMPTY, "Client ID or name (required)")
+	PreviewCmd.Flags().StringArrayVarP(&projectIDs, "project", "p", nil, "Project ID or name to include (repeatable; empty = every project)")
 	PreviewCmd.Flags().StringVar(&begin, "begin", utils.EMPTY, "Begin date/time: ISO-8601 or now()/now()-1h/now()-1d style expression (required)")
 	PreviewCmd.Flags().StringVar(&end, "end", utils.EMPTY, "End date/time: ISO-8601 or now()/now()-1h/now()-1d style expression")
 	PreviewCmd.Flags().StringVar(&to, "to", utils.EMPTY, "Alias of --end")

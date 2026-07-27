@@ -13,8 +13,7 @@ import (
 )
 
 func HandleInvoicePreview(orgOverride string, clientID string, projectIDs []string, beginExpr string, endExpr string, toExpr string, outputOverride string) error {
-	trimmedClientID := strings.TrimSpace(clientID)
-	if utils.IsBlank(trimmedClientID) {
+	if utils.IsBlank(strings.TrimSpace(clientID)) {
 		return fmt.Errorf("client id is required: use --client")
 	}
 
@@ -28,16 +27,25 @@ func HandleInvoicePreview(orgOverride string, clientID string, projectIDs []stri
 		return err
 	}
 
+	resolvedClientID, err := resolveClientID(orgID, clientID)
+	if err != nil {
+		return err
+	}
+	resolvedProjectIDs, err := resolveProjectIDs(orgID, projectIDs)
+	if err != nil {
+		return err
+	}
+
 	cli, err := client.NewClient()
 	if err != nil {
 		return err
 	}
 
 	data, filename, err := cli.PreviewInvoice(orgID, client.InvoiceRequest{
-		ClientID:       trimmedClientID,
+		ClientID:       resolvedClientID,
 		DateRangeStart: start,
 		DateRangeEnd:   end,
-		ProjectIDs:     normalizeIDs(projectIDs),
+		ProjectIDs:     resolvedProjectIDs,
 	})
 	if err != nil {
 		return err
@@ -53,8 +61,7 @@ func HandleInvoicePreview(orgOverride string, clientID string, projectIDs []stri
 }
 
 func HandleInvoiceGenerate(orgOverride string, clientID string, projectIDs []string, beginExpr string, endExpr string, toExpr string, outputOverride string, formatOverride string) error {
-	trimmedClientID := strings.TrimSpace(clientID)
-	if utils.IsBlank(trimmedClientID) {
+	if utils.IsBlank(strings.TrimSpace(clientID)) {
 		return fmt.Errorf("client id is required: use --client")
 	}
 
@@ -68,16 +75,25 @@ func HandleInvoiceGenerate(orgOverride string, clientID string, projectIDs []str
 		return err
 	}
 
+	resolvedClientID, err := resolveClientID(orgID, clientID)
+	if err != nil {
+		return err
+	}
+	resolvedProjectIDs, err := resolveProjectIDs(orgID, projectIDs)
+	if err != nil {
+		return err
+	}
+
 	cli, err := client.NewClient()
 	if err != nil {
 		return err
 	}
 
 	data, filename, err := cli.GenerateInvoice(orgID, client.InvoiceRequest{
-		ClientID:       trimmedClientID,
+		ClientID:       resolvedClientID,
 		DateRangeStart: start,
 		DateRangeEnd:   end,
-		ProjectIDs:     normalizeIDs(projectIDs),
+		ProjectIDs:     resolvedProjectIDs,
 	})
 	if err != nil {
 		return err
@@ -93,7 +109,7 @@ func HandleInvoiceGenerate(orgOverride string, clientID string, projectIDs []str
 	// The generate endpoint streams back the raw PDF, not JSON, so it
 	// carries no invoice id. Look the just-created invoice back up (most
 	// recent first, see cwclock-api's InvoiceStore.List) to surface it.
-	invoices, err := cli.ListInvoices(orgID, trimmedClientID, dayPart(start), dayPart(end))
+	invoices, err := cli.ListInvoices(orgID, resolvedClientID, dayPart(start), dayPart(end))
 	if err != nil {
 		fmt.Printf("Warning: failed to look up the generated invoice's id: %s\n", err)
 		return nil

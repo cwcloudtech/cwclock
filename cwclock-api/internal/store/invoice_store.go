@@ -224,6 +224,32 @@ func (s *InvoiceStore) FindByID(ctx context.Context, id string) (models.Invoice,
 	return scanInvoice(row)
 }
 
+// FindByNumber looks up an invoice by its number, case-insensitively -
+// used as ResolveIdentifier's fallback. Picks the most recently created
+// match if more than one exists.
+func (s *InvoiceStore) FindByNumber(ctx context.Context, orgID, number string) (models.Invoice, error) {
+	row := s.pool.QueryRow(ctx, `
+		SELECT id, organization_id, client_id, data, selected_begin_date, selected_end_date, created_at, updated_at
+		FROM invoices
+		WHERE organization_id = $1 AND data->>'number' ILIKE $2
+		ORDER BY created_at DESC
+		LIMIT 1
+	`, orgID, number)
+	return scanInvoice(row)
+}
+
+// ResolveIdentifier resolves a caller-supplied invoice identifier that may
+// be either its real id or its human-readable number: tries id first
+// (scoped to orgID, so a valid id belonging to a different organization
+// isn't leaked), and falls back to a case-insensitive number match on any
+// failure - invalid uuid syntax or not found alike (see ai-instruct-98).
+func (s *InvoiceStore) ResolveIdentifier(ctx context.Context, orgID, identifier string) (models.Invoice, error) {
+	if inv, err := s.FindByID(ctx, identifier); err == nil && inv.OrganizationID == orgID {
+		return inv, nil
+	}
+	return s.FindByNumber(ctx, orgID, identifier)
+}
+
 // GetPDF returns an invoice's stored PDF bytes and its human-readable
 // number (used as the download filename).
 func (s *InvoiceStore) GetPDF(ctx context.Context, id string) (pdf []byte, number string, err error) {

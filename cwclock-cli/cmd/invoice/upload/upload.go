@@ -24,6 +24,6 @@ var UploadCmd = &cobra.Command{
 
 func init() {
 	UploadCmd.DisableFlagsInUseLine = true
-	UploadCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
-	UploadCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "Invoice ID to upload/reupload (required)")
+	UploadCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID or name (overrides configured org_id)")
+	UploadCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "Invoice ID or number to upload/reupload (required)")
 }

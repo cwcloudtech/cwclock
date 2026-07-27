@@ -31,9 +31,9 @@ var GenerateCmd = &cobra.Command{
 
 func init() {
 	GenerateCmd.DisableFlagsInUseLine = true
-	GenerateCmd.Flags().StringVar(&orgID, "org", utils.EMPTY, "Organization ID (overrides configured org_id)")
-	GenerateCmd.Flags().StringVarP(&clientID, "client", "c", utils.EMPTY, "Client ID (required)")
-	GenerateCmd.Flags().StringArrayVarP(&projectIDs, "project", "p", nil, "Project ID to include (repeatable; empty = every project)")
+	GenerateCmd.Flags().StringVar(&orgID, "org", utils.EMPTY, "Organization ID or name (overrides configured org_id)")
+	GenerateCmd.Flags().StringVarP(&clientID, "client", "c", utils.EMPTY, "Client ID or name (required)")
+	GenerateCmd.Flags().StringArrayVarP(&projectIDs, "project", "p", nil, "Project ID or name to include (repeatable; empty = every project)")
 	GenerateCmd.Flags().StringVar(&begin, "begin", utils.EMPTY, "Begin date/time: ISO-8601 or now()/now()-1h/now()-1d style expression (required)")
 	GenerateCmd.Flags().StringVar(&end, "end", utils.EMPTY, "End date/time: ISO-8601 or now()/now()-1h/now()-1d style expression")
 	GenerateCmd.Flags().StringVar(&to, "to", utils.EMPTY, "Alias of --end")

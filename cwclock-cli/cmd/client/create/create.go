@@ -71,7 +71,7 @@ var CreateCmd = &cobra.Command{
 
 func init() {
 	CreateCmd.DisableFlagsInUseLine = true
-	CreateCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
+	CreateCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID or name (overrides configured org_id)")
 	CreateCmd.Flags().StringVar(&name, "name", utils.EMPTY, "Client name (required)")
 	CreateCmd.Flags().StringVar(&country, "country", utils.EMPTY, "Country code (required)")
 	CreateCmd.Flags().StringVar(&email, "email", utils.EMPTY, "Email")

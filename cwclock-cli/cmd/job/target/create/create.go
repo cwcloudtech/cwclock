@@ -52,7 +52,7 @@ var CreateCmd = &cobra.Command{
 
 func init() {
 	CreateCmd.DisableFlagsInUseLine = true
-	CreateCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
+	CreateCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID or name (overrides configured org_id)")
 	CreateCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "Job ID (required)")
 	CreateCmd.Flags().StringVar(&targetType, "type", utils.EMPTY, "Target type: email (default), s3, google_drive or git")
 	CreateCmd.Flags().StringVar(&to, "to", utils.EMPTY, "Recipient email(s), comma/semicolon-separated (email target)")

@@ -79,8 +79,8 @@ var UpdateCmd = &cobra.Command{
 
 func init() {
 	UpdateCmd.DisableFlagsInUseLine = true
-	UpdateCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
-	UpdateCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "Client ID to update (required)")
+	UpdateCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID or name (overrides configured org_id)")
+	UpdateCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "Client ID or name to update (required)")
 	UpdateCmd.Flags().StringVar(&name, "name", utils.EMPTY, "Client name")
 	UpdateCmd.Flags().StringVar(&country, "country", utils.EMPTY, "Country code")
 	UpdateCmd.Flags().StringVar(&email, "email", utils.EMPTY, "Email")

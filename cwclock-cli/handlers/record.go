@@ -35,73 +35,56 @@ func timerStatePath() (string, error) {
 }
 
 func resolveOrgID(override string) (string, error) {
-	orgID := strings.TrimSpace(override)
-	if utils.IsBlank(orgID) {
-		orgID = config.GetOrgID()
+	value := strings.TrimSpace(override)
+	if utils.IsBlank(value) {
+		value = config.GetOrgID()
 	}
-	if utils.IsBlank(orgID) {
+	if utils.IsBlank(value) {
 		return utils.EMPTY, fmt.Errorf("organization id is required: set it with 'cwclock configure set org_id <id>' or use --org")
 	}
-	return orgID, nil
-}
 
-func resolveProjectID(override string) (string, error) {
-	projectID := strings.TrimSpace(override)
-	if utils.IsBlank(projectID) {
-		return utils.EMPTY, fmt.Errorf("project id is required: set it with 'cwclock configure set project_id <id>' or use --project")
+	if looksLikeUUID(value) {
+		return value, nil
 	}
-	return projectID, nil
-}
 
-// findProjectByID looks up a single project by id (there's no dedicated "get
-// project" endpoint, only list) - used to infer a time record's client and/
-// or default text from its project (see resolveTimeEntryDefaults).
-func findProjectByID(orgID string, projectID string) (client.Project, error) {
-	cli, err := client.NewClient()
+	org, err := resolveOrganization(value)
 	if err != nil {
-		return client.Project{}, err
+		return utils.EMPTY, fmt.Errorf("organization %q not found by id or name: set it with 'cwclock configure set org_id <id>' or use --org", value)
 	}
-
-	projects, err := cli.ListProjects(orgID, utils.EMPTY)
-	if err != nil {
-		return client.Project{}, err
-	}
-
-	for _, p := range projects {
-		if p.ID == projectID {
-			return p, nil
-		}
-	}
-
-	return client.Project{}, fmt.Errorf("could not find project %q", projectID)
+	return org.ID, nil
 }
 
-// resolveTimeEntryDefaults resolves the mandatory project id and, with a
-// single project lookup when either is needed, fills in the client id
-// (inferred from the project - a project belongs to exactly one client, see
-// ai-instruct-96) and the entry text (defaults to the project's own name,
-// matching the web app's TaskInput.jsx "name || project.name" behavior, see
-// ai-instruct-97) whenever their overrides are left blank.
+// resolveTimeEntryDefaults resolves the mandatory project (accepting its id
+// or name, see resolveProject) and, with the same project lookup reused
+// when needed, fills in the client (also accepting id or name; inferred
+// from the project when blank, since a project belongs to exactly one
+// client - see ai-instruct-96) and the entry text (defaults to the
+// project's own name, matching the web app's TaskInput.jsx "name ||
+// project.name" behavior, see ai-instruct-97) whenever their overrides are
+// left blank.
 func resolveTimeEntryDefaults(orgID string, clientOverride string, projectOverride string, textOverride string) (clientID string, projectID string, text string, err error) {
-	projectID, err = resolveProjectID(projectOverride)
+	if utils.IsBlank(strings.TrimSpace(projectOverride)) {
+		return utils.EMPTY, utils.EMPTY, utils.EMPTY, fmt.Errorf("project id is required: set it with 'cwclock configure set project_id <id>' or use --project")
+	}
+
+	project, err := resolveProject(orgID, projectOverride)
 	if err != nil {
 		return utils.EMPTY, utils.EMPTY, utils.EMPTY, err
 	}
+	projectID = project.ID
 
 	clientID = strings.TrimSpace(clientOverride)
-	text = strings.TrimSpace(textOverride)
-	if utils.IsNotBlank(clientID) && utils.IsNotBlank(text) {
-		return clientID, projectID, text, nil
-	}
-
-	project, err := findProjectByID(orgID, projectID)
-	if err != nil {
-		return utils.EMPTY, utils.EMPTY, utils.EMPTY, err
-	}
-
-	if utils.IsBlank(clientID) {
+	if utils.IsNotBlank(clientID) {
+		resolvedClientID, err := resolveClientID(orgID, clientID)
+		if err != nil {
+			return utils.EMPTY, utils.EMPTY, utils.EMPTY, err
+		}
+		clientID = resolvedClientID
+	} else {
 		clientID = project.ClientID
 	}
+
+	text = strings.TrimSpace(textOverride)
 	if utils.IsBlank(text) {
 		text = project.Name
 	}
@@ -183,7 +166,7 @@ func HandleRecordStop(orgOverride string, textOverride string, formatOverride st
 		// Not expected once a record started with HandleRecordStart, which
 		// already defaults text to the project's name - this only covers a
 		// pre-existing timer.json written before that defaulting existed.
-		project, err := findProjectByID(orgID, state.ProjectID)
+		project, err := resolveProject(orgID, state.ProjectID)
 		if err != nil {
 			return err
 		}

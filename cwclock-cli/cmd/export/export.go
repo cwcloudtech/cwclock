@@ -32,9 +32,9 @@ var ExportCmd = &cobra.Command{
 
 func init() {
 	ExportCmd.DisableFlagsInUseLine = true
-	ExportCmd.Flags().StringVar(&orgID, "org", utils.EMPTY, "Organization ID (overrides configured org_id)")
-	ExportCmd.Flags().StringArrayVarP(&clientIDs, "client", "c", nil, "Client ID filter (repeatable; every client is included when omitted)")
-	ExportCmd.Flags().StringArrayVarP(&projectIDs, "project", "p", nil, "Project ID filter (repeatable; every project is included when omitted)")
+	ExportCmd.Flags().StringVar(&orgID, "org", utils.EMPTY, "Organization ID or name (overrides configured org_id)")
+	ExportCmd.Flags().StringArrayVarP(&clientIDs, "client", "c", nil, "Client ID or name filter (repeatable; every client is included when omitted)")
+	ExportCmd.Flags().StringArrayVarP(&projectIDs, "project", "p", nil, "Project ID or name filter (repeatable; every project is included when omitted)")
 	ExportCmd.Flags().StringVar(&begin, "begin", utils.EMPTY, "Begin date/time: ISO-8601 or now()/now()-1h/now()-1d style expression (required)")
 	ExportCmd.Flags().StringVar(&end, "end", utils.EMPTY, "End date/time: ISO-8601 or now()/now()-1h/now()-1d style expression")
 	ExportCmd.Flags().StringVar(&to, "to", utils.EMPTY, "Alias of --end")

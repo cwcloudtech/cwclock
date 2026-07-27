@@ -41,12 +41,20 @@ func HandleProjectList(orgOverride string, clientOverride string, formatOverride
 		return err
 	}
 
+	resolvedClientID := utils.EMPTY
+	if trimmed := strings.TrimSpace(clientOverride); utils.IsNotBlank(trimmed) {
+		resolvedClientID, err = resolveClientID(orgID, trimmed)
+		if err != nil {
+			return err
+		}
+	}
+
 	cli, err := client.NewClient()
 	if err != nil {
 		return err
 	}
 
-	projects, err := cli.ListProjects(orgID, strings.TrimSpace(clientOverride))
+	projects, err := cli.ListProjects(orgID, resolvedClientID)
 	if err != nil {
 		return err
 	}
@@ -61,8 +69,7 @@ func HandleProjectList(orgOverride string, clientOverride string, formatOverride
 }
 
 func HandleProjectCreate(orgOverride string, clientID string, fields ProjectFields, changed map[string]bool, formatOverride string) error {
-	trimmedClientID := strings.TrimSpace(clientID)
-	if utils.IsBlank(trimmedClientID) {
+	if utils.IsBlank(strings.TrimSpace(clientID)) {
 		return fmt.Errorf("client id is required: use --client")
 	}
 	if utils.IsBlank(fields.Name) {
@@ -70,6 +77,11 @@ func HandleProjectCreate(orgOverride string, clientID string, fields ProjectFiel
 	}
 
 	orgID, err := resolveOrgID(orgOverride)
+	if err != nil {
+		return err
+	}
+
+	resolvedClientID, err := resolveClientID(orgID, clientID)
 	if err != nil {
 		return err
 	}
@@ -88,7 +100,7 @@ func HandleProjectCreate(orgOverride string, clientID string, fields ProjectFiel
 		return err
 	}
 
-	project, err := cli.CreateProject(orgID, trimmedClientID, payload)
+	project, err := cli.CreateProject(orgID, resolvedClientID, payload)
 	if err != nil {
 		return err
 	}
@@ -136,27 +148,30 @@ func HandleProjectUpdate(orgOverride string, id string, clientOverride string, f
 		return err
 	}
 
+	current, err := resolveProject(orgID, trimmedID)
+	if err != nil {
+		return err
+	}
+
+	resolvedClientOverride := utils.EMPTY
+	if trimmed := strings.TrimSpace(clientOverride); utils.IsNotBlank(trimmed) {
+		resolvedClientOverride, err = resolveClientID(orgID, trimmed)
+		if err != nil {
+			return err
+		}
+	}
+
+	payload := mergeProjectFields(current, resolvedClientOverride, fields, changed)
+	if utils.IsBlank(payload.Name) {
+		return fmt.Errorf("name is required: use --name")
+	}
+
 	cli, err := client.NewClient()
 	if err != nil {
 		return err
 	}
 
-	projects, err := cli.ListProjects(orgID, utils.EMPTY)
-	if err != nil {
-		return err
-	}
-
-	current, found := findProject(projects, trimmedID)
-	if !found {
-		return fmt.Errorf("project %q not found", trimmedID)
-	}
-
-	payload := mergeProjectFields(current, clientOverride, fields, changed)
-	if utils.IsBlank(payload.Name) {
-		return fmt.Errorf("name is required: use --name")
-	}
-
-	updated, err := cli.UpdateProject(orgID, trimmedID, payload)
+	updated, err := cli.UpdateProject(orgID, current.ID, payload)
 	if err != nil {
 		return err
 	}
@@ -176,26 +191,22 @@ func HandleProjectDelete(orgOverride string, id string) error {
 		return err
 	}
 
+	current, err := resolveProject(orgID, trimmedID)
+	if err != nil {
+		return err
+	}
+
 	cli, err := client.NewClient()
 	if err != nil {
 		return err
 	}
 
-	if err := cli.DeleteProject(orgID, trimmedID); err != nil {
+	if err := cli.DeleteProject(orgID, current.ID); err != nil {
 		return err
 	}
 
-	fmt.Printf("id = %v\n", trimmedID)
+	fmt.Printf("id = %v\n", current.ID)
 	return nil
-}
-
-func findProject(projects []client.Project, id string) (client.Project, bool) {
-	for _, p := range projects {
-		if p.ID == id {
-			return p, true
-		}
-	}
-	return client.Project{}, false
 }
 
 func renderProject(project client.Project, formatOverride string) {

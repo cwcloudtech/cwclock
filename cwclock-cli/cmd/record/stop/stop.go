@@ -25,7 +25,7 @@ var StopCmd = &cobra.Command{
 
 func init() {
 	StopCmd.DisableFlagsInUseLine = true
-	StopCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
+	StopCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID or name (overrides configured org_id)")
 	StopCmd.Flags().StringVarP(&text, "text", "t", utils.EMPTY, "Time record description (overrides the one given at start)")
 	StopCmd.Flags().StringVarP(&format, "format", "f", utils.EMPTY, "Output format override: pretty|json")
 }

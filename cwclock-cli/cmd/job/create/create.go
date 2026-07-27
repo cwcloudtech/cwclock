@@ -69,13 +69,13 @@ var CreateCmd = &cobra.Command{
 
 func init() {
 	CreateCmd.DisableFlagsInUseLine = true
-	CreateCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
+	CreateCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID or name (overrides configured org_id)")
 	CreateCmd.Flags().StringVar(&name, "name", utils.EMPTY, "Job name (required)")
 	CreateCmd.Flags().StringVar(&cron, "cron", utils.EMPTY, "Cron expression (required)")
 	CreateCmd.Flags().StringVar(&reportTypes, "report-types", utils.EMPTY, "Comma-separated report types (required): summary-pdf, summary-csv, detailed-pdf, detailed-csv, unpaid-invoices, all-invoices")
 	CreateCmd.Flags().StringVar(&timePeriod, "time-period", utils.EMPTY, "Time period covered by each run (required), e.g. now(), now()-1d, now()-1h")
-	CreateCmd.Flags().StringArrayVarP(&clientIDs, "client", "c", nil, "Client ID to include (repeatable; empty = all)")
-	CreateCmd.Flags().StringArrayVarP(&projectIDs, "project", "p", nil, "Project ID to include (repeatable; empty = all)")
+	CreateCmd.Flags().StringArrayVarP(&clientIDs, "client", "c", nil, "Client ID or name to include (repeatable; empty = all)")
+	CreateCmd.Flags().StringArrayVarP(&projectIDs, "project", "p", nil, "Project ID or name to include (repeatable; empty = all)")
 	CreateCmd.Flags().BoolVar(&includeFinancial, "include-financial", false, "Include financial figures in the exported reports")
 	CreateCmd.Flags().BoolVar(&enabled, "enabled", true, "Whether the job is enabled")
 

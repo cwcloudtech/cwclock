@@ -246,19 +246,15 @@ func (h *InvoiceHandler) List(w http.ResponseWriter, r *http.Request) {
 // DownloadPDF streams a previously generated invoice's stored PDF.
 func (h *InvoiceHandler) DownloadPDF(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
-	invoiceID := chi.URLParam(r, "invoiceId")
+	identifier := chi.URLParam(r, "invoiceId")
 
-	inv, err := h.invoices.FindByID(r.Context(), invoiceID)
+	inv, err := h.invoices.ResolveIdentifier(r.Context(), orgID, identifier)
 	if err != nil {
 		writeStoreError(w, err)
 		return
 	}
-	if inv.OrganizationID != orgID {
-		writeError(w, http.StatusNotFound, "Resource not found", CodeNotFound)
-		return
-	}
 
-	pdf, number, err := h.invoices.GetPDF(r.Context(), invoiceID)
+	pdf, number, err := h.invoices.GetPDF(r.Context(), inv.ID)
 	if err != nil {
 		writeStoreError(w, err)
 		return
@@ -274,15 +270,11 @@ func (h *InvoiceHandler) DownloadPDF(w http.ResponseWriter, r *http.Request) {
 // itself is unchanged either way.
 func (h *InvoiceHandler) Reupload(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
-	invoiceID := chi.URLParam(r, "invoiceId")
+	identifier := chi.URLParam(r, "invoiceId")
 
-	inv, err := h.invoices.FindByID(r.Context(), invoiceID)
+	inv, err := h.invoices.ResolveIdentifier(r.Context(), orgID, identifier)
 	if err != nil {
 		writeStoreError(w, err)
-		return
-	}
-	if inv.OrganizationID != orgID {
-		writeError(w, http.StatusNotFound, "Resource not found", CodeNotFound)
 		return
 	}
 
@@ -292,14 +284,14 @@ func (h *InvoiceHandler) Reupload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pdf, number, err := h.invoices.GetPDF(r.Context(), invoiceID)
+	pdf, number, err := h.invoices.GetPDF(r.Context(), inv.ID)
 	if err != nil {
 		writeStoreError(w, err)
 		return
 	}
 
 	externalconn.SyncUpload(r.Context(), org.ExternalConnections, externalconn.YearFolder(inv.CreatedAt), externalconn.MonthCandidates(inv.CreatedAt), number+".pdf", pdf)
-	writeJSON(w, http.StatusOK, map[string]string{"id": invoiceID})
+	writeJSON(w, http.StatusOK, map[string]string{"id": inv.ID})
 }
 
 // SendEmail emails an already-generated invoice's PDF to the client's
@@ -308,15 +300,11 @@ func (h *InvoiceHandler) Reupload(w http.ResponseWriter, r *http.Request) {
 // replaces the CWClock logo in the email when it's set.
 func (h *InvoiceHandler) SendEmail(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
-	invoiceID := chi.URLParam(r, "invoiceId")
+	identifier := chi.URLParam(r, "invoiceId")
 
-	inv, err := h.invoices.FindByID(r.Context(), invoiceID)
+	inv, err := h.invoices.ResolveIdentifier(r.Context(), orgID, identifier)
 	if err != nil {
 		writeStoreError(w, err)
-		return
-	}
-	if inv.OrganizationID != orgID {
-		writeError(w, http.StatusNotFound, "Resource not found", CodeNotFound)
 		return
 	}
 
@@ -347,7 +335,7 @@ func (h *InvoiceHandler) SendEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pdf, number, err := h.invoices.GetPDF(r.Context(), invoiceID)
+	pdf, number, err := h.invoices.GetPDF(r.Context(), inv.ID)
 	if err != nil {
 		writeStoreError(w, err)
 		return
@@ -366,7 +354,7 @@ func (h *InvoiceHandler) SendEmail(w http.ResponseWriter, r *http.Request) {
 	language := models.ClientLanguage(client.Country)
 	reportAttachments := h.invoiceReportAttachments(r.Context(), orgID, client, inv)
 	h.mailer.SendInvoice(r.Context(), recipients, org.ID, org.Name, owner.Email, org.AccountingEmail, number, inv.SelectedBeginDate, inv.SelectedEndDate, client.PurchaseOrder, language, pdf, reportAttachments)
-	writeJSON(w, http.StatusOK, map[string]string{"id": invoiceID})
+	writeJSON(w, http.StatusOK, map[string]string{"id": inv.ID})
 }
 
 // invoiceReportAttachments builds the summary/detailed report PDFs for the
@@ -406,7 +394,7 @@ type updateInvoiceStatusPayload struct {
 // lifecycle (unpaid/paid/canceled/refunded).
 func (h *InvoiceHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
-	invoiceID := chi.URLParam(r, "invoiceId")
+	identifier := chi.URLParam(r, "invoiceId")
 
 	var p updateInvoiceStatusPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil || !models.IsValidInvoiceStatus(p.Status) {
@@ -414,17 +402,13 @@ func (h *InvoiceHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	inv, err := h.invoices.FindByID(r.Context(), invoiceID)
+	inv, err := h.invoices.ResolveIdentifier(r.Context(), orgID, identifier)
 	if err != nil {
 		writeStoreError(w, err)
 		return
 	}
-	if inv.OrganizationID != orgID {
-		writeError(w, http.StatusNotFound, "Resource not found", CodeNotFound)
-		return
-	}
 
-	updated, err := h.invoices.UpdateStatus(r.Context(), invoiceID, p.Status)
+	updated, err := h.invoices.UpdateStatus(r.Context(), inv.ID, p.Status)
 	if err != nil {
 		writeStoreError(w, err)
 		return
@@ -435,19 +419,15 @@ func (h *InvoiceHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 // Delete removes an invoice (and its stored PDF) entirely.
 func (h *InvoiceHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
-	invoiceID := chi.URLParam(r, "invoiceId")
+	identifier := chi.URLParam(r, "invoiceId")
 
-	inv, err := h.invoices.FindByID(r.Context(), invoiceID)
+	inv, err := h.invoices.ResolveIdentifier(r.Context(), orgID, identifier)
 	if err != nil {
 		writeStoreError(w, err)
 		return
 	}
-	if inv.OrganizationID != orgID {
-		writeError(w, http.StatusNotFound, "Resource not found", CodeNotFound)
-		return
-	}
 
-	if err := h.invoices.Delete(r.Context(), invoiceID); err != nil {
+	if err := h.invoices.Delete(r.Context(), inv.ID); err != nil {
 		writeStoreError(w, err)
 		return
 	}
@@ -456,5 +436,5 @@ func (h *InvoiceHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		externalconn.SyncDelete(r.Context(), org.ExternalConnections, externalconn.YearFolder(inv.CreatedAt), externalconn.MonthCandidates(inv.CreatedAt), inv.Number+".pdf")
 	}
 
-	writeJSON(w, http.StatusOK, map[string]string{"id": invoiceID})
+	writeJSON(w, http.StatusOK, map[string]string{"id": inv.ID})
 }
