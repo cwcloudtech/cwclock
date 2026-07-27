@@ -5,11 +5,11 @@
 class Cwclock < Formula
   desc ""
   homepage "https://gitlab.cwcloud.tech/oss/cwclock"
-  version "1.13.1"
+  version "1.13.2"
 
   on_macos do
-    url "https://gitlab.cwcloud.tech/oss/cwclock/-/releases/v1.13.1/downloads/cwclock_1.13.1_darwin_all.tar.gz"
-    sha256 "dfec564e99e19654a711ee3e7f48c4b68bd4c5c6fadb884f90174786db917d8f"
+    url "https://gitlab.cwcloud.tech/oss/cwclock/-/releases/v1.13.2/downloads/cwclock_1.13.2_darwin_all.tar.gz"
+    sha256 "bf00e8f7b14269904f8615ecc3e61ea6588b7af3bcbac229c0b3b885f814531d"
 
     define_method(:install) do
       bin.install "cwclock"
@@ -18,15 +18,15 @@ class Cwclock < Formula
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://gitlab.cwcloud.tech/oss/cwclock/-/releases/v1.13.1/downloads/cwclock_1.13.1_linux_amd64.tar.gz"
-      sha256 "16556aa4282a19f18e8037899d23315450deba3078e03210a743840ff166b61a"
+      url "https://gitlab.cwcloud.tech/oss/cwclock/-/releases/v1.13.2/downloads/cwclock_1.13.2_linux_amd64.tar.gz"
+      sha256 "51cfe4410698c39982061ceea781861450afac30147ac37a2a7ac2320c084ea8"
       define_method(:install) do
         bin.install "cwclock"
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://gitlab.cwcloud.tech/oss/cwclock/-/releases/v1.13.1/downloads/cwclock_1.13.1_linux_arm64.tar.gz"
-      sha256 "f86d8ea01dee57ef3e85c48d92a3ecfec2fc94816d9389a0ae8878552eeb802e"
+      url "https://gitlab.cwcloud.tech/oss/cwclock/-/releases/v1.13.2/downloads/cwclock_1.13.2_linux_arm64.tar.gz"
+      sha256 "92490c64dc56f6cfbc909304158a6bcfffce1bc9f90b86eab59fab4cf5fa75e1"
       define_method(:install) do
         bin.install "cwclock"
       end
