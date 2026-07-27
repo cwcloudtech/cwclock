@@ -25,5 +25,5 @@ yarn-error.log*
 .claude
 
 values-test.yaml
-cwclock-helm-*
+cwclock-helm*
 charts

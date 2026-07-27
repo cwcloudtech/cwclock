@@ -25,7 +25,6 @@ archives:
         format: zip
     files:
       - install.sh
-      - README.md
 
 release:
   prerelease: auto
