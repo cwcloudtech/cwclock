@@ -25,6 +25,6 @@ var SetRoleCmd = &cobra.Command{
 
 func init() {
 	SetRoleCmd.DisableFlagsInUseLine = true
-	SetRoleCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "User ID (required)")
+	SetRoleCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "User ID or email (required)")
 	SetRoleCmd.Flags().StringVarP(&format, "format", "f", utils.EMPTY, "Output format override: pretty|json")
 }

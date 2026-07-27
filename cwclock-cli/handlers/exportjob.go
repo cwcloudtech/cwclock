@@ -96,8 +96,11 @@ func (f ExportJobFields) toPayload(orgID string, targets []client.ExportTarget) 
 	if err != nil {
 		return client.ExportJobPayload{}, err
 	}
-	projectIDs, err := resolveProjectIDs(orgID, f.ProjectIDs)
+	projects, err := resolveProjects(orgID, f.ProjectIDs)
 	if err != nil {
+		return client.ExportJobPayload{}, err
+	}
+	if err := requireProjectsMatchClients(clientIDs, projects); err != nil {
 		return client.ExportJobPayload{}, err
 	}
 
@@ -108,7 +111,7 @@ func (f ExportJobFields) toPayload(orgID string, targets []client.ExportTarget) 
 		ReportTypes:      parseCommaList(f.ReportTypes),
 		TimePeriod:       f.TimePeriod,
 		ClientIDs:        clientIDs,
-		ProjectIDs:       projectIDs,
+		ProjectIDs:       projectIDsOf(projects),
 		IncludeFinancial: f.IncludeFinancial,
 		Enabled:          f.Enabled,
 	}, nil
@@ -143,6 +146,25 @@ func mergeExportJobFields(orgID string, current client.ExportJob, fields ExportJ
 	if changed["time-period"] {
 		payload.TimePeriod = fields.TimePeriod
 	}
+	// projects only needs to be populated (for the cross-check below) when
+	// either side of the --client/--project pair could have changed -
+	// otherwise there's nothing new to validate against the other.
+	var projects []client.Project
+	if changed["project"] {
+		resolved, err := resolveProjects(orgID, fields.ProjectIDs)
+		if err != nil {
+			return client.ExportJobPayload{}, err
+		}
+		projects = resolved
+		payload.ProjectIDs = projectIDsOf(resolved)
+	} else if changed["client"] && len(payload.ProjectIDs) > 0 {
+		resolved, err := resolveProjects(orgID, payload.ProjectIDs)
+		if err != nil {
+			return client.ExportJobPayload{}, err
+		}
+		projects = resolved
+	}
+
 	if changed["client"] {
 		clientIDs, err := resolveClientIDs(orgID, fields.ClientIDs)
 		if err != nil {
@@ -150,13 +172,11 @@ func mergeExportJobFields(orgID string, current client.ExportJob, fields ExportJ
 		}
 		payload.ClientIDs = clientIDs
 	}
-	if changed["project"] {
-		projectIDs, err := resolveProjectIDs(orgID, fields.ProjectIDs)
-		if err != nil {
-			return client.ExportJobPayload{}, err
-		}
-		payload.ProjectIDs = projectIDs
+
+	if err := requireProjectsMatchClients(payload.ClientIDs, projects); err != nil {
+		return client.ExportJobPayload{}, err
 	}
+
 	if changed["include-financial"] {
 		payload.IncludeFinancial = fields.IncludeFinancial
 	}

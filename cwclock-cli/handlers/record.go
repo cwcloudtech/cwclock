@@ -63,8 +63,8 @@ func resolveOrgID(override string) (string, error) {
 // project.name" behavior, see ai-instruct-97) whenever their overrides are
 // left blank.
 func resolveTimeEntryDefaults(orgID string, clientOverride string, projectOverride string, textOverride string) (clientID string, projectID string, text string, err error) {
-	if utils.IsBlank(strings.TrimSpace(projectOverride)) {
-		return utils.EMPTY, utils.EMPTY, utils.EMPTY, fmt.Errorf("project id is required: set it with 'cwclock configure set project_id <id>' or use --project")
+	if utils.IsBlank(projectOverride) {
+		return utils.EMPTY, utils.EMPTY, utils.EMPTY, fmt.Errorf("project id is required: set it with --project")
 	}
 
 	project, err := resolveProject(orgID, projectOverride)
@@ -77,6 +77,9 @@ func resolveTimeEntryDefaults(orgID string, clientOverride string, projectOverri
 	if utils.IsNotBlank(clientID) {
 		resolvedClientID, err := resolveClientID(orgID, clientID)
 		if err != nil {
+			return utils.EMPTY, utils.EMPTY, utils.EMPTY, err
+		}
+		if err := requireProjectsMatchClients([]string{resolvedClientID}, []client.Project{project}); err != nil {
 			return utils.EMPTY, utils.EMPTY, utils.EMPTY, err
 		}
 		clientID = resolvedClientID

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -168,6 +169,39 @@ func (s *UserStore) FindByID(ctx context.Context, id string) (models.User, error
 		FROM users WHERE id = $1
 	`, id)
 	return scanUser(row)
+}
+
+// ListByEmails returns every user whose email case-insensitively matches
+// one of emails (OR logic, repeatable) - used by the admin users endpoint's
+// ?email= filter, so a superuser (or the CLI's id-or-email fallback for
+// `cwclock admin user`) can look a user up by email without listing
+// everyone (see ai-instruct-99).
+func (s *UserStore) ListByEmails(ctx context.Context, emails []string) ([]models.User, error) {
+	lowered := make([]string, len(emails))
+	for i, e := range emails {
+		lowered[i] = strings.ToLower(e)
+	}
+
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, email, data, created_at, updated_at
+		FROM users
+		WHERE lower(email) = ANY($1)
+		ORDER BY created_at
+	`, lowered)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []models.User{}
+	for rows.Next() {
+		u, err := scanUser(rows)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+	return users, rows.Err()
 }
 
 // List returns every registered user, for the superuser's user management screen.

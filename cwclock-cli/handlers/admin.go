@@ -145,14 +145,9 @@ func HandleAdminUserUpdate(id string, fields AdminUserFields, changed map[string
 		return err
 	}
 
-	users, err := cli.AdminListUsers()
+	current, err := resolveAdminUser(cli, trimmedID)
 	if err != nil {
 		return err
-	}
-
-	current, found := findAdminUser(users, trimmedID)
-	if !found {
-		return fmt.Errorf("user %q not found", trimmedID)
 	}
 
 	payload := mergeAdminUserFields(current, fields, changed)
@@ -169,7 +164,7 @@ func HandleAdminUserUpdate(id string, fields AdminUserFields, changed map[string
 		return err
 	}
 
-	updated, err := cli.AdminUpdateUser(trimmedID, payload)
+	updated, err := cli.AdminUpdateUser(current.ID, payload)
 	if err != nil {
 		return err
 	}
@@ -193,20 +188,15 @@ func HandleAdminUserSetRole(id string, role string, formatOverride string) error
 		return err
 	}
 
-	users, err := cli.AdminListUsers()
+	current, err := resolveAdminUser(cli, trimmedID)
 	if err != nil {
 		return err
-	}
-
-	current, found := findAdminUser(users, trimmedID)
-	if !found {
-		return fmt.Errorf("user %q not found", trimmedID)
 	}
 
 	payload := adminUserToPayload(current)
 	payload.Role = trimmedRole
 
-	updated, err := cli.AdminUpdateUser(trimmedID, payload)
+	updated, err := cli.AdminUpdateUser(current.ID, payload)
 	if err != nil {
 		return err
 	}
@@ -226,11 +216,16 @@ func HandleAdminUserDelete(id string) error {
 		return err
 	}
 
-	if err := cli.AdminDeleteUser(trimmedID); err != nil {
+	current, err := resolveAdminUser(cli, trimmedID)
+	if err != nil {
 		return err
 	}
 
-	fmt.Printf("id = %v\n", trimmedID)
+	if err := cli.AdminDeleteUser(current.ID); err != nil {
+		return err
+	}
+
+	fmt.Printf("id = %v\n", current.ID)
 	return nil
 }
 
@@ -241,6 +236,32 @@ func findAdminUser(users []client.AdminUser, id string) (client.AdminUser, bool)
 		}
 	}
 	return client.AdminUser{}, false
+}
+
+// resolveAdminUser resolves identifier as a user id or, when it isn't
+// shaped like one (or isn't found by id), as an email via the admin users
+// endpoint's ?email= filter, picking the first match (see ai-instruct-99).
+func resolveAdminUser(cli *client.Client, identifier string) (client.AdminUser, error) {
+	trimmed := strings.TrimSpace(identifier)
+
+	if looksLikeUUID(trimmed) {
+		users, err := cli.AdminListUsers()
+		if err != nil {
+			return client.AdminUser{}, err
+		}
+		if user, found := findAdminUser(users, trimmed); found {
+			return user, nil
+		}
+	}
+
+	matches, err := cli.AdminFindUsersByEmail([]string{trimmed})
+	if err != nil {
+		return client.AdminUser{}, err
+	}
+	if len(matches) == 0 {
+		return client.AdminUser{}, fmt.Errorf("user %q not found by id or email", trimmed)
+	}
+	return matches[0], nil
 }
 
 func renderAdminUser(user client.AdminUser, formatOverride string) {

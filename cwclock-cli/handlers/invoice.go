@@ -31,8 +31,11 @@ func HandleInvoicePreview(orgOverride string, clientID string, projectIDs []stri
 	if err != nil {
 		return err
 	}
-	resolvedProjectIDs, err := resolveProjectIDs(orgID, projectIDs)
+	resolvedProjects, err := resolveProjects(orgID, projectIDs)
 	if err != nil {
+		return err
+	}
+	if err := requireProjectsMatchClients([]string{resolvedClientID}, resolvedProjects); err != nil {
 		return err
 	}
 
@@ -45,7 +48,7 @@ func HandleInvoicePreview(orgOverride string, clientID string, projectIDs []stri
 		ClientID:       resolvedClientID,
 		DateRangeStart: start,
 		DateRangeEnd:   end,
-		ProjectIDs:     resolvedProjectIDs,
+		ProjectIDs:     projectIDsOf(resolvedProjects),
 	})
 	if err != nil {
 		return err
@@ -79,8 +82,11 @@ func HandleInvoiceGenerate(orgOverride string, clientID string, projectIDs []str
 	if err != nil {
 		return err
 	}
-	resolvedProjectIDs, err := resolveProjectIDs(orgID, projectIDs)
+	resolvedProjects, err := resolveProjects(orgID, projectIDs)
 	if err != nil {
+		return err
+	}
+	if err := requireProjectsMatchClients([]string{resolvedClientID}, resolvedProjects); err != nil {
 		return err
 	}
 
@@ -93,7 +99,7 @@ func HandleInvoiceGenerate(orgOverride string, clientID string, projectIDs []str
 		ClientID:       resolvedClientID,
 		DateRangeStart: start,
 		DateRangeEnd:   end,
-		ProjectIDs:     resolvedProjectIDs,
+		ProjectIDs:     projectIDsOf(resolvedProjects),
 	})
 	if err != nil {
 		return err

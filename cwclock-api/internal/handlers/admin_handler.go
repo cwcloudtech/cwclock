@@ -39,9 +39,19 @@ func toUserMeResponse(u models.User) models.UserMeResponse {
 	}
 }
 
-// ListUsers returns every account, for the superuser's user-management screen.
+// ListUsers returns every account, for the superuser's user-management
+// screen - or, when one or more ?email= query params are given (repeatable,
+// OR logic), only the accounts matching one of those emails
+// case-insensitively, for the CLI's id-or-email fallback on
+// `cwclock admin user` (see ai-instruct-99).
 func (h *AdminHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
-	users, err := h.users.List(r.Context())
+	var users []models.User
+	var err error
+	if emails := r.URL.Query()["email"]; len(emails) > 0 {
+		users, err = h.users.ListByEmails(r.Context(), emails)
+	} else {
+		users, err = h.users.List(r.Context())
+	}
 	if err != nil {
 		writeStoreError(w, err)
 		return

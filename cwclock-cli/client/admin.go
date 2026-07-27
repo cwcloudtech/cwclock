@@ -84,6 +84,33 @@ func (c *Client) AdminListUsers() ([]AdminUser, error) {
 	return users, nil
 }
 
+// AdminFindUsersByEmail resolves one or more emails (OR logic) against
+// GET /admin/users?email=..., repeated per email - used as the CLI's
+// id-or-email fallback for `cwclock admin user` (see ai-instruct-99).
+func (c *Client) AdminFindUsersByEmail(emails []string) ([]AdminUser, error) {
+	values := url.Values{}
+	for _, email := range emails {
+		values.Add("email", email)
+	}
+
+	path := adminUsersPath()
+	if len(values) > 0 {
+		path += "?" + values.Encode()
+	}
+
+	responseBody, err := c.httpRequest(path, "GET", bytes.Buffer{})
+	if err != nil {
+		return nil, err
+	}
+	defer responseBody.Close()
+
+	var users []AdminUser
+	if err := json.NewDecoder(responseBody).Decode(&users); err != nil {
+		return nil, fmt.Errorf("failed to decode admin users response: %w", err)
+	}
+	return users, nil
+}
+
 func (c *Client) AdminUpdateUser(id string, payload AdminUserPayload) (AdminUser, error) {
 	encoded, err := json.Marshal(payload)
 	if err != nil {

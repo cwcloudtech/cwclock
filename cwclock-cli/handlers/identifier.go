@@ -117,23 +117,72 @@ func resolveProjectID(orgID string, identifier string) (string, error) {
 	return p.ID, nil
 }
 
-// resolveProjectIDs resolves a repeatable --project flag's values (job
-// create/update, invoice, export); blank input means "every project" and
-// is left untouched.
-func resolveProjectIDs(orgID string, identifiers []string) ([]string, error) {
+// resolveProjects resolves a repeatable --project flag's values (job
+// create/update, invoice, export) to their full project objects; blank
+// input means "every project" and is left untouched. Returning the full
+// objects (not just ids) lets callers cross-check each project's client
+// against a --client scope with requireProjectsMatchClients.
+func resolveProjects(orgID string, identifiers []string) ([]client.Project, error) {
 	normalized := normalizeIDs(identifiers)
 	if len(normalized) == 0 {
 		return nil, nil
 	}
-	resolved := make([]string, 0, len(normalized))
+	resolved := make([]client.Project, 0, len(normalized))
 	for _, identifier := range normalized {
-		id, err := resolveProjectID(orgID, identifier)
+		p, err := resolveProject(orgID, identifier)
 		if err != nil {
 			return nil, err
 		}
-		resolved = append(resolved, id)
+		resolved = append(resolved, p)
 	}
 	return resolved, nil
+}
+
+// resolveProjectIDs is resolveProjects's id-only convenience wrapper.
+func resolveProjectIDs(orgID string, identifiers []string) ([]string, error) {
+	projects, err := resolveProjects(orgID, identifiers)
+	if err != nil {
+		return nil, err
+	}
+	return projectIDsOf(projects), nil
+}
+
+// projectIDsOf extracts each project's id, preserving order; nil in, nil
+// out.
+func projectIDsOf(projects []client.Project) []string {
+	if len(projects) == 0 {
+		return nil
+	}
+	ids := make([]string, len(projects))
+	for i, p := range projects {
+		ids[i] = p.ID
+	}
+	return ids
+}
+
+// requireProjectsMatchClients fails fast when both a client and project
+// scope were explicitly given and at least one resolved project doesn't
+// belong to any of the resolved clients - a project belongs to exactly one
+// client, so a mismatch here almost certainly means the user picked an
+// inconsistent --client/--project pair by mistake (see ai-instruct-99). A
+// blank clientIDs or projects means one side wasn't given, so there's
+// nothing to cross-check.
+func requireProjectsMatchClients(clientIDs []string, projects []client.Project) error {
+	if len(clientIDs) == 0 || len(projects) == 0 {
+		return nil
+	}
+
+	clientSet := make(map[string]bool, len(clientIDs))
+	for _, id := range clientIDs {
+		clientSet[id] = true
+	}
+
+	for _, p := range projects {
+		if !clientSet[p.ClientID] {
+			return fmt.Errorf("project %q does not belong to the specified client(s)", p.Name)
+		}
+	}
+	return nil
 }
 
 // resolveOrganization resolves identifier as an org id or, when it isn't

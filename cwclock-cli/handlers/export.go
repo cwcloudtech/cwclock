@@ -50,8 +50,11 @@ func HandleExport(orgOverride string, clientIDs []string, projectIDs []string, b
 	if err != nil {
 		return err
 	}
-	resolvedProjectIDs, err := resolveProjectIDs(orgID, projectIDs)
+	resolvedProjects, err := resolveProjects(orgID, projectIDs)
 	if err != nil {
+		return err
+	}
+	if err := requireProjectsMatchClients(resolvedClientIDs, resolvedProjects); err != nil {
 		return err
 	}
 
@@ -63,7 +66,7 @@ func HandleExport(orgOverride string, clientIDs []string, projectIDs []string, b
 	if len(resolvedClientIDs) > 0 {
 		req.Clients = &client.ReportIDFilter{IDs: resolvedClientIDs}
 	}
-	if len(resolvedProjectIDs) > 0 {
+	if resolvedProjectIDs := projectIDsOf(resolvedProjects); len(resolvedProjectIDs) > 0 {
 		req.Projects = &client.ReportIDFilter{IDs: resolvedProjectIDs}
 	}
 
