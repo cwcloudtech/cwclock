@@ -13,8 +13,8 @@ var (
 	cron             string
 	reportTypes      string
 	timePeriod       string
-	clientIDs        string
-	projectIDs       string
+	clientIDs        []string
+	projectIDs       []string
 	includeFinancial bool
 	enabled          bool
 
@@ -74,8 +74,8 @@ func init() {
 	CreateCmd.Flags().StringVar(&cron, "cron", utils.EMPTY, "Cron expression (required)")
 	CreateCmd.Flags().StringVar(&reportTypes, "report-types", utils.EMPTY, "Comma-separated report types (required): summary-pdf, summary-csv, detailed-pdf, detailed-csv, unpaid-invoices, all-invoices")
 	CreateCmd.Flags().StringVar(&timePeriod, "time-period", utils.EMPTY, "Time period covered by each run (required), e.g. now(), now()-1d, now()-1h")
-	CreateCmd.Flags().StringVar(&clientIDs, "client-ids", utils.EMPTY, "Comma-separated client IDs to include (empty = all)")
-	CreateCmd.Flags().StringVar(&projectIDs, "project-ids", utils.EMPTY, "Comma-separated project IDs to include (empty = all)")
+	CreateCmd.Flags().StringArrayVarP(&clientIDs, "client", "c", nil, "Client ID to include (repeatable; empty = all)")
+	CreateCmd.Flags().StringArrayVarP(&projectIDs, "project", "p", nil, "Project ID to include (repeatable; empty = all)")
 	CreateCmd.Flags().BoolVar(&includeFinancial, "include-financial", false, "Include financial figures in the exported reports")
 	CreateCmd.Flags().BoolVar(&enabled, "enabled", true, "Whether the job is enabled")
 

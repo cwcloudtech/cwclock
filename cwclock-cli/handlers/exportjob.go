@@ -17,8 +17,8 @@ type ExportJobFields struct {
 	Cron             string
 	ReportTypes      string
 	TimePeriod       string
-	ClientIDs        string
-	ProjectIDs       string
+	ClientIDs        []string
+	ProjectIDs       []string
 	IncludeFinancial bool
 	Enabled          bool
 }
@@ -98,8 +98,8 @@ func (f ExportJobFields) toPayload(targets []client.ExportTarget) client.ExportJ
 		Targets:          targets,
 		ReportTypes:      parseCommaList(f.ReportTypes),
 		TimePeriod:       f.TimePeriod,
-		ClientIDs:        parseCommaList(f.ClientIDs),
-		ProjectIDs:       parseCommaList(f.ProjectIDs),
+		ClientIDs:        normalizeIDs(f.ClientIDs),
+		ProjectIDs:       normalizeIDs(f.ProjectIDs),
 		IncludeFinancial: f.IncludeFinancial,
 		Enabled:          f.Enabled,
 	}
@@ -134,11 +134,11 @@ func mergeExportJobFields(current client.ExportJob, fields ExportJobFields, chan
 	if changed["time-period"] {
 		payload.TimePeriod = fields.TimePeriod
 	}
-	if changed["client-ids"] {
-		payload.ClientIDs = parseCommaList(fields.ClientIDs)
+	if changed["client"] {
+		payload.ClientIDs = normalizeIDs(fields.ClientIDs)
 	}
-	if changed["project-ids"] {
-		payload.ProjectIDs = parseCommaList(fields.ProjectIDs)
+	if changed["project"] {
+		payload.ProjectIDs = normalizeIDs(fields.ProjectIDs)
 	}
 	if changed["include-financial"] {
 		payload.IncludeFinancial = fields.IncludeFinancial

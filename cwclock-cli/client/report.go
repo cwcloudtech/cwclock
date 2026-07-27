@@ -21,6 +21,7 @@ type ReportRequest struct {
 	DateRangeStart string          `json:"dateRangeStart"`
 	DateRangeEnd   string          `json:"dateRangeEnd"`
 	Clients        *ReportIDFilter `json:"clients,omitempty"`
+	Projects       *ReportIDFilter `json:"projects,omitempty"`
 }
 
 func reportPath(orgID string, reportType string) string {

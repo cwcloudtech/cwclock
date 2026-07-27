@@ -14,15 +14,15 @@ var (
 	cron             string
 	reportTypes      string
 	timePeriod       string
-	clientIDs        string
-	projectIDs       string
+	clientIDs        []string
+	projectIDs       []string
 	includeFinancial bool
 	enabled          bool
 	format           string
 )
 
 var fieldFlagNames = []string{
-	"name", "cron", "report-types", "time-period", "client-ids", "project-ids",
+	"name", "cron", "report-types", "time-period", "client", "project",
 	"include-financial", "enabled",
 }
 
@@ -59,8 +59,8 @@ func init() {
 	UpdateCmd.Flags().StringVar(&cron, "cron", utils.EMPTY, "Cron expression")
 	UpdateCmd.Flags().StringVar(&reportTypes, "report-types", utils.EMPTY, "Comma-separated report types: summary-pdf, summary-csv, detailed-pdf, detailed-csv, unpaid-invoices, all-invoices")
 	UpdateCmd.Flags().StringVar(&timePeriod, "time-period", utils.EMPTY, "Time period covered by each run, e.g. now(), now()-1d, now()-1h")
-	UpdateCmd.Flags().StringVar(&clientIDs, "client-ids", utils.EMPTY, "Comma-separated client IDs to include (empty = all)")
-	UpdateCmd.Flags().StringVar(&projectIDs, "project-ids", utils.EMPTY, "Comma-separated project IDs to include (empty = all)")
+	UpdateCmd.Flags().StringArrayVarP(&clientIDs, "client", "c", nil, "Client ID to include (repeatable; empty = all)")
+	UpdateCmd.Flags().StringArrayVarP(&projectIDs, "project", "p", nil, "Project ID to include (repeatable; empty = all)")
 	UpdateCmd.Flags().BoolVar(&includeFinancial, "include-financial", false, "Include financial figures in the exported reports")
 	UpdateCmd.Flags().BoolVar(&enabled, "enabled", false, "Whether the job is enabled")
 	UpdateCmd.Flags().StringVarP(&format, "format", "f", utils.EMPTY, "Output format override: pretty|json")

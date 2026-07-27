@@ -45,14 +45,6 @@ func resolveOrgID(override string) (string, error) {
 	return orgID, nil
 }
 
-func resolveClientID(override string) (string, error) {
-	clientID := strings.TrimSpace(override)
-	if utils.IsBlank(clientID) {
-		return utils.EMPTY, fmt.Errorf("client id is required: set it with 'cwclock configure set client_id <id>' or use --client")
-	}
-	return clientID, nil
-}
-
 func resolveProjectID(override string) (string, error) {
 	projectID := strings.TrimSpace(override)
 	if utils.IsBlank(projectID) {
@@ -61,22 +53,55 @@ func resolveProjectID(override string) (string, error) {
 	return projectID, nil
 }
 
-func HandleRecordStart(text string, clientOverride string, projectOverride string) error {
+// resolveClientAndProject resolves the mandatory project id and, when
+// clientOverride is blank, infers its client by looking the project up
+// server-side (a project belongs to exactly one client, so the client id
+// doesn't need to be repeated on the command line - see ai-instruct-96).
+func resolveClientAndProject(orgID string, clientOverride string, projectOverride string) (clientID string, projectID string, err error) {
+	projectID, err = resolveProjectID(projectOverride)
+	if err != nil {
+		return utils.EMPTY, utils.EMPTY, err
+	}
+
+	if trimmed := strings.TrimSpace(clientOverride); utils.IsNotBlank(trimmed) {
+		return trimmed, projectID, nil
+	}
+
+	cli, err := client.NewClient()
+	if err != nil {
+		return utils.EMPTY, utils.EMPTY, err
+	}
+
+	projects, err := cli.ListProjects(orgID, utils.EMPTY)
+	if err != nil {
+		return utils.EMPTY, utils.EMPTY, err
+	}
+
+	for _, p := range projects {
+		if p.ID == projectID {
+			return p.ClientID, projectID, nil
+		}
+	}
+
+	return utils.EMPTY, utils.EMPTY, fmt.Errorf("could not find project %q to infer its client: use --client", projectID)
+}
+
+func HandleRecordStart(orgOverride string, text string, clientOverride string, projectOverride string) error {
 	statePath, err := timerStatePath()
 	if err != nil {
 		return err
 	}
 
 	if _, err := os.Stat(statePath); err == nil {
-		return fmt.Errorf("a timer is already running; stop it first with --stop")
+		return fmt.Errorf("a timer is already running; stop it first with 'cwclock record stop'")
 	}
 
-	clientID, err := resolveClientID(clientOverride)
+	orgID, err := resolveOrgID(orgOverride)
 	if err != nil {
 		return err
 	}
 
-	projectID, err := resolveProjectID(projectOverride)
+	clientID, projectID, err := resolveClientAndProject(orgID, clientOverride, projectOverride)
 	if err != nil {
 		return err
 	}
@@ -109,7 +134,7 @@ func HandleRecordStop(orgOverride string, textOverride string, formatOverride st
 
 	data, err := os.ReadFile(statePath)
 	if err != nil {
-		return fmt.Errorf("no timer is currently running; start one with --start")
+		return fmt.Errorf("no timer is currently running; start one with 'cwclock record start'")
 	}
 
 	var state timerState
@@ -172,12 +197,7 @@ func HandleRecordCreateRange(orgOverride string, clientOverride string, projectO
 		return err
 	}
 
-	clientID, err := resolveClientID(clientOverride)
-	if err != nil {
-		return err
-	}
-
-	projectID, err := resolveProjectID(projectOverride)
+	clientID, projectID, err := resolveClientAndProject(orgID, clientOverride, projectOverride)
 	if err != nil {
 		return err
 	}

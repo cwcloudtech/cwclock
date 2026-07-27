@@ -12,7 +12,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-func HandleInvoicePreview(orgOverride string, clientID string, beginExpr string, endExpr string, toExpr string, outputOverride string) error {
+func HandleInvoicePreview(orgOverride string, clientID string, projectIDs []string, beginExpr string, endExpr string, toExpr string, outputOverride string) error {
 	trimmedClientID := strings.TrimSpace(clientID)
 	if utils.IsBlank(trimmedClientID) {
 		return fmt.Errorf("client id is required: use --client")
@@ -37,6 +37,7 @@ func HandleInvoicePreview(orgOverride string, clientID string, beginExpr string,
 		ClientID:       trimmedClientID,
 		DateRangeStart: start,
 		DateRangeEnd:   end,
+		ProjectIDs:     normalizeIDs(projectIDs),
 	})
 	if err != nil {
 		return err
@@ -51,7 +52,7 @@ func HandleInvoicePreview(orgOverride string, clientID string, beginExpr string,
 	return nil
 }
 
-func HandleInvoiceGenerate(orgOverride string, clientID string, beginExpr string, endExpr string, toExpr string, outputOverride string, formatOverride string) error {
+func HandleInvoiceGenerate(orgOverride string, clientID string, projectIDs []string, beginExpr string, endExpr string, toExpr string, outputOverride string, formatOverride string) error {
 	trimmedClientID := strings.TrimSpace(clientID)
 	if utils.IsBlank(trimmedClientID) {
 		return fmt.Errorf("client id is required: use --client")
@@ -76,6 +77,7 @@ func HandleInvoiceGenerate(orgOverride string, clientID string, beginExpr string
 		ClientID:       trimmedClientID,
 		DateRangeStart: start,
 		DateRangeEnd:   end,
+		ProjectIDs:     normalizeIDs(projectIDs),
 	})
 	if err != nil {
 		return err

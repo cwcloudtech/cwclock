@@ -38,6 +38,22 @@ func resolveDateRangeParams(beginExpr string, endExpr string, toExpr string) (st
 	return begin.Format(dateRangeTimeLayout), endTime.Format(dateRangeTimeLayout), nil
 }
 
+// normalizeIDs trims a repeatable id flag's values (e.g. --client, --project
+// passed multiple times) and drops any blanks, returning nil when nothing is
+// left so it serializes as an omitted field rather than an empty array.
+func normalizeIDs(values []string) []string {
+	result := make([]string, 0, len(values))
+	for _, v := range values {
+		if trimmed := strings.TrimSpace(v); utils.IsNotBlank(trimmed) {
+			result = append(result, trimmed)
+		}
+	}
+	if len(result) == 0 {
+		return nil
+	}
+	return result
+}
+
 // dayPart extracts the leading "YYYY-MM-DD" from a dateRangeTimeLayout
 // string, matching cwclock-api's own dayPart used to filter by day.
 func dayPart(v string) string {

@@ -11,9 +11,10 @@ var validExportTypes = []string{"summary", "detailed"}
 var validExportFileFormats = []string{"pdf", "csv"}
 
 // HandleExport downloads a summary or detailed time report as a PDF or CSV
-// file, optionally filtered to one client - unlike an invoice, a report
-// covers every client by default (see cwclock-api's exportRequest.Clients).
-func HandleExport(orgOverride string, clientID string, beginExpr string, endExpr string, toExpr string, reportType string, fileFormat string, outputOverride string) error {
+// file, optionally filtered to one or more clients/projects - unlike an
+// invoice, a report covers every client by default (see cwclock-api's
+// exportRequest.Clients/Projects).
+func HandleExport(orgOverride string, clientIDs []string, projectIDs []string, beginExpr string, endExpr string, toExpr string, reportType string, fileFormat string, outputOverride string) error {
 	normalizedType := strings.ToLower(strings.TrimSpace(reportType))
 	if utils.IsBlank(normalizedType) {
 		normalizedType = "summary"
@@ -50,8 +51,11 @@ func HandleExport(orgOverride string, clientID string, beginExpr string, endExpr
 		DateRangeStart: start,
 		DateRangeEnd:   end,
 	}
-	if trimmedClientID := strings.TrimSpace(clientID); utils.IsNotBlank(trimmedClientID) {
-		req.Clients = &client.ReportIDFilter{IDs: []string{trimmedClientID}}
+	if normalizedClientIDs := normalizeIDs(clientIDs); len(normalizedClientIDs) > 0 {
+		req.Clients = &client.ReportIDFilter{IDs: normalizedClientIDs}
+	}
+	if normalizedProjectIDs := normalizeIDs(projectIDs); len(normalizedProjectIDs) > 0 {
+		req.Projects = &client.ReportIDFilter{IDs: normalizedProjectIDs}
 	}
 
 	data, filename, err := cli.GenerateReport(orgID, normalizedType, req)

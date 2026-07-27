@@ -9,13 +9,14 @@ import (
 )
 
 var (
-	orgID    string
-	clientID string
-	begin    string
-	end      string
-	to       string
-	output   string
-	format   string
+	orgID      string
+	clientID   string
+	projectIDs []string
+	begin      string
+	end        string
+	to         string
+	output     string
+	format     string
 )
 
 var GenerateCmd = &cobra.Command{
@@ -23,7 +24,7 @@ var GenerateCmd = &cobra.Command{
 	Short: "Generate and save an invoice",
 	Long:  `This command renders an invoice PDF for a client over a date range, saves it under its own invoice number, and streams the same PDF back as a download.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := handlers.HandleInvoiceGenerate(orgID, clientID, begin, end, to, output, format)
+		err := handlers.HandleInvoiceGenerate(orgID, clientID, projectIDs, begin, end, to, output, format)
 		utils.ExitIfError(err)
 	},
 }
@@ -32,6 +33,7 @@ func init() {
 	GenerateCmd.DisableFlagsInUseLine = true
 	GenerateCmd.Flags().StringVar(&orgID, "org", utils.EMPTY, "Organization ID (overrides configured org_id)")
 	GenerateCmd.Flags().StringVarP(&clientID, "client", "c", utils.EMPTY, "Client ID (required)")
+	GenerateCmd.Flags().StringArrayVarP(&projectIDs, "project", "p", nil, "Project ID to include (repeatable; empty = every project)")
 	GenerateCmd.Flags().StringVar(&begin, "begin", utils.EMPTY, "Begin date/time: ISO-8601 or now()/now()-1h/now()-1d style expression (required)")
 	GenerateCmd.Flags().StringVar(&end, "end", utils.EMPTY, "End date/time: ISO-8601 or now()/now()-1h/now()-1d style expression")
 	GenerateCmd.Flags().StringVar(&to, "to", utils.EMPTY, "Alias of --end")
