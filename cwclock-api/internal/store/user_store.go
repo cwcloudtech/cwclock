@@ -270,7 +270,7 @@ func (s *UserStore) ConfirmTOTP(ctx context.Context, id string) (models.User, er
 // DisableTOTP removes id's TOTP secret and, when keepEnabled is false (the
 // user has no other MFA factor left), turns MFA back off entirely.
 func (s *UserStore) DisableTOTP(ctx context.Context, id string, keepEnabled bool) (models.User, error) {
-	patch, err := json.Marshal(map[string]any{"mfaTotpSecret": "", "mfaEnabled": keepEnabled})
+	patch, err := json.Marshal(map[string]any{"mfaTotpSecret": utils.EMPTY, "mfaEnabled": keepEnabled})
 	if err != nil {
 		return models.User{}, err
 	}

@@ -1,14 +1,16 @@
 package utils
 
-import "strings"
+import (
+	"strings"
+)
 
 func FormatWebAgentMessage(raw string) string {
 	if !strings.HasPrefix(raw, "command: cwclock ") || !strings.Contains(raw, "\noutput:\n") {
 		return raw
 	}
 
-	command := ""
-	exitCode := ""
+	command := EMPTY
+	exitCode := EMPTY
 	lines := strings.Split(raw, "\n")
 	for _, line := range lines {
 		if strings.HasPrefix(line, "command: ") {

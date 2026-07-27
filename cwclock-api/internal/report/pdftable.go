@@ -48,7 +48,7 @@ func drawTable(pdf *fpdf.Fpdf, translate func(string) string, columns []tableCol
 	}
 
 	drawHeader := func() {
-		pdf.SetFont("", "B", tableFontSizePt)
+		pdf.SetFont(utils.EMPTY, "B", tableFontSizePt)
 		pdf.SetFillColor(28, 185, 247)
 		y := pdf.GetY()
 		x := left
@@ -75,7 +75,7 @@ func drawTable(pdf *fpdf.Fpdf, translate func(string) string, columns []tableCol
 				strs[j] = string(l)
 			}
 			if len(strs) == 0 {
-				strs = []string{""}
+				strs = []string{utils.EMPTY}
 			}
 			lines[i] = strs
 			if len(strs) > maxLines {
@@ -93,7 +93,7 @@ func drawTable(pdf *fpdf.Fpdf, translate func(string) string, columns []tableCol
 		x := left
 		for i := range columns {
 			for j := 0; j < maxLines; j++ {
-				line := ""
+				line := utils.EMPTY
 				if j < len(lines[i]) {
 					line = lines[i][j]
 				}

@@ -190,7 +190,7 @@ func (s *s3Target) sign(req *http.Request, u *url.URL, body []byte) {
 	canonicalRequest := strings.Join([]string{
 		req.Method,
 		u.EscapedPath(),
-		"",
+		utils.EMPTY,
 		canonicalHeaders.String(),
 		signedHeaders,
 		payloadHash,

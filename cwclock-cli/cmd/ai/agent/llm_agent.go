@@ -33,9 +33,9 @@ type LLMAgent struct {
 func NewLLMAgent(serverURL string, modelName string, provider string) *LLMAgent {
 	providerName := strings.ToLower(strings.TrimSpace(provider))
 
-	baseURL := ""
-	apiKey := ""
-	defaultModel := ""
+	baseURL := utils.EMPTY
+	apiKey := utils.EMPTY
+	defaultModel := utils.EMPTY
 
 	switch providerName {
 	case "openrouter":
@@ -286,7 +286,7 @@ func (agent *LLMAgent) ProcessPrompt(prompt string) (string, error) {
 
 	result, err := agent.ProcessConversationWithUsage(messages, AgentSettings{})
 	if err != nil {
-		return "", err
+		return utils.EMPTY, err
 	}
 	return result.Response, nil
 }
@@ -295,7 +295,7 @@ func (agent *LLMAgent) ProcessPrompt(prompt string) (string, error) {
 func (agent *LLMAgent) ProcessConversation(messages []AgentConversationMessage, settings AgentSettings) (string, error) {
 	result, err := agent.ProcessConversationWithUsage(messages, settings)
 	if err != nil {
-		return "", err
+		return utils.EMPTY, err
 	}
 	return result.Response, nil
 }
@@ -348,7 +348,7 @@ func (agent *LLMAgent) ProcessConversationWithUsage(messages []AgentConversation
 	openAITools := make([]OpenAITool, 0, len(toolsResp.Tools))
 	geminiTools := make([]GeminiTool, 0, len(toolsResp.Tools))
 	for _, tool := range toolsResp.Tools {
-		description := ""
+		description := utils.EMPTY
 		if utils.IsNotEmpty(tool.Description) {
 			description = *tool.Description
 		}
@@ -414,13 +414,13 @@ func (agent *LLMAgent) ProcessConversationWithUsage(messages []AgentConversation
 		128,
 		func(tool GeminiTool) string {
 			if len(tool.FunctionDeclarations) == 0 {
-				return ""
+				return utils.EMPTY
 			}
 			return tool.FunctionDeclarations[0].Name
 		},
 		func(tool GeminiTool) string {
 			if len(tool.FunctionDeclarations) == 0 {
-				return ""
+				return utils.EMPTY
 			}
 			return tool.FunctionDeclarations[0].Description
 		},
@@ -457,7 +457,7 @@ func latestUserMessage(messages []AgentConversationMessage) string {
 		}
 	}
 
-	return ""
+	return utils.EMPTY
 }
 
 func (agent *LLMAgent) buildDynamicRunCommandSchema(ctx context.Context) map[string]interface{} {
@@ -716,7 +716,7 @@ func (agent *LLMAgent) runAnthropic(ctx context.Context, messages []AgentConvers
 		}
 	}
 
-	return &ConversationResult{Response: "", Usage: tokenUsage}, nil
+	return &ConversationResult{Response: utils.EMPTY, Usage: tokenUsage}, nil
 }
 
 func (agent *LLMAgent) runGemini(ctx context.Context, messages []AgentConversationMessage, maxTokens int, geminiTools []GeminiTool) (*ConversationResult, error) {
@@ -774,7 +774,7 @@ func (agent *LLMAgent) runGemini(ctx context.Context, messages []AgentConversati
 					Total:      resp.UsageMetadata.TotalTokenCount,
 				}
 			}
-			return &ConversationResult{Response: "", Usage: tokenUsage}, nil
+			return &ConversationResult{Response: utils.EMPTY, Usage: tokenUsage}, nil
 		}
 
 		candidate := resp.Candidates[0]
@@ -875,7 +875,7 @@ func (agent *LLMAgent) runOpenAI(ctx context.Context, messages []AgentConversati
 	}
 
 	if len(resp.Choices) == 0 {
-		return &ConversationResult{Response: "", Usage: tokenUsage}, nil
+		return &ConversationResult{Response: utils.EMPTY, Usage: tokenUsage}, nil
 	}
 
 	msg := resp.Choices[0].Message
@@ -1066,11 +1066,11 @@ func (agent *LLMAgent) callOpenAI(ctx context.Context, req OpenAIChatCompletionR
 func (agent *LLMAgent) callTool(ctx context.Context, toolName string, args map[string]interface{}) (string, error) {
 	result, err := agent.client.CallTool(ctx, toolName, args)
 	if err != nil {
-		return "", fmt.Errorf("failed to call tool %s: %w", toolName, err)
+		return utils.EMPTY, fmt.Errorf("failed to call tool %s: %w", toolName, err)
 	}
 
 	if result == nil || len(result.Content) == 0 {
-		return "", nil
+		return utils.EMPTY, nil
 	}
 
 	output := make([]string, 0, len(result.Content))
@@ -1089,7 +1089,7 @@ func (agent *LLMAgent) callTool(ctx context.Context, toolName string, args map[s
 	}
 
 	if len(output) == 0 {
-		return "", nil
+		return utils.EMPTY, nil
 	}
 
 	return strings.Join(output, "\n"), nil

@@ -41,8 +41,8 @@ func init() {
 	BootstrapCmd.DisableFlagsInUseLine = true
 	BootstrapCmd.Flags().StringVarP(&releaseName, "release", "r", "cwclock", "Release name for deployment (default: cwclock)")
 	BootstrapCmd.Flags().StringVarP(&nameSpace, "namespace", "n", "cwclock", "Namespace to use for deployment (default: cwclock)")
-	BootstrapCmd.Flags().StringVarP(&clusterName, "kind-cluster", "c", "", "Kind cluster name (optional)")
-	BootstrapCmd.Flags().StringVarP(&directory, "directory", "D", "", "Helm chart directory (overrides default_helm_directory/env.DIRECTORY and skips git clone)")
+	BootstrapCmd.Flags().StringVarP(&clusterName, "kind-cluster", "c", utils.EMPTY, "Kind cluster name (optional)")
+	BootstrapCmd.Flags().StringVarP(&directory, "directory", "D", utils.EMPTY, "Helm chart directory (overrides default_helm_directory/env.DIRECTORY and skips git clone)")
 	BootstrapCmd.Flags().BoolVarP(&keepDir, "keep-dir", "k", false, "Keep the local helm directory")
 	BootstrapCmd.Flags().BoolVarP(&recreateNs, "recreate-ns", "d", false, "Recreate the namespace")
 	BootstrapCmd.Flags().BoolVarP(&openshift, "openshift", "o", false, "Use openshift cli instead of kubectl")
@@ -133,15 +133,15 @@ func init() {
 
 	configureCmd.Flags().StringVarP(&releaseName, "release", "r", "cwclock", "Release name for deployment (default: cwclock)")
 	configureCmd.Flags().StringVarP(&nameSpace, "namespace", "n", "cwclock", "Namespace to use for deployment (default: cwclock)")
-	configureCmd.Flags().StringVarP(&clusterName, "kind-cluster", "c", "", "Kind cluster name (optional)")
-	configureCmd.Flags().StringVarP(&directory, "directory", "D", "", "Helm chart directory (overrides default_helm_directory/env.DIRECTORY and skips git clone)")
+	configureCmd.Flags().StringVarP(&clusterName, "kind-cluster", "c", utils.EMPTY, "Kind cluster name (optional)")
+	configureCmd.Flags().StringVarP(&directory, "directory", "D", utils.EMPTY, "Helm chart directory (overrides default_helm_directory/env.DIRECTORY and skips git clone)")
 	configureCmd.Flags().BoolVarP(&keepDir, "keep-dir", "k", false, "Keep the local helm directory")
 	configureCmd.Flags().StringArrayVarP(&otherValues, "value", "p", []string{}, `Values to override other configurations (e.g. --value key=value --value key2=value2)`)
 	configureCmd.Flags().StringArrayVar(&otherValues, "values", []string{}, `Alias of --value`)
 
 	// Configure subcommand flags
-	configureCmd.Flags().StringVarP(&tempRepoURL, "repo-url", "u", "", "Temporary repository URL")
-	configureCmd.Flags().StringVarP(&tempBranch, "branch", "b", "", "Temporary branch name")
+	configureCmd.Flags().StringVarP(&tempRepoURL, "repo-url", "u", utils.EMPTY, "Temporary repository URL")
+	configureCmd.Flags().StringVarP(&tempBranch, "branch", "b", utils.EMPTY, "Temporary branch name")
 	configureCmd.Flags().StringVar(&tempUsername, "username", "U", "Username for repository authentication")
 	configureCmd.Flags().StringVar(&tempPassword, "password", "P", "Password for repository authentication")
 

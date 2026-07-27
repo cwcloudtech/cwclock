@@ -21,7 +21,7 @@ type DisplayMetricSample struct {
 }
 
 func GetMetrics() ([]MetricSample, error) {
-	return fetchAndParseMetrics("", "")
+	return fetchAndParseMetrics(utils.EMPTY, utils.EMPTY)
 }
 
 func GetMetricByName(name string, filter string) ([]MetricSample, error) {
@@ -97,19 +97,19 @@ func matchesMetricNameFilter(metricName string, filterName string) bool {
 
 func parseLabelFilter(filter string) (string, string, error) {
 	if utils.IsBlank(filter) {
-		return "", "", nil
+		return utils.EMPTY, utils.EMPTY, nil
 	}
 
 	trimmed := strings.TrimSpace(filter)
 	sepIdx := strings.IndexAny(trimmed, ":=")
 	if sepIdx < 0 {
-		return "", "", fmt.Errorf("invalid filter format %q: expected label:value or label=value", filter)
+		return utils.EMPTY, utils.EMPTY, fmt.Errorf("invalid filter format %q: expected label:value or label=value", filter)
 	}
 
 	key := strings.TrimSpace(trimmed[:sepIdx])
 	value := strings.TrimSpace(trimmed[sepIdx+1:])
 	if utils.IsBlank(key) || utils.IsBlank(value) {
-		return "", "", fmt.Errorf("invalid filter format %q: expected label:value or label=value", filter)
+		return utils.EMPTY, utils.EMPTY, fmt.Errorf("invalid filter format %q: expected label:value or label=value", filter)
 	}
 
 	return key, value, nil

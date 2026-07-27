@@ -14,6 +14,8 @@ import (
 	"text/tabwriter"
 )
 
+const EMPTY = ""
+
 func If[T any](cond bool, vtrue, vfalse T) T {
 	if cond {
 		return vtrue
@@ -22,7 +24,7 @@ func If[T any](cond bool, vtrue, vfalse T) T {
 }
 
 func IsNotBlank(str string) bool {
-	return len(str) > 0 && strings.TrimSpace(str) != ""
+	return len(str) > 0 && strings.TrimSpace(str) != EMPTY
 }
 
 func IsBlank(str string) bool {
@@ -134,7 +136,7 @@ func PromptUserForValue() string {
 	value, err := reader.ReadString('\n')
 	if nil != err {
 		fmt.Println("An error occured while reading input. Please try again", err)
-		return ""
+		return EMPTY
 	}
 
 	// remove the delimeter from the string
@@ -152,7 +154,7 @@ func PrintJson(class interface{}) {
 func PrintHeader(class interface{}) {
 	values := reflect.ValueOf(class)
 	typesOf := values.Type()
-	headerMsg := ""
+	headerMsg := EMPTY
 	for i := 0; i < values.NumField(); i++ {
 		headerMsg = fmt.Sprintf("%s%s\t", headerMsg, typesOf.Field(i).Name)
 	}
@@ -197,7 +199,7 @@ func PrintMultiRow(type_class interface{}, class interface{}) {
 	s := reflect.ValueOf(class)
 	for i := 0; i < s.Len(); i++ {
 		v := reflect.Indirect(s.Index(i))
-		valuesMsg := ""
+		valuesMsg := EMPTY
 		for i := 0; i < v.NumField(); i++ {
 			valuesMsg = fmt.Sprintf("%s%v\t", valuesMsg, v.Field(i).Interface())
 		}
@@ -239,7 +241,7 @@ func PrintDynamicTable(rows []map[string]interface{}) {
 
 func formatDynamicValue(value interface{}) string {
 	if value == nil {
-		return ""
+		return EMPTY
 	}
 
 	switch typedValue := value.(type) {
@@ -277,7 +279,7 @@ func JsonInlinePrint(in string) string {
 
 func JsonPrettyPrint(in string) string {
 	var out bytes.Buffer
-	err := json.Indent(&out, []byte(in), "", "\t")
+	err := json.Indent(&out, []byte(in), EMPTY, "\t")
 	if nil != err {
 		return in
 	}
@@ -290,7 +292,7 @@ func ExitIfError(err error) {
 }
 
 func ExitIfErrorWithouMsg(err error) {
-	ExitIfNeeded("", nil != err)
+	ExitIfNeeded(EMPTY, nil != err)
 }
 
 func ExitIfErrorWithMsg(msg string, err error) {
@@ -317,7 +319,7 @@ func GetSystemEditor() string {
 
 func ShortName(name string, hash string) string {
 	if IsBlank(name) {
-		return ""
+		return EMPTY
 	}
 
 	if IsBlank(hash) {

@@ -43,11 +43,11 @@ var UpdateCmd = &cobra.Command{
 
 func init() {
 	UpdateCmd.DisableFlagsInUseLine = true
-	UpdateCmd.Flags().StringVarP(&id, "id", "i", "", "User ID to update (required)")
-	UpdateCmd.Flags().StringVar(&email, "email", "", "Email")
-	UpdateCmd.Flags().StringVar(&name, "name", "", "First name")
-	UpdateCmd.Flags().StringVar(&surname, "surname", "", "Surname")
-	UpdateCmd.Flags().StringVar(&role, "role", "", "Global role: superuser, confirmed, disabled or ban")
-	UpdateCmd.Flags().StringVar(&password, "password", "", "New password")
-	UpdateCmd.Flags().StringVarP(&format, "format", "f", "", "Output format override: pretty|json")
+	UpdateCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "User ID to update (required)")
+	UpdateCmd.Flags().StringVar(&email, "email", utils.EMPTY, "Email")
+	UpdateCmd.Flags().StringVar(&name, "name", utils.EMPTY, "First name")
+	UpdateCmd.Flags().StringVar(&surname, "surname", utils.EMPTY, "Surname")
+	UpdateCmd.Flags().StringVar(&role, "role", utils.EMPTY, "Global role: superuser, confirmed, disabled or ban")
+	UpdateCmd.Flags().StringVar(&password, "password", utils.EMPTY, "New password")
+	UpdateCmd.Flags().StringVarP(&format, "format", "f", utils.EMPTY, "Output format override: pretty|json")
 }

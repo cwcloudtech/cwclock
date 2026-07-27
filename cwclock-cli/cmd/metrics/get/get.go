@@ -29,7 +29,7 @@ Example: cwclock metrics get cpu_all --filter instance:node-1`,
 }
 
 func init() {
-	GetCmd.Flags().StringVarP(&format, "format", "f", "", "Output format override: pretty|json")
+	GetCmd.Flags().StringVarP(&format, "format", "f", utils.EMPTY, "Output format override: pretty|json")
 	GetCmd.Flags().BoolVar(&valueOnly, "value", false, "Display only raw sample value(s), one per line")
-	GetCmd.Flags().StringVar(&filter, "filter", "", "Filter samples by label, format: label:value or label=value")
+	GetCmd.Flags().StringVar(&filter, "filter", utils.EMPTY, "Filter samples by label, format: label:value or label=value")
 }

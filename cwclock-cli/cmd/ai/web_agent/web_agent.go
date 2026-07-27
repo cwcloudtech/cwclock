@@ -231,7 +231,7 @@ func handleGitLabWebhook(w http.ResponseWriter, r *http.Request, llmAgent *agent
 
 	trigger := fmt.Sprintf("!%s", config.GetAgentName())
 	prompt := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(event.ObjectAttributes.Note), trigger))
-	responseText := ""
+	responseText := utils.EMPTY
 	if utils.IsBlank(prompt) {
 		responseText = fmt.Sprintf("Usage: %s <prompt>", trigger)
 	} else {
@@ -279,7 +279,7 @@ func isGitLabIssueCommand(event gitLabNoteEvent) (bool, string) {
 	note := strings.TrimSpace(event.ObjectAttributes.Note)
 	trigger := fmt.Sprintf("!%s", config.GetAgentName())
 	if strings.Contains(note, trigger) {
-		return true, ""
+		return true, utils.EMPTY
 	}
 
 	return false, fmt.Sprintf("not a command for the agent because it doesn't contain the trigger '%s'", trigger)

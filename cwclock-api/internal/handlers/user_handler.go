@@ -371,7 +371,7 @@ func (h *UserHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	h.redirectToLogin(w, r, "")
+	h.redirectToLogin(w, r, utils.EMPTY)
 }
 
 func (h *UserHandler) redirectToLogin(w http.ResponseWriter, r *http.Request, confirmError string) {

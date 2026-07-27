@@ -43,7 +43,7 @@ var ConnectionCmd = &cobra.Command{
 		if hasOffset && hasType {
 			fmt.Println("Error: specify only one of --type (create) or --offset (delete)")
 			cmd.Help()
-			utils.ExitIfNeeded("", true)
+			utils.ExitIfNeeded(utils.EMPTY, true)
 			return
 		}
 
@@ -71,24 +71,24 @@ var ConnectionCmd = &cobra.Command{
 
 func init() {
 	ConnectionCmd.DisableFlagsInUseLine = true
-	ConnectionCmd.Flags().StringVarP(&id, "id", "i", "", "Organization ID (required)")
-	ConnectionCmd.Flags().StringVar(&connType, "type", "", "Connection type: s3, google_drive or git (create)")
-	ConnectionCmd.Flags().StringVar(&endpoint, "endpoint", "", "S3 endpoint (s3)")
-	ConnectionCmd.Flags().StringVar(&bucketName, "bucket-name", "", "S3 bucket name (s3)")
-	ConnectionCmd.Flags().StringVar(&region, "region", "", "S3 region (s3)")
-	ConnectionCmd.Flags().StringVar(&accessKey, "access-key", "", "S3 access key (s3)")
-	ConnectionCmd.Flags().StringVar(&secretKey, "secret-key", "", "S3 secret key (s3)")
-	ConnectionCmd.Flags().StringVar(&serviceAccountBase64, "service-account-base64", "", "Base64-encoded Google service account (google_drive)")
-	ConnectionCmd.Flags().StringVar(&folderID, "folder-id", "", "Google Drive folder ID (google_drive)")
-	ConnectionCmd.Flags().StringVar(&repoURL, "repo-url", "", "Git repository URL (git)")
-	ConnectionCmd.Flags().StringVar(&username, "username", "", "Git username (git, with --password)")
-	ConnectionCmd.Flags().StringVar(&password, "password", "", "Git password (git, with --username)")
-	ConnectionCmd.Flags().StringVar(&sshPrivateKey, "ssh-private-key", "", "Git SSH private key (git)")
-	ConnectionCmd.Flags().StringVar(&sshPrivateKeyPassphrase, "ssh-private-key-passphrase", "", "Git SSH private key passphrase (git)")
-	ConnectionCmd.Flags().StringVar(&path, "path", "", "Optional destination subfolder")
+	ConnectionCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "Organization ID (required)")
+	ConnectionCmd.Flags().StringVar(&connType, "type", utils.EMPTY, "Connection type: s3, google_drive or git (create)")
+	ConnectionCmd.Flags().StringVar(&endpoint, "endpoint", utils.EMPTY, "S3 endpoint (s3)")
+	ConnectionCmd.Flags().StringVar(&bucketName, "bucket-name", utils.EMPTY, "S3 bucket name (s3)")
+	ConnectionCmd.Flags().StringVar(&region, "region", utils.EMPTY, "S3 region (s3)")
+	ConnectionCmd.Flags().StringVar(&accessKey, "access-key", utils.EMPTY, "S3 access key (s3)")
+	ConnectionCmd.Flags().StringVar(&secretKey, "secret-key", utils.EMPTY, "S3 secret key (s3)")
+	ConnectionCmd.Flags().StringVar(&serviceAccountBase64, "service-account-base64", utils.EMPTY, "Base64-encoded Google service account (google_drive)")
+	ConnectionCmd.Flags().StringVar(&folderID, "folder-id", utils.EMPTY, "Google Drive folder ID (google_drive)")
+	ConnectionCmd.Flags().StringVar(&repoURL, "repo-url", utils.EMPTY, "Git repository URL (git)")
+	ConnectionCmd.Flags().StringVar(&username, "username", utils.EMPTY, "Git username (git, with --password)")
+	ConnectionCmd.Flags().StringVar(&password, "password", utils.EMPTY, "Git password (git, with --username)")
+	ConnectionCmd.Flags().StringVar(&sshPrivateKey, "ssh-private-key", utils.EMPTY, "Git SSH private key (git)")
+	ConnectionCmd.Flags().StringVar(&sshPrivateKeyPassphrase, "ssh-private-key-passphrase", utils.EMPTY, "Git SSH private key passphrase (git)")
+	ConnectionCmd.Flags().StringVar(&path, "path", utils.EMPTY, "Optional destination subfolder")
 	ConnectionCmd.Flags().BoolVar(&flatDirectory, "flat-directory", false, "Upload directly at the destination root instead of nesting under YYYY/MM")
 	ConnectionCmd.Flags().IntVar(&offset, "offset", -1, "Offset of the connection to delete in the connections array (delete)")
-	ConnectionCmd.Flags().StringVarP(&format, "format", "f", "", "Output format override: pretty|json")
+	ConnectionCmd.Flags().StringVarP(&format, "format", "f", utils.EMPTY, "Output format override: pretty|json")
 
 	ConnectionCmd.AddCommand(ls.LsCmd)
 }

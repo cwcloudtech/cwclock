@@ -134,7 +134,7 @@ func icsEscape(s string) string {
 	replacer := strings.NewReplacer(
 		`\`, `\\`,
 		"\n", `\n`,
-		"\r", "",
+		"\r", utils.EMPTY,
 		",", `\,`,
 		";", `\;`,
 	)

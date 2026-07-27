@@ -24,6 +24,6 @@ var LsCmd = &cobra.Command{
 
 func init() {
 	LsCmd.DisableFlagsInUseLine = true
-	LsCmd.Flags().StringVarP(&orgID, "org", "o", "", "Organization ID (overrides configured org_id)")
-	LsCmd.Flags().StringVarP(&format, "format", "f", "", "Output format override: pretty|json")
+	LsCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
+	LsCmd.Flags().StringVarP(&format, "format", "f", utils.EMPTY, "Output format override: pretty|json")
 }

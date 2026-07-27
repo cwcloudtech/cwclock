@@ -240,7 +240,7 @@ func displayOrganizationsAsTable(orgs []client.Organization) {
 	table.SetColWidth(60)
 
 	if utils.IsEmpty(orgs) {
-		table.Append([]string{"No organizations available", "", "", ""})
+		table.Append([]string{"No organizations available", utils.EMPTY, utils.EMPTY, utils.EMPTY})
 		table.Render()
 		return
 	}

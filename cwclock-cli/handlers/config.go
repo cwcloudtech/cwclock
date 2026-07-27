@@ -37,7 +37,7 @@ var availableConfigKeys = []string{
 }
 
 func HandlerGetConfigKey(key string) {
-	value := config.GetConfigValue(key, "")
+	value := config.GetConfigValue(key, utils.EMPTY)
 	fmt.Printf("%v = %v\n", key, value)
 }
 
@@ -170,7 +170,7 @@ func getHomeDir() string {
 func readConfigFile(filename string) (string, error) {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return "", err
+		return utils.EMPTY, err
 	}
 
 	return string(data), nil

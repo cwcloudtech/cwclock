@@ -2,6 +2,7 @@ package pfw
 
 import (
 	"cwclock/handlers"
+	"cwclock/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -24,5 +25,5 @@ var PfwCmd = &cobra.Command{
 func init() {
 	PfwCmd.Flags().StringVarP(&nameSpace, "namespace", "n", "cwclock", "Namespace (default: cwclock)")
 	PfwCmd.Flags().BoolVarP(&openshift, "openshift", "o", false, "Use openshift cli instead of kubectl")
-	PfwCmd.Flags().StringVar(&configPath, "config", "", "Path to a YAML port-forward config file")
+	PfwCmd.Flags().StringVar(&configPath, "config", utils.EMPTY, "Path to a YAML port-forward config file")
 }

@@ -353,13 +353,13 @@ func runGitClean(directory string, config RepoConfig) error {
 
 func generateRandomPassword(length int) (string, error) {
 	if length <= 0 {
-		return "", fmt.Errorf("password length must be greater than 0")
+		return utils.EMPTY, fmt.Errorf("password length must be greater than 0")
 	}
 
 	byteLen := (length*3 + 3) / 4
 	randomBytes := make([]byte, byteLen)
 	if _, err := rand.Read(randomBytes); err != nil {
-		return "", fmt.Errorf("failed to generate random bytes: %w", err)
+		return utils.EMPTY, fmt.Errorf("failed to generate random bytes: %w", err)
 	}
 
 	return base64.RawURLEncoding.EncodeToString(randomBytes)[:length], nil
@@ -379,13 +379,13 @@ func replaceVariablesInValues(chartDirectory string, nameSpace string) (string, 
 	for _, pattern := range patterns {
 		matchedPaths, err := filepath.Glob(filepath.Join(chartDirectory, pattern))
 		if err != nil {
-			return "", fmt.Errorf("invalid values file pattern %q: %w", pattern, err)
+			return utils.EMPTY, fmt.Errorf("invalid values file pattern %q: %w", pattern, err)
 		}
 
 		for _, matchedPath := range matchedPaths {
 			fileInfo, err := os.Stat(matchedPath)
 			if err != nil {
-				return "", fmt.Errorf("failed to stat values file %q: %w", matchedPath, err)
+				return utils.EMPTY, fmt.Errorf("failed to stat values file %q: %w", matchedPath, err)
 			}
 
 			if !fileInfo.Mode().IsRegular() {
@@ -397,18 +397,18 @@ func replaceVariablesInValues(chartDirectory string, nameSpace string) (string, 
 	}
 
 	if len(valuesFilePaths) == 0 {
-		return "", fmt.Errorf("no values files found in %q", chartDirectory)
+		return utils.EMPTY, fmt.Errorf("no values files found in %q", chartDirectory)
 	}
 
 	password, err := generateRandomPassword(20)
 	if err != nil {
-		return "", fmt.Errorf("failed to generate password: %w", err)
+		return utils.EMPTY, fmt.Errorf("failed to generate password: %w", err)
 	}
 
 	for valuesFilePath := range valuesFilePaths {
 		content, err := os.ReadFile(valuesFilePath)
 		if err != nil {
-			return "", fmt.Errorf("failed to read values file %q: %w", valuesFilePath, err)
+			return utils.EMPTY, fmt.Errorf("failed to read values file %q: %w", valuesFilePath, err)
 		}
 
 		replacedContent := strings.ReplaceAll(string(content), "${{tenant-name}}", nameSpace)
@@ -528,22 +528,22 @@ func getSecretValue(nameSpace string, openshift bool, secretName string, entryNa
 
 	output, err := exec.Command(kubectlCommand, kubectlArgs...).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("error retrieving secret: %s", strings.TrimSpace(string(output))), ""
+		return fmt.Errorf("error retrieving secret: %s", strings.TrimSpace(string(output))), utils.EMPTY
 	}
 
 	var secret kubernetesSecret
 	if err := json.Unmarshal(output, &secret); err != nil {
-		return fmt.Errorf("error parsing secret JSON: %w", err), ""
+		return fmt.Errorf("error parsing secret JSON: %w", err), utils.EMPTY
 	}
 
 	pwdBase64, ok := secret.Data[entryName]
 	if !ok {
-		return fmt.Errorf("%s not found in secret", entryName), ""
+		return fmt.Errorf("%s not found in secret", entryName), utils.EMPTY
 	}
 
 	pwdBytes, err := base64.StdEncoding.DecodeString(pwdBase64)
 	if err != nil {
-		return fmt.Errorf("error decoding %s: %w", entryName, err), ""
+		return fmt.Errorf("error decoding %s: %w", entryName, err), utils.EMPTY
 	}
 
 	return nil, string(pwdBytes)
@@ -641,7 +641,7 @@ func runPortForward(nameSpace string, service string, port int, targetPort int, 
 		nameSpace,
 		"port-forward",
 		"svc/" + service,
-		"" + strconv.Itoa(targetPort) + ":" + strconv.Itoa(port),
+		utils.EMPTY + strconv.Itoa(targetPort) + ":" + strconv.Itoa(port),
 	}
 
 	log.Printf("Executing %s command: %s %s", kubectlCommand, kubectlCommand, strings.Join(kubectlArgs, " "))

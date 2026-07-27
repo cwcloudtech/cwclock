@@ -288,7 +288,7 @@ func discoverCwclockCommands(executable string) ([]commandSpec, error) {
 	}
 
 	queue := []queueEntry{{Path: []string{}}}
-	visited := map[string]bool{"": true}
+	visited := map[string]bool{utils.EMPTY: true}
 	collected := map[string]commandSpec{}
 
 	for len(queue) > 0 {

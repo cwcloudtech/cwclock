@@ -450,7 +450,7 @@ func displayExportJobsAsTable(jobs []client.ExportJob) {
 	table.SetColWidth(60)
 
 	if utils.IsEmpty(jobs) {
-		table.Append([]string{"No export jobs available", "", "", "", "", ""})
+		table.Append([]string{"No export jobs available", utils.EMPTY, utils.EMPTY, utils.EMPTY, utils.EMPTY, utils.EMPTY})
 		table.Render()
 		return
 	}
@@ -471,7 +471,7 @@ func displayExportTargetsAsTable(targets []client.ExportTarget) {
 	table.SetColWidth(60)
 
 	if utils.IsEmpty(targets) {
-		table.Append([]string{"", "No targets available", "", "", ""})
+		table.Append([]string{utils.EMPTY, "No targets available", utils.EMPTY, utils.EMPTY, utils.EMPTY})
 		table.Render()
 		return
 	}
@@ -487,7 +487,7 @@ func displayExportTargetsAsTable(targets []client.ExportTarget) {
 
 func connectionSummary(conn *client.ExternalConnection) string {
 	if conn == nil {
-		return ""
+		return utils.EMPTY
 	}
 	switch conn.Type {
 	case "s3":

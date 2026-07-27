@@ -42,7 +42,7 @@ func timerStatePath() (string, error) {
 	homeDir := getHomeDir()
 	dir := filepath.Join(homeDir, ".cwclock")
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		return "", err
+		return utils.EMPTY, err
 	}
 	return filepath.Join(dir, "timer.json"), nil
 }
@@ -53,7 +53,7 @@ func resolveOrgID(override string) (string, error) {
 		orgID = config.GetOrgID()
 	}
 	if utils.IsBlank(orgID) {
-		return "", fmt.Errorf("organization id is required: set it with 'cwclock configure set org_id <id>' or use --org")
+		return utils.EMPTY, fmt.Errorf("organization id is required: set it with 'cwclock configure set org_id <id>' or use --org")
 	}
 	return orgID, nil
 }
@@ -61,7 +61,7 @@ func resolveOrgID(override string) (string, error) {
 func resolveClientID(override string) (string, error) {
 	clientID := strings.TrimSpace(override)
 	if utils.IsBlank(clientID) {
-		return "", fmt.Errorf("client id is required: set it with 'cwclock configure set client_id <id>' or use --client")
+		return utils.EMPTY, fmt.Errorf("client id is required: set it with 'cwclock configure set client_id <id>' or use --client")
 	}
 	return clientID, nil
 }
@@ -69,7 +69,7 @@ func resolveClientID(override string) (string, error) {
 func resolveProjectID(override string) (string, error) {
 	projectID := strings.TrimSpace(override)
 	if utils.IsBlank(projectID) {
-		return "", fmt.Errorf("project id is required: set it with 'cwclock configure set project_id <id>' or use --project")
+		return utils.EMPTY, fmt.Errorf("project id is required: set it with 'cwclock configure set project_id <id>' or use --project")
 	}
 	return projectID, nil
 }
@@ -340,7 +340,7 @@ func displayTimeEntriesAsTable(entries []client.TimeEntry) {
 	table.SetColWidth(60)
 
 	if utils.IsEmpty(entries) {
-		table.Append([]string{"No records available", "", "", "", "", ""})
+		table.Append([]string{"No records available", utils.EMPTY, utils.EMPTY, utils.EMPTY, utils.EMPTY, utils.EMPTY})
 		table.Render()
 		return
 	}
@@ -360,7 +360,7 @@ func displayTimeEntriesAsTable(entries []client.TimeEntry) {
 
 func timeValueOrBlank(value *string) string {
 	if value == nil {
-		return ""
+		return utils.EMPTY
 	}
 	return *value
 }

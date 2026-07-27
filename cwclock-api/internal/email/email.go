@@ -85,7 +85,7 @@ func renderBody(title string, body template.HTML, logoURL string) (string, error
 		Body  template.HTML
 	}{Title: title, Logo: template.URL(logoURL), Body: body})
 	if err != nil {
-		return "", err
+		return utils.EMPTY, err
 	}
 	return buf.String(), nil
 }

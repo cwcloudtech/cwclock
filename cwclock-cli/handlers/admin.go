@@ -258,7 +258,7 @@ func displayAdminOrganizationsAsTable(orgs []client.AdminOrganization) {
 	table.SetColWidth(60)
 
 	if utils.IsEmpty(orgs) {
-		table.Append([]string{"No organizations available", "", "", "", ""})
+		table.Append([]string{"No organizations available", utils.EMPTY, utils.EMPTY, utils.EMPTY, utils.EMPTY})
 		table.Render()
 		return
 	}
@@ -276,7 +276,7 @@ func displayAdminUsersAsTable(users []client.AdminUser) {
 	table.SetColWidth(60)
 
 	if utils.IsEmpty(users) {
-		table.Append([]string{"No users available", "", "", "", "", ""})
+		table.Append([]string{"No users available", utils.EMPTY, utils.EMPTY, utils.EMPTY, utils.EMPTY, utils.EMPTY})
 		table.Render()
 		return
 	}

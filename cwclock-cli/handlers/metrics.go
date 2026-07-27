@@ -61,7 +61,7 @@ func toDisplaySamples(samples []client.MetricSample) []client.DisplayMetricSampl
 
 func formatMetricLabels(labels map[string]string) string {
 	if utils.IsEmpty(labels) {
-		return ""
+		return utils.EMPTY
 	}
 
 	keys := make([]string, 0, len(labels))
@@ -85,7 +85,7 @@ func displayMetricsAsTable(samples []client.MetricSample) {
 	table.SetColWidth(60)
 
 	if utils.IsEmpty(samples) {
-		table.Append([]string{"No metrics available", "", ""})
+		table.Append([]string{"No metrics available", utils.EMPTY, utils.EMPTY})
 		table.Render()
 		return
 	}

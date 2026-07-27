@@ -43,12 +43,12 @@ var UpdateCmd = &cobra.Command{
 
 func init() {
 	UpdateCmd.DisableFlagsInUseLine = true
-	UpdateCmd.Flags().StringVarP(&orgID, "org", "o", "", "Organization ID (overrides configured org_id)")
-	UpdateCmd.Flags().StringVarP(&id, "id", "i", "", "Project ID to update (required)")
-	UpdateCmd.Flags().StringVarP(&clientID, "client", "c", "", "Reassign to this client ID")
-	UpdateCmd.Flags().StringVar(&name, "name", "", "Project name")
-	UpdateCmd.Flags().StringVar(&color, "color", "", "Project color")
+	UpdateCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
+	UpdateCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "Project ID to update (required)")
+	UpdateCmd.Flags().StringVarP(&clientID, "client", "c", utils.EMPTY, "Reassign to this client ID")
+	UpdateCmd.Flags().StringVar(&name, "name", utils.EMPTY, "Project name")
+	UpdateCmd.Flags().StringVar(&color, "color", utils.EMPTY, "Project color")
 	UpdateCmd.Flags().Float64Var(&dailyRate, "daily-rate", 0, "Daily rate")
-	UpdateCmd.Flags().StringVar(&subdivisions, "subdivisions", "", "Comma-separated list of subdivisions")
-	UpdateCmd.Flags().StringVarP(&format, "format", "f", "", "Output format override: pretty|json")
+	UpdateCmd.Flags().StringVar(&subdivisions, "subdivisions", utils.EMPTY, "Comma-separated list of subdivisions")
+	UpdateCmd.Flags().StringVarP(&format, "format", "f", utils.EMPTY, "Output format override: pretty|json")
 }

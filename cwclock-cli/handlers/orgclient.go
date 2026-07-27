@@ -296,7 +296,7 @@ func displayOrgClientsAsTable(clients []client.OrgClient) {
 	table.SetColWidth(60)
 
 	if utils.IsEmpty(clients) {
-		table.Append([]string{"No clients available", "", "", ""})
+		table.Append([]string{"No clients available", utils.EMPTY, utils.EMPTY, utils.EMPTY})
 		table.Render()
 		return
 	}

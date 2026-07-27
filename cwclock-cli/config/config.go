@@ -21,7 +21,7 @@ func GetValueFromFile(content_file string, key string) string {
 	}
 
 	if utils.IsBlank(requested_line) {
-		return ""
+		return utils.EMPTY
 	}
 
 	return strings.TrimSpace(strings.Split(requested_line, " = ")[1])
@@ -53,7 +53,7 @@ func GetConfigValue(key string, defaultValue string) string {
 }
 
 func GetApiKey() string {
-	return GetConfigValue("api_key", "")
+	return GetConfigValue("api_key", utils.EMPTY)
 }
 
 func GetOpenAIBaseURL() string {
@@ -61,7 +61,7 @@ func GetOpenAIBaseURL() string {
 }
 
 func GetOpenAIAPIKey() string {
-	return GetConfigValue("openai_api_key", "")
+	return GetConfigValue("openai_api_key", utils.EMPTY)
 }
 
 func GetOpenRouterBaseURL() string {
@@ -69,7 +69,7 @@ func GetOpenRouterBaseURL() string {
 }
 
 func GetOpenRouterAPIKey() string {
-	return GetConfigValue("openrouter_api_key", "")
+	return GetConfigValue("openrouter_api_key", utils.EMPTY)
 }
 
 func GetDeepSeekBaseURL() string {
@@ -77,7 +77,7 @@ func GetDeepSeekBaseURL() string {
 }
 
 func GetDeepSeekAPIKey() string {
-	return GetConfigValue("deepseek_api_key", "")
+	return GetConfigValue("deepseek_api_key", utils.EMPTY)
 }
 
 func GetAnthropicBaseURL() string {
@@ -85,7 +85,7 @@ func GetAnthropicBaseURL() string {
 }
 
 func GetAnthropicAPIKey() string {
-	return GetConfigValue("anthropic_api_key", "")
+	return GetConfigValue("anthropic_api_key", utils.EMPTY)
 }
 
 func GetGeminiBaseURL() string {
@@ -93,7 +93,7 @@ func GetGeminiBaseURL() string {
 }
 
 func GetGeminiAPIKey() string {
-	return GetConfigValue("gemini_api_key", "")
+	return GetConfigValue("gemini_api_key", utils.EMPTY)
 }
 
 func GetMistralBaseURL() string {
@@ -101,7 +101,7 @@ func GetMistralBaseURL() string {
 }
 
 func GetMistralAPIKey() string {
-	return GetConfigValue("mistral_api_key", "")
+	return GetConfigValue("mistral_api_key", utils.EMPTY)
 }
 
 func GetDefaultAiProvider() string {
@@ -109,7 +109,7 @@ func GetDefaultAiProvider() string {
 }
 
 func GetDefaultAiModel() string {
-	return GetConfigValue("default_ai_model", "")
+	return GetConfigValue("default_ai_model", utils.EMPTY)
 }
 
 func GetAgentName() string {
@@ -121,11 +121,11 @@ func GetGitLabBaseURL() string {
 }
 
 func GetGitLabToken() string {
-	return GetConfigValue("gitlab_token", "")
+	return GetConfigValue("gitlab_token", utils.EMPTY)
 }
 
 func GetGitLabWebhookSecret() string {
-	return GetConfigValue("gitlab_webhook_secret", "")
+	return GetConfigValue("gitlab_webhook_secret", utils.EMPTY)
 }
 
 func GetDefaultFormat(override string) string {
@@ -141,7 +141,7 @@ func GetApiURL() string {
 }
 
 func GetOrgID() string {
-	return GetConfigValue("org_id", "")
+	return GetConfigValue("org_id", utils.EMPTY)
 }
 
 func GetCorsEnabled() bool {

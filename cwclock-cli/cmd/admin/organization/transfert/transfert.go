@@ -25,7 +25,7 @@ var TransfertCmd = &cobra.Command{
 
 func init() {
 	TransfertCmd.DisableFlagsInUseLine = true
-	TransfertCmd.Flags().StringVarP(&id, "id", "i", "", "Organization ID (required)")
-	TransfertCmd.Flags().StringVar(&owner, "owner", "", "New owner's user ID (required)")
-	TransfertCmd.Flags().StringVarP(&format, "format", "f", "", "Output format override: pretty|json")
+	TransfertCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "Organization ID (required)")
+	TransfertCmd.Flags().StringVar(&owner, "owner", utils.EMPTY, "New owner's user ID (required)")
+	TransfertCmd.Flags().StringVarP(&format, "format", "f", utils.EMPTY, "Output format override: pretty|json")
 }

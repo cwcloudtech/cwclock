@@ -45,7 +45,7 @@ func (f OrgConnectionFields) toConnection() (client.ExternalConnection, error) {
 	connType := strings.TrimSpace(f.Type)
 	switch connType {
 	case "s3", "google_drive", "git":
-	case "":
+	case utils.EMPTY:
 		return client.ExternalConnection{}, fmt.Errorf("--type is required: expected s3, google_drive or git")
 	default:
 		return client.ExternalConnection{}, fmt.Errorf("invalid type %q: expected s3, google_drive or git", connType)
@@ -167,7 +167,7 @@ func displayExternalConnectionsAsTable(conns []client.ExternalConnection) {
 	table.SetColWidth(60)
 
 	if utils.IsEmpty(conns) {
-		table.Append([]string{"", "No external connections available", ""})
+		table.Append([]string{utils.EMPTY, "No external connections available", utils.EMPTY})
 		table.Render()
 		return
 	}

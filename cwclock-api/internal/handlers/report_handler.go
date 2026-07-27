@@ -196,7 +196,7 @@ func exportFilenameDate(day string) string {
 func (h *ReportHandler) GenerateDetailedPDF(ctx context.Context, orgID string, filter store.ReportFilter, canSeeAmount bool) (data []byte, filename string, err error) {
 	org, entries, _, err := h.loadEnrichedEntries(ctx, orgID, filter, canSeeAmount)
 	if err != nil {
-		return nil, "", err
+		return nil, utils.EMPTY, err
 	}
 	totals := report.Totals(entries, canSeeAmount, org.Currency)
 	logoData, logoType := report.ResolveLogo(org.Picture)
@@ -210,7 +210,7 @@ func (h *ReportHandler) GenerateDetailedPDF(ctx context.Context, orgID string, f
 func (h *ReportHandler) GenerateSummaryPDF(ctx context.Context, orgID string, filter store.ReportFilter, canSeeAmount bool) (data []byte, filename string, err error) {
 	org, entries, lk, err := h.loadEnrichedEntries(ctx, orgID, filter, canSeeAmount)
 	if err != nil {
-		return nil, "", err
+		return nil, utils.EMPTY, err
 	}
 	start, _ := time.Parse(report.DayLayout, filter.Start)
 	end, _ := time.Parse(report.DayLayout, filter.End)
@@ -231,7 +231,7 @@ func (h *ReportHandler) GenerateSummaryPDF(ctx context.Context, orgID string, fi
 func (h *ReportHandler) GenerateDetailedCSV(ctx context.Context, orgID string, filter store.ReportFilter, canSeeAmount bool) (data []byte, filename string, err error) {
 	org, entries, _, err := h.loadEnrichedEntries(ctx, orgID, filter, canSeeAmount)
 	if err != nil {
-		return nil, "", err
+		return nil, utils.EMPTY, err
 	}
 	data, err = report.DetailedCSV(entries, canSeeAmount, org.Currency)
 	filename = fmt.Sprintf("CWClock_Time_Report_Detailed_%s-%s.csv", exportFilenameDate(filter.Start), exportFilenameDate(filter.End))
@@ -243,7 +243,7 @@ func (h *ReportHandler) GenerateDetailedCSV(ctx context.Context, orgID string, f
 func (h *ReportHandler) GenerateSummaryCSV(ctx context.Context, orgID string, filter store.ReportFilter, canSeeAmount bool) (data []byte, filename string, err error) {
 	org, entries, _, err := h.loadEnrichedEntries(ctx, orgID, filter, canSeeAmount)
 	if err != nil {
-		return nil, "", err
+		return nil, utils.EMPTY, err
 	}
 	rows := report.SummaryRows(entries, canSeeAmount)
 	data, err = report.SummaryCSV(rows, canSeeAmount, org.Currency)

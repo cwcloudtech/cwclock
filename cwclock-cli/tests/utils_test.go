@@ -42,7 +42,7 @@ func TestIsNotBlank(t *testing.T) {
 		input    string
 		expected bool
 	}{
-		{"", false},
+		{utils.EMPTY, false},
 		{" ", false},
 		{"  ", false},
 		{"hello", true},
@@ -63,7 +63,7 @@ func TestIsEmpty(t *testing.T) {
 		expected bool
 	}{
 		{"nil", nil, true},
-		{"empty string", "", true},
+		{"empty string", utils.EMPTY, true},
 		{"non-empty string", "hello", false},
 		{"empty slice", []string{}, true},
 		{"non-empty slice", []string{"hello"}, false},
@@ -93,7 +93,7 @@ func TestStringInSlice(t *testing.T) {
 		{"apple", true},
 		{"banana", true},
 		{"grape", false},
-		{"", false},
+		{utils.EMPTY, false},
 	}
 
 	for _, tt := range tests {
@@ -106,7 +106,7 @@ func TestStringInSlice(t *testing.T) {
 func TestJsonPrettyPrint(t *testing.T) {
 	input := `{"name":"test","value":123}`
 	var expectedFormatted bytes.Buffer
-	json.Indent(&expectedFormatted, []byte(input), "", "\t")
+	json.Indent(&expectedFormatted, []byte(input), utils.EMPTY, "\t")
 
 	if got := utils.JsonPrettyPrint(input); got != expectedFormatted.String() {
 		t.Errorf("JsonPrettyPrint() formatting mismatch:\ngot:\n%s\nwant:\n%s", got, expectedFormatted.String())
@@ -120,10 +120,10 @@ func TestShortName(t *testing.T) {
 		expected string
 	}{
 		{"deployment-abc123", "abc123", "deployment"},
-		{"deployment-abc123", "", "deployment"},
+		{"deployment-abc123", utils.EMPTY, "deployment"},
 		{"deployment", "abc123", "deployment"},
-		{"", "abc123", ""},
-		{"deployment", "", "deployment"},
+		{utils.EMPTY, "abc123", utils.EMPTY},
+		{"deployment", utils.EMPTY, "deployment"},
 		{"my-app-abc123", "abc123", "my-app"},
 	}
 

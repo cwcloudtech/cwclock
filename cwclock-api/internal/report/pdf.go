@@ -225,7 +225,7 @@ func placeProjectLegend(pdf *fpdf.Fpdf, translate func(string) string, x, y, wid
 		pdf.SetFillColor(int(c.R), int(c.G), int(c.B))
 		pdf.Rect(x, rowY+2, donutSwatchSize, donutSwatchSize, "F")
 
-		pdf.SetFont("", "B", donutLegendFont)
+		pdf.SetFont(utils.EMPTY, "B", donutLegendFont)
 		name := truncateToWidth(pdf, translate(r.ProjectName), textWidth)
 		pdf.SetXY(textX, rowY)
 		pdf.CellFormat(textWidth, donutLegendLine, name, utils.EMPTY, 0, "L", false, 0, utils.EMPTY)

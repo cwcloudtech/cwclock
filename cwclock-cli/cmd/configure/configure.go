@@ -32,7 +32,7 @@ The configure command takes no arguments it will prompt you for each default val
 			}
 
 			defaultApiKey := config.GetApiKey()
-			fmt.Printf("API key [%s]: ", utils.If(utils.IsNotBlank(defaultApiKey), handlers.MaskedValue, ""))
+			fmt.Printf("API key [%s]: ", utils.If(utils.IsNotBlank(defaultApiKey), handlers.MaskedValue, utils.EMPTY))
 			newApiKey := utils.PromptUserForValue()
 			if utils.IsNotBlank(newApiKey) {
 				config.SetApiKey(newApiKey)
@@ -45,7 +45,7 @@ The configure command takes no arguments it will prompt you for each default val
 				config.SetOrgID(newOrgID)
 			}
 
-			default_format := config.GetDefaultFormat("")
+			default_format := config.GetDefaultFormat(utils.EMPTY)
 			fmt.Printf("Default output format [%s]: ", default_format)
 			new_default_format := utils.PromptUserForValue()
 			if utils.IsNotBlank(new_default_format) {

@@ -39,11 +39,11 @@ var CreateCmd = &cobra.Command{
 
 func init() {
 	CreateCmd.DisableFlagsInUseLine = true
-	CreateCmd.Flags().StringVarP(&orgID, "org", "o", "", "Organization ID (overrides configured org_id)")
-	CreateCmd.Flags().StringVarP(&clientID, "client", "c", "", "Client ID (required)")
-	CreateCmd.Flags().StringVar(&name, "name", "", "Project name (required)")
-	CreateCmd.Flags().StringVar(&color, "color", "", "Project color")
+	CreateCmd.Flags().StringVarP(&orgID, "org", "o", utils.EMPTY, "Organization ID (overrides configured org_id)")
+	CreateCmd.Flags().StringVarP(&clientID, "client", "c", utils.EMPTY, "Client ID (required)")
+	CreateCmd.Flags().StringVar(&name, "name", utils.EMPTY, "Project name (required)")
+	CreateCmd.Flags().StringVar(&color, "color", utils.EMPTY, "Project color")
 	CreateCmd.Flags().Float64Var(&dailyRate, "daily-rate", 0, "Daily rate")
-	CreateCmd.Flags().StringVar(&subdivisions, "subdivisions", "", "Comma-separated list of subdivisions")
-	CreateCmd.Flags().StringVarP(&format, "format", "f", "", "Output format override: pretty|json")
+	CreateCmd.Flags().StringVar(&subdivisions, "subdivisions", utils.EMPTY, "Comma-separated list of subdivisions")
+	CreateCmd.Flags().StringVarP(&format, "format", "f", utils.EMPTY, "Output format override: pretty|json")
 }

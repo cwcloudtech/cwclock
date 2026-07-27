@@ -21,5 +21,5 @@ var DeleteCmd = &cobra.Command{
 
 func init() {
 	DeleteCmd.DisableFlagsInUseLine = true
-	DeleteCmd.Flags().StringVarP(&id, "id", "i", "", "User ID to delete (required)")
+	DeleteCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "User ID to delete (required)")
 }

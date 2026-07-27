@@ -141,7 +141,7 @@ func HandleProjectUpdate(orgOverride string, id string, clientOverride string, f
 		return err
 	}
 
-	projects, err := cli.ListProjects(orgID, "")
+	projects, err := cli.ListProjects(orgID, utils.EMPTY)
 	if err != nil {
 		return err
 	}
@@ -213,7 +213,7 @@ func displayProjectsAsTable(projects []client.Project) {
 	table.SetColWidth(60)
 
 	if utils.IsEmpty(projects) {
-		table.Append([]string{"No projects available", "", "", "", ""})
+		table.Append([]string{"No projects available", utils.EMPTY, utils.EMPTY, utils.EMPTY, utils.EMPTY})
 		table.Render()
 		return
 	}
@@ -226,7 +226,7 @@ func displayProjectsAsTable(projects []client.Project) {
 
 func dailyRateOrBlank(value *float64) string {
 	if value == nil {
-		return ""
+		return utils.EMPTY
 	}
 	return strconv.FormatFloat(*value, 'f', -1, 64)
 }

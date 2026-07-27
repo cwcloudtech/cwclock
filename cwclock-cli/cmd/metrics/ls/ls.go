@@ -23,5 +23,5 @@ This command takes no arguments`,
 }
 
 func init() {
-	ListCmd.Flags().StringVarP(&format, "format", "f", "", "Output format override: pretty|json")
+	ListCmd.Flags().StringVarP(&format, "format", "f", utils.EMPTY, "Output format override: pretty|json")
 }

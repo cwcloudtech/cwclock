@@ -1,5 +1,7 @@
 package models
 
+import "cwclock-api/internal/utils"
+
 // ActivationMode controls how a newly registered (non-first) account moves
 // from disabled to confirmed: an administrator flips its role by hand
 // (ActivationModeAdmin, the default) or the user follows a confirmation
@@ -37,6 +39,6 @@ func I18nCodeForRole(role GlobalRole, activationMode string) string {
 		}
 		return I18nAccountDisabledAdmin
 	default:
-		return ""
+		return utils.EMPTY
 	}
 }

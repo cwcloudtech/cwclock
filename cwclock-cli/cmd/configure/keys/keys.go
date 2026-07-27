@@ -2,6 +2,7 @@ package keys
 
 import (
 	"cwclock/handlers"
+	"cwclock/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -20,5 +21,5 @@ var KeysCmd = &cobra.Command{
 }
 
 func init() {
-	KeysCmd.Flags().StringVarP(&format, "format", "f", "", "Output format override: pretty|json")
+	KeysCmd.Flags().StringVarP(&format, "format", "f", utils.EMPTY, "Output format override: pretty|json")
 }
