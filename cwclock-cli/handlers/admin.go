@@ -244,7 +244,7 @@ func findAdminUser(users []client.AdminUser, id string) (client.AdminUser, bool)
 func resolveAdminUser(cli *client.Client, identifier string) (client.AdminUser, error) {
 	trimmed := strings.TrimSpace(identifier)
 
-	if looksLikeUUID(trimmed) {
+	if utils.IsValidUUID(trimmed) {
 		users, err := cli.AdminListUsers()
 		if err != nil {
 			return client.AdminUser{}, err

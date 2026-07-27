@@ -96,7 +96,7 @@ func (f ExportJobFields) toPayload(orgID string, targets []client.ExportTarget) 
 	if err != nil {
 		return client.ExportJobPayload{}, err
 	}
-	projects, err := resolveProjects(orgID, f.ProjectIDs)
+	projects, err := resolveProjects(orgID, singleClientScope(clientIDs), f.ProjectIDs)
 	if err != nil {
 		return client.ExportJobPayload{}, err
 	}
@@ -146,31 +146,38 @@ func mergeExportJobFields(orgID string, current client.ExportJob, fields ExportJ
 	if changed["time-period"] {
 		payload.TimePeriod = fields.TimePeriod
 	}
-	// projects only needs to be populated (for the cross-check below) when
-	// either side of the --client/--project pair could have changed -
-	// otherwise there's nothing new to validate against the other.
-	var projects []client.Project
-	if changed["project"] {
-		resolved, err := resolveProjects(orgID, fields.ProjectIDs)
-		if err != nil {
-			return client.ExportJobPayload{}, err
-		}
-		projects = resolved
-		payload.ProjectIDs = projectIDsOf(resolved)
-	} else if changed["client"] && len(payload.ProjectIDs) > 0 {
-		resolved, err := resolveProjects(orgID, payload.ProjectIDs)
-		if err != nil {
-			return client.ExportJobPayload{}, err
-		}
-		projects = resolved
-	}
-
+	// Resolve the (possibly updated) client scope first, so a project
+	// resolution below can be scoped to it when unambiguous (see
+	// ai-instruct-100).
 	if changed["client"] {
 		clientIDs, err := resolveClientIDs(orgID, fields.ClientIDs)
 		if err != nil {
 			return client.ExportJobPayload{}, err
 		}
 		payload.ClientIDs = clientIDs
+	}
+
+	// projects only needs to be populated (for the cross-check below) when
+	// either side of the --client/--project pair could have changed -
+	// otherwise there's nothing new to validate against the other.
+	var projects []client.Project
+	if changed["project"] {
+		resolved, err := resolveProjects(orgID, singleClientScope(payload.ClientIDs), fields.ProjectIDs)
+		if err != nil {
+			return client.ExportJobPayload{}, err
+		}
+		projects = resolved
+		payload.ProjectIDs = projectIDsOf(resolved)
+	} else if changed["client"] && len(payload.ProjectIDs) > 0 {
+		// Deliberately unscoped: these are the job's existing project ids,
+		// which may well belong to a client other than the new one - that's
+		// exactly the mismatch requireProjectsMatchClients needs to catch,
+		// so don't narrow the search to the new client first.
+		resolved, err := resolveProjects(orgID, utils.EMPTY, payload.ProjectIDs)
+		if err != nil {
+			return client.ExportJobPayload{}, err
+		}
+		projects = resolved
 	}
 
 	if err := requireProjectsMatchClients(payload.ClientIDs, projects); err != nil {

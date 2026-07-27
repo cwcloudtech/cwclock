@@ -31,7 +31,7 @@ func HandleInvoicePreview(orgOverride string, clientID string, projectIDs []stri
 	if err != nil {
 		return err
 	}
-	resolvedProjects, err := resolveProjects(orgID, projectIDs)
+	resolvedProjects, err := resolveProjects(orgID, resolvedClientID, projectIDs)
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func HandleInvoiceGenerate(orgOverride string, clientID string, projectIDs []str
 	if err != nil {
 		return err
 	}
-	resolvedProjects, err := resolveProjects(orgID, projectIDs)
+	resolvedProjects, err := resolveProjects(orgID, resolvedClientID, projectIDs)
 	if err != nil {
 		return err
 	}

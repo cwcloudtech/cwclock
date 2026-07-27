@@ -50,7 +50,7 @@ func HandleExport(orgOverride string, clientIDs []string, projectIDs []string, b
 	if err != nil {
 		return err
 	}
-	resolvedProjects, err := resolveProjects(orgID, projectIDs)
+	resolvedProjects, err := resolveProjects(orgID, singleClientScope(resolvedClientIDs), projectIDs)
 	if err != nil {
 		return err
 	}

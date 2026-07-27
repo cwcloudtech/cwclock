@@ -148,7 +148,7 @@ func HandleProjectUpdate(orgOverride string, id string, clientOverride string, f
 		return err
 	}
 
-	current, err := resolveProject(orgID, trimmedID)
+	current, err := resolveProject(orgID, utils.EMPTY, trimmedID)
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func HandleProjectDelete(orgOverride string, id string) error {
 		return err
 	}
 
-	current, err := resolveProject(orgID, trimmedID)
+	current, err := resolveProject(orgID, utils.EMPTY, trimmedID)
 	if err != nil {
 		return err
 	}

@@ -47,7 +47,12 @@ Prefer dynamic tools named `cwclock_<command_path>` for direct execution.
   the real id **or** the resource's name (invoice's `-i` accepts its number instead of a name) -
   case-insensitively, first match wins. So if the user gives a name instead of a uuid (e.g. "for
   client Acme" or "org Idriss's Org"), just pass it straight through as the flag value - no need to
-  look up the real id first.
+  look up the real id first. Same idea for `cwclock admin user`'s `-i`/`--id`: it accepts an email
+  as a fallback when the value isn't a valid/found user id.
+- Whenever both `--client` and `--project` are given together (any command), the command fails
+  fast if the resolved project doesn't actually belong to the resolved client - don't try to work
+  around that error by guessing a different id, surface it to the user instead, since it means the
+  project/client pairing itself was wrong.
 
 ## Examples
 

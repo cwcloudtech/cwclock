@@ -43,7 +43,7 @@ func resolveOrgID(override string) (string, error) {
 		return utils.EMPTY, fmt.Errorf("organization id is required: set it with 'cwclock configure set org_id <id>' or use --org")
 	}
 
-	if looksLikeUUID(value) {
+	if utils.IsValidUUID(value) {
 		return value, nil
 	}
 
@@ -67,22 +67,28 @@ func resolveTimeEntryDefaults(orgID string, clientOverride string, projectOverri
 		return utils.EMPTY, utils.EMPTY, utils.EMPTY, fmt.Errorf("project id is required: set it with --project")
 	}
 
-	project, err := resolveProject(orgID, projectOverride)
-	if err != nil {
-		return utils.EMPTY, utils.EMPTY, utils.EMPTY, err
-	}
-	projectID = project.ID
-
+	// Resolve the client first, when given, so the project lookup below can
+	// be scoped to it (most of the time it's already known - see
+	// ai-instruct-100) instead of searching every project in the org.
 	clientID = strings.TrimSpace(clientOverride)
 	if utils.IsNotBlank(clientID) {
 		resolvedClientID, err := resolveClientID(orgID, clientID)
 		if err != nil {
 			return utils.EMPTY, utils.EMPTY, utils.EMPTY, err
 		}
-		if err := requireProjectsMatchClients([]string{resolvedClientID}, []client.Project{project}); err != nil {
+		clientID = resolvedClientID
+	}
+
+	project, err := resolveProject(orgID, clientID, projectOverride)
+	if err != nil {
+		return utils.EMPTY, utils.EMPTY, utils.EMPTY, err
+	}
+	projectID = project.ID
+
+	if utils.IsNotBlank(clientID) {
+		if err := requireProjectsMatchClients([]string{clientID}, []client.Project{project}); err != nil {
 			return utils.EMPTY, utils.EMPTY, utils.EMPTY, err
 		}
-		clientID = resolvedClientID
 	} else {
 		clientID = project.ClientID
 	}
@@ -169,7 +175,7 @@ func HandleRecordStop(orgOverride string, textOverride string, formatOverride st
 		// Not expected once a record started with HandleRecordStart, which
 		// already defaults text to the project's name - this only covers a
 		// pre-existing timer.json written before that defaulting existed.
-		project, err := resolveProject(orgID, state.ProjectID)
+		project, err := resolveProject(orgID, state.ClientID, state.ProjectID)
 		if err != nil {
 			return err
 		}

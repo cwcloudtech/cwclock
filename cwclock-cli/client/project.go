@@ -42,7 +42,7 @@ func projectPath(orgID string, id string) string {
 
 func (c *Client) ListProjects(orgID string, clientID string) ([]Project, error) {
 	path := projectsPath(orgID)
-	if utils.IsNotBlank(clientID) {
+	if utils.IsValidUUID(clientID) {
 		path += "?clientId=" + url.QueryEscape(clientID)
 	}
 

@@ -4,19 +4,8 @@ import (
 	"cwclock/client"
 	"cwclock/utils"
 	"fmt"
-	"regexp"
 	"strings"
 )
-
-var uuidPattern = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
-
-// looksLikeUUID reports whether value is shaped like a UUID. It short-
-// circuits id-or-name resolution to the common, fast path: a real id
-// round-trips straight through without the extra list+match API call a
-// name lookup needs (see ai-instruct-98).
-func looksLikeUUID(value string) bool {
-	return uuidPattern.MatchString(strings.TrimSpace(value))
-}
 
 // resolveClient resolves identifier as a client id or, when it isn't
 // shaped like one (or isn't found by id), as a client name -
@@ -33,7 +22,7 @@ func resolveClient(orgID string, identifier string) (client.OrgClient, error) {
 		return client.OrgClient{}, err
 	}
 
-	if looksLikeUUID(trimmed) {
+	if utils.IsValidUUID(trimmed) {
 		for _, c := range clients {
 			if c.ID == trimmed {
 				return c, nil
@@ -79,20 +68,24 @@ func resolveClientIDs(orgID string, identifiers []string) ([]string, error) {
 
 // resolveProject resolves identifier as a project id or, when it isn't
 // shaped like one (or isn't found by id), as a project name -
-// case-insensitively, picking the first match.
-func resolveProject(orgID string, identifier string) (client.Project, error) {
+// case-insensitively, picking the first match. clientID, when known,
+// scopes the search to that client's projects instead of the whole
+// organization's - most callers already know it by the time they need a
+// project, and it also disambiguates two different clients having a
+// same-named project. Pass utils.EMPTY when it isn't known.
+func resolveProject(orgID string, clientID string, identifier string) (client.Project, error) {
 	trimmed := strings.TrimSpace(identifier)
 
 	cli, err := client.NewClient()
 	if err != nil {
 		return client.Project{}, err
 	}
-	projects, err := cli.ListProjects(orgID, utils.EMPTY)
+	projects, err := cli.ListProjects(orgID, clientID)
 	if err != nil {
 		return client.Project{}, err
 	}
 
-	if looksLikeUUID(trimmed) {
+	if utils.IsValidUUID(trimmed) {
 		for _, p := range projects {
 			if p.ID == trimmed {
 				return p, nil
@@ -108,28 +101,20 @@ func resolveProject(orgID string, identifier string) (client.Project, error) {
 	return client.Project{}, fmt.Errorf("project %q not found by id or name", trimmed)
 }
 
-// resolveProjectID is resolveProject's id-only convenience wrapper.
-func resolveProjectID(orgID string, identifier string) (string, error) {
-	p, err := resolveProject(orgID, identifier)
-	if err != nil {
-		return utils.EMPTY, err
-	}
-	return p.ID, nil
-}
-
 // resolveProjects resolves a repeatable --project flag's values (job
 // create/update, invoice, export) to their full project objects; blank
 // input means "every project" and is left untouched. Returning the full
 // objects (not just ids) lets callers cross-check each project's client
-// against a --client scope with requireProjectsMatchClients.
-func resolveProjects(orgID string, identifiers []string) ([]client.Project, error) {
+// against a --client scope with requireProjectsMatchClients. clientID is
+// resolveProject's same optional scoping hint.
+func resolveProjects(orgID string, clientID string, identifiers []string) ([]client.Project, error) {
 	normalized := normalizeIDs(identifiers)
 	if len(normalized) == 0 {
 		return nil, nil
 	}
 	resolved := make([]client.Project, 0, len(normalized))
 	for _, identifier := range normalized {
-		p, err := resolveProject(orgID, identifier)
+		p, err := resolveProject(orgID, clientID, identifier)
 		if err != nil {
 			return nil, err
 		}
@@ -139,12 +124,22 @@ func resolveProjects(orgID string, identifiers []string) ([]client.Project, erro
 }
 
 // resolveProjectIDs is resolveProjects's id-only convenience wrapper.
-func resolveProjectIDs(orgID string, identifiers []string) ([]string, error) {
-	projects, err := resolveProjects(orgID, identifiers)
+func resolveProjectIDs(orgID string, clientID string, identifiers []string) ([]string, error) {
+	projects, err := resolveProjects(orgID, clientID, identifiers)
 	if err != nil {
 		return nil, err
 	}
 	return projectIDsOf(projects), nil
+}
+
+// singleClientScope returns clientID when there's exactly one (the search
+// can be scoped to it), or utils.EMPTY when there are zero or several
+// (ambiguous - search every client's projects instead).
+func singleClientScope(clientIDs []string) string {
+	if len(clientIDs) == 1 {
+		return clientIDs[0]
+	}
+	return utils.EMPTY
 }
 
 // projectIDsOf extracts each project's id, preserving order; nil in, nil
@@ -200,7 +195,7 @@ func resolveOrganization(identifier string) (client.Organization, error) {
 		return client.Organization{}, err
 	}
 
-	if looksLikeUUID(trimmed) {
+	if utils.IsValidUUID(trimmed) {
 		for _, o := range orgs {
 			if o.ID == trimmed {
 				return o, nil
