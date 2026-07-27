@@ -35,10 +35,6 @@ spec:
             - containerPort: 5000
               protocol: TCP
           resources: {}
-          volumeMounts:
-            - mountPath: /app/cloud_environments.yml
-              name: cloud-environment-cm
-              subPath: cloud_environments.yml
       initContainers:
         - command:
           - sh
@@ -51,7 +47,3 @@ spec:
           image: busybox:1.28
           name: check-cwclock-db
       restartPolicy: Always
-      volumes:
-        - name: cloud-environment-cm
-          configMap:
-            name: cloud-environment-cm
