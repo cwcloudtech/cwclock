@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source ./ci/compute-env.sh
+source ./ci/app/compute-env.sh
 
 echo "" > .env.cwclock.db
 env|grep "POSTGRES_"|while read; do

@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "cwclock-chart.fullname" . }}-ui-env-cm
+  labels:
+  {{- include "cwclock-chart.labels" . | nindent 4 }}
+data:
+  CWCLOCK_UI_URL: {{ print $.Values.public.scheme "://" $.Values.public.ui }}
+  CWCLOCK_API_URL: {{ print $.Values.public.scheme "://" $.Values.public.api }}
+  {{- range $key, $value := .Values.ui.extra_env }}
+  {{ $key }}: {{ quote $value }}
+  {{- end }}

@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cwclock-ui
+  labels:
+  {{- include "cwclock-chart.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: cwclock-ui
+  {{- include "cwclock-chart.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: "http"
+      port: {{ $.Values.ui.port }}
+      targetPort: 80

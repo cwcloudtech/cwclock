@@ -1,0 +1,32 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cwclock-ui
+  labels:
+    app: cwclock-ui
+  {{- include "cwclock-chart.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.ui.replicas }}
+  selector:
+    matchLabels:
+      app: cwclock-ui
+    {{- include "cwclock-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: cwclock-ui
+      {{- include "cwclock-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: cwclock-ui
+          image: {{ .Values.image.repository }}/cwclock-ui:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "cwclock-chart.fullname" . }}-ui-env-cm
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          resources: {}
+      restartPolicy: Always

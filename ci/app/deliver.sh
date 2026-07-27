@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source ./ci/compute-env.sh
+source ./ci/app/compute-env.sh
 
 sha="$(git rev-parse --short HEAD)"
 details="$(git log --pretty=format:"%an, %ar : %s" -1)"

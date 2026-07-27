@@ -1,0 +1,28 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: migration-cm
+  labels:
+  {{- include "cwclock-chart.labels" . | nindent 4 }}
+data:
+{{ (.Files.Glob "../cwclock-db/migrations/*").AsConfig | indent 2 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "cwclock-chart.fullname" . }}-db-env-cm
+  labels:
+  {{- include "cwclock-chart.labels" . | nindent 4 }}
+data:
+  POSTGRES_PORT: {{ $.Values.db.port | quote }}
+  POSTGRES_DB: {{ $.Values.db.name }}
+  POSTGRES_USER: {{ $.Values.db.user }}
+  {{- if $.Values.db.host }}
+  POSTGRES_HOST: {{ $.Values.db.host }}
+  {{- else }}
+  POSTGRES_HOST: {{ print "cwclock-db." $.Release.Namespace ".svc.cluster.local" }}
+  {{- end }}
+  {{- range $key, $value := .Values.db.extra_env }}
+  {{ $key }}: {{ quote $value }}
+  {{- end }}

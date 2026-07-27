@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source ./ci/compute-env.sh
+source ./ci/app/compute-env.sh
 
 for app in $CWCLOCK_APPS; do
   export IMAGE_NAME="cwclock-${app}"

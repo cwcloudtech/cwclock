@@ -1,0 +1,79 @@
+version: 2
+
+builds:
+  - binary: cwclock
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -X main.Version={{.Version}}
+
+universal_binaries:
+  - replace: true
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - install.sh
+      - README.md
+
+release:
+  prerelease: auto
+  mode: replace
+  gitlab:
+    owner: oss
+    name: cwclock
+
+checksum:
+  name_template: 'checksums.txt'
+
+dockers:
+  - image_templates: 
+      - "rg.fr-par.scw.cloud/cwclock-t8d7th/cwclock-cli:{{ .Version }}"
+    dockerfile: Dockerfile.cli
+    build_flag_templates:
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.description={{ .ProjectName }}
+      - --label=org.opencontainers.image.url=https://gitlab.cwcloud.tech/oss/cwclock
+      - --label=org.opencontainers.image.source=https://gitlab.cwcloud.tech/oss/cwclock
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.created={{.Date}}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.licenses=MIT
+
+gitlab_urls:
+  api: https://gitlab.cwcloud.tech/api/v4
+  download: https://gitlab.cwcloud.tech
+  skip_tls_verify: true
+  use_package_registry: false
+
+brews:
+  - name: cwclock
+    homepage: https://gitlab.cwcloud.tech/oss/cwclock
+    repository:
+      owner: oss
+      name: cwclock
+    commit_author:
+      name: cwcloud
+      email: contact@cwcloud.tech
+    url_template: "https://gitlab.cwcloud.tech/oss/cwclock/-/releases/{{ .Tag }}/downloads/{{ .ArtifactName }}"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+      - Merge branch
+      - Merge pull request

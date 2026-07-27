@@ -153,12 +153,12 @@ func (p organizationPayload) toFields() store.OrganizationFields {
 func redactExternalConnections(conns []models.ExternalConnection) []models.ExternalConnection {
 	redacted := make([]models.ExternalConnection, len(conns))
 	for i, c := range conns {
-		c.AccessKey = ""
-		c.SecretKey = ""
-		c.ServiceAccountBase64 = ""
-		c.Password = ""
-		c.SSHPrivateKey = ""
-		c.SSHPrivateKeyPassphrase = ""
+		c.AccessKey = utils.EMPTY
+		c.SecretKey = utils.EMPTY
+		c.ServiceAccountBase64 = utils.EMPTY
+		c.Password = utils.EMPTY
+		c.SSHPrivateKey = utils.EMPTY
+		c.SSHPrivateKeyPassphrase = utils.EMPTY
 		redacted[i] = c
 	}
 	return redacted

@@ -1,0 +1,57 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cwclock-api
+  labels:
+    app: cwclock-api
+  {{- include "cwclock-chart.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.api.replicas }}
+  selector:
+    matchLabels:
+      app: cwclock-api
+    {{- include "cwclock-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: cwclock-api
+      {{- include "cwclock-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: cwclock-api
+          image: {{ .Values.image.repository }}/cwclock-api:{{ .Values.image.tag }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "cwclock-chart.fullname" . }}-api-env-cm
+            - configMapRef:
+                name: {{ include "cwclock-chart.fullname" . }}-db-env-cm
+            - secretRef:
+                name: {{ include "cwclock-chart.fullname" . }}-db-env-secret
+            - secretRef:
+                name: {{ include "cwclock-chart.fullname" . }}-jwt-secret
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 5000
+              protocol: TCP
+          resources: {}
+          volumeMounts:
+            - mountPath: /app/cloud_environments.yml
+              name: cloud-environment-cm
+              subPath: cloud_environments.yml
+      initContainers:
+        - command:
+          - sh
+          - -c
+          - |
+            while ! nc -zv -w 5 cwclock-db.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local 5432; do
+              echo "Waiting for cwclock-db service..."
+              sleep 1
+            done
+          image: busybox:1.28
+          name: check-cwclock-db
+      restartPolicy: Always
+      volumes:
+        - name: cloud-environment-cm
+          configMap:
+            name: cloud-environment-cm
