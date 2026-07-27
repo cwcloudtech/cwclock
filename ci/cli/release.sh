@@ -3,7 +3,6 @@
 set -e
 
 source ./ci/cli/compute-env.sh
-cd "${CWCLOCK_CLI_DIR}"
 
 echo "Starting release process for version $CI_COMMIT_TAG..."
 
@@ -17,7 +16,7 @@ docker login "${CI_REGISTRY}" --username "${CI_REGISTRY_USER}" --password "${CI_
 
 if ! docker run --rm --privileged \
   -v "$PWD:/go/src/gitlab.com/goreleaser/cwclock" \
-  -w "/go/src/gitlab.com/goreleaser/cwclock" \
+  -w "/go/src/gitlab.com/goreleaser/cwclock/${CWCLOCK_CLI_DIR#./}" \
   -v "/var/run/docker.sock:/var/run/docker.sock" \
   -e DOCKER_USERNAME="${CI_REGISTRY_USER}" \
   -e DOCKER_PASSWORD="${CI_REGISTRY_PASSWORD}" \

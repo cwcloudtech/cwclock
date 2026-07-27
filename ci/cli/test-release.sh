@@ -3,19 +3,18 @@
 set -e
 
 source ./ci/cli/compute-env.sh
-cd "${CWCLOCK_CLI_DIR}"
 
 echo "Starting test release process..."
 
 #? Ensure clean state before testing
-rm -rf dist || true
-mkdir -p dist
+rm -rf "${CWCLOCK_CLI_DIR}/dist" || true
+mkdir -p "${CWCLOCK_CLI_DIR}/dist"
 
 docker login "${CI_REGISTRY}" --username "${CI_REGISTRY_USER}" --password "${CI_REGISTRY_PASSWORD}"
 
 if ! docker run --rm --privileged \
   -v "$PWD:/go/src/gitlab.com/goreleaser/cwclock" \
-  -w "/go/src/gitlab.com/goreleaser/cwclock" \
+  -w "/go/src/gitlab.com/goreleaser/cwclock/${CWCLOCK_CLI_DIR#./}" \
   -v "/var/run/docker.sock:/var/run/docker.sock" \
   -e DOCKER_USERNAME="${CI_REGISTRY_USER}" \
   -e DOCKER_PASSWORD="${CI_REGISTRY_PASSWORD}" \
@@ -26,11 +25,11 @@ if ! docker run --rm --privileged \
   exit 1
 fi
 
-if [ ! -d "dist" ] || [ -z "$(ls -A dist)" ]; then
+if [ ! -d "${CWCLOCK_CLI_DIR}/dist" ] || [ -z "$(ls -A "${CWCLOCK_CLI_DIR}/dist")" ]; then
   echo "❌ No artifacts were created in dist directory"
   exit 1
 fi
 
 echo "✅ Test release completed successfully"
 echo "📦 Generated artifacts:"
-ls -la dist/
+ls -la "${CWCLOCK_CLI_DIR}/dist"
