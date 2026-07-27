@@ -78,6 +78,7 @@ build:
         - ci/app/**/*
         - cwclock-api/**/*
         - cwclock-ui/**/*
+        - helm/migrations/**/*
         - .docker/**/*
         - Dockerfile
         - docker-compose*.yml
