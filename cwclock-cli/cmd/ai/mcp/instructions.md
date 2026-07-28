@@ -22,37 +22,20 @@ Prefer dynamic tools named `cwclock_<command_path>` for direct execution.
 
 ## Important Rules
 
-- Dates for `--begin`/`--end` (and their `--from`/`--to` aliases on `record`, or just `--to` on
-  `invoice`/`export`) accept ISO-8601, or a relative `now()` style expression such as `now()`,
-  `now()-1h`, `now()-1d`. Same parser everywhere (`record create`/`start`, `invoice
-  preview`/`generate`, `export`).
-- `--org` falls back to the configured `org_id` when omitted; if none is available, the command
-  reports that it's missing.
-- On `record start` and `record create`, only `--project` is required - `--client` is optional and
-  is looked up automatically from the project when omitted. `--text` is optional everywhere in the
-  `record` command tree and defaults to the project's name when left blank (matching the web app).
-  `record stop` takes no required flags at all - it automatically uses whatever was captured by the
-  most recent `record start`.
-- `--client`/`--project` are **repeatable** flags (pass `--client id1 --client id2` for more than
-  one), not comma-separated, on `job create`/`job update`, `invoice preview`/`generate` (project
-  only - an invoice is always for one client), and `export`. Omitting them means "every
-  client/project".
-- `-o` means `--org` on almost every command, **except** `invoice preview`, `invoice generate` and
-  `export`, where `-o` means `--output` (the file path to save the downloaded PDF/CSV to) - on
-  those three, `--org` has no short flag.
-- `invoice generate` and `export` actually download a file; when the user doesn't give
-  `--output`/`-o`, the command still saves it (using the server's suggested filename, or a sane
-  default like `invoice.pdf`/`summary.pdf`) and prints the path it wrote to.
-- `--org`, `--client`, `--project` (everywhere above) and invoice's `-i`/`--id` all accept either
-  the real id **or** the resource's name (invoice's `-i` accepts its number instead of a name) -
-  case-insensitively, first match wins. So if the user gives a name instead of a uuid (e.g. "for
-  client Acme" or "org Idriss's Org"), just pass it straight through as the flag value - no need to
-  look up the real id first. Same idea for `cwclock admin user`'s `-i`/`--id`: it accepts an email
-  as a fallback when the value isn't a valid/found user id.
-- Whenever both `--client` and `--project` are given together (any command), the command fails
-  fast if the resolved project doesn't actually belong to the resolved client - don't try to work
-  around that error by guessing a different id, surface it to the user instead, since it means the
-  project/client pairing itself was wrong.
+- Dates for `--begin`/`--end` (and their `--from`/`--to` aliases on `record`, or just `--to` on `invoice`/`export`) accept ISO-8601, or a relative `now()` style expression such as `now()`, `now()-1h`, `now()-1d`. Same parser everywhere (`record create`/`start`, `invoice preview`/`generate`, `export`).
+- `--org` falls back to the configured `org_id` when omitted; if none is available, the command reports that it's missing.
+- On `record start` and `record create`, only `--project` is required 
+- `--client` is optional and is looked up automatically from the project when omitted. `--text` is optional everywhere in the `record` command tree and defaults to the project's name when left blank (matching the web app). 
+- `record stop` takes no required flags at all - it automatically uses whatever was captured by the most recent `record start`.
+- `--client`/`--project` are **repeatable** flags (pass `--client id1 --client id2` for more than one), not comma-separated, on `job create`/`job update`, `invoice preview`/`generate` (project only 
+- an invoice is always for one client), and `export`. Omitting them means "every client/project".
+- `-o` means `--org` on almost every command, **except** `invoice preview`, `invoice generate` and `export`, where `-o` means `--output` (the file path to save the downloaded PDF/CSV to) - on those three, `--org` has no short flag.
+- `invoice generate` and `export` actually download a file; when the user doesn't give `--output`/`-o`, the command still saves it (using the server's suggested filename, or a sane default like `invoice.pdf`/`summary.pdf`) and prints the path it wrote to.
+- `--org`, `--client`, `--project` (everywhere above) and invoice's `-i`/`--id` all accept either the real id **or** the resource's name (invoice's `-i` accepts its number instead of a name) 
+- case-insensitively, first match wins. So if the user gives a name instead of a uuid (e.g. "for client Acme" or "org Idriss's Org"), just pass it straight through as the flag value - no need to look up the real id first. Same idea for `cwclock admin user`'s `-i`/`--id`: it accepts an email as a fallback when the value isn't a valid/found user id.
+- Whenever both `--client` and `--project` are given together (any command), the command fails fast if the resolved project doesn't actually belong to the resolved client 
+- don't try to work around that error by guessing a different id, surface it to the user instead, since it means the project/client pairing itself was wrong.
+- Always double quote args like `--org`, `--project`, `--id`, `--client` because it can contain spaces
 
 ## Examples
 
