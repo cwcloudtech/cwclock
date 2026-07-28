@@ -41,6 +41,27 @@ The complete document's [here](https://www.cwcloud.tech/docs/tutorials/cwclock) 
 
 ## Getting started
 
+### On Kubernetes with the cwclock cli
+
+1. Install `kind` or equivalent (or have a K8S cluster ready), `kubectl` and `helm`
+
+2. Install `cwclock` cli
+
+```shell
+brew tap cwclock/cwclock https://gitlab.cwcloud.tech/oss/cwclock.git
+brew trust --formula cwclock/cwclock/cwclock
+brew install cwclock
+```
+
+If you don't have `brew`, refer to [this documentation](https://www.cwcloud.tech/docs/tutorials/cwclock/cli#installation) for your operating system.
+
+3. Run this:
+
+```shell
+cwclock bootrap # will install using helm
+cwclock bootstrap pfw # will open tunnels
+```
+
 ### With docker compose in local
 
 The whole stack (PostgreSQL, Flyway migrations, the [cwclock-api](./cwclock-api) backend and the [cwclock-ui](./cwclock-ui) frontend served by nginx) can be started with a single command:
