@@ -35,9 +35,9 @@ The complete document's [here](https://www.cwcloud.tech/docs/tutorials/cwclock) 
 
 ## Technologies
 
-- [Go](https://go.dev) and [PostgreSQL](https://www.postgresql.org) for the API
-- [React](https://react.dev) for the GUI
-- [Flyway](https://flywaydb.org) for the migrations
+* [Go](https://go.dev) and [PostgreSQL](https://www.postgresql.org) for the API
+* [React](https://react.dev) for the GUI
+* [Flyway](https://flywaydb.org) for the migrations
 
 ## Getting started
 
