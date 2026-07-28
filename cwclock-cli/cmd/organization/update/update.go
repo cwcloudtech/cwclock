@@ -67,7 +67,7 @@ var UpdateCmd = &cobra.Command{
 
 func init() {
 	UpdateCmd.DisableFlagsInUseLine = true
-	UpdateCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "Organization ID to update (required)")
+	UpdateCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "Organization ID or name to update (required)")
 	UpdateCmd.Flags().StringVar(&name, "name", utils.EMPTY, "Organization name")
 	UpdateCmd.Flags().StringVar(&country, "country", utils.EMPTY, "Country code")
 	UpdateCmd.Flags().StringVar(&accountingEmail, "accounting-email", utils.EMPTY, "Accounting email, cc'd on invoice emails")

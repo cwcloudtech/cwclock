@@ -165,19 +165,9 @@ func HandleOrganizationUpdate(id string, fields OrganizationFields, changed map[
 		return fmt.Errorf("organization id is required: use -i or --id")
 	}
 
-	cli, err := client.NewClient()
+	current, err := resolveOrganization(trimmedID)
 	if err != nil {
 		return err
-	}
-
-	orgs, err := cli.ListOrganizations()
-	if err != nil {
-		return err
-	}
-
-	current, found := findOrganization(orgs, trimmedID)
-	if !found {
-		return fmt.Errorf("organization %q not found", trimmedID)
 	}
 
 	payload := mergeOrganizationFields(current, fields, changed)
@@ -188,7 +178,12 @@ func HandleOrganizationUpdate(id string, fields OrganizationFields, changed map[
 		return fmt.Errorf("country is required: use --country")
 	}
 
-	updated, err := cli.UpdateOrganization(trimmedID, payload)
+	cli, err := client.NewClient()
+	if err != nil {
+		return err
+	}
+
+	updated, err := cli.UpdateOrganization(current.ID, payload)
 	if err != nil {
 		return err
 	}
@@ -203,26 +198,22 @@ func HandleOrganizationDelete(id string) error {
 		return fmt.Errorf("organization id is required: use -i or --id")
 	}
 
+	current, err := resolveOrganization(trimmedID)
+	if err != nil {
+		return err
+	}
+
 	cli, err := client.NewClient()
 	if err != nil {
 		return err
 	}
 
-	if err := cli.DeleteOrganization(trimmedID); err != nil {
+	if err := cli.DeleteOrganization(current.ID); err != nil {
 		return err
 	}
 
-	fmt.Printf("id = %v\n", trimmedID)
+	fmt.Printf("id = %v\n", current.ID)
 	return nil
-}
-
-func findOrganization(orgs []client.Organization, id string) (client.Organization, bool) {
-	for _, org := range orgs {
-		if org.ID == id {
-			return org, true
-		}
-	}
-	return client.Organization{}, false
 }
 
 func renderOrganization(org client.Organization, formatOverride string) {

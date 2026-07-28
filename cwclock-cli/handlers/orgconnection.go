@@ -76,12 +76,17 @@ func HandleOrgConnectionList(id string, formatOverride string) error {
 		return fmt.Errorf("organization id is required: use -i or --id")
 	}
 
+	resolvedOrg, err := resolveOrganization(trimmedID)
+	if err != nil {
+		return err
+	}
+
 	cli, err := client.NewClient()
 	if err != nil {
 		return err
 	}
 
-	org, err := cli.GetOrganization(trimmedID)
+	org, err := cli.GetOrganization(resolvedOrg.ID)
 	if err != nil {
 		return err
 	}
@@ -109,12 +114,17 @@ func HandleOrgConnectionCreate(id string, fields OrgConnectionFields, formatOver
 		return err
 	}
 
+	resolvedOrg, err := resolveOrganization(trimmedID)
+	if err != nil {
+		return err
+	}
+
 	cli, err := client.NewClient()
 	if err != nil {
 		return err
 	}
 
-	org, err := cli.AddOrganizationExternalConnection(trimmedID, conn)
+	org, err := cli.AddOrganizationExternalConnection(resolvedOrg.ID, conn)
 	if err != nil {
 		return err
 	}
@@ -137,12 +147,17 @@ func HandleOrgConnectionDelete(id string, offset int) error {
 		return fmt.Errorf("offset is required: use --offset")
 	}
 
+	resolvedOrg, err := resolveOrganization(trimmedID)
+	if err != nil {
+		return err
+	}
+
 	cli, err := client.NewClient()
 	if err != nil {
 		return err
 	}
 
-	org, err := cli.GetOrganization(trimmedID)
+	org, err := cli.GetOrganization(resolvedOrg.ID)
 	if err != nil {
 		return err
 	}
@@ -152,7 +167,7 @@ func HandleOrgConnectionDelete(id string, offset int) error {
 	}
 
 	connectionID := org.ExternalConnections[offset].ID
-	if _, err := cli.RemoveOrganizationExternalConnection(trimmedID, connectionID); err != nil {
+	if _, err := cli.RemoveOrganizationExternalConnection(resolvedOrg.ID, connectionID); err != nil {
 		return err
 	}
 

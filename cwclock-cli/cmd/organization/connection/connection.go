@@ -71,7 +71,7 @@ var ConnectionCmd = &cobra.Command{
 
 func init() {
 	ConnectionCmd.DisableFlagsInUseLine = true
-	ConnectionCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "Organization ID (required)")
+	ConnectionCmd.Flags().StringVarP(&id, "id", "i", utils.EMPTY, "Organization ID or name (required)")
 	ConnectionCmd.Flags().StringVar(&connType, "type", utils.EMPTY, "Connection type: s3, google_drive or git (create)")
 	ConnectionCmd.Flags().StringVar(&endpoint, "endpoint", utils.EMPTY, "S3 endpoint (s3)")
 	ConnectionCmd.Flags().StringVar(&bucketName, "bucket-name", utils.EMPTY, "S3 bucket name (s3)")
