@@ -22,6 +22,7 @@ const fieldsFromItem = (item) => ({
   start: padTimeString(item.start) || "",
   end: padTimeString(item.end) || "",
   allDay: item.allDay,
+  half: item.half,
   projectId: item.projectId,
   userId: item.userId,
 });
@@ -68,8 +69,9 @@ const TaskComponent = ({ item }) => {
       text: form.text,
       day: form.day,
       allDay: form.allDay,
-      start: form.allDay ? null : form.start,
-      end: form.allDay ? null : form.end,
+      half: form.half,
+      start: form.allDay || form.half ? null : form.start,
+      end: form.allDay || form.half ? null : form.end,
       projectId: form.projectId,
       clientId: selectedProject ? selectedProject.clientId : item.clientId,
       userId: form.userId,
@@ -80,6 +82,8 @@ const TaskComponent = ({ item }) => {
 
   const timeLabel = item.allDay
     ? t("timeTracker.allDay")
+    : item.half
+    ? t("timeTracker.half")
     : `${padTimeString(item.start) || "?"} - ${padTimeString(item.end) || "?"}`;
 
   const maxLabelLen = parseInt(process.env.REACT_APP_TASK_LABEL_MAX_LENGTH) || 50;
@@ -122,11 +126,21 @@ const TaskComponent = ({ item }) => {
                 <input
                   type="checkbox"
                   checked={form.allDay}
+                  disabled={form.half}
                   onChange={(e) => setForm({ ...form, allDay: e.target.checked })}
                 />{" "}
                 {t("timeTracker.allDay")}
               </label>
-              {!form.allDay && (
+              <label className={styles.allDayLabel} title={t("timeTracker.markHalf")}>
+                <input
+                  type="checkbox"
+                  checked={form.half}
+                  disabled={form.allDay}
+                  onChange={(e) => setForm({ ...form, half: e.target.checked })}
+                />{" "}
+                {t("timeTracker.half")}
+              </label>
+              {!form.allDay && !form.half && (
                 <>
                   <input
                     className="cw-input"

@@ -38,6 +38,7 @@ const (
 	CodeInvalidAdminUserEdit        = "errors.invalidAdminUserEdit"
 	CodeTimeEntryFields             = "errors.timeEntryFields"
 	CodeTimeEntryStartEnd           = "errors.timeEntryStartEnd"
+	CodeTimeEntryAllDayHalf         = "errors.timeEntryAllDayHalf"
 	CodeOwnTimeEntriesOnly          = "errors.ownTimeEntriesOnly"
 	CodeReassignForbidden           = "errors.reassignForbidden"
 	CodeNameAndSurnameRequired      = "errors.nameAndSurnameRequired"

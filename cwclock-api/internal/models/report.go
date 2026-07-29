@@ -13,6 +13,7 @@ type ReportEntry struct {
 	Start        *string   `json:"start"`
 	End          *string   `json:"end"`
 	AllDay       bool      `json:"allDay"`
+	Half         bool      `json:"half"`
 	DurationSecs int       `json:"durationSecs"`
 	Days         float64   `json:"days"`
 	Text         string    `json:"text"`

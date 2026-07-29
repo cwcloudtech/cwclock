@@ -111,15 +111,16 @@ func DetailedPDF(orgName, start, end string, report models.DetailedReport, logoD
 
 	rows := make([][]string, 0, len(report.Entries))
 	for _, e := range report.Entries {
-		// The PDF's Time column shows "All day" rather than the synthetic
-		// 9:00-to-9:00-plus-HoursPerDay window allDayWindow assigns an
-		// all-day entry's Start/End for duration/sorting purposes - that
-		// window is a computation detail, not a real clocked time range, and
-		// printing it as one reads as an actual, precise shift. The CSV
-		// export keeps showing that window as literal Start/End columns
-		// (ai-instruct-66), since its Start Time/End Time columns are
-		// expected to always hold a time, matching Clockify-style importers.
-		timeRange := utils.If(e.AllDay, "All day", formatAMPM(e.Start)+" - "+formatAMPM(e.End))
+		// The PDF's Time column shows "All day"/"Half day" rather than the
+		// synthetic 9:00-to-9:00-plus-HoursPerDay(/2) window allDayWindow/
+		// halfDayWindow assigns such an entry's Start/End for duration/
+		// sorting purposes - that window is a computation detail, not a real
+		// clocked time range, and printing it as one reads as an actual,
+		// precise shift. The CSV export keeps showing that window as literal
+		// Start/End columns (ai-instruct-66), since its Start Time/End Time
+		// columns are expected to always hold a time, matching Clockify-style
+		// importers.
+		timeRange := utils.If(e.AllDay, "All day", utils.If(e.Half, "Half day", formatAMPM(e.Start)+" - "+formatAMPM(e.End)))
 
 		row := []string{
 			formatUSDate(e.Day),

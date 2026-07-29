@@ -19,8 +19,9 @@ import { useI18n } from "../../i18n/I18nContext";
 
 // Duration math lives here rather than reusing the reports package's
 // enrichment logic: that logic pulls in per-client hours-per-day / all-day
-// window billing semantics this personal screen doesn't need - an all-day
-// entry simply contributes nothing to its day's total here.
+// and half-day window billing semantics this personal screen doesn't need -
+// an all-day or half-day entry simply contributes nothing to its day's total
+// here.
 const parseSecondsOfDay = (hms) => {
   if (!hms) return 0;
   const [h, m, s] = hms.split(":").map(Number);
@@ -28,7 +29,7 @@ const parseSecondsOfDay = (hms) => {
 };
 
 const entryDurationSecs = (item) => {
-  if (item.allDay || !item.start || !item.end) return 0;
+  if (item.allDay || item.half || !item.start || !item.end) return 0;
   const secs = parseSecondsOfDay(item.end) - parseSecondsOfDay(item.start);
   return secs > 0 ? secs : 0;
 };

@@ -13,6 +13,7 @@ type TimeEntry struct {
 	Start          *string   `json:"start"`
 	End            *string   `json:"end"`
 	AllDay         bool      `json:"allDay"`
+	Half           bool      `json:"half"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 }

@@ -19,6 +19,7 @@ const fieldsFromEntry = (e) => ({
   start: padTimeString(e.start) || "",
   end: padTimeString(e.end) || "",
   allDay: e.allDay,
+  half: e.half,
   clientId: e.clientId,
   projectId: e.projectId,
   userId: e.userId,
@@ -65,8 +66,9 @@ const ReportEntryRow = ({ entry, orgId, currency, isAdminOrOwner, showAmount, on
           text: form.text,
           day: form.day,
           allDay: form.allDay,
-          start: form.allDay ? null : form.start,
-          end: form.allDay ? null : form.end,
+          half: form.half,
+          start: form.allDay || form.half ? null : form.start,
+          end: form.allDay || form.half ? null : form.end,
         },
         orgId,
         user.token
@@ -104,11 +106,21 @@ const ReportEntryRow = ({ entry, orgId, currency, isAdminOrOwner, showAmount, on
           <input
             type="checkbox"
             checked={form.allDay}
+            disabled={form.half}
             onChange={(e) => setForm({ ...form, allDay: e.target.checked })}
           />{" "}
           {t("timeTracker.allDay")}
         </label>
-        {!form.allDay && (
+        <label className={styles.allDayLabel}>
+          <input
+            type="checkbox"
+            checked={form.half}
+            disabled={form.allDay}
+            onChange={(e) => setForm({ ...form, half: e.target.checked })}
+          />{" "}
+          {t("timeTracker.half")}
+        </label>
+        {!form.allDay && !form.half && (
           <>
             <input
               className="cw-input"
@@ -175,6 +187,7 @@ const ReportEntryRow = ({ entry, orgId, currency, isAdminOrOwner, showAmount, on
       <span>
         {padTimeString(entry.start) || "?"} - {padTimeString(entry.end) || "?"}
         {entry.allDay && ` (${t("timeTracker.allDay")})`}
+        {entry.half && ` (${t("timeTracker.half")})`}
       </span>
       <span>{formatHMS(entry.durationSecs)}</span>
       <span>{entry.userName}</span>

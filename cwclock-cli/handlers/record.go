@@ -195,9 +195,12 @@ func HandleRecordStop(orgOverride string, textOverride string, formatOverride st
 	return nil
 }
 
-func HandleRecordCreateRange(orgOverride string, clientOverride string, projectOverride string, text string, beginExpr string, endExpr string, allDay bool, formatOverride string) error {
+func HandleRecordCreateRange(orgOverride string, clientOverride string, projectOverride string, text string, beginExpr string, endExpr string, allDay bool, half bool, formatOverride string) error {
 	if allDay {
 		return handleRecordCreateAllDay(orgOverride, clientOverride, projectOverride, text, beginExpr, endExpr, formatOverride)
+	}
+	if half {
+		return handleRecordCreateHalf(orgOverride, clientOverride, projectOverride, text, beginExpr, endExpr, formatOverride)
 	}
 
 	begin, err := utils.ParseTimeExpr(beginExpr)
@@ -268,6 +271,41 @@ func handleRecordCreateAllDay(orgOverride string, clientOverride string, project
 	return nil
 }
 
+// handleRecordCreateHalf creates a half-day time record - only a single date
+// is needed (--begin/--from), same as --all-day, which --half treats as
+// covering half the day rather than a specific begin/end time.
+func handleRecordCreateHalf(orgOverride string, clientOverride string, projectOverride string, text string, beginExpr string, endExpr string, formatOverride string) error {
+	if utils.IsBlank(strings.TrimSpace(beginExpr)) {
+		return fmt.Errorf("a date is required: use --begin or --from")
+	}
+	if utils.IsNotBlank(strings.TrimSpace(endExpr)) {
+		return fmt.Errorf("--end/--to cannot be combined with --half: it always covers half the day given by --begin/--from")
+	}
+
+	day, err := utils.ParseTimeExpr(beginExpr)
+	if err != nil {
+		return fmt.Errorf("invalid date: %w", err)
+	}
+
+	orgID, err := resolveOrgID(orgOverride)
+	if err != nil {
+		return err
+	}
+
+	clientID, projectID, resolvedText, err := resolveTimeEntryDefaults(orgID, clientOverride, projectOverride, text)
+	if err != nil {
+		return err
+	}
+
+	entry, err := createHalfDayTimeEntry(orgID, clientID, projectID, resolvedText, day)
+	if err != nil {
+		return err
+	}
+
+	renderTimeEntry(entry, formatOverride)
+	return nil
+}
+
 func createTimeEntryFromRange(orgID string, clientID string, projectID string, text string, begin time.Time, end time.Time) (client.TimeEntry, error) {
 	cli, err := client.NewClient()
 	if err != nil {
@@ -304,6 +342,25 @@ func createAllDayTimeEntry(orgID string, clientID string, projectID string, text
 		Text:      text,
 		Day:       day.Format(dayLayout),
 		AllDay:    true,
+	}
+
+	return cli.CreateTimeEntry(orgID, payload)
+}
+
+// createHalfDayTimeEntry creates a time record with no specific start/end
+// time-of-day, marked half-day - see handleRecordCreateHalf.
+func createHalfDayTimeEntry(orgID string, clientID string, projectID string, text string, day time.Time) (client.TimeEntry, error) {
+	cli, err := client.NewClient()
+	if err != nil {
+		return client.TimeEntry{}, err
+	}
+
+	payload := client.CreateTimeEntryPayload{
+		ClientID:  clientID,
+		ProjectID: projectID,
+		Text:      text,
+		Day:       day.Format(dayLayout),
+		Half:      true,
 	}
 
 	return cli.CreateTimeEntry(orgID, payload)
@@ -373,12 +430,12 @@ func renderTimeEntry(entry client.TimeEntry, formatOverride string) {
 
 func displayTimeEntriesAsTable(entries []client.TimeEntry) {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"ID", "Day", "Start", "End", "All Day", "Text"})
+	table.SetHeader([]string{"ID", "Day", "Start", "End", "All Day", "Half Day", "Text"})
 	table.SetAutoWrapText(false)
 	table.SetColWidth(60)
 
 	if utils.IsEmpty(entries) {
-		table.Append([]string{"No records available", utils.EMPTY, utils.EMPTY, utils.EMPTY, utils.EMPTY, utils.EMPTY})
+		table.Append([]string{"No records available", utils.EMPTY, utils.EMPTY, utils.EMPTY, utils.EMPTY, utils.EMPTY, utils.EMPTY})
 		table.Render()
 		return
 	}
@@ -390,6 +447,7 @@ func displayTimeEntriesAsTable(entries []client.TimeEntry) {
 			timeValueOrBlank(entry.Start),
 			timeValueOrBlank(entry.End),
 			strconv.FormatBool(entry.AllDay),
+			strconv.FormatBool(entry.Half),
 			entry.Text,
 		})
 	}

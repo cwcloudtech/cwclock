@@ -19,6 +19,7 @@ type TimeEntry struct {
 	Start          *string `json:"start"`
 	End            *string `json:"end"`
 	AllDay         bool    `json:"allDay"`
+	Half           bool    `json:"half"`
 	CreatedAt      string  `json:"createdAt"`
 	UpdatedAt      string  `json:"updatedAt"`
 }
@@ -38,6 +39,7 @@ type CreateTimeEntryPayload struct {
 	Start     *string `json:"start,omitempty"`
 	End       *string `json:"end,omitempty"`
 	AllDay    bool    `json:"allDay"`
+	Half      bool    `json:"half"`
 }
 
 func timeEntriesPath(orgID string) string {

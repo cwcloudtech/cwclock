@@ -52,6 +52,7 @@ type timeEntryPayload struct {
 	Start     *string `json:"start"`
 	End       *string `json:"end"`
 	AllDay    bool    `json:"allDay"`
+	Half      bool    `json:"half"`
 }
 
 func (p timeEntryPayload) toFields() store.TimeEntryFields {
@@ -61,6 +62,7 @@ func (p timeEntryPayload) toFields() store.TimeEntryFields {
 		Start:  p.Start,
 		End:    p.End,
 		AllDay: p.AllDay,
+		Half:   p.Half,
 	}
 }
 
@@ -80,6 +82,17 @@ func canManage(r *http.Request, entryUserID string) bool {
 func isAdminOrOwner(r *http.Request) bool {
 	role, _ := middleware.OrgRoleFromContext(r.Context())
 	return role == models.RoleAdmin || role == models.RoleOwner
+}
+
+// validateAllDayHalf rejects a request marking a time entry as both all-day
+// and half-day - the two are mutually exclusive, same model on both flags.
+// Returns false (having already written the error response) when invalid.
+func validateAllDayHalf(w http.ResponseWriter, allDay, half bool) bool {
+	if allDay && half {
+		writeError(w, http.StatusBadRequest, "Please check either all day or half day, not both", CodeTimeEntryAllDayHalf)
+		return false
+	}
+	return true
 }
 
 // List returns one page of the connected user's own time entries for the
@@ -140,8 +153,11 @@ func (h *TimeEntryHandler) Create(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "Please add text, clientId, projectId and day fields", CodeTimeEntryFields)
 		return
 	}
-	if !p.AllDay && (p.Start == nil || p.End == nil || utils.IsBlank(*p.Start) || utils.IsBlank(*p.End)) {
-		writeError(w, http.StatusBadRequest, "Please add start and end fields, or check allDay", CodeTimeEntryStartEnd)
+	if !validateAllDayHalf(w, p.AllDay, p.Half) {
+		return
+	}
+	if !p.AllDay && !p.Half && (p.Start == nil || p.End == nil || utils.IsBlank(*p.Start) || utils.IsBlank(*p.End)) {
+		writeError(w, http.StatusBadRequest, "Please add start and end fields, or check allDay/half", CodeTimeEntryStartEnd)
 		return
 	}
 
@@ -169,10 +185,13 @@ func (h *TimeEntryHandler) Update(w http.ResponseWriter, r *http.Request) {
 	p := timeEntryPayload{
 		ClientID: entry.ClientID, ProjectID: entry.ProjectID,
 		Text: entry.Text, Day: entry.Day,
-		Start: entry.Start, End: entry.End, AllDay: entry.AllDay,
+		Start: entry.Start, End: entry.End, AllDay: entry.AllDay, Half: entry.Half,
 	}
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 		writeError(w, http.StatusBadRequest, "Invalid request body", CodeInvalidRequestBody)
+		return
+	}
+	if !validateAllDayHalf(w, p.AllDay, p.Half) {
 		return
 	}
 

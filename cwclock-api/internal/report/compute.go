@@ -93,13 +93,25 @@ func allDayWindow(client models.Client) (start, end string) {
 	return formatMinutesOfDay(allDayStartMinutes), formatMinutesOfDay(endMinutes)
 }
 
+// halfDayWindow returns the display start/end for a "half day" entry: 9:00
+// AM through 9:00 AM plus half the client's HoursPerDay (falling back to 7h
+// if unset) - same model as allDayWindow, but for half the day.
+func halfDayWindow(client models.Client) (start, end string) {
+	endMinutes := allDayStartMinutes + int(hoursPerDay(client)*60/2)
+	return formatMinutesOfDay(allDayStartMinutes), formatMinutesOfDay(endMinutes)
+}
+
 // DurationSecs computes an entry's duration: an all-day entry takes its
-// client's HoursPerDay (falling back to 7h if unset), otherwise it's the
-// wall-clock gap between start and end, treating an end earlier than start
-// as crossing midnight. Exported for reuse by the task-duration metric.
+// client's HoursPerDay (falling back to 7h if unset), a half-day entry takes
+// half of that, otherwise it's the wall-clock gap between start and end,
+// treating an end earlier than start as crossing midnight. Exported for
+// reuse by the task-duration metric.
 func DurationSecs(entry models.TimeEntry, client models.Client) int {
 	if entry.AllDay {
 		return int(hoursPerDay(client) * 3600)
+	}
+	if entry.Half {
+		return int(hoursPerDay(client) * 3600 / 2)
 	}
 	if entry.Start == nil || entry.End == nil {
 		return 0
@@ -165,6 +177,9 @@ func Enrich(entries []models.TimeEntry, lk Lookups, canSeeAmount bool) []models.
 		if e.AllDay {
 			s, en := allDayWindow(client)
 			start, end = &s, &en
+		} else if e.Half {
+			s, en := halfDayWindow(client)
+			start, end = &s, &en
 		}
 
 		out = append(out, buildReportEntry(e, client, project, member, start, end, dur, canSeeAmount))
@@ -190,6 +205,7 @@ func buildReportEntry(e models.TimeEntry, client models.Client, project models.P
 		Start:        start,
 		End:          end,
 		AllDay:       e.AllDay,
+		Half:         e.Half,
 		DurationSecs: durSecs,
 		Days:         float64(durSecs) / 3600 / hoursPerDay(client),
 		Text:         e.Text,

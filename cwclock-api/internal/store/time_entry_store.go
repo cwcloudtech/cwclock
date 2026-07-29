@@ -32,22 +32,24 @@ type timeEntryData struct {
 	Start  *string `json:"start"`
 	End    *string `json:"end"`
 	AllDay bool    `json:"allDay"`
+	Half   bool    `json:"half"`
 }
 
 // TimeEntryFields holds the editable, non-relational fields of a time entry.
-// When AllDay is true, Start/End are always stored as null regardless of
-// what's passed.
+// When AllDay or Half is true, Start/End are always stored as null
+// regardless of what's passed.
 type TimeEntryFields struct {
 	Text   string
 	Day    string
 	Start  *string
 	End    *string
 	AllDay bool
+	Half   bool
 }
 
 func toTimeEntryData(f TimeEntryFields) timeEntryData {
-	d := timeEntryData{Text: f.Text, Day: f.Day, AllDay: f.AllDay}
-	if !f.AllDay {
+	d := timeEntryData{Text: f.Text, Day: f.Day, AllDay: f.AllDay, Half: f.Half}
+	if !f.AllDay && !f.Half {
 		d.Start = f.Start
 		d.End = f.End
 	}
@@ -72,6 +74,7 @@ func scanTimeEntry(row pgx.Row) (models.TimeEntry, error) {
 	t.Start = d.Start
 	t.End = d.End
 	t.AllDay = d.AllDay
+	t.Half = d.Half
 	return t, nil
 }
 
