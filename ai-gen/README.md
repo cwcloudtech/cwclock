@@ -101,3 +101,4 @@
 * [ai-instruct-99](./ai-instruct-99.md)
 * [ai-instruct-100](./ai-instruct-100.md)
 * [ai-instruct-101](./ai-instruct-101.md)
+* [ai-instruct-102](./ai-instruct-102.md)
