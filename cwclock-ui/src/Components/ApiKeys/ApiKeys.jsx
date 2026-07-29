@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { MdDeleteForever } from "react-icons/md";
-import { FaRegCopy, FaExternalLinkAlt } from "react-icons/fa";
+import { FaRegCopy, FaExternalLinkAlt, FaRegEye, FaRegEyeSlash } from "react-icons/fa";
+import { FiDownload } from "react-icons/fi";
 import { toast } from "react-toastify";
 import ConfigForm from "../common/ConfigForm";
 import CollapsiblePanel from "../common/CollapsiblePanel";
@@ -9,7 +10,13 @@ import ConfirmModal from "../common/ConfirmModal";
 import Modal from "../common/Modal";
 import Tooltip from "../common/Tooltip";
 import EmptyState from "../common/EmptyState";
-import { listApiKeysApi, createApiKeyApi, deleteApiKeyApi } from "../../Redux/ApiKeys/ApiKey.actions";
+import {
+  listApiKeysApi,
+  createApiKeyApi,
+  deleteApiKeyApi,
+  downloadApiKeyConfigApi,
+  fetchApiKeyConfigQrApi,
+} from "../../Redux/ApiKeys/ApiKey.actions";
 import { useI18n } from "../../i18n/I18nContext";
 import toastOptions from "../../Redux/toastOptions";
 import styles from "./Styles/ApiKeys.module.css";
@@ -20,10 +27,13 @@ const ApiKeys = () => {
   const { t } = useI18n();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const { currentOrgId } = useSelector((state) => state.organizations);
   const { keys } = useSelector((state) => state.apiKeys);
   const [fields, setFields] = useState(initialFields);
   const [deletingKey, setDeletingKey] = useState(null);
   const [createdToken, setCreatedToken] = useState(null);
+  const [qrCode, setQrCode] = useState(null);
+  const [qrLoading, setQrLoading] = useState(false);
 
   useEffect(() => {
     dispatch(listApiKeysApi(user.token));
@@ -64,6 +74,31 @@ const ApiKeys = () => {
     navigator.clipboard.writeText(text).then(() => {
       toast.success(t("common.copied"), toastOptions);
     });
+  };
+
+  const handleCloseCreatedModal = () => {
+    setCreatedToken(null);
+    setQrCode(null);
+  };
+
+  const handleDownloadConfig = () => {
+    dispatch(downloadApiKeyConfigApi(createdToken, currentOrgId, user.token)).catch(() => {});
+  };
+
+  const handleToggleQr = async () => {
+    if (qrCode) {
+      setQrCode(null);
+      return;
+    }
+    setQrLoading(true);
+    try {
+      const png = await dispatch(fetchApiKeyConfigQrApi(createdToken, currentOrgId, user.token));
+      setQrCode(png);
+    } catch (e) {
+      // error toast already shown by fetchApiKeyConfigQrApi
+    } finally {
+      setQrLoading(false);
+    }
   };
 
   return (
@@ -107,7 +142,7 @@ const ApiKeys = () => {
         ))}
       </ul>
 
-      <Modal show={!!createdToken} title={t("apiKeys.createdTitle")} onClose={() => setCreatedToken(null)}>
+      <Modal show={!!createdToken} title={t("apiKeys.createdTitle")} onClose={handleCloseCreatedModal}>
         <p className={styles.warning}>{t("apiKeys.createdWarning")}</p>
         <div className={styles.tokenBox}>
           <code className={styles.token}>{createdToken}</code>
@@ -116,7 +151,22 @@ const ApiKeys = () => {
               <FaRegCopy style={{ fontSize: "16px" }} />
             </button>
           </Tooltip>
+          <Tooltip label={t("apiKeys.downloadConfig")}>
+            <button type="button" className={styles.iconBtn} onClick={handleDownloadConfig}>
+              <FiDownload style={{ fontSize: "16px" }} />
+            </button>
+          </Tooltip>
+          <Tooltip label={qrCode ? t("apiKeys.hideQr") : t("apiKeys.showQr")}>
+            <button type="button" className={styles.iconBtn} onClick={handleToggleQr} disabled={qrLoading}>
+              {qrCode ? <FaRegEyeSlash style={{ fontSize: "16px" }} /> : <FaRegEye style={{ fontSize: "16px" }} />}
+            </button>
+          </Tooltip>
         </div>
+        {qrCode && (
+          <div className={styles.qrWrapper}>
+            <img src={qrCode} alt="" className={styles.qrCode} />
+          </div>
+        )}
       </Modal>
 
       <ConfirmModal

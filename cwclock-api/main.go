@@ -91,6 +91,7 @@ func main() {
 	importHandler := handlers.NewImportHandler(userStore, clientStore, projectStore, timeEntryStore)
 	reportHandler := handlers.NewReportHandler(orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize)
 	apiKeyHandler := handlers.NewApiKeyHandler(apiKeyStore)
+	configHandler := handlers.NewConfigHandler(orgStore, cfg.APIBaseURL)
 	invoiceHandler := handlers.NewInvoiceHandler(invoiceStore, orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize, mailer, reportHandler, mailCounterStore, cfg.MailLimit)
 	currencyHandler := handlers.NewCurrencyHandler(currencyStore)
 	countryHandler := handlers.NewCountryHandler(countryStore)
@@ -122,7 +123,7 @@ func main() {
 	defer func() { _ = met.Shutdown(context.Background()) }()
 
 	r := router.New(
-		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler, mfaHandler, importHandler, apiKeyHandler, invoiceHandler,
+		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler, mfaHandler, importHandler, apiKeyHandler, configHandler, invoiceHandler,
 		currencyHandler, countryHandler, fieldHandler, oidcHandler, contactHandler, exportJobHandler, calendarFeedHandler,
 		orgStore, userStore, apiKeyStore, cfg.JWTSecret, cfg.ActivationMode, cfg.CorsEnabled, cfg.CorsAllowedOrigins, cfg.Version, cfg.ManifestPath,
 		tel, met.Observe, met.Handler,

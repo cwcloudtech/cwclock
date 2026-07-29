@@ -25,6 +25,7 @@ func New(
 	mfaHandler *handlers.MFAHandler,
 	importHandler *handlers.ImportHandler,
 	apiKeyHandler *handlers.ApiKeyHandler,
+	configHandler *handlers.ConfigHandler,
 	invoiceHandler *handlers.InvoiceHandler,
 	currencyHandler *handlers.CurrencyHandler,
 	countryHandler *handlers.CountryHandler,
@@ -126,6 +127,14 @@ func New(
 						r.Get("/", apiKeyHandler.List)
 						r.Post("/", apiKeyHandler.Create)
 						r.Delete("/{id}", apiKeyHandler.Delete)
+					})
+
+					// Builds the downloadable CLI config file / QR code for an
+					// API key, from a token the caller passes in - see
+					// ConfigHandler for why this can't look one up by id.
+					r.Route("/me/config", func(r chi.Router) {
+						r.Get("/file", configHandler.File)
+						r.Get("/qr", configHandler.QR)
 					})
 
 					r.Route("/me/calendar-feed", func(r chi.Router) {

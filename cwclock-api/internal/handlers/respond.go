@@ -68,6 +68,7 @@ const (
 	CodeContactGibberish            = "errors.contactGibberish"
 	CodeInvalidMFACode              = "errors.invalidMfaCode"
 	CodeMailLimitExceeded           = "errors.mailLimitExceeded"
+	CodeConfigTokenRequired         = "errors.configTokenRequired"
 )
 
 func writeJSON(w http.ResponseWriter, status int, body any) {

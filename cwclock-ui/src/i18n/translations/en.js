@@ -384,6 +384,9 @@ const en = {
     emptyBody: "Create your first API key above to get started.",
     createdTitle: "API key created",
     createdWarning: "Copy this key now - for your security, it won't be shown again.",
+    downloadConfig: "Download CLI config",
+    showQr: "Show QR code",
+    hideQr: "Hide QR code",
     deleteKeyTitle: "Revoke API key",
     deleteKeyBody: 'Revoke "{{description}}"? Any script using it will stop working immediately.',
     openSwagger: "API documentation",
@@ -489,6 +492,7 @@ const en = {
     contactRateLimited: "You're sending too many messages. Please wait a bit before trying again.",
     contactMessageTooShort: "Your message is too short. Please add a bit more detail.",
     contactGibberish: "Your message looks like spam. Please rewrite it.",
+    configTokenRequired: "Missing API key token.",
   },
   reports: {
     summary: "Summary",

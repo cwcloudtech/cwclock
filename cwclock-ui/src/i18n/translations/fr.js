@@ -384,6 +384,9 @@ const fr = {
     emptyBody: "Créez votre première clé API ci-dessus pour commencer.",
     createdTitle: "Clé API créée",
     createdWarning: "Copiez cette clé maintenant - pour votre sécurité, elle ne sera plus jamais affichée.",
+    downloadConfig: "Télécharger la configuration CLI",
+    showQr: "Afficher le QR code",
+    hideQr: "Masquer le QR code",
     deleteKeyTitle: "Révoquer la clé API",
     deleteKeyBody: "Révoquer « {{description}} » ? Tout script qui l'utilise cessera de fonctionner immédiatement.",
     openSwagger: "Documentation de l'API",
@@ -489,6 +492,7 @@ const fr = {
     contactRateLimited: "Vous envoyez trop de messages. Veuillez patienter avant de réessayer.",
     contactMessageTooShort: "Votre message est trop court. Merci d'ajouter un peu plus de détails.",
     contactGibberish: "Votre message ressemble à du spam. Merci de le reformuler.",
+    configTokenRequired: "Jeton de clé API manquant.",
   },
   reports: {
     summary: "Résumé",
