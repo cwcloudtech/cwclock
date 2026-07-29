@@ -9,7 +9,7 @@ GET /me/config/file
 GET /me/config/qr
 ```
 
-I want you to replace the `X-Config-Key` header by a body to avoid adding a CORS exception in our reverse proxy
+I want you to replace the `X-Config-Key` header by a body to avoid adding a CORS exception in our reverse proxy:
 
 ```
 POST /me/config/file
@@ -20,4 +20,3 @@ POST /me/config/qr
 ```
 
 `orga_id` is still optional.
-

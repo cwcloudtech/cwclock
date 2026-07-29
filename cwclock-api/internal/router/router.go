@@ -131,10 +131,13 @@ func New(
 
 					// Builds the downloadable CLI config file / QR code for an
 					// API key, from a token the caller passes in - see
-					// ConfigHandler for why this can't look one up by id.
+					// ConfigHandler for why this can't look one up by id. POST
+					// with the token in the body (not GET+header/query) so
+					// reverse proxies don't need a CORS exception for a
+					// custom header (see ai-instruct-103).
 					r.Route("/me/config", func(r chi.Router) {
-						r.Get("/file", configHandler.File)
-						r.Get("/qr", configHandler.QR)
+						r.Post("/file", configHandler.File)
+						r.Post("/qr", configHandler.QR)
 					})
 
 					r.Route("/me/calendar-feed", func(r chi.Router) {

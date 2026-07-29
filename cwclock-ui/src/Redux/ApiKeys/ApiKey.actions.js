@@ -16,12 +16,13 @@ const CONFIG_ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/users/me/config`;
 const authConfig = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
 
 // The API key token only ever exists in the browser right after creation
-// (see ApiKeyHandler.Create) - these two calls hand it to the backend via a
-// header rather than persisting/looking it up, so it never touches the URL
-// or server access logs.
-const configRequest = (token, apiKeyToken, orgId) => ({
-  headers: { Authorization: `Bearer ${token}`, "X-Config-Token": apiKeyToken },
-  params: orgId ? { organization: orgId } : undefined,
+// (see ApiKeyHandler.Create) - these two calls hand it to the backend in the
+// POST body rather than persisting/looking it up, so it never touches the
+// URL, and doesn't need a custom header that'd force a CORS exception on
+// reverse proxies (see ai-instruct-103).
+const configBody = (apiKeyToken, orgId) => ({
+  key: apiKeyToken,
+  ...(orgId ? { orga_id: orgId } : {}),
 });
 
 // A blob-response error carries the JSON error body as a Blob instead of a
@@ -95,8 +96,8 @@ const downloadBlob = (response, fallbackFilename) => {
 // ever available in the browser right after createApiKeyApi resolves.
 export const downloadApiKeyConfigApi = (apiKeyToken, orgId, token) => async () => {
   try {
-    const response = await axios.get(`${CONFIG_ENDPOINT}/file`, {
-      ...configRequest(token, apiKeyToken, orgId),
+    const response = await axios.post(`${CONFIG_ENDPOINT}/file`, configBody(apiKeyToken, orgId), {
+      ...authConfig(token),
       responseType: "blob",
     });
     downloadBlob(response, "config");
@@ -110,7 +111,7 @@ export const downloadApiKeyConfigApi = (apiKeyToken, orgId, token) => async () =
 // just-created API key - see downloadApiKeyConfigApi.
 export const fetchApiKeyConfigQrApi = (apiKeyToken, orgId, token) => async () => {
   try {
-    const { data } = await axios.get(`${CONFIG_ENDPOINT}/qr`, configRequest(token, apiKeyToken, orgId));
+    const { data } = await axios.post(`${CONFIG_ENDPOINT}/qr`, configBody(apiKeyToken, orgId), authConfig(token));
     return data.qrCodePng;
   } catch (e) {
     toast.error(apiErrorMessage(e, getStoredLocale()), toastOptions);
