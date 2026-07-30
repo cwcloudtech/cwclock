@@ -27,7 +27,8 @@ RUN CGO_ENABLED=0 go build -o /out/cwclock-api .
 # Stage mobile build (android only)
 FROM eclipse-temurin:${JDK_IMAGE_TAG} AS mobile-build
 ARG GRADLE_VERSION=8.10.2
-ARG NPM_VERSION=12.0.2
+ARG NODE_MOBILE_VERSION=20.20.2
+ARG NPM_MOBILE_VERSION=11.19.0
 ARG ANDROID_SDK_CMDLINE_TOOLS_VERSION=11076708
 ARG ANDROID_PLATFORM=android-35
 ARG ANDROID_BUILD_TOOLS=35.0.0
@@ -37,8 +38,8 @@ ENV PATH=${PATH}:/opt/gradle/bin:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl unzip ca-certificates && \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y --no-install-recommends nodejs && \
-    npm install -g npm@${NPM_VERSION} && \
+    apt-get install -y --no-install-recommends nodejs-${NODE_MOBILE_VERSION} && \
+    npm install -g npm@${NPM_MOBILE_VERSION} && \
     curl -fsSL -o /tmp/gradle.zip "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" && \
     unzip -q /tmp/gradle.zip -d /opt && mv "/opt/gradle-${GRADLE_VERSION}" /opt/gradle && rm /tmp/gradle.zip && \
     mkdir -p "${ANDROID_SDK_ROOT}/cmdline-tools" && \
