@@ -38,7 +38,7 @@ ENV PATH=${PATH}:/opt/gradle/bin:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl unzip ca-certificates && \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y --no-install-recommends nodejs-${NODE_MOBILE_VERSION} && \
+    apt-get install -y --no-install-recommends nodejs=${NODE_MOBILE_VERSION}-1nodesource1 && \
     npm install -g npm@${NPM_MOBILE_VERSION} && \
     curl -fsSL -o /tmp/gradle.zip "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" && \
     unzip -q /tmp/gradle.zip -d /opt && mv "/opt/gradle-${GRADLE_VERSION}" /opt/gradle && rm /tmp/gradle.zip && \
