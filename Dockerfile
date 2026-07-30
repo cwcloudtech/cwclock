@@ -24,14 +24,6 @@ COPY cwclock-api/ ./
 COPY manifest.json ./manifest.json
 RUN CGO_ENABLED=0 go build -o /out/cwclock-api .
 
-# Stage api run
-FROM alpine:${ALPINE_IMAGE_TAG} AS api
-RUN apk add --no-cache ca-certificates
-COPY --from=api-build /out/cwclock-api /usr/local/bin/cwclock-api
-COPY --from=api-build /app/manifest.json /manifest.json
-EXPOSE 8080
-ENTRYPOINT ["/usr/local/bin/cwclock-api"]
-
 # Stage mobile build (android only)
 FROM eclipse-temurin:${JDK_IMAGE_TAG} AS mobile-build
 ARG GRADLE_VERSION=8.10.2
@@ -65,6 +57,14 @@ RUN VERSION="$(cat VERSION)" && \
     sed -i "s/versionName \"[^\"]*\"/versionName \"${VERSION}\"/" android/app/build.gradle && \
     cd android && gradle assembleRelease --no-daemon && \
     mkdir -p /out && cp app/build/outputs/apk/release/app-release.apk "/out/cwclock-v${VERSION}.apk"
+
+# Stage api run
+FROM alpine:${ALPINE_IMAGE_TAG} AS api
+RUN apk add --no-cache ca-certificates
+COPY --from=api-build /out/cwclock-api /usr/local/bin/cwclock-api
+COPY --from=api-build /app/manifest.json /manifest.json
+EXPOSE 8080
+ENTRYPOINT ["/usr/local/bin/cwclock-api"]
 
 # Stage ui run
 FROM nginx:${NGINX_IMAGE_TAG} AS ui
