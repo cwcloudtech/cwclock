@@ -1,4 +1,8 @@
 apply plugin: "com.android.application"
+// Required by react-native-gradle-plugin 0.77+'s Kotlin-based build logic,
+// matching the official template (ai-instruct-115) - this app's own
+// MainActivity/MainApplication stay plain Java, no .kt sources needed.
+apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
 /**

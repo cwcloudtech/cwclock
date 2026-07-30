@@ -4,24 +4,30 @@ buildscript {
         minSdkVersion = 24
         compileSdkVersion = 35
         targetSdkVersion = 34
-        ndkVersion = "26.1.10909125"
-        kotlinVersion = "1.9.24"
-        // Android Gradle Plugin - unlike the react-native-gradle-plugin
-        // classpath entry below, this is a real Maven Central artifact with
-        // no local included build to substitute it, so it needs an explicit
-        // version (ai-instruct-108 build failure: "Could not find
-        // com.android.tools.build:gradle:."). 8.6.0 is the version RN 0.76's
-        // own template pins, compatible with Gradle 8.10.2 (see
-        // gradle/wrapper/gradle-wrapper.properties) and JDK 17 (see the root
-        // Dockerfile's mobile-build stage).
-        agpVersion = "8.6.0"
+        // r27 (up from r26.1) - required for 16 KB memory page size support.
+        // Devices shipping with a 16 KB page size (e.g. recent Pixel
+        // hardware) fail to load native libraries built for the old 4 KB
+        // page alignment, crashing the app on launch ("keeps stopping",
+        // ai-instruct-115). RN itself only became 16 KB-page-compliant
+        // starting at 0.77 (see the react-native version bump in
+        // package.json), so bumping just the NDK without also bumping RN
+        // wouldn't have fixed this - Meta's own prebuilt Hermes/react-android
+        // binaries needed the same rebuild.
+        ndkVersion = "27.1.12297006"
+        kotlinVersion = "2.0.21"
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:${agpVersion}")
+        // No explicit version (unlike pre-0.77, see ai-instruct-108's
+        // "Could not find com.android.tools.build:gradle:." failure this
+        // used to need a pin for) - react-native-gradle-plugin 0.77+ resolves
+        // a compatible Android Gradle Plugin version itself via its
+        // "com.facebook.react.rootproject" plugin applied below, matching
+        // the official RN 0.77.3 template.
+        classpath("com.android.tools.build:gradle")
         // No version here - it's not a normal Maven artifact, it resolves
         // to the local ../node_modules/@react-native/gradle-plugin project
         // via the plain includeBuild() in settings.gradle (same reasoning

@@ -9,6 +9,7 @@ import com.facebook.react.ReactPackage;
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactHost;
 import com.facebook.react.defaults.DefaultReactNativeHost;
+import com.facebook.react.soloader.OpenSourceMergedSoMapping;
 import com.facebook.soloader.SoLoader;
 import java.util.List;
 
@@ -58,7 +59,10 @@ public class MainApplication extends Application implements ReactApplication {
   @Override
   public void onCreate() {
     super.onCreate();
-    SoLoader.init(this, false);
+    // OpenSourceMergedSoMapping.INSTANCE (not the bare Kotlin object - Java
+    // needs the .INSTANCE accessor) - required since RN merged native
+    // libraries into a single libreactnative.so (ai-instruct-115).
+    SoLoader.init(this, OpenSourceMergedSoMapping.INSTANCE);
     if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
       DefaultNewArchitectureEntryPoint.load();
     }
