@@ -1,6 +1,0 @@
-<resources>
-    <!-- Matches cwclock-ui's cw-primary-500 CSS custom property (src/index.css)
-         for basic brand consistency between the web app and the launcher icon/status bar. -->
-    <color name="cw_primary">#1cb9f7</color>
-    <color name="ic_launcher_background">#1cb9f7</color>
-</resources>
