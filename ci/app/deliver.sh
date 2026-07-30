@@ -9,8 +9,8 @@ echo '{"version":"'"${VERSION}"'", "sha":"'"${sha}"'", "details":"'"${details}"'
 
 docker login "${CI_REGISTRY}" --username "${CI_REGISTRY_USER}" --password "${CI_REGISTRY_PASSWORD}"
 
-for app in $CWCLOCK_APPS; do
-  image_name="cwclock-${app}"
+for app in $APPS; do
+  image_name="${APP_PREFIX}-${app}"
 
   local_version="${VERSION}"
   local_version_sha="${VERSION_SHA}"
@@ -20,7 +20,7 @@ for app in $CWCLOCK_APPS; do
     local_version="${VERSION}-mobile"
     local_version_sha="${VERSION_SHA}-mobile"
     local_latest="latest-mobile"
-    image_name="ui"
+    image_name="${APP_PREFIX}-ui"
   fi
 
   docker buildx bake -f docker-compose-build.yml --push "${app}"
