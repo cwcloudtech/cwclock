@@ -7,13 +7,22 @@ apply plugin: "com.facebook.react"
  * lines you need.
  */
 react {
-    // Autolinking/JS bundling defaults are enough for this app, except for
-    // hermesFlags: the default is ["-O", "-output-source-map"] (see
-    // node_modules/@react-native/gradle-plugin's ReactExtension.kt) - we keep
-    // both and add -Wno-undefined-variable, since Hermes's static scope
-    // checker otherwise warns on every reference to a legitimate global
-    // (fetch, setTimeout, XMLHttpRequest, self, navigator, ...) across the
-    // whole bundle on every release build.
+    // Autolinking/JS bundling defaults are enough for this app, except for:
+    // - autolinkLibrariesWithApp(): settings.gradle's autolinkLibrariesFromCommand()
+    //   only registers each native module as a Gradle project and generates
+    //   PackageList.java's source; it does NOT add those projects as :app
+    //   dependencies. Without this call, PackageList.java references classes
+    //   (e.g. AsyncStoragePackage) that are never on :app's compile classpath,
+    //   failing compileReleaseJavaWithJavac with "package ... does not exist"
+    //   for every single autolinked module (see ReactExtension.kt's doc
+    //   comment on autolinkLibrariesWithApp()).
+    // - hermesFlags: the default is ["-O", "-output-source-map"] (see
+    //   node_modules/@react-native/gradle-plugin's ReactExtension.kt) - we keep
+    //   both and add -Wno-undefined-variable, since Hermes's static scope
+    //   checker otherwise warns on every reference to a legitimate global
+    //   (fetch, setTimeout, XMLHttpRequest, self, navigator, ...) across the
+    //   whole bundle on every release build.
+    autolinkLibrariesWithApp()
     hermesFlags = ["-O", "-output-source-map", "-Wno-undefined-variable"]
 }
 
