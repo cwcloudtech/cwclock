@@ -22,7 +22,7 @@ class AppScreen extends StatelessWidget {
         : child;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.of(context).background,
       body: SafeArea(child: body),
     );
   }

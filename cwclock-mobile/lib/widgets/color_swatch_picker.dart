@@ -23,7 +23,7 @@ class ColorSwatchPicker extends StatelessWidget {
           if (label != null)
             Padding(
               padding: EdgeInsets.only(bottom: AppSpacing.of(0.5)),
-              child: Text(label!, style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+              child: Text(label!, style: TextStyle(fontSize: 13, color: AppColors.of(context).textMuted)),
             ),
           Wrap(
             spacing: AppSpacing.of(1),
@@ -38,7 +38,7 @@ class ColorSwatchPicker extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: colorFromHex(color),
                       shape: BoxShape.circle,
-                      border: value == color ? Border.all(color: AppColors.text, width: 3) : null,
+                      border: value == color ? Border.all(color: AppColors.of(context).text, width: 3) : null,
                     ),
                   ),
                 ),

@@ -27,10 +27,10 @@ class ConnectScreen extends ConsumerWidget {
           SizedBox(height: AppSpacing.of(6)),
           Text(
             t('onboarding.title'),
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.text),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.of(context).text),
           ),
           SizedBox(height: AppSpacing.of(1)),
-          Text(t('onboarding.intro'), style: const TextStyle(fontSize: 15, color: AppColors.textMuted)),
+          Text(t('onboarding.intro'), style: TextStyle(fontSize: 15, color: AppColors.of(context).textMuted)),
           SizedBox(height: AppSpacing.of(4)),
           AppButton(
             title: t('onboarding.scanQr'),

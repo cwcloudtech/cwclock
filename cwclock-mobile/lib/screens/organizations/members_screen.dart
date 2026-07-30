@@ -107,7 +107,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
                 if (mounted) _showError(apiErrorMessage(asApiException(e), locale));
               }
             },
-            child: Text(t('organizations.removeMember'), style: const TextStyle(color: AppColors.danger)),
+            child: Text(t('organizations.removeMember'), style: TextStyle(color: AppColors.of(context).danger)),
           ),
         ],
       ),
@@ -143,12 +143,12 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
               child: members.isEmpty
                   ? Padding(
                       padding: EdgeInsets.symmetric(horizontal: AppSpacing.of(2)),
-                      child: Text(t('organizations.noMembers'), style: const TextStyle(color: AppColors.textMuted)),
+                      child: Text(t('organizations.noMembers'), style: TextStyle(color: AppColors.of(context).textMuted)),
                     )
                   : ListView.separated(
                       padding: EdgeInsets.symmetric(horizontal: AppSpacing.of(2)),
                       itemCount: members.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1, color: AppColors.border),
+                      separatorBuilder: (_, _) => Divider(height: 1, color: AppColors.of(context).border),
                       itemBuilder: (context, index) {
                         final member = members[index];
                         final isOwnerRow = member.role == 'owner';
@@ -178,7 +178,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
                                         onPressed: () => _handleRemove(member),
                                         child: Text(
                                           t('organizations.removeMember'),
-                                          style: const TextStyle(color: AppColors.danger),
+                                          style: TextStyle(color: AppColors.of(context).danger),
                                         ),
                                       ),
                                   ],

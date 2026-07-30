@@ -19,7 +19,6 @@ const Map<String, dynamic> fr = {
         "Scannez le QR code de votre page Clés API CWClock, ou renseignez votre clé API manuellement.",
     'scanQr': 'Scanner le QR code',
     'enterManually': 'Saisir manuellement',
-    'pasteConfig': 'Coller la configuration (optionnel)',
     'apiUrl': "URL de l'API",
     'apiKey': 'Clé API',
     'orgIdOptional': "ID d'organisation (optionnel)",
@@ -37,6 +36,8 @@ const Map<String, dynamic> fr = {
     'connectedTo': 'Connecté à',
     'organization': 'Organisation',
     'switchOrganization': "Changer d'organisation",
+    'lightMode': 'Mode clair',
+    'darkMode': 'Mode sombre',
     'disconnect': 'Déconnecter',
     'disconnectConfirm':
         'Déconnecter cet appareil de CWClock ? Vous devrez à nouveau scanner ou saisir une clé API.',

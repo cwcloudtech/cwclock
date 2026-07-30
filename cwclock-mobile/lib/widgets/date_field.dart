@@ -64,7 +64,7 @@ class AppDateField extends StatelessWidget {
         margin: EdgeInsets.only(bottom: AppSpacing.of(2)),
         padding: EdgeInsets.symmetric(horizontal: AppSpacing.of(1.5), vertical: AppSpacing.of(1.25)),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.of(context).border),
           borderRadius: BorderRadius.circular(AppRadius.value),
         ),
         child: Column(
@@ -73,9 +73,9 @@ class AppDateField extends StatelessWidget {
             if (label != null)
               Padding(
                 padding: EdgeInsets.only(bottom: AppSpacing.of(0.5)),
-                child: Text(label!, style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+                child: Text(label!, style: TextStyle(fontSize: 13, color: AppColors.of(context).textMuted)),
               ),
-            Text(_formattedValue, style: const TextStyle(fontSize: 16, color: AppColors.text)),
+            Text(_formattedValue, style: TextStyle(fontSize: 16, color: AppColors.of(context).text)),
           ],
         ),
       ),

@@ -82,7 +82,7 @@ class _ClientFormScreenState extends ConsumerState<ClientFormScreen> {
               if (!mounted) return;
               Navigator.of(context).pop();
             },
-            child: Text(t('common.delete'), style: const TextStyle(color: AppColors.danger)),
+            child: Text(t('common.delete'), style: TextStyle(color: AppColors.of(context).danger)),
           ),
         ],
       ),

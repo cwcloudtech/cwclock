@@ -68,7 +68,7 @@ class _AppFormFieldState extends State<AppFormField> {
           if (widget.label != null)
             Padding(
               padding: EdgeInsets.only(bottom: AppSpacing.of(0.5)),
-              child: Text(widget.label!, style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+              child: Text(widget.label!, style: TextStyle(fontSize: 13, color: AppColors.of(context).textMuted)),
             ),
           TextFormField(
             controller: _controller,
@@ -79,10 +79,10 @@ class _AppFormFieldState extends State<AppFormField> {
             keyboardType: widget.keyboardType,
             maxLines: widget.obscureText ? 1 : widget.maxLines,
             textCapitalization: widget.textCapitalization,
-            style: const TextStyle(fontSize: 16, color: AppColors.text),
+            style: TextStyle(fontSize: 16, color: AppColors.of(context).text),
             decoration: InputDecoration(
               hintText: widget.placeholder,
-              hintStyle: const TextStyle(color: AppColors.textMuted),
+              hintStyle: TextStyle(color: AppColors.of(context).textMuted),
               contentPadding: EdgeInsets.symmetric(
                 horizontal: AppSpacing.of(1.5),
                 vertical: AppSpacing.of(1.25),

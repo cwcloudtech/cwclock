@@ -27,16 +27,16 @@ class AppButton extends StatelessWidget {
     final Color foreground;
     switch (variant) {
       case AppButtonVariant.primary:
-        background = AppColors.primary;
-        foreground = AppColors.white;
+        background = AppColors.of(context).primary;
+        foreground = kWhite;
         break;
       case AppButtonVariant.secondary:
-        background = AppColors.backgroundMuted;
-        foreground = AppColors.text;
+        background = AppColors.of(context).backgroundMuted;
+        foreground = AppColors.of(context).text;
         break;
       case AppButtonVariant.danger:
-        background = AppColors.danger;
-        foreground = AppColors.white;
+        background = AppColors.of(context).danger;
+        foreground = kWhite;
         break;
     }
 

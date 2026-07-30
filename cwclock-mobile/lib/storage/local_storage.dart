@@ -7,6 +7,7 @@ class LocalStorage {
   static const _apiUrlKey = 'cwclock.apiUrl';
   static const _orgIdKey = 'cwclock.orgId';
   static const _localeKey = 'cwclock.locale';
+  static const _themeModeKey = 'cwclock.themeMode';
 
   Future<String?> getApiUrl() async => (await SharedPreferences.getInstance()).getString(_apiUrlKey);
 
@@ -24,6 +25,11 @@ class LocalStorage {
 
   Future<void> setLocale(String locale) async =>
       (await SharedPreferences.getInstance()).setString(_localeKey, locale);
+
+  Future<String?> getThemeMode() async => (await SharedPreferences.getInstance()).getString(_themeModeKey);
+
+  Future<void> setThemeMode(String mode) async =>
+      (await SharedPreferences.getInstance()).setString(_themeModeKey, mode);
 
   Future<void> clearAll() async {
     final prefs = await SharedPreferences.getInstance();

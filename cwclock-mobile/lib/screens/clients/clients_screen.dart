@@ -37,12 +37,12 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
         child: clients.isEmpty
             ? Padding(
                 padding: EdgeInsets.all(AppSpacing.of(2)),
-                child: Text(t('clients.noClients'), style: const TextStyle(color: AppColors.textMuted)),
+                child: Text(t('clients.noClients'), style: TextStyle(color: AppColors.of(context).textMuted)),
               )
             : ListView.separated(
                 padding: EdgeInsets.symmetric(horizontal: AppSpacing.of(2)),
                 itemCount: clients.length,
-                separatorBuilder: (_, _) => const Divider(height: 1, color: AppColors.border),
+                separatorBuilder: (_, _) => Divider(height: 1, color: AppColors.of(context).border),
                 itemBuilder: (context, index) {
                   final client = clients[index];
                   return ListTile(
@@ -56,8 +56,8 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/clients/form'),
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: AppColors.white),
+        backgroundColor: AppColors.of(context).primary,
+        child: const Icon(Icons.add, color: kWhite),
       ),
     );
   }

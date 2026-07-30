@@ -7,6 +7,7 @@ import '../../providers/locale_provider.dart';
 import '../../providers/organizations_provider.dart';
 import '../../providers/permissions.dart' as perm;
 import '../../providers/session_provider.dart';
+import '../../providers/theme_mode_provider.dart';
 import '../../theme.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_screen.dart';
@@ -45,7 +46,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Navigator.pop(context);
               ref.read(sessionProvider.notifier).disconnect();
             },
-            child: Text(t('settings.disconnect'), style: const TextStyle(color: AppColors.danger)),
+            child: Text(t('settings.disconnect'), style: TextStyle(color: AppColors.of(context).danger)),
           ),
         ],
       ),
@@ -63,6 +64,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final canManage = perm.isAdminOrOwner(session.user, orgsState.members);
     final currentLocaleLabel =
         supportedLocales.where((l) => l.code == locale).firstOrNull?.label ?? 'English';
+    ref.watch(themeModeProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(title: Text(t('settings.title'))),
@@ -70,17 +73,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(t('settings.connectedTo'), style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
-            Text(session.apiUrl ?? '', style: const TextStyle(fontSize: 17, color: AppColors.text)),
+            Text(t('settings.connectedTo'), style: TextStyle(fontSize: 13, color: AppColors.of(context).textMuted)),
+            Text(session.apiUrl ?? '', style: TextStyle(fontSize: 17, color: AppColors.of(context).text)),
             SizedBox(height: AppSpacing.of(1.5)),
-            Text(t('settings.organization'), style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+            Text(t('settings.organization'), style: TextStyle(fontSize: 13, color: AppColors.of(context).textMuted)),
             Text(
               currentOrg?.name ?? session.orgId ?? '',
-              style: const TextStyle(fontSize: 17, color: AppColors.text),
+              style: TextStyle(fontSize: 17, color: AppColors.of(context).text),
             ),
             if (session.user?.email != null) ...[
               SizedBox(height: AppSpacing.of(1.5)),
-              Text(session.user!.email, style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+              Text(session.user!.email, style: TextStyle(fontSize: 13, color: AppColors.of(context).textMuted)),
             ],
             AppButton(
               title: t('settings.switchOrganization'),
@@ -94,14 +97,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onPressed: () => ref.read(localeProvider.notifier).setLocale(locale == 'en' ? 'fr' : 'en'),
               margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
             ),
+            AppButton(
+              title: isDark ? t('settings.darkMode') : t('settings.lightMode'),
+              variant: AppButtonVariant.secondary,
+              onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
+              margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
+            ),
             if (canManage) ...[
               Container(
                 margin: EdgeInsets.only(top: AppSpacing.of(3)),
                 padding: EdgeInsets.only(top: AppSpacing.of(2)),
-                decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.border))),
+                decoration: BoxDecoration(border: Border(top: BorderSide(color: AppColors.of(context).border))),
                 child: Text(
                   t('management.title'),
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textMuted),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.of(context).textMuted),
                 ),
               ),
               AppButton(

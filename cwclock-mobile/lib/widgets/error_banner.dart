@@ -13,7 +13,7 @@ class ErrorBanner extends StatelessWidget {
     if (message == null || message!.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: EdgeInsets.only(bottom: AppSpacing.of(1.5)),
-      child: Text(message!, style: const TextStyle(color: AppColors.danger, fontSize: 14)),
+      child: Text(message!, style: TextStyle(color: AppColors.of(context).danger, fontSize: 14)),
     );
   }
 }

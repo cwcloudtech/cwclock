@@ -41,7 +41,7 @@ class AppSelectField extends StatelessWidget {
           if (label != null)
             Padding(
               padding: EdgeInsets.only(bottom: AppSpacing.of(0.5)),
-              child: Text(label!, style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+              child: Text(label!, style: TextStyle(fontSize: 13, color: AppColors.of(context).textMuted)),
             ),
           DropdownButtonFormField<String>(
             initialValue: currentValue,

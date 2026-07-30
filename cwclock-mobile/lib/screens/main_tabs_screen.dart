@@ -60,8 +60,8 @@ class _MainTabsScreenState extends ConsumerState<MainTabsScreen> {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: index,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textMuted,
+        selectedItemColor: AppColors.of(context).primary,
+        unselectedItemColor: AppColors.of(context).textMuted,
         onTap: (i) => setState(() => _index = i),
         items: [
           for (final tab in tabs) BottomNavigationBarItem(icon: Icon(tab.icon), label: tab.label),

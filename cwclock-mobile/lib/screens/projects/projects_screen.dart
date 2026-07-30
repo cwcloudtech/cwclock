@@ -42,12 +42,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         child: projects.isEmpty
             ? Padding(
                 padding: EdgeInsets.all(AppSpacing.of(2)),
-                child: Text(t('projects.noProjects'), style: const TextStyle(color: AppColors.textMuted)),
+                child: Text(t('projects.noProjects'), style: TextStyle(color: AppColors.of(context).textMuted)),
               )
             : ListView.separated(
                 padding: EdgeInsets.symmetric(horizontal: AppSpacing.of(2)),
                 itemCount: projects.length,
-                separatorBuilder: (_, _) => const Divider(height: 1, color: AppColors.border),
+                separatorBuilder: (_, _) => Divider(height: 1, color: AppColors.of(context).border),
                 itemBuilder: (context, index) {
                   final project = projects[index];
                   final client = clients.where((c) => c.id == project.clientId).firstOrNull;
@@ -57,7 +57,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                       width: 12,
                       height: 12,
                       decoration: BoxDecoration(
-                        color: project.color != null ? colorFromHex(project.color!) : AppColors.primary,
+                        color: project.color != null ? colorFromHex(project.color!) : AppColors.of(context).primary,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -70,8 +70,8 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/projects/form'),
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: AppColors.white),
+        backgroundColor: AppColors.of(context).primary,
+        child: const Icon(Icons.add, color: kWhite),
       ),
     );
   }

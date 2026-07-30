@@ -151,7 +151,7 @@ class _TimeTrackerScreenState extends ConsumerState<TimeTrackerScreen> {
               Navigator.pop(context);
               ref.read(timeEntriesProvider.notifier).deleteTimeEntry(orgId, item.id);
             },
-            child: Text(t('common.delete'), style: const TextStyle(color: AppColors.danger)),
+            child: Text(t('common.delete'), style: TextStyle(color: AppColors.of(context).danger)),
           ),
         ],
       ),
@@ -191,8 +191,8 @@ class _TimeTrackerScreenState extends ConsumerState<TimeTrackerScreen> {
         children: [
           Container(
             padding: EdgeInsets.all(AppSpacing.of(2)),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.border)),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppColors.of(context).border)),
             ),
             child: timer != null
                 ? Column(
@@ -202,13 +202,13 @@ class _TimeTrackerScreenState extends ConsumerState<TimeTrackerScreen> {
                         timer.text,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.of(context).text),
                       ),
                       Padding(
                         padding: EdgeInsets.symmetric(vertical: AppSpacing.of(1)),
                         child: Text(
                           formatHMS(_elapsed),
-                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.primary),
+                          style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.of(context).primary),
                         ),
                       ),
                       AppButton(title: t('timeTracker.stop'), variant: AppButtonVariant.danger, onPressed: _handleStop),
@@ -253,7 +253,7 @@ class _TimeTrackerScreenState extends ConsumerState<TimeTrackerScreen> {
                               child: Text(
                                 t('timeTracker.noRecords'),
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(color: AppColors.textMuted),
+                                style: TextStyle(color: AppColors.of(context).textMuted),
                               ),
                             ),
                           ],
@@ -267,7 +267,7 @@ class _TimeTrackerScreenState extends ConsumerState<TimeTrackerScreen> {
                             for (final group in groups) {
                               if (remaining == 0) {
                                 return Container(
-                                  color: AppColors.backgroundMuted,
+                                  color: AppColors.of(context).backgroundMuted,
                                   padding: EdgeInsets.symmetric(
                                     horizontal: AppSpacing.of(2),
                                     vertical: AppSpacing.of(1),
@@ -277,13 +277,13 @@ class _TimeTrackerScreenState extends ConsumerState<TimeTrackerScreen> {
                                     children: [
                                       Text(
                                         group.day,
-                                        style: const TextStyle(
-                                            fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textMuted),
+                                        style: TextStyle(
+                                            fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.of(context).textMuted),
                                       ),
                                       Text(
                                         formatHMS(group.totalSecs),
-                                        style: const TextStyle(
-                                            fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textMuted),
+                                        style: TextStyle(
+                                            fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.of(context).textMuted),
                                       ),
                                     ],
                                   ),
@@ -303,7 +303,7 @@ class _TimeTrackerScreenState extends ConsumerState<TimeTrackerScreen> {
                                   ),
                                   trailing: TextButton(
                                     onPressed: () => _handleDelete(item),
-                                    child: Text(t('common.delete'), style: const TextStyle(color: AppColors.danger)),
+                                    child: Text(t('common.delete'), style: TextStyle(color: AppColors.of(context).danger)),
                                   ),
                                   onTap: () => context.push('/edit-record', extra: item),
                                 );
@@ -321,8 +321,8 @@ class _TimeTrackerScreenState extends ConsumerState<TimeTrackerScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/all-day-record'),
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: AppColors.white),
+        backgroundColor: AppColors.of(context).primary,
+        child: const Icon(Icons.add, color: kWhite),
       ),
     );
   }

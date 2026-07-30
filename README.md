@@ -38,7 +38,7 @@ The complete document's [here](https://www.cwcloud.tech/docs/tutorials/cwclock) 
 
 * [Go](https://go.dev) and [PostgreSQL](https://www.postgresql.org) for the API
 * [React](https://react.dev) and [Redux](https://redux.js.org) for the GUI
-* [React native](https://reactnative.dev) and [Redux](https://redux.js.org) for the mobile
+* [Flutter](https://flutter.dev) for the mobile application
 * [Flyway](https://flywaydb.org) for the migrations
 
 ## Getting started

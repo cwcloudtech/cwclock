@@ -223,7 +223,7 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   t('invoices.previousInvoices'),
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textMuted),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.of(context).textMuted),
                 ),
               ),
             ),
@@ -231,12 +231,12 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
               child: invoices.isEmpty
                   ? Padding(
                       padding: EdgeInsets.symmetric(horizontal: AppSpacing.of(2)),
-                      child: Text(t('invoices.noInvoices'), style: const TextStyle(color: AppColors.textMuted)),
+                      child: Text(t('invoices.noInvoices'), style: TextStyle(color: AppColors.of(context).textMuted)),
                     )
                   : ListView.separated(
                       padding: EdgeInsets.symmetric(horizontal: AppSpacing.of(2)),
                       itemCount: invoices.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1, color: AppColors.border),
+                      separatorBuilder: (_, _) => Divider(height: 1, color: AppColors.of(context).border),
                       itemBuilder: (context, index) {
                         final invoice = invoices[index];
                         return ListTile(

@@ -51,7 +51,7 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
                       child: Text(
                         t('pdf.failedToLoad'),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: AppColors.danger),
+                        style: TextStyle(color: AppColors.of(context).danger),
                       ),
                     ),
                   )

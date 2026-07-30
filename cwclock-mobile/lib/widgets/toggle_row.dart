@@ -28,12 +28,12 @@ class AppToggleRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 16, color: disabled ? AppColors.textMuted : AppColors.text),
+            style: TextStyle(fontSize: 16, color: disabled ? AppColors.of(context).textMuted : AppColors.of(context).text),
           ),
           Switch(
             value: value,
             onChanged: disabled ? null : onChanged,
-            activeTrackColor: AppColors.primary,
+            activeTrackColor: AppColors.of(context).primary,
           ),
         ],
       ),

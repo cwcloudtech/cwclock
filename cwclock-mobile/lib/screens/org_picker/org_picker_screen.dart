@@ -48,17 +48,17 @@ class _OrgPickerScreenState extends ConsumerState<OrgPickerScreen> {
         child: orgsState.items.isEmpty && !orgsState.isLoading
             ? Padding(
                 padding: EdgeInsets.all(AppSpacing.of(2)),
-                child: Text(t('onboarding.noOrganizations'), style: const TextStyle(color: AppColors.textMuted)),
+                child: Text(t('onboarding.noOrganizations'), style: TextStyle(color: AppColors.of(context).textMuted)),
               )
             : ListView.separated(
                 padding: EdgeInsets.symmetric(horizontal: AppSpacing.of(2)),
                 itemCount: orgsState.items.length,
-                separatorBuilder: (_, _) => const Divider(height: 1, color: AppColors.border),
+                separatorBuilder: (_, _) => Divider(height: 1, color: AppColors.of(context).border),
                 itemBuilder: (context, index) {
                   final org = orgsState.items[index];
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(org.name, style: const TextStyle(fontSize: 17, color: AppColors.text)),
+                    title: Text(org.name, style: TextStyle(fontSize: 17, color: AppColors.of(context).text)),
                     onTap: () => _handleSelect(org.id),
                   );
                 },
