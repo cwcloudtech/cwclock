@@ -32,8 +32,11 @@ RUN CGO_ENABLED=0 go build -o /out/cwclock-api .
 # necessary anymore.
 FROM ghcr.io/cirruslabs/flutter:${FLUTTER_IMAGE_TAG} AS mobile-build
 WORKDIR /app
+
 COPY cwclock-mobile/ ./
+COPY .docker/android ./
 COPY VERSION ./VERSION
+
 RUN VERSION="$(cat VERSION)" && \
     ANDROID_VERSION_CODE="$(echo "${VERSION}" | awk -F. '{printf "%d%02d%02d", $1, $2, $3}')" && \
     sed -i "s/^version: .*/version: ${VERSION}+${ANDROID_VERSION_CODE}/" pubspec.yaml && \
