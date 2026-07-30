@@ -7,7 +7,14 @@ apply plugin: "com.facebook.react"
  * lines you need.
  */
 react {
-    // Autolinking/JS bundling defaults are enough for this app.
+    // Autolinking/JS bundling defaults are enough for this app, except for
+    // hermesFlags: the default is ["-O", "-output-source-map"] (see
+    // node_modules/@react-native/gradle-plugin's ReactExtension.kt) - we keep
+    // both and add -Wno-undefined-variable, since Hermes's static scope
+    // checker otherwise warns on every reference to a legitimate global
+    // (fetch, setTimeout, XMLHttpRequest, self, navigator, ...) across the
+    // whole bundle on every release build.
+    hermesFlags = ["-O", "-output-source-map", "-Wno-undefined-variable"]
 }
 
 // Release builds are unminified for now (enableProguardInReleaseBuilds =
