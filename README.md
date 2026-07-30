@@ -28,6 +28,7 @@ A live version is available at [cwclock.me](https://www.cwclock.me).
 * MFA with TOTP and Yubikey
 * Contact form
 * Cli suitable for humain or AI agents with MCP server and web agent modes
+* Mobile application for Android (no IOS yet)
 
 ## Complet documentation
 
@@ -36,7 +37,8 @@ The complete document's [here](https://www.cwcloud.tech/docs/tutorials/cwclock) 
 ## Technologies
 
 * [Go](https://go.dev) and [PostgreSQL](https://www.postgresql.org) for the API
-* [React](https://react.dev) for the GUI
+* [React](https://react.dev) and [Redux](https://redux.js.org) for the GUI
+* [React native](https://reactnative.dev) and [Redux](https://redux.js.org) for the mobile
 * [Flyway](https://flywaydb.org) for the migrations
 
 ## Getting started
