@@ -28,3 +28,5 @@ yarn-error.log*
 values-test.yaml
 cwclock-helm*
 charts
+*.tgz
+*.tar.gz
