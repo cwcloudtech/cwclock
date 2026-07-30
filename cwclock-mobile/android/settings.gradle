@@ -1,7 +1,10 @@
-rootProject.name = "CWClockMobile"
-
+// pluginManagement {} must be the very first statement in a Gradle settings
+// file - nothing (not even rootProject.name) may precede it (ai-instruct-107
+// build failure: "The pluginManagement {} block must appear before any
+// other statements in the script").
 pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
 plugins { id("com.facebook.react.settings") }
 extensions.configure(com.facebook.react.ReactSettingsExtension) { ex -> ex.autolinkLibrariesFromCommand() }
 
+rootProject.name = "CWClockMobile"
 include ":app"
