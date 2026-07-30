@@ -15,6 +15,7 @@ import '../../widgets/error_banner.dart';
 import '../../widgets/form_field.dart';
 import '../../widgets/select_field.dart';
 import '../../widgets/toggle_row.dart';
+import '../../widgets/app_top_bar.dart';
 
 /// Create (client is null) or edit (present). Ported from
 /// src/screens/clients/ClientFormScreen.js.
@@ -98,7 +99,7 @@ class _ClientFormScreenState extends ConsumerState<ClientFormScreen> {
     final f = _fields;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.client != null ? t('clients.editClient') : t('clients.addClient'))),
+      appBar: AppTopBar(title: widget.client != null ? t('clients.editClient') : t('clients.addClient')),
       body: AppScreen(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

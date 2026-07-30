@@ -12,6 +12,9 @@ class Organization {
   final String? identificationNumber;
   final String? iban;
   final String? bic;
+  final String? picture;
+  final double pictureX;
+  final double pictureY;
 
   const Organization({
     required this.id,
@@ -27,6 +30,9 @@ class Organization {
     this.identificationNumber,
     this.iban,
     this.bic,
+    this.picture,
+    this.pictureX = 50,
+    this.pictureY = 50,
   });
 
   factory Organization.fromJson(Map<String, dynamic> json) {
@@ -44,6 +50,9 @@ class Organization {
       identificationNumber: json['identificationNumber'] as String?,
       iban: json['iban'] as String?,
       bic: json['bic'] as String?,
+      picture: json['picture'] as String?,
+      pictureX: (json['pictureX'] as num?)?.toDouble() ?? 50,
+      pictureY: (json['pictureY'] as num?)?.toDouble() ?? 50,
     );
   }
 

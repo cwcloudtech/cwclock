@@ -11,6 +11,8 @@ import '../../providers/theme_mode_provider.dart';
 import '../../theme.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_screen.dart';
+import '../../widgets/data_uri_image.dart';
+import '../../widgets/app_top_bar.dart';
 
 /// Ported from src/screens/settings/SettingsScreen.js.
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -62,13 +64,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     final currentOrg = orgsState.items.where((o) => o.id == session.orgId).firstOrNull;
     final canManage = perm.isAdminOrOwner(session.user, orgsState.members);
-    final currentLocaleLabel =
-        supportedLocales.where((l) => l.code == locale).firstOrNull?.label ?? 'English';
+    // Shows the language tapping switches TO, not the current one - e.g.
+    // "English" while French is loaded (ai-instruct-121), same convention as
+    // the dark/light mode button below.
+    final otherLocaleCode = locale == 'en' ? 'fr' : 'en';
+    final otherLocaleLabel =
+        supportedLocales.where((l) => l.code == otherLocaleCode).firstOrNull?.label ?? 'English';
     ref.watch(themeModeProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: Text(t('settings.title'))),
+      appBar: AppTopBar(title: t('settings.title')),
       body: AppScreen(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,9 +83,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Text(session.apiUrl ?? '', style: TextStyle(fontSize: 17, color: AppColors.of(context).text)),
             SizedBox(height: AppSpacing.of(1.5)),
             Text(t('settings.organization'), style: TextStyle(fontSize: 13, color: AppColors.of(context).textMuted)),
-            Text(
-              currentOrg?.name ?? session.orgId ?? '',
-              style: TextStyle(fontSize: 17, color: AppColors.of(context).text),
+            Padding(
+              padding: EdgeInsets.only(top: 4),
+              child: Row(
+                children: [
+                  DataUriImage(
+                    picture: currentOrg?.picture,
+                    pictureX: currentOrg?.pictureX ?? 50,
+                    pictureY: currentOrg?.pictureY ?? 50,
+                    size: 40,
+                    borderRadius: 8,
+                    fallback: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.of(context).backgroundMuted,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.business_outlined, color: AppColors.of(context).textMuted),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      currentOrg?.name ?? session.orgId ?? '',
+                      style: TextStyle(fontSize: 17, color: AppColors.of(context).text),
+                    ),
+                  ),
+                ],
+              ),
             ),
             if (session.user?.email != null) ...[
               SizedBox(height: AppSpacing.of(1.5)),
@@ -92,9 +124,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
             ),
             AppButton(
-              title: currentLocaleLabel,
+              title: otherLocaleLabel,
               variant: AppButtonVariant.secondary,
-              onPressed: () => ref.read(localeProvider.notifier).setLocale(locale == 'en' ? 'fr' : 'en'),
+              onPressed: () => ref.read(localeProvider.notifier).setLocale(otherLocaleCode),
               margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
             ),
             AppButton(

@@ -15,6 +15,7 @@ import '../../widgets/app_button.dart';
 import '../../widgets/date_field.dart';
 import '../../widgets/error_banner.dart';
 import '../../widgets/select_field.dart';
+import '../../widgets/app_top_bar.dart';
 
 DateTime _firstOfMonth() {
   final now = DateTime.now();
@@ -159,7 +160,7 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: Text(t('invoices.title'))),
+      appBar: AppTopBar(title: t('invoices.title')),
       body: SafeArea(
         child: Column(
           children: [

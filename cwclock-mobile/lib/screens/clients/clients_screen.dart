@@ -6,6 +6,7 @@ import '../../providers/clients_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/session_provider.dart';
 import '../../theme.dart';
+import '../../widgets/app_top_bar.dart';
 
 /// Ported from src/screens/clients/ClientsScreen.js.
 class ClientsScreen extends ConsumerStatefulWidget {
@@ -32,7 +33,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     final clients = ref.watch(clientsProvider).items;
 
     return Scaffold(
-      appBar: AppBar(title: Text(t('clients.title'))),
+      appBar: AppTopBar(title: t('clients.title')),
       body: SafeArea(
         child: clients.isEmpty
             ? Padding(

@@ -15,6 +15,7 @@ import '../../widgets/color_swatch_picker.dart';
 import '../../widgets/error_banner.dart';
 import '../../widgets/form_field.dart';
 import '../../widgets/select_field.dart';
+import '../../widgets/app_top_bar.dart';
 
 /// Create (project is null) or edit (present). Color uses a fixed swatch row
 /// instead of a native color picker. Ported from
@@ -113,7 +114,7 @@ class _ProjectFormScreenState extends ConsumerState<ProjectFormScreen> {
     final clientItems = [for (final c in clients) SelectItem(c.id, c.name)];
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.project != null ? t('projects.editProject') : t('projects.addProject'))),
+      appBar: AppTopBar(title: widget.project != null ? t('projects.editProject') : t('projects.addProject')),
       body: AppScreen(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

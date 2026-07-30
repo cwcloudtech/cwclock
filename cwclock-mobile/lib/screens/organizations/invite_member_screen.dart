@@ -11,6 +11,7 @@ import '../../widgets/app_screen.dart';
 import '../../widgets/error_banner.dart';
 import '../../widgets/form_field.dart';
 import '../../widgets/select_field.dart';
+import '../../widgets/app_top_bar.dart';
 
 /// Ported from src/screens/organizations/InviteMemberScreen.js.
 class InviteMemberScreen extends ConsumerStatefulWidget {
@@ -51,7 +52,7 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
     final t = translateWith(locale);
 
     return Scaffold(
-      appBar: AppBar(title: Text(t('organizations.inviteMember'))),
+      appBar: AppTopBar(title: t('organizations.inviteMember')),
       body: AppScreen(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

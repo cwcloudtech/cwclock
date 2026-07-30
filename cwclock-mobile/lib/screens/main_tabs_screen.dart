@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/locale_provider.dart';
+import '../providers/main_tab_provider.dart';
 import '../providers/organizations_provider.dart';
 import '../providers/permissions.dart' as perm;
 import '../providers/session_provider.dart';
@@ -19,6 +20,10 @@ import 'time/time_tracker_screen.dart';
 /// routes (see router.dart) rather than nested within this shell, so they
 /// cover the whole screen including this bottom bar - same visual result as
 /// React Navigation's stack-over-tabs.
+///
+/// The active tab lives in [mainTabProvider] rather than local State, so
+/// AppTopBar's avatar action (ai-instruct-121) can jump straight to Settings
+/// from any pushed screen too.
 class MainTabsScreen extends ConsumerStatefulWidget {
   const MainTabsScreen({super.key});
 
@@ -27,8 +32,6 @@ class MainTabsScreen extends ConsumerStatefulWidget {
 }
 
 class _MainTabsScreenState extends ConsumerState<MainTabsScreen> {
-  int _index = 0;
-
   @override
   void initState() {
     super.initState();
@@ -45,15 +48,18 @@ class _MainTabsScreenState extends ConsumerState<MainTabsScreen> {
     final session = ref.watch(sessionProvider);
     final members = ref.watch(organizationsProvider).members;
     final showInvoices = perm.isAdminOrOwner(session.user, members);
+    final activeTab = ref.watch(mainTabProvider);
 
     final tabs = <_TabDef>[
-      _TabDef(t('timeTracker.title'), Icons.access_time, const TimeTrackerScreen()),
-      _TabDef(t('reports.title'), Icons.description_outlined, const ReportsScreen()),
-      if (showInvoices) _TabDef(t('invoices.title'), Icons.receipt_long_outlined, const InvoicesScreen()),
-      _TabDef(t('settings.title'), Icons.settings_outlined, const SettingsScreen()),
+      _TabDef(MainTab.timeTracker, t('timeTracker.title'), Icons.access_time, const TimeTrackerScreen()),
+      _TabDef(MainTab.reports, t('reports.title'), Icons.description_outlined, const ReportsScreen()),
+      if (showInvoices)
+        _TabDef(MainTab.invoices, t('invoices.title'), Icons.receipt_long_outlined, const InvoicesScreen()),
+      _TabDef(MainTab.settings, t('settings.title'), Icons.settings_outlined, const SettingsScreen()),
     ];
 
-    final index = _index >= tabs.length ? 0 : _index;
+    final resolvedIndex = tabs.indexWhere((tab) => tab.id == activeTab);
+    final index = resolvedIndex == -1 ? 0 : resolvedIndex;
 
     return Scaffold(
       body: IndexedStack(index: index, children: [for (final tab in tabs) tab.screen]),
@@ -62,7 +68,7 @@ class _MainTabsScreenState extends ConsumerState<MainTabsScreen> {
         currentIndex: index,
         selectedItemColor: AppColors.of(context).primary,
         unselectedItemColor: AppColors.of(context).textMuted,
-        onTap: (i) => setState(() => _index = i),
+        onTap: (i) => ref.read(mainTabProvider.notifier).state = tabs[i].id,
         items: [
           for (final tab in tabs) BottomNavigationBarItem(icon: Icon(tab.icon), label: tab.label),
         ],
@@ -72,9 +78,10 @@ class _MainTabsScreenState extends ConsumerState<MainTabsScreen> {
 }
 
 class _TabDef {
+  final MainTab id;
   final String label;
   final IconData icon;
   final Widget screen;
 
-  const _TabDef(this.label, this.icon, this.screen);
+  const _TabDef(this.id, this.label, this.icon, this.screen);
 }

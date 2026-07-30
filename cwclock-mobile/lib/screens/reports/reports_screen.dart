@@ -13,6 +13,7 @@ import '../../widgets/app_screen.dart';
 import '../../widgets/date_field.dart';
 import '../../widgets/error_banner.dart';
 import '../../widgets/select_field.dart';
+import '../../widgets/app_top_bar.dart';
 
 DateTime _firstOfMonth() {
   final now = DateTime.now();
@@ -67,7 +68,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     final t = translateWith(locale);
 
     return Scaffold(
-      appBar: AppBar(title: Text(t('reports.title'))),
+      appBar: AppTopBar(title: t('reports.title')),
       body: AppScreen(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

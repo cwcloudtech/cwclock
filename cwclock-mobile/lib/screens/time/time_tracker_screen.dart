@@ -16,6 +16,7 @@ import '../../theme.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/form_field.dart';
 import '../../widgets/select_field.dart';
+import '../../widgets/app_top_bar.dart';
 
 /// The default tab: a running-timer header (start/stop) above a
 /// day-grouped list of entries. All-day records are created from
@@ -186,7 +187,7 @@ class _TimeTrackerScreenState extends ConsumerState<TimeTrackerScreen> {
     final groups = groupByDay(entriesState.items);
 
     return Scaffold(
-      appBar: AppBar(title: Text(t('timeTracker.title'))),
+      appBar: AppTopBar(title: t('timeTracker.title')),
       body: Column(
         children: [
           Container(

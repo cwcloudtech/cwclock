@@ -14,6 +14,7 @@ import '../../widgets/app_screen.dart';
 import '../../widgets/error_banner.dart';
 import '../../widgets/form_field.dart';
 import '../../widgets/select_field.dart';
+import '../../widgets/app_top_bar.dart';
 
 /// View/edit the current organization's profile. Editing is owner-only,
 /// matching OrganizationHandler.Update's route gate - other roles see a
@@ -91,7 +92,7 @@ class _OrganizationScreenState extends ConsumerState<OrganizationScreen> {
     final currencyItems = [for (final c in currencies) SelectItem(c.iso, c.name)];
 
     return Scaffold(
-      appBar: AppBar(title: Text(t('organizations.profileTitle'))),
+      appBar: AppTopBar(title: t('organizations.profileTitle')),
       body: AppScreen(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

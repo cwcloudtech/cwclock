@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../providers/locale_provider.dart';
 import '../../theme.dart';
 import '../../widgets/app_button.dart';
+import '../../widgets/app_top_bar.dart';
 
 /// The generic "show a locally-downloaded PDF" screen, reused by Reports,
 /// Invoices' Preview/Generate and its previous-invoices list - all of them
@@ -40,7 +41,7 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
     final t = translateWith(locale);
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title ?? t('pdf.title'))),
+      appBar: AppTopBar(title: widget.title ?? t('pdf.title')),
       body: Column(
         children: [
           Expanded(

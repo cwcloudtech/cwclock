@@ -19,6 +19,7 @@ import '../../widgets/error_banner.dart';
 import '../../widgets/form_field.dart';
 import '../../widgets/select_field.dart';
 import '../../widgets/toggle_row.dart';
+import '../../widgets/app_top_bar.dart';
 
 DateTime _timeStringToDate(String? hms) {
   final padded = padTimeString(hms).isEmpty ? '09:00:00' : padTimeString(hms);
@@ -137,7 +138,7 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: Text(t('timeTracker.editRecord'))),
+      appBar: AppTopBar(title: t('timeTracker.editRecord')),
       body: AppScreen(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -5,6 +5,7 @@ import '../../providers/locale_provider.dart';
 import '../../providers/organizations_provider.dart';
 import '../../providers/session_provider.dart';
 import '../../theme.dart';
+import '../../widgets/app_top_bar.dart';
 
 /// Shown whenever session status is "needsOrg" - either onboarding didn't
 /// have an org_id line (manual entry / an older QR), or the user picked
@@ -43,7 +44,7 @@ class _OrgPickerScreenState extends ConsumerState<OrgPickerScreen> {
     final orgsState = ref.watch(organizationsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(t('onboarding.pickOrganization'))),
+      appBar: AppTopBar(title: t('onboarding.pickOrganization')),
       body: SafeArea(
         child: orgsState.items.isEmpty && !orgsState.isLoading
             ? Padding(

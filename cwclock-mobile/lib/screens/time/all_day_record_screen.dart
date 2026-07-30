@@ -16,6 +16,7 @@ import '../../widgets/date_field.dart';
 import '../../widgets/error_banner.dart';
 import '../../widgets/form_field.dart';
 import '../../widgets/select_field.dart';
+import '../../widgets/app_top_bar.dart';
 
 /// Picking a project and a date creates the entry immediately. Ported from
 /// src/screens/time/AllDayRecordScreen.js.
@@ -83,7 +84,7 @@ class _AllDayRecordScreenState extends ConsumerState<AllDayRecordScreen> {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: Text(t('timeTracker.addAllDayRecord'))),
+      appBar: AppTopBar(title: t('timeTracker.addAllDayRecord')),
       body: AppScreen(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

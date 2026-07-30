@@ -7,6 +7,7 @@ import '../../providers/locale_provider.dart';
 import '../../providers/projects_provider.dart';
 import '../../providers/session_provider.dart';
 import '../../theme.dart';
+import '../../widgets/app_top_bar.dart';
 
 /// Ported from src/screens/projects/ProjectsScreen.js.
 class ProjectsScreen extends ConsumerStatefulWidget {
@@ -37,7 +38,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     final clients = ref.watch(clientsProvider).items;
 
     return Scaffold(
-      appBar: AppBar(title: Text(t('projects.title'))),
+      appBar: AppTopBar(title: t('projects.title')),
       body: SafeArea(
         child: projects.isEmpty
             ? Padding(

@@ -11,6 +11,7 @@ import '../../providers/permissions.dart' as perm;
 import '../../providers/session_provider.dart';
 import '../../theme.dart';
 import '../../widgets/app_button.dart';
+import '../../widgets/app_top_bar.dart';
 
 const _roles = ['admin', 'member', 'reader'];
 
@@ -127,7 +128,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
     final members = orgsState.members;
 
     return Scaffold(
-      appBar: AppBar(title: Text(t('organizations.membersTitle'))),
+      appBar: AppTopBar(title: t('organizations.membersTitle')),
       body: SafeArea(
         child: Column(
           children: [
