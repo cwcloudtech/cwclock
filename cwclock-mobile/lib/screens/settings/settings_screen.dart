@@ -98,7 +98,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
             ),
             AppButton(
-              title: isDark ? t('settings.darkMode') : t('settings.lightMode'),
+              // Shows the mode tapping switches TO, not the current one -
+              // e.g. "Light mode" while dark mode is active (ai-instruct-120).
+              title: isDark ? t('settings.lightMode') : t('settings.darkMode'),
+              icon: isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
               variant: AppButtonVariant.secondary,
               onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
               margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
@@ -114,25 +117,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
               AppButton(
+                // Icons match cwclock-ui's SidebarNav.jsx (FaBuilding,
+                // FaRegUserCircle, FaFileAlt - ai-instruct-120); there's no
+                // dedicated "members" nav icon on the web app (membership is
+                // managed inside the Organization page there), so this one
+                // uses the closest generic "people" icon instead.
                 title: t('management.organization'),
+                icon: Icons.business_outlined,
                 variant: AppButtonVariant.secondary,
                 onPressed: () => context.push('/organization'),
                 margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
               ),
               AppButton(
                 title: t('management.members'),
+                icon: Icons.people_outline,
                 variant: AppButtonVariant.secondary,
                 onPressed: () => context.push('/members'),
                 margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
               ),
               AppButton(
                 title: t('management.clients'),
+                icon: Icons.account_circle_outlined,
                 variant: AppButtonVariant.secondary,
                 onPressed: () => context.push('/clients'),
                 margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
               ),
               AppButton(
                 title: t('management.projects'),
+                icon: Icons.description_outlined,
                 variant: AppButtonVariant.secondary,
                 onPressed: () => context.push('/projects'),
                 margin: EdgeInsets.only(top: AppSpacing.of(1.5)),

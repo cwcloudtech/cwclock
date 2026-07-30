@@ -174,12 +174,10 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
                                         child: Text(t('organizations.changeRole')),
                                       ),
                                     if (canRemove)
-                                      TextButton(
+                                      IconButton(
                                         onPressed: () => _handleRemove(member),
-                                        child: Text(
-                                          t('organizations.removeMember'),
-                                          style: TextStyle(color: AppColors.of(context).danger),
-                                        ),
+                                        icon: Icon(Icons.delete_outline, color: AppColors.of(context).danger),
+                                        tooltip: t('organizations.removeMember'),
                                       ),
                                   ],
                                 ),

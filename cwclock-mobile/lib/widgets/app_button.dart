@@ -11,6 +11,7 @@ class AppButton extends StatelessWidget {
   final AppButtonVariant variant;
   final bool loading;
   final EdgeInsetsGeometry? margin;
+  final IconData? icon;
 
   const AppButton({
     super.key,
@@ -19,6 +20,7 @@ class AppButton extends StatelessWidget {
     this.variant = AppButtonVariant.primary,
     this.loading = false,
     this.margin,
+    this.icon,
   });
 
   @override
@@ -61,7 +63,16 @@ class AppButton extends StatelessWidget {
                 width: 20,
                 child: CircularProgressIndicator(strokeWidth: 2, color: foreground),
               )
-            : Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            : icon == null
+                ? Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(icon, size: 18),
+                      const SizedBox(width: 8),
+                      Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
       ),
     );
   }
