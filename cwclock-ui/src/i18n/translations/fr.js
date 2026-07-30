@@ -84,6 +84,7 @@ const fr = {
     documentation: "Documentation",
     contactForm: "Nous contacter",
     downloadAndroidApp: "Télécharger l'application Android",
+    scanToDownloadAndroidApp: "Scannez ce QR code avec votre appareil Android pour télécharger l'application.",
     editProfile: "Modifier le profil",
     editProfileTooltip: "Modifier votre profil et votre avatar",
     lightMode: "Mode clair",

@@ -1,0 +1,12 @@
+.instructions {
+  margin: 0 0 var(--cw-spacing);
+  color: var(--cw-text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.qrWrapper {
+  display: flex;
+  justify-content: center;
+  padding: var(--cw-spacing) 0;
+}

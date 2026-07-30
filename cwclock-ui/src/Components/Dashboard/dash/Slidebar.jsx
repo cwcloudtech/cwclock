@@ -10,6 +10,7 @@ import memberLabel from "../../common/memberLabel";
 import Tooltip from "../../common/Tooltip";
 import useAppVersion from "../../common/useAppVersion";
 import isAndroidDevice from "../../common/isAndroidDevice";
+import AndroidQrModal from "../../common/AndroidQrModal";
 import { useTheme } from "../../common/ThemeContext";
 import { useI18n, LANGUAGES } from "../../../i18n/I18nContext";
 import logo from "../../../assets/images/cwclock-logo.svg";
@@ -34,7 +35,11 @@ import { isAdminOrOwner as computeIsAdminOrOwner } from "../../common/permission
 const Slidebar = () => {
   const [expanded, setExpanded] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showAndroidQr, setShowAndroidQr] = useState(false);
   const appVersion = useAppVersion();
+  const androidDownloadUrl = appVersion
+    ? process.env.REACT_APP_MOBILE_URL_PATTERN.replace("{version}", appVersion)
+    : null;
 
   const handleclick = () => {
     setExpanded(!expanded);
@@ -160,14 +165,21 @@ const Slidebar = () => {
                 <FaEnvelope fontSize="18px" />
               </Link>
             </Tooltip>
-            {appVersion && isAndroidDevice() && (
+            {androidDownloadUrl && (
               <Tooltip label={t("nav.downloadAndroidApp")} position="bottom">
-                <a
-                  href={process.env.REACT_APP_MOBILE_URL_PATTERN.replace("{version}", appVersion)}
-                  className={styles.gitRepoLink}
-                >
-                  <FaAndroid fontSize="18px" />
-                </a>
+                {isAndroidDevice() ? (
+                  <a href={androidDownloadUrl} className={styles.gitRepoLink}>
+                    <FaAndroid fontSize="18px" />
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    className={`${styles.gitRepoLink} ${styles.androidButton}`}
+                    onClick={() => setShowAndroidQr(true)}
+                  >
+                    <FaAndroid fontSize="18px" />
+                  </button>
+                )}
               </Tooltip>
             )}
             <Dropdown
@@ -251,6 +263,7 @@ const Slidebar = () => {
       </div>
 
       <EditProfileModal show={showEditProfile} onClose={() => setShowEditProfile(false)} user={user} />
+      <AndroidQrModal show={showAndroidQr} onClose={() => setShowAndroidQr(false)} url={androidDownloadUrl} />
 
       <div className={styles.Slideflex}>
         <div className={`${styles.sidebarCol} ${expanded ? styles.sidebarColExpanded : ""}`}>
