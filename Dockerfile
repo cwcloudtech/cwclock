@@ -39,7 +39,7 @@ RUN VERSION="$(cat VERSION)" && \
     sed -i "s/^version: .*/version: ${VERSION}+${ANDROID_VERSION_CODE}/" pubspec.yaml && \
     flutter pub get && \
     flutter build apk --release && \
-    mv build/app/outputs/flutter-apk/app-release.apk "/build/app/outputs/flutter-apk/cwclock-v${VERSION}.apk"
+    mv /app/build/app/outputs/flutter-apk/app-release.apk "/app/build/app/outputs/flutter-apk/cwclock-v${VERSION}.apk"
 
 # Stage api run
 FROM alpine:${ALPINE_IMAGE_TAG} AS api
