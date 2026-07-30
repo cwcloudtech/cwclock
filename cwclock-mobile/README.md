@@ -30,10 +30,6 @@ into the manual-entry screen.
   (matching `gradle-wrapper.properties`' pinned version) to generate it for
   local `./gradlew` use. The Docker `mobile-build` stage doesn't need it - it
   invokes the image's own installed `gradle` directly.
-- **Launcher icon is a placeholder** vector adaptive icon (a simple clock
-  glyph, see `android/app/src/main/res/drawable/ic_launcher_foreground.xml`),
-  covering API 26+ only. Add real per-density `mipmap-*/ic_launcher.png`
-  fallbacks (and real branded art) before a store release.
 - **Release signing** falls back to the Android Gradle Plugin's implicit
   debug keystore when `MOBILE_KEYSTORE_PATH`/`MOBILE_KEYSTORE_PASSWORD`/
   `MOBILE_KEY_ALIAS`/`MOBILE_KEY_PASSWORD` aren't set (see
