@@ -184,6 +184,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ],
             AppButton(
               title: t('settings.disconnect'),
+              icon: Icons.logout,
               variant: AppButtonVariant.danger,
               onPressed: _handleDisconnect,
               margin: EdgeInsets.only(top: AppSpacing.of(3)),
