@@ -10,16 +10,26 @@ echo '{"version":"'"${VERSION}"'", "sha":"'"${sha}"'", "details":"'"${details}"'
 docker login "${CI_REGISTRY}" --username "${CI_REGISTRY_USER}" --password "${CI_REGISTRY_PASSWORD}"
 
 for app in $CWCLOCK_APPS; do
-  export IMAGE_NAME="cwclock-${app}"
-  export SERVICE_NAME="${app}"
+  image_name="cwclock-${app}"
 
-  docker buildx bake -f docker-compose-build.yml --push ${SERVICE_NAME}
-  if [[ $VERSION != $VERSION_SHA ]]; then
-    docker tag "${CI_REGISTRY}/${IMAGE_NAME}:${VERSION}" "${CI_REGISTRY}/${IMAGE_NAME}:${VERSION_SHA}"
-    docker push "${CI_REGISTRY}/${IMAGE_NAME}:${VERSION_SHA}"
+  local_version="${VERSION}"
+  local_version_sha="${VERSION_SHA}"
+  local_latest="latest"
+
+  if [[ $app = "ui-and-mobile" ]]; then
+    local_version="${VERSION}-mobile"
+    local_version_sha="${VERSION_SHA}-mobile"
+    local_latest="latest-mobile"
+    image_name="ui"
   fi
 
-  docker tag "${CI_REGISTRY}/${IMAGE_NAME}:${VERSION}" "${CI_REGISTRY}/${IMAGE_NAME}:latest"
-  docker push "${CI_REGISTRY}/${IMAGE_NAME}:${VERSION}"
-  docker push "${CI_REGISTRY}/${IMAGE_NAME}:latest"
+  docker buildx bake -f docker-compose-build.yml --push "${app}"
+  if [[ $VERSION != $VERSION_SHA ]]; then
+    docker tag "${CI_REGISTRY}/${image_name}:${local_version}" "${CI_REGISTRY}/${image_name}:${local_version_sha}"
+    docker push "${CI_REGISTRY}/${image_name}:${local_version_sha}"
+  fi
+
+  docker tag "${CI_REGISTRY}/${image_name}:${local_version}" "${CI_REGISTRY}/${image_name}:${local_latest}"
+  docker push "${CI_REGISTRY}/${image_name}:${local_version}"
+  docker push "${CI_REGISTRY}/${image_name}:${local_latest}"
 done
