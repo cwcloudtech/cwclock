@@ -83,6 +83,7 @@ const en = {
     gitRepository: "Git repository",
     documentation: "Documentation",
     contactForm: "Contact us",
+    downloadAndroidApp: "Download the Android app",
     editProfile: "Edit profile",
     editProfileTooltip: "Edit your profile and avatar",
     lightMode: "Light mode",

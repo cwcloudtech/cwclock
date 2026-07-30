@@ -13,3 +13,9 @@ services:
       context: .
       dockerfile: Dockerfile
       target: ui
+  ui-and-mobile:
+    image: ${CI_REGISTRY}/cwclock-ui:${VERSION}-mobile
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ui-and-mobile

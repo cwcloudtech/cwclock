@@ -1,0 +1,26 @@
+# dependencies
+node_modules/
+
+# Xcode (kept out of this pass - Android only for now, but the folder
+# structure/tooling knows how to ignore it once iOS is added)
+ios/build/
+ios/Pods/
+
+# Android
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+*.keystore
+!debug.keystore
+
+# metro
+.metro-health-check*
+
+# testing
+coverage/
+
+# misc
+.DS_Store
+*.log
+.env

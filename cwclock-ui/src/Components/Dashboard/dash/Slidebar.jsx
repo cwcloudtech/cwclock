@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styles from "./STYLE/Slidebar.module.css";
-import { FaChevronLeft, FaChevronRight, FaUserCheck, FaGitAlt, FaBook, FaEnvelope } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaUserCheck, FaGitAlt, FaBook, FaEnvelope, FaAndroid } from "react-icons/fa";
 import { FiLogOut, FiSun, FiMoon, FiGlobe } from "react-icons/fi";
 import { Route, Routes, useNavigate, Link } from "react-router-dom";
 import Dropdown, { DropdownItem, DropdownText, DropdownDivider } from "../../common/Dropdown";
@@ -168,6 +168,16 @@ const Slidebar = () => {
                 <FaEnvelope fontSize="18px" />
               </Link>
             </Tooltip>
+            {appVersion && (
+              <Tooltip label={t("nav.downloadAndroidApp")} position="bottom">
+                <a
+                  href={process.env.REACT_APP_MOBILE_URL_PATTERN.replace("{version}", appVersion)}
+                  className={styles.gitRepoLink}
+                >
+                  <FaAndroid fontSize="18px" />
+                </a>
+              </Tooltip>
+            )}
             <Dropdown
               align="end"
               triggerClassName={styles.profileTrigger}

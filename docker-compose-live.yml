@@ -27,7 +27,7 @@ services:
       - "18080:8080"
 
   ui:
-    image: ${CI_REGISTRY}/cwclock-ui:${VERSION}
+    image: ${CI_REGISTRY}/cwclock-ui:${VERSION}-mobile
     container_name: cwclock-ui
     restart: always
     env_file:

@@ -83,6 +83,7 @@ const fr = {
     gitRepository: "Dépôt Git",
     documentation: "Documentation",
     contactForm: "Nous contacter",
+    downloadAndroidApp: "Télécharger l'application Android",
     editProfile: "Modifier le profil",
     editProfileTooltip: "Modifier votre profil et votre avatar",
     lightMode: "Mode clair",
