@@ -6,6 +6,8 @@ import { clientsReducer } from "./clients/clients.reducer";
 import { projectsReducer } from "./projects/projects.reducer";
 import { timeEntriesReducer } from "./timeEntries/timeEntries.reducer";
 import { invoicesReducer } from "./invoices/invoices.reducer";
+import { countriesReducer } from "./countries/countries.reducer";
+import { currenciesReducer } from "./currencies/currencies.reducer";
 
 const rootReducer = combineReducers({
   session: sessionReducer,
@@ -14,6 +16,8 @@ const rootReducer = combineReducers({
   projects: projectsReducer,
   timeEntries: timeEntriesReducer,
   invoices: invoicesReducer,
+  countries: countriesReducer,
+  currencies: currenciesReducer,
 });
 
 const store = createStore(rootReducer, applyMiddleware(thunk));

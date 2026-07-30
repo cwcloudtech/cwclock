@@ -11,3 +11,9 @@ export const isAdminOrOwner = (user, members) => {
   const role = memberRole(user, members);
   return role === "admin" || role === "owner";
 };
+
+// isOrgOwner gates owner-only actions (invite a member, change a member's
+// role, edit the organization profile - see organizations.actions.js) -
+// ownership is a property of the organization itself (ownerId), not the
+// membership row, so it takes the org rather than the members list.
+export const isOrgOwner = (user, org) => isSuperadmin(user) || org?.ownerId === user?.id;

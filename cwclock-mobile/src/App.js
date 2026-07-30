@@ -25,6 +25,13 @@ import ReportsScreen from "./screens/reports/ReportsScreen";
 import InvoicesScreen from "./screens/invoices/InvoicesScreen";
 import PdfViewerScreen from "./screens/pdf/PdfViewerScreen";
 import SettingsScreen from "./screens/settings/SettingsScreen";
+import OrganizationScreen from "./screens/organizations/OrganizationScreen";
+import MembersScreen from "./screens/organizations/MembersScreen";
+import InviteMemberScreen from "./screens/organizations/InviteMemberScreen";
+import ClientsScreen from "./screens/clients/ClientsScreen";
+import ClientFormScreen from "./screens/clients/ClientFormScreen";
+import ProjectsScreen from "./screens/projects/ProjectsScreen";
+import ProjectFormScreen from "./screens/projects/ProjectFormScreen";
 
 const RootStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -114,6 +121,31 @@ const ConnectedNavigator = () => {
         name="SwitchOrganization"
         component={OrgPickerScreen}
         options={{ title: t("settings.switchOrganization") }}
+      />
+      <RootStack.Screen
+        name="Organization"
+        component={OrganizationScreen}
+        options={{ title: t("organizations.profileTitle") }}
+      />
+      <RootStack.Screen name="Members" component={MembersScreen} options={{ title: t("organizations.membersTitle") }} />
+      <RootStack.Screen
+        name="InviteMember"
+        component={InviteMemberScreen}
+        options={{ title: t("organizations.inviteMember") }}
+      />
+      <RootStack.Screen name="Clients" component={ClientsScreen} options={{ title: t("clients.title") }} />
+      <RootStack.Screen
+        name="ClientForm"
+        component={ClientFormScreen}
+        options={({ route }) => ({ title: route.params?.client ? t("clients.editClient") : t("clients.addClient") })}
+      />
+      <RootStack.Screen name="Projects" component={ProjectsScreen} options={{ title: t("projects.title") }} />
+      <RootStack.Screen
+        name="ProjectForm"
+        component={ProjectFormScreen}
+        options={({ route }) => ({
+          title: route.params?.project ? t("projects.editProject") : t("projects.addProject"),
+        })}
       />
     </RootStack.Navigator>
   );

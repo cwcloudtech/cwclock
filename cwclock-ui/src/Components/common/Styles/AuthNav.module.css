@@ -19,6 +19,20 @@
   width: auto;
 }
 
+.androidLink {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--cw-spacing);
+  color: var(--cw-text-muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.androidLink:hover {
+  color: var(--cw-primary-600);
+}
+
 .actions {
   display: flex;
   align-items: center;

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import styles from "./STYLE/Slidebar.module.css";
 import { FaChevronLeft, FaChevronRight, FaUserCheck, FaGitAlt, FaBook, FaEnvelope, FaAndroid } from "react-icons/fa";
 import { FiLogOut, FiSun, FiMoon, FiGlobe } from "react-icons/fi";
@@ -9,6 +8,8 @@ import EditProfileModal from "../../common/EditProfileModal";
 import DisabledNotice from "../../common/DisabledNotice";
 import memberLabel from "../../common/memberLabel";
 import Tooltip from "../../common/Tooltip";
+import useAppVersion from "../../common/useAppVersion";
+import isAndroidDevice from "../../common/isAndroidDevice";
 import { useTheme } from "../../common/ThemeContext";
 import { useI18n, LANGUAGES } from "../../../i18n/I18nContext";
 import logo from "../../../assets/images/cwclock-logo.svg";
@@ -33,17 +34,8 @@ import { isAdminOrOwner as computeIsAdminOrOwner } from "../../common/permission
 const Slidebar = () => {
   const [expanded, setExpanded] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
-  const [appVersion, setAppVersion] = useState(null);
+  const appVersion = useAppVersion();
 
-  useEffect(() => {
-    // manifest.json is copied next to the built frontend at deploy time (see
-    // Dockerfile), not served by the API, so it's fetched from the app's own
-    // origin instead of REACT_APP_APIURL.
-    axios
-      .get("/manifest.json")
-      .then(({ data }) => setAppVersion(data.version))
-      .catch(() => {});
-  }, []);
   const handleclick = () => {
     setExpanded(!expanded);
   };
@@ -168,7 +160,7 @@ const Slidebar = () => {
                 <FaEnvelope fontSize="18px" />
               </Link>
             </Tooltip>
-            {appVersion && (
+            {appVersion && isAndroidDevice() && (
               <Tooltip label={t("nav.downloadAndroidApp")} position="bottom">
                 <a
                   href={process.env.REACT_APP_MOBILE_URL_PATTERN.replace("{version}", appVersion)}

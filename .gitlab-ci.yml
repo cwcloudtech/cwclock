@@ -78,6 +78,7 @@ build:
         - ci/app/**/*
         - cwclock-api/**/*
         - cwclock-ui/**/*
+        - cwclock-mobile/**/*
         - helm/migrations/**/*
         - .docker/**/*
         - Dockerfile
@@ -107,6 +108,7 @@ deploy:
     - setsid ./ci/app/deploy.sh
     - setsid ./ci/common/notif.sh "api"
     - setsid ./ci/common/notif.sh "ui"
+    - setsid ./ci/common/notif.sh "mobile"
   rules: *app_deploy_rules
   tags:
     - cwclock
