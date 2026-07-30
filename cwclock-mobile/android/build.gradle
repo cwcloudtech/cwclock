@@ -6,15 +6,29 @@ buildscript {
         targetSdkVersion = 34
         ndkVersion = "26.1.10909125"
         kotlinVersion = "1.9.24"
+        // Android Gradle Plugin - unlike the react-native-gradle-plugin
+        // classpath entry below, this is a real Maven Central artifact with
+        // no local included build to substitute it, so it needs an explicit
+        // version (ai-instruct-108 build failure: "Could not find
+        // com.android.tools.build:gradle:."). 8.6.0 is the version RN 0.76's
+        // own template pins, compatible with Gradle 8.10.2 (see
+        // gradle/wrapper/gradle-wrapper.properties) and JDK 17 (see the root
+        // Dockerfile's mobile-build stage).
+        agpVersion = "8.6.0"
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle")
+        classpath("com.android.tools.build:gradle:${agpVersion}")
+        // No version here - it's not a normal Maven artifact, it resolves
+        // to the local ../node_modules/@react-native/gradle-plugin project
+        // via the plain includeBuild() in settings.gradle (same reasoning
+        // as the AGP comment above, opposite conclusion: this one *is*
+        // substituted, so a version would just be ignored/wrong).
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
     }
 }
 

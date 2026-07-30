@@ -8,3 +8,12 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex -> ex.autol
 
 rootProject.name = "CWClockMobile"
 include ":app"
+
+// A second, plain includeBuild is required alongside pluginManagement's
+// above: pluginManagement.includeBuild only registers this build for
+// *plugin id* resolution (the `plugins { id("com.facebook.react.settings") }`
+// block above), not for ordinary dependency substitution. Without this line,
+// `classpath("com.facebook.react:react-native-gradle-plugin")` in the root
+// build.gradle has nothing to resolve against (ai-instruct-108 build
+// failure: "Could not find com.facebook.react:react-native-gradle-plugin:.").
+includeBuild("../node_modules/@react-native/gradle-plugin")
