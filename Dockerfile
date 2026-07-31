@@ -34,7 +34,7 @@ FROM ghcr.io/cirruslabs/flutter:${FLUTTER_IMAGE_TAG} AS mobile-build
 WORKDIR /app
 
 COPY cwclock-mobile/ ./
-COPY .docker/android ./
+COPY .docker/android ./android/
 COPY VERSION ./VERSION
 
 RUN VERSION="$(cat VERSION)" && \
