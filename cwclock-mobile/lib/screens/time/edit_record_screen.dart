@@ -162,14 +162,18 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
             AppToggleRow(
               label: t('timeTracker.allDay'),
               value: _allDay,
-              disabled: _half,
-              onChanged: (v) => setState(() => _allDay = v),
+              onChanged: (v) => setState(() {
+                _allDay = v;
+                if (v) _half = false;
+              }),
             ),
             AppToggleRow(
               label: t('timeTracker.half'),
               value: _half,
-              disabled: _allDay,
-              onChanged: (v) => setState(() => _half = v),
+              onChanged: (v) => setState(() {
+                _half = v;
+                if (v) _allDay = false;
+              }),
             ),
             if (!_allDay && !_half) ...[
               AppDateField(

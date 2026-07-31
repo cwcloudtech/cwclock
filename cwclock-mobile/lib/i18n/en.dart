@@ -90,6 +90,12 @@ const Map<String, dynamic> en = {
     'deleteInvoiceTitle': 'Delete invoice',
     'deleteInvoiceBody': 'Delete invoice {{number}}? This can\'t be undone.',
     'deleteSuccess': 'Invoice deleted.',
+    'changeStatus': 'Change status',
+    'statusUnpaid': 'Unpaid',
+    'statusPaid': 'Paid',
+    'statusCanceled': 'Canceled',
+    'statusRefunded': 'Refunded',
+    'updateStatusSuccess': 'Invoice status updated.',
   },
   'pdf': {
     'title': 'Document',

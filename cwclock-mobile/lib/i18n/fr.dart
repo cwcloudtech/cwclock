@@ -90,6 +90,12 @@ const Map<String, dynamic> fr = {
     'deleteInvoiceTitle': 'Supprimer la facture',
     'deleteInvoiceBody': 'Supprimer la facture {{number}} ? Cette action est irréversible.',
     'deleteSuccess': 'Facture supprimée.',
+    'changeStatus': 'Changer le statut',
+    'statusUnpaid': 'Non payée',
+    'statusPaid': 'Payée',
+    'statusCanceled': 'Annulée',
+    'statusRefunded': 'Remboursée',
+    'updateStatusSuccess': 'Statut de la facture mis à jour.',
   },
   'pdf': {
     'title': 'Document',

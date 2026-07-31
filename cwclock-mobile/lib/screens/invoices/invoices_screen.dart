@@ -22,6 +22,22 @@ DateTime _firstOfMonth() {
   return DateTime(now.year, now.month, 1);
 }
 
+/// Mirrors cwclock-ui's STATUSES/STATUS_LABEL_KEY (Invoices.jsx).
+const _invoiceStatuses = ['unpaid', 'paid', 'canceled', 'refunded'];
+
+String _invoiceStatusLabelKey(String status) {
+  switch (status) {
+    case 'paid':
+      return 'invoices.statusPaid';
+    case 'canceled':
+      return 'invoices.statusCanceled';
+    case 'refunded':
+      return 'invoices.statusRefunded';
+    default:
+      return 'invoices.statusUnpaid';
+  }
+}
+
 /// This tab is only shown when the connected user is admin/owner of the
 /// current org (see main_tabs_screen.dart, mirroring cwclock-ui's
 /// showInvoices gate). Preview never saves anything; Generate allocates a
@@ -175,6 +191,17 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
     }
   }
 
+  void _handleChangeStatus(Invoice invoice, String status) {
+    final t = translateWith(ref.read(localeProvider));
+    _runInvoiceAction(
+      invoice,
+      (orgId, invoiceId) async {
+        await ref.read(invoicesProvider.notifier).updateInvoiceStatus(orgId, invoiceId, status);
+      },
+      t('invoices.updateStatusSuccess'),
+    );
+  }
+
   void _handleReupload(Invoice invoice) {
     final t = translateWith(ref.read(localeProvider));
     _runInvoiceAction(
@@ -250,21 +277,31 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
                     items: clientItems,
                     placeholder: t('invoices.client'),
                   ),
-                  AppDateField(
-                    label: t('invoices.startDate'),
-                    value: _start,
-                    onChanged: (v) {
-                      setState(() => _start = v);
-                      _refreshInvoices();
-                    },
-                  ),
-                  AppDateField(
-                    label: t('invoices.endDate'),
-                    value: _end,
-                    onChanged: (v) {
-                      setState(() => _end = v);
-                      _refreshInvoices();
-                    },
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: AppDateField(
+                          label: t('invoices.startDate'),
+                          value: _start,
+                          onChanged: (v) {
+                            setState(() => _start = v);
+                            _refreshInvoices();
+                          },
+                        ),
+                      ),
+                      SizedBox(width: AppSpacing.of(1.5)),
+                      Expanded(
+                        child: AppDateField(
+                          label: t('invoices.endDate'),
+                          value: _end,
+                          onChanged: (v) {
+                            setState(() => _end = v);
+                            _refreshInvoices();
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                   ErrorBanner(message: _error),
                   Row(
@@ -320,6 +357,16 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              PopupMenuButton<String>(
+                                enabled: !busy,
+                                tooltip: t('invoices.changeStatus'),
+                                icon: Icon(Icons.sync_alt, color: AppColors.of(context).textMuted),
+                                onSelected: (status) => _handleChangeStatus(invoice, status),
+                                itemBuilder: (context) => [
+                                  for (final status in _invoiceStatuses)
+                                    PopupMenuItem(value: status, child: Text(t(_invoiceStatusLabelKey(status)))),
+                                ],
+                              ),
                               IconButton(
                                 onPressed: busy ? null : () => _handleReupload(invoice),
                                 icon: Icon(Icons.cloud_upload_outlined, color: AppColors.of(context).textMuted),

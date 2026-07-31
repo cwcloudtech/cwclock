@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 
 /// A labeled Switch row - ported from src/components/ToggleRow.js. Used for
-/// the All day / Half day toggles (EditRecordScreen), which disable each
-/// other.
+/// the All day / Half day toggles (EditRecordScreen), which uncheck each
+/// other instead of disabling.
 class AppToggleRow extends StatelessWidget {
   final String label;
   final bool value;

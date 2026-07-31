@@ -106,8 +106,7 @@ const ReportEntryRow = ({ entry, orgId, currency, isAdminOrOwner, showAmount, on
           <input
             type="checkbox"
             checked={form.allDay}
-            disabled={form.half}
-            onChange={(e) => setForm({ ...form, allDay: e.target.checked })}
+            onChange={(e) => setForm({ ...form, allDay: e.target.checked, half: e.target.checked ? false : form.half })}
           />{" "}
           {t("timeTracker.allDay")}
         </label>
@@ -115,8 +114,7 @@ const ReportEntryRow = ({ entry, orgId, currency, isAdminOrOwner, showAmount, on
           <input
             type="checkbox"
             checked={form.half}
-            disabled={form.allDay}
-            onChange={(e) => setForm({ ...form, half: e.target.checked })}
+            onChange={(e) => setForm({ ...form, half: e.target.checked, allDay: e.target.checked ? false : form.allDay })}
           />{" "}
           {t("timeTracker.half")}
         </label>

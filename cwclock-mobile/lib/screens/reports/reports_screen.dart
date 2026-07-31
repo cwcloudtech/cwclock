@@ -8,6 +8,7 @@ import '../../common/format.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/reports_provider.dart';
 import '../../providers/session_provider.dart';
+import '../../theme.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_screen.dart';
 import '../../widgets/date_field.dart';
@@ -82,11 +83,25 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 SelectItem('detailed', t('reports.detailed')),
               ],
             ),
-            Center(
-              child: AppDateField(label: t('reports.startDate'), value: _start, onChanged: (v) => setState(() => _start = v)),
-            ),
-            Center(
-              child: AppDateField(label: t('reports.endDate'), value: _end, onChanged: (v) => setState(() => _end = v)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: AppDateField(
+                    label: t('reports.startDate'),
+                    value: _start,
+                    onChanged: (v) => setState(() => _start = v),
+                  ),
+                ),
+                SizedBox(width: AppSpacing.of(1.5)),
+                Expanded(
+                  child: AppDateField(
+                    label: t('reports.endDate'),
+                    value: _end,
+                    onChanged: (v) => setState(() => _end = v),
+                  ),
+                ),
+              ],
             ),
             ErrorBanner(message: _error),
             AppButton(title: t('reports.generate'), onPressed: _handleGenerate, loading: _generating),

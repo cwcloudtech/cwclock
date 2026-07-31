@@ -67,6 +67,18 @@ class InvoicesNotifier extends Notifier<InvoicesState> {
     return ref.read(apiClientProvider).dio.post('/organizations/$orgId/invoices/$invoiceId/send');
   }
 
+  /// Moves an invoice through its payment lifecycle (unpaid/paid/canceled/
+  /// refunded). Ported from updateInvoiceStatusApi.
+  Future<Invoice> updateInvoiceStatus(String orgId, String invoiceId, String status) async {
+    final response = await ref
+        .read(apiClientProvider)
+        .dio
+        .put('/organizations/$orgId/invoices/$invoiceId', data: {'status': status});
+    final updated = Invoice.fromJson(response.data as Map<String, dynamic>);
+    state = state.copyWith(items: [for (final i in state.items) i.id == updated.id ? updated : i]);
+    return updated;
+  }
+
   Future<void> deleteInvoice(String orgId, String invoiceId) async {
     await ref.read(apiClientProvider).dio.delete('/organizations/$orgId/invoices/$invoiceId');
     state = state.copyWith(items: state.items.where((i) => i.id != invoiceId).toList());

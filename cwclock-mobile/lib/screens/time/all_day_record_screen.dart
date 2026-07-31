@@ -10,6 +10,7 @@ import '../../providers/locale_provider.dart';
 import '../../providers/projects_provider.dart';
 import '../../providers/session_provider.dart';
 import '../../providers/time_entries_provider.dart';
+import '../../theme.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_screen.dart';
 import '../../widgets/date_field.dart';
@@ -31,6 +32,7 @@ class _AllDayRecordScreenState extends ConsumerState<AllDayRecordScreen> {
   String _projectId = '';
   String _text = '';
   DateTime _day = DateTime.now();
+  bool _half = false;
   String? _error;
   bool _saving = false;
 
@@ -59,8 +61,8 @@ class _AllDayRecordScreenState extends ConsumerState<AllDayRecordScreen> {
       await ref.read(timeEntriesProvider.notifier).createTimeEntry(orgId, {
         'text': _text.trim().isEmpty ? project.name : _text.trim(),
         'day': toDayString(_day),
-        'allDay': true,
-        'half': false,
+        'allDay': !_half,
+        'half': _half,
         'clientId': project.clientId,
         'projectId': project.id,
       });
@@ -102,7 +104,37 @@ class _AllDayRecordScreenState extends ConsumerState<AllDayRecordScreen> {
               onChanged: (v) => setState(() => _text = v),
               placeholder: t('timeTracker.whatAreYouWorkingOn'),
             ),
-            AppDateField(label: t('timeTracker.day'), value: _day, onChanged: (v) => setState(() => _day = v)),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: AppDateField(
+                    label: t('timeTracker.day'),
+                    value: _day,
+                    onChanged: (v) => setState(() => _day = v),
+                  ),
+                ),
+                SizedBox(width: AppSpacing.of(1.5)),
+                Padding(
+                  padding: EdgeInsets.only(bottom: AppSpacing.of(2)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        t('timeTracker.half'),
+                        style: TextStyle(fontSize: 13, color: AppColors.of(context).textMuted),
+                      ),
+                      Switch(
+                        value: _half,
+                        onChanged: (v) => setState(() => _half = v),
+                        activeTrackColor: AppColors.of(context).primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
             ErrorBanner(message: _error),
             AppButton(
               title: t('timeTracker.addAllDayRecord'),
