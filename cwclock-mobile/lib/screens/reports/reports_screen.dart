@@ -82,8 +82,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 SelectItem('detailed', t('reports.detailed')),
               ],
             ),
-            AppDateField(label: t('reports.startDate'), value: _start, onChanged: (v) => setState(() => _start = v)),
-            AppDateField(label: t('reports.endDate'), value: _end, onChanged: (v) => setState(() => _end = v)),
+            Center(
+              child: AppDateField(label: t('reports.startDate'), value: _start, onChanged: (v) => setState(() => _start = v)),
+            ),
+            Center(
+              child: AppDateField(label: t('reports.endDate'), value: _end, onChanged: (v) => setState(() => _end = v)),
+            ),
             ErrorBanner(message: _error),
             AppButton(title: t('reports.generate'), onPressed: _handleGenerate, loading: _generating),
           ],

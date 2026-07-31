@@ -8,6 +8,7 @@ import 'models/time_entry.dart';
 import 'providers/session_provider.dart';
 import 'screens/clients/client_form_screen.dart';
 import 'screens/clients/clients_screen.dart';
+import 'screens/export_jobs/export_jobs_screen.dart';
 import 'screens/loading_screen.dart';
 import 'screens/main_tabs_screen.dart';
 import 'screens/onboarding/connect_screen.dart';
@@ -96,6 +97,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/projects/form',
         builder: (context, state) => ProjectFormScreen(project: state.extra as Project?),
       ),
+      GoRoute(path: '/export-jobs', builder: (context, state) => const ExportJobsScreen()),
     ],
   );
 });

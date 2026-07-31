@@ -52,6 +52,25 @@ class InvoicesNotifier extends Notifier<InvoicesState> {
   Future<String> downloadInvoicePdf(String orgId, String invoiceId) {
     return ref.read(pdfClientProvider).fetchPdf('GET', '/organizations/$orgId/invoices/$invoiceId/pdf');
   }
+
+  /// Re-pushes an already-generated invoice's stored PDF to every one of the
+  /// organization's external connections - doesn't change the invoice
+  /// itself, so there's no list state to update. Ported from
+  /// reuploadInvoiceApi.
+  Future<void> reuploadInvoice(String orgId, String invoiceId) {
+    return ref.read(apiClientProvider).dio.post('/organizations/$orgId/invoices/$invoiceId/reupload');
+  }
+
+  /// Emails an already-generated invoice's PDF to the client's invoice
+  /// recipients. Ported from sendInvoiceEmailApi.
+  Future<void> sendInvoiceEmail(String orgId, String invoiceId) {
+    return ref.read(apiClientProvider).dio.post('/organizations/$orgId/invoices/$invoiceId/send');
+  }
+
+  Future<void> deleteInvoice(String orgId, String invoiceId) async {
+    await ref.read(apiClientProvider).dio.delete('/organizations/$orgId/invoices/$invoiceId');
+    state = state.copyWith(items: state.items.where((i) => i.id != invoiceId).toList());
+  }
 }
 
 final invoicesProvider = NotifierProvider<InvoicesNotifier, InvoicesState>(InvoicesNotifier.new);

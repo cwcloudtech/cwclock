@@ -302,10 +302,20 @@ class _TimeTrackerScreenState extends ConsumerState<TimeTrackerScreen> {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  trailing: IconButton(
-                                    onPressed: () => _handleDelete(item),
-                                    icon: Icon(Icons.delete_outline, color: AppColors.of(context).danger),
-                                    tooltip: t('common.delete'),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        onPressed: () => _handleDelete(item),
+                                        icon: Icon(Icons.delete_outline, color: AppColors.of(context).danger),
+                                        tooltip: t('common.delete'),
+                                      ),
+                                      IconButton(
+                                        onPressed: () => context.push('/edit-record', extra: item),
+                                        icon: Icon(Icons.edit_outlined, color: AppColors.of(context).textMuted),
+                                        tooltip: t('common.edit'),
+                                      ),
+                                    ],
                                   ),
                                   onTap: () => context.push('/edit-record', extra: item),
                                 );

@@ -83,6 +83,13 @@ const Map<String, dynamic> fr = {
         "Ceci alloue un vrai numéro de facture et l'enregistre. Continuer ?",
     'previousInvoices': 'Factures précédentes',
     'noInvoices': 'Aucune facture pour ce client/cette période.',
+    'reupload': 'Renvoyer vers les connexions externes',
+    'reuploadSuccess': 'Facture renvoyée.',
+    'sendInvoice': 'Envoyer par e-mail',
+    'sendInvoiceSuccess': 'Facture envoyée.',
+    'deleteInvoiceTitle': 'Supprimer la facture',
+    'deleteInvoiceBody': 'Supprimer la facture {{number}} ? Cette action est irréversible.',
+    'deleteSuccess': 'Facture supprimée.',
   },
   'pdf': {
     'title': 'Document',
@@ -94,6 +101,7 @@ const Map<String, dynamic> fr = {
     'members': 'Membres',
     'clients': 'Clients',
     'projects': 'Projets',
+    'exportJobs': "Tâches d'export",
   },
   'organizations': {
     'profileTitle': "Profil de l'organisation",
@@ -159,6 +167,12 @@ const Map<String, dynamic> fr = {
     'deleteProjectTitle': 'Supprimer le projet',
     'deleteProjectBody': 'Supprimer "{{name}}" ?',
     'noProjects': 'Aucun projet pour le moment.',
+  },
+  'exportJobs': {
+    'title': "Tâches d'export",
+    'noJobs': "Aucune tâche d'export pour le moment.",
+    'runNow': 'Exécuter maintenant',
+    'runSuccess': "Tâche d'export démarrée.",
   },
   'errors': {
     'network': 'Une erreur est survenue. Veuillez réessayer.',

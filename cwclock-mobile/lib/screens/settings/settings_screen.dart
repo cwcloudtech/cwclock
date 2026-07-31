@@ -118,13 +118,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Text(session.user!.email, style: TextStyle(fontSize: 13, color: AppColors.of(context).textMuted)),
             ],
             AppButton(
+              // Same icon as the Organization management button below - both
+              // represent "an organization" (ai-instruct-124).
               title: t('settings.switchOrganization'),
+              icon: Icons.business_outlined,
               variant: AppButtonVariant.secondary,
               onPressed: () => context.push('/switch-organization'),
               margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
             ),
             AppButton(
               title: otherLocaleLabel,
+              icon: Icons.translate,
               variant: AppButtonVariant.secondary,
               onPressed: () => ref.read(localeProvider.notifier).setLocale(otherLocaleCode),
               margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
@@ -179,6 +183,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: Icons.description_outlined,
                 variant: AppButtonVariant.secondary,
                 onPressed: () => context.push('/projects'),
+                margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
+              ),
+              AppButton(
+                // FaDownload in cwclock-ui's SidebarNav.jsx.
+                title: t('management.exportJobs'),
+                icon: Icons.file_download_outlined,
+                variant: AppButtonVariant.secondary,
+                onPressed: () => context.push('/export-jobs'),
                 margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
               ),
             ],

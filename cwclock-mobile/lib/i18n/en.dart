@@ -83,6 +83,13 @@ const Map<String, dynamic> en = {
         'This allocates a real invoice number and saves it. Continue?',
     'previousInvoices': 'Previous invoices',
     'noInvoices': 'No invoices for this client/period yet.',
+    'reupload': 'Reupload to external connections',
+    'reuploadSuccess': 'Invoice reuploaded.',
+    'sendInvoice': 'Send by email',
+    'sendInvoiceSuccess': 'Invoice sent.',
+    'deleteInvoiceTitle': 'Delete invoice',
+    'deleteInvoiceBody': 'Delete invoice {{number}}? This can\'t be undone.',
+    'deleteSuccess': 'Invoice deleted.',
   },
   'pdf': {
     'title': 'Document',
@@ -94,6 +101,7 @@ const Map<String, dynamic> en = {
     'members': 'Members',
     'clients': 'Clients',
     'projects': 'Projects',
+    'exportJobs': 'Export jobs',
   },
   'organizations': {
     'profileTitle': 'Organization profile',
@@ -158,6 +166,12 @@ const Map<String, dynamic> en = {
     'deleteProjectTitle': 'Delete project',
     'deleteProjectBody': 'Delete "{{name}}"?',
     'noProjects': 'No projects yet.',
+  },
+  'exportJobs': {
+    'title': 'Export jobs',
+    'noJobs': 'No export jobs yet.',
+    'runNow': 'Run now',
+    'runSuccess': 'Export job started.',
   },
   'errors': {
     'network': 'Something went wrong. Please try again.',

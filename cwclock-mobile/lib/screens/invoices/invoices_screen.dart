@@ -40,6 +40,7 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
   DateTime _end = DateTime.now();
   String? _error;
   bool _busy = false;
+  final Set<String> _busyInvoiceIds = {};
 
   @override
   void initState() {
@@ -148,6 +149,77 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
     }
   }
 
+  Future<void> _runInvoiceAction(
+    Invoice invoice,
+    Future<void> Function(String orgId, String invoiceId) action,
+    String successMessage,
+  ) async {
+    final orgId = ref.read(sessionProvider).orgId;
+    if (orgId == null) return;
+    final locale = ref.read(localeProvider);
+
+    setState(() => _busyInvoiceIds.add(invoice.id));
+    try {
+      await action(orgId, invoice.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(successMessage)));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(apiErrorMessage(asApiException(e), locale))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busyInvoiceIds.remove(invoice.id));
+    }
+  }
+
+  void _handleReupload(Invoice invoice) {
+    final t = translateWith(ref.read(localeProvider));
+    _runInvoiceAction(
+      invoice,
+      (orgId, invoiceId) => ref.read(invoicesProvider.notifier).reuploadInvoice(orgId, invoiceId),
+      t('invoices.reuploadSuccess'),
+    );
+  }
+
+  void _handleSendInvoice(Invoice invoice) {
+    final t = translateWith(ref.read(localeProvider));
+    _runInvoiceAction(
+      invoice,
+      (orgId, invoiceId) => ref.read(invoicesProvider.notifier).sendInvoiceEmail(orgId, invoiceId),
+      t('invoices.sendInvoiceSuccess'),
+    );
+  }
+
+  void _handleDeleteInvoice(Invoice invoice) {
+    final locale = ref.read(localeProvider);
+    final t = translateWith(locale);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t('invoices.deleteInvoiceTitle')),
+        content: Text(t('invoices.deleteInvoiceBody', {'number': invoice.number})),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(t('common.cancel'))),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _runInvoiceAction(
+                invoice,
+                (orgId, invoiceId) => ref.read(invoicesProvider.notifier).deleteInvoice(orgId, invoiceId),
+                t('invoices.deleteSuccess'),
+              );
+            },
+            child: Text(t('common.delete'), style: TextStyle(color: AppColors.of(context).danger)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
@@ -240,10 +312,31 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
                       separatorBuilder: (_, _) => Divider(height: 1, color: AppColors.of(context).border),
                       itemBuilder: (context, index) {
                         final invoice = invoices[index];
+                        final busy = _busyInvoiceIds.contains(invoice.id);
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
                           title: Text(invoice.number),
                           subtitle: Text('${invoice.status} · ${invoice.totalTTC.toStringAsFixed(2)}'),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                onPressed: busy ? null : () => _handleReupload(invoice),
+                                icon: Icon(Icons.cloud_upload_outlined, color: AppColors.of(context).textMuted),
+                                tooltip: t('invoices.reupload'),
+                              ),
+                              IconButton(
+                                onPressed: busy ? null : () => _handleSendInvoice(invoice),
+                                icon: Icon(Icons.mail_outline, color: AppColors.of(context).textMuted),
+                                tooltip: t('invoices.sendInvoice'),
+                              ),
+                              IconButton(
+                                onPressed: busy ? null : () => _handleDeleteInvoice(invoice),
+                                icon: Icon(Icons.delete_outline, color: AppColors.of(context).danger),
+                                tooltip: t('common.delete'),
+                              ),
+                            ],
+                          ),
                           onTap: () => _handleOpenInvoice(invoice),
                         );
                       },
