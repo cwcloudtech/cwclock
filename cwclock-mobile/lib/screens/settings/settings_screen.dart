@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../i18n/app_localizations.dart';
 import '../../providers/app_update_provider.dart';
@@ -24,6 +25,8 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  String? _appVersion;
+
   @override
   void initState() {
     super.initState();
@@ -32,6 +35,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final orgId = ref.read(sessionProvider).orgId;
       if (orgId != null) ref.read(organizationsProvider.notifier).listMembers(orgId);
       ref.read(appUpdateProvider.notifier).checkForUpdate();
+    });
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _appVersion = info.version);
     });
   }
 
@@ -248,6 +254,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onPressed: _handleDisconnect,
               margin: EdgeInsets.only(top: AppSpacing.of(3)),
             ),
+            if (_appVersion != null)
+              Padding(
+                padding: EdgeInsets.only(top: AppSpacing.of(3)),
+                child: Center(
+                  child: Text(
+                    t('settings.version', {'version': _appVersion!}),
+                    style: TextStyle(fontSize: 12, color: AppColors.of(context).textMuted),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

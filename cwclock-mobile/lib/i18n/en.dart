@@ -43,6 +43,7 @@ const Map<String, dynamic> en = {
     'disconnect': 'Disconnect',
     'disconnectConfirm':
         "Disconnect this device from CWClock? You'll need to scan or enter an API key again.",
+    'version': 'Version {{version}}',
   },
   'timeTracker': {
     'title': 'Time tracker',
