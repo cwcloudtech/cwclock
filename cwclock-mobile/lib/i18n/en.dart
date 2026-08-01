@@ -38,7 +38,7 @@ const Map<String, dynamic> en = {
     'switchOrganization': 'Switch organization',
     'lightMode': 'Light mode',
     'darkMode': 'Dark mode',
-    'updateTo': 'Update to v{{version}}',
+    'upgradeTo': 'Upgrade to v{{version}}',
     'updateFailed': "Couldn't download the update. Please try again.",
     'disconnect': 'Disconnect',
     'disconnectConfirm':

@@ -182,9 +182,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 )
               else
                 AppButton(
-                  title: t('settings.updateTo', {'version': updateState.availableVersion!}),
+                  title: t('settings.upgradeTo', {'version': updateState.availableVersion!}),
                   icon: Icons.system_update_alt,
-                  variant: AppButtonVariant.secondary,
+                  variant: AppButtonVariant.danger,
                   onPressed: _handleUpdate,
                   margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
                 ),

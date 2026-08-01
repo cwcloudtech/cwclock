@@ -37,10 +37,21 @@ COPY cwclock-mobile/ ./
 COPY .docker/android ./android/
 COPY VERSION ./VERSION
 
-RUN VERSION="$(cat VERSION)" && \
+# Release builds must be signed with a persistent key (see the signingConfigs
+# comment in android/app/build.gradle.kts) or self-update breaks with
+# "App not installed" every time the signing key rotates between builds
+# (ai-instruct-128). The keystore is supplied as a build secret, never baked
+# into an image layer; when it's absent (e.g. local/dev builds) the mounted
+# file is empty and Gradle falls back to debug signing.
+RUN --mount=type=secret,id=mobile_keystore,target=/run/secrets/mobile_keystore.jks \
+    --mount=type=secret,id=mobile_keystore_password,env=MOBILE_KEYSTORE_PASSWORD \
+    --mount=type=secret,id=mobile_key_alias,env=MOBILE_KEY_ALIAS \
+    --mount=type=secret,id=mobile_key_password,env=MOBILE_KEY_PASSWORD \
+    VERSION="$(cat VERSION)" && \
     ANDROID_VERSION_CODE="$(echo "${VERSION}" | awk -F. '{printf "%d%02d%02d", $1, $2, $3}')" && \
     sed -i "s/^version: .*/version: ${VERSION}+${ANDROID_VERSION_CODE}/" pubspec.yaml && \
     flutter pub get && \
+    if [ -s /run/secrets/mobile_keystore.jks ]; then export MOBILE_KEYSTORE_PATH=/run/secrets/mobile_keystore.jks; fi && \
     flutter build apk --release && \
     mv /app/build/app/outputs/flutter-apk/app-release.apk "/app/build/app/outputs/flutter-apk/cwclock-v${VERSION}.apk"
 

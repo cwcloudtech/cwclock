@@ -30,3 +30,8 @@ cwclock-helm*
 charts
 *.tgz
 *.tar.gz
+
+# mobile release-signing secrets (ai-instruct-128) - must never be committed
+*.keystore
+*.jks
+mobile-release.keystore

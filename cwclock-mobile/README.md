@@ -1,11 +1,9 @@
-# cwclock_mobile
+# CWClock mobile
 
 Android Flutter app covering a subset of CWClock: time recording (start/stop,
 all-day records, edit, delete), simplified summary/detailed PDF report
 generation, and invoice preview/generation/history, plus organization/member/
-client/project management. Rewritten from the original React Native app in
-`ai-instruct-118` after repeated React Native/Kotlin/Gradle toolchain
-incompatibilities (see `ai-gen/ai-instruct-115.md` through `-117.md`).
+client/project management.
 
 ## Setup
 
@@ -48,8 +46,23 @@ into the manual-entry screen.
 ## Known gaps / follow-ups (deliberately out of scope for this pass)
 
 - **iOS is not configured.** Only the `android/` platform folder exists.
-- **Release signing** falls back to Flutter's implicit debug keystore.
-  Provide real signing config in `android/app/build.gradle.kts` before
-  publishing anywhere.
 - Not implemented (outside the original feature subset): API-key creation
   on-device, invoice email sending, export jobs, calendar view.
+
+## Release signing (Android)
+
+`android/app/build.gradle.kts`'s `release` build type signs with a
+persistent keystore supplied via the `MOBILE_KEYSTORE_PATH` /
+`MOBILE_KEYSTORE_PASSWORD` / `MOBILE_KEY_ALIAS` / `MOBILE_KEY_PASSWORD` env
+vars, falling back to Flutter's implicit debug keystore when they're unset
+(so plain `flutter run --release` still works with no setup). CI supplies
+these as build secrets - see the `mobile-build` stage in the root
+`Dockerfile` and `secrets:` block in `docker-compose-build.yml`, sourced
+from the `MOBILE_KEYSTORE_BASE64` / `MOBILE_KEYSTORE_PASSWORD` /
+`MOBILE_KEY_ALIAS` / `MOBILE_KEY_PASSWORD` GitLab CI/CD variables (masked,
+protected).
+
+All release APKs must be signed with the *same* key, or Android refuses to
+install one as an "update" over another ("App not installed" -
+`ai-instruct-128`). Never let a real release build fall back to the debug
+keystore.

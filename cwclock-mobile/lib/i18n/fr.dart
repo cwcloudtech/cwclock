@@ -38,7 +38,7 @@ const Map<String, dynamic> fr = {
     'switchOrganization': "Changer d'organisation",
     'lightMode': 'Mode clair',
     'darkMode': 'Mode sombre',
-    'updateTo': 'Mettre à jour vers la v{{version}}',
+    'upgradeTo': 'Mettre à niveau vers la v{{version}}',
     'updateFailed': 'Impossible de télécharger la mise à jour. Veuillez réessayer.',
     'disconnect': 'Déconnecter',
     'disconnectConfirm':

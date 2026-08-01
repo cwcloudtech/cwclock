@@ -1,3 +1,19 @@
+# Release-signing secrets for the mobile APK (ai-instruct-128, see the
+# Dockerfile's mobile-build stage). MOBILE_KEYSTORE_FILE points at a keystore
+# written to disk by CI before this file is baked; the other three come
+# straight from CI/CD variables. When MOBILE_KEYSTORE_FILE isn't set it falls
+# back to /dev/null, so local `docker buildx bake` still works (Gradle then
+# falls back to debug signing).
+secrets:
+  mobile_keystore:
+    file: ${MOBILE_KEYSTORE_FILE:-/dev/null}
+  mobile_keystore_password:
+    environment: MOBILE_KEYSTORE_PASSWORD
+  mobile_key_alias:
+    environment: MOBILE_KEY_ALIAS
+  mobile_key_password:
+    environment: MOBILE_KEY_PASSWORD
+
 services:
 
   api:
@@ -19,3 +35,8 @@ services:
       context: .
       dockerfile: Dockerfile
       target: ui-and-mobile
+      secrets:
+        - mobile_keystore
+        - mobile_keystore_password
+        - mobile_key_alias
+        - mobile_key_password
