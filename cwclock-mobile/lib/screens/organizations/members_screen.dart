@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../api/api_client.dart';
+import '../../common/member_label.dart';
 import '../../i18n/app_localizations.dart';
 import '../../models/member.dart';
 import '../../providers/locale_provider.dart';
@@ -153,9 +154,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
                       itemBuilder: (context, index) {
                         final member = members[index];
                         final isOwnerRow = member.role == 'owner';
-                        final displayName = (member.name?.isNotEmpty ?? false) || (member.surname?.isNotEmpty ?? false)
-                            ? '${member.name ?? ''} ${member.surname ?? ''}'.trim()
-                            : member.email;
+                        final displayName = memberLabel(member);
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
                           title: Text(displayName, maxLines: 1, overflow: TextOverflow.ellipsis),

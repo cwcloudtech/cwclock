@@ -26,9 +26,12 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
   bool _failed = false;
 
   Future<void> _handleShare() async {
-    final path = widget.path.startsWith('file://') ? widget.path : 'file://${widget.path}';
+    // XFile wraps dart:io's File(path) directly - it wants a plain
+    // filesystem path, not a file:// URI, so the share sheet used to open
+    // an unreadable path (silently swallowed by the catch below) and never
+    // show up. widget.path is already the raw path PdfClient wrote to.
     try {
-      await SharePlus.instance.share(ShareParams(files: [XFile(path)]));
+      await SharePlus.instance.share(ShareParams(files: [XFile(widget.path)]));
     } catch (_) {
       // Matches the RN version's Share.open(...).catch(() => {}) - a
       // cancelled/failed share sheet isn't an error worth surfacing.

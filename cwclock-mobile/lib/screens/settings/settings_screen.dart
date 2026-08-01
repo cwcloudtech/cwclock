@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../i18n/app_localizations.dart';
+import '../../providers/app_update_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/organizations_provider.dart';
 import '../../providers/permissions.dart' as perm;
@@ -30,7 +31,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ref.read(organizationsProvider.notifier).listOrganizations();
       final orgId = ref.read(sessionProvider).orgId;
       if (orgId != null) ref.read(organizationsProvider.notifier).listMembers(orgId);
+      ref.read(appUpdateProvider.notifier).checkForUpdate();
     });
+  }
+
+  Future<void> _handleUpdate() async {
+    final t = translateWith(ref.read(localeProvider));
+    try {
+      await ref.read(appUpdateProvider.notifier).downloadAndInstall();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t('settings.updateFailed'))));
+      }
+    }
   }
 
   void _handleDisconnect() {
@@ -64,6 +77,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     final currentOrg = orgsState.items.where((o) => o.id == session.orgId).firstOrNull;
     final canManage = perm.isAdminOrOwner(session.user, orgsState.members);
+    final updateState = ref.watch(appUpdateProvider);
     // Shows the language tapping switches TO, not the current one - e.g.
     // "English" while French is loaded (ai-instruct-121), same convention as
     // the dark/light mode button below.
@@ -142,6 +156,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
               margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
             ),
+            if (updateState.availableVersion != null) ...[
+              if (updateState.downloading)
+                Padding(
+                  padding: EdgeInsets.only(top: AppSpacing.of(1.5)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.value),
+                        child: LinearProgressIndicator(
+                          value: updateState.progress > 0 ? updateState.progress : null,
+                          minHeight: 8,
+                          backgroundColor: AppColors.of(context).backgroundMuted,
+                          color: AppColors.of(context).primary,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        '${(updateState.progress * 100).round()}%',
+                        style: TextStyle(fontSize: 12, color: AppColors.of(context).textMuted),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                AppButton(
+                  title: t('settings.updateTo', {'version': updateState.availableVersion!}),
+                  icon: Icons.system_update_alt,
+                  variant: AppButtonVariant.secondary,
+                  onPressed: _handleUpdate,
+                  margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
+                ),
+            ],
             if (canManage) ...[
               Container(
                 margin: EdgeInsets.only(top: AppSpacing.of(3)),
