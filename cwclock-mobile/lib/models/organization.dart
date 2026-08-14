@@ -2,6 +2,10 @@ class Organization {
   final String id;
   final String name;
   final String? ownerId;
+  // Only populated by the superuser admin list (GET /admin/organizations/,
+  // OrganizationWithOwner) - the regular /organizations/ list can't resolve
+  // it, so it stays null there.
+  final String? ownerEmail;
   final String? accountingEmail;
   final String? address;
   final String? postalCode;
@@ -20,6 +24,7 @@ class Organization {
     required this.id,
     required this.name,
     this.ownerId,
+    this.ownerEmail,
     this.accountingEmail,
     this.address,
     this.postalCode,
@@ -40,6 +45,7 @@ class Organization {
       id: json['id'] as String,
       name: json['name'] as String? ?? '',
       ownerId: json['ownerId'] as String?,
+      ownerEmail: json['ownerEmail'] as String?,
       accountingEmail: json['accountingEmail'] as String?,
       address: json['address'] as String?,
       postalCode: json['postalCode'] as String?,

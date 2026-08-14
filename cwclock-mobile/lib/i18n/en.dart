@@ -25,7 +25,8 @@ const Map<String, dynamic> en = {
     'connect': 'Connect',
     'invalidCredentials':
         "Couldn't connect - please check the API URL and API key.",
-    'scanHint': 'Point the camera at the QR code from your CWClock API Keys page.',
+    'scanHint':
+        'Point the camera at the QR code from your CWClock API Keys page.',
     'scanFailed':
         "That QR code doesn't look like a CWClock config - please try again or enter manually.",
     'pickOrganization': 'Pick an organization',
@@ -106,10 +107,7 @@ const Map<String, dynamic> en = {
     'statusRefunded': 'Refunded',
     'updateStatusSuccess': 'Invoice status updated.',
   },
-  'pdf': {
-    'title': 'Document',
-    'failedToLoad': "Couldn't load the PDF.",
-  },
+  'pdf': {'title': 'Document', 'failedToLoad': "Couldn't load the PDF."},
   'management': {
     'title': 'Management',
     'organization': 'Organization',
@@ -117,6 +115,26 @@ const Map<String, dynamic> en = {
     'clients': 'Clients',
     'projects': 'Projects',
     'exportJobs': 'Export jobs',
+  },
+  'admin': {
+    'title': 'Administration',
+    'usersTitle': 'Users',
+    'organizationsTitle': 'Organizations',
+    'changeStatus': 'Change status',
+    'globalRoleSuperuser': 'Superuser',
+    'globalRoleConfirmed': 'Confirmed',
+    'globalRoleDisabled': 'Disabled',
+    'globalRoleBan': 'Banned',
+    'deleteUserTitle': 'Delete user',
+    'deleteUserBody': 'Delete "{{email}}"? This cannot be undone.',
+    'noUsers': 'No users.',
+    'transfer': 'Transfer',
+    'transferOwnership': 'Transfer ownership',
+    'transferModalTitle': 'Transfer ownership of {{name}}',
+    'newOwnerEmail': "New owner's email",
+    'deleteOrgTitle': 'Delete organization',
+    'deleteOrgBody': 'Delete "{{name}}"? This cannot be undone.',
+    'noOrganizations': 'No organizations.',
   },
   'organizations': {
     'profileTitle': 'Organization profile',
@@ -210,5 +228,9 @@ const Map<String, dynamic> en = {
     'noUserWithEmail': 'No user with this email.',
     'cantRemoveOwner': 'The organization owner cannot be removed.',
     'invalidClientForOrg': 'That client does not belong to this organization.',
+    'cantDeleteOwnAccount': "You can't delete your own account.",
+    'invalidAdminUserEdit':
+        'Please add valid email, name, surname and role fields.',
+    'duplicateEmail': 'Email already in use.',
   },
 };

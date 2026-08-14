@@ -6,6 +6,8 @@ import 'models/client.dart';
 import 'models/project.dart';
 import 'models/time_entry.dart';
 import 'providers/session_provider.dart';
+import 'screens/admin/admin_organizations_screen.dart';
+import 'screens/admin/admin_users_screen.dart';
 import 'screens/clients/client_form_screen.dart';
 import 'screens/clients/clients_screen.dart';
 import 'screens/export_jobs/export_jobs_screen.dart';
@@ -35,7 +37,9 @@ class _RouterRefreshNotifier extends ChangeNotifier {
   }
 }
 
-final _routerRefreshProvider = Provider<_RouterRefreshNotifier>((ref) => _RouterRefreshNotifier(ref));
+final _routerRefreshProvider = Provider<_RouterRefreshNotifier>(
+  (ref) => _RouterRefreshNotifier(ref),
+);
 
 /// Root switches its whole tree based on session status (see
 /// SessionStatus in providers/session_provider.dart), restored once at boot
@@ -60,44 +64,102 @@ final routerProvider = Provider<GoRouter>((ref) {
           return loc == '/pick-organization' ? null : '/pick-organization';
         case SessionStatus.connected:
           final isOnboardingRoute =
-              loc == '/loading' || loc.startsWith('/onboarding') || loc == '/pick-organization';
+              loc == '/loading' ||
+              loc.startsWith('/onboarding') ||
+              loc == '/pick-organization';
           return isOnboardingRoute ? '/main' : null;
       }
     },
     routes: [
-      GoRoute(path: '/loading', builder: (context, state) => const LoadingScreen()),
-      GoRoute(path: '/onboarding/connect', builder: (context, state) => const ConnectScreen()),
-      GoRoute(path: '/onboarding/scan-qr', builder: (context, state) => const ScanQrScreen()),
-      GoRoute(path: '/onboarding/manual-entry', builder: (context, state) => const ManualEntryScreen()),
-      GoRoute(path: '/pick-organization', builder: (context, state) => const OrgPickerScreen()),
-      GoRoute(path: '/switch-organization', builder: (context, state) => const OrgPickerScreen()),
-      GoRoute(path: '/main', builder: (context, state) => const MainTabsScreen()),
+      GoRoute(
+        path: '/loading',
+        builder: (context, state) => const LoadingScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/connect',
+        builder: (context, state) => const ConnectScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/scan-qr',
+        builder: (context, state) => const ScanQrScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/manual-entry',
+        builder: (context, state) => const ManualEntryScreen(),
+      ),
+      GoRoute(
+        path: '/pick-organization',
+        builder: (context, state) => const OrgPickerScreen(),
+      ),
+      GoRoute(
+        path: '/switch-organization',
+        builder: (context, state) => const OrgPickerScreen(),
+      ),
+      GoRoute(
+        path: '/main',
+        builder: (context, state) => const MainTabsScreen(),
+      ),
       GoRoute(
         path: '/edit-record',
-        builder: (context, state) => EditRecordScreen(entry: state.extra as TimeEntry),
+        builder: (context, state) =>
+            EditRecordScreen(entry: state.extra as TimeEntry),
       ),
-      GoRoute(path: '/all-day-record', builder: (context, state) => const AllDayRecordScreen()),
+      GoRoute(
+        path: '/all-day-record',
+        builder: (context, state) => const AllDayRecordScreen(),
+      ),
       GoRoute(
         path: '/pdf-viewer',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>;
-          return PdfViewerScreen(path: extra['path'] as String, title: extra['title'] as String?);
+          return PdfViewerScreen(
+            path: extra['path'] as String,
+            title: extra['title'] as String?,
+          );
         },
       ),
-      GoRoute(path: '/organization', builder: (context, state) => const OrganizationScreen()),
-      GoRoute(path: '/members', builder: (context, state) => const MembersScreen()),
-      GoRoute(path: '/members/invite', builder: (context, state) => const InviteMemberScreen()),
-      GoRoute(path: '/clients', builder: (context, state) => const ClientsScreen()),
+      GoRoute(
+        path: '/organization',
+        builder: (context, state) => const OrganizationScreen(),
+      ),
+      GoRoute(
+        path: '/members',
+        builder: (context, state) => const MembersScreen(),
+      ),
+      GoRoute(
+        path: '/members/invite',
+        builder: (context, state) => const InviteMemberScreen(),
+      ),
+      GoRoute(
+        path: '/clients',
+        builder: (context, state) => const ClientsScreen(),
+      ),
       GoRoute(
         path: '/clients/form',
-        builder: (context, state) => ClientFormScreen(client: state.extra as Client?),
+        builder: (context, state) =>
+            ClientFormScreen(client: state.extra as Client?),
       ),
-      GoRoute(path: '/projects', builder: (context, state) => const ProjectsScreen()),
+      GoRoute(
+        path: '/projects',
+        builder: (context, state) => const ProjectsScreen(),
+      ),
       GoRoute(
         path: '/projects/form',
-        builder: (context, state) => ProjectFormScreen(project: state.extra as Project?),
+        builder: (context, state) =>
+            ProjectFormScreen(project: state.extra as Project?),
       ),
-      GoRoute(path: '/export-jobs', builder: (context, state) => const ExportJobsScreen()),
+      GoRoute(
+        path: '/export-jobs',
+        builder: (context, state) => const ExportJobsScreen(),
+      ),
+      GoRoute(
+        path: '/admin/users',
+        builder: (context, state) => const AdminUsersScreen(),
+      ),
+      GoRoute(
+        path: '/admin/organizations',
+        builder: (context, state) => const AdminOrganizationsScreen(),
+      ),
     ],
   );
 });

@@ -25,7 +25,8 @@ const Map<String, dynamic> fr = {
     'connect': 'Se connecter',
     'invalidCredentials':
         "Connexion impossible - veuillez vérifier l'URL de l'API et la clé API.",
-    'scanHint': 'Pointez la caméra vers le QR code de votre page Clés API CWClock.',
+    'scanHint':
+        'Pointez la caméra vers le QR code de votre page Clés API CWClock.',
     'scanFailed':
         'Ce QR code ne ressemble pas à une configuration CWClock - veuillez réessayer ou saisir manuellement.',
     'pickOrganization': 'Choisir une organisation',
@@ -39,7 +40,8 @@ const Map<String, dynamic> fr = {
     'lightMode': 'Mode clair',
     'darkMode': 'Mode sombre',
     'upgradeTo': 'Mettre à niveau vers la v{{version}}',
-    'updateFailed': 'Impossible de télécharger la mise à jour. Veuillez réessayer.',
+    'updateFailed':
+        'Impossible de télécharger la mise à jour. Veuillez réessayer.',
     'disconnect': 'Déconnecter',
     'disconnectConfirm':
         'Déconnecter cet appareil de CWClock ? Vous devrez à nouveau scanner ou saisir une clé API.',
@@ -97,7 +99,8 @@ const Map<String, dynamic> fr = {
     'sendInvoice': 'Envoyer par e-mail',
     'sendInvoiceSuccess': 'Facture envoyée.',
     'deleteInvoiceTitle': 'Supprimer la facture',
-    'deleteInvoiceBody': 'Supprimer la facture {{number}} ? Cette action est irréversible.',
+    'deleteInvoiceBody':
+        'Supprimer la facture {{number}} ? Cette action est irréversible.',
     'deleteSuccess': 'Facture supprimée.',
     'changeStatus': 'Changer le statut',
     'statusUnpaid': 'Non payée',
@@ -106,10 +109,7 @@ const Map<String, dynamic> fr = {
     'statusRefunded': 'Remboursée',
     'updateStatusSuccess': 'Statut de la facture mis à jour.',
   },
-  'pdf': {
-    'title': 'Document',
-    'failedToLoad': 'Impossible de charger le PDF.',
-  },
+  'pdf': {'title': 'Document', 'failedToLoad': 'Impossible de charger le PDF.'},
   'management': {
     'title': 'Gestion',
     'organization': 'Organisation',
@@ -117,6 +117,27 @@ const Map<String, dynamic> fr = {
     'clients': 'Clients',
     'projects': 'Projets',
     'exportJobs': "Tâches d'export",
+  },
+  'admin': {
+    'title': 'Administration',
+    'usersTitle': 'Utilisateurs',
+    'organizationsTitle': 'Organisations',
+    'changeStatus': 'Changer le statut',
+    'globalRoleSuperuser': 'Super-administrateur',
+    'globalRoleConfirmed': 'Confirmé',
+    'globalRoleDisabled': 'Désactivé',
+    'globalRoleBan': 'Banni',
+    'deleteUserTitle': "Supprimer l'utilisateur",
+    'deleteUserBody':
+        'Supprimer « {{email}} » ? Cette action est irréversible.',
+    'noUsers': 'Aucun utilisateur.',
+    'transfer': 'Transférer',
+    'transferOwnership': 'Transférer la propriété',
+    'transferModalTitle': 'Transférer la propriété de {{name}}',
+    'newOwnerEmail': 'E-mail du nouveau propriétaire',
+    'deleteOrgTitle': "Supprimer l'organisation",
+    'deleteOrgBody': 'Supprimer « {{name}} » ? Cette action est irréversible.',
+    'noOrganizations': 'Aucune organisation.',
   },
   'organizations': {
     'profileTitle': "Profil de l'organisation",
@@ -166,7 +187,8 @@ const Map<String, dynamic> fr = {
     'dailyRate': 'Taux journalier',
     'sendReportsWithInvoice': 'Envoyer les rapports avec la facture',
     'deleteClientTitle': 'Supprimer le client',
-    'deleteClientBody': 'Supprimer "{{name}}" ? Cela supprime aussi ses projets.',
+    'deleteClientBody':
+        'Supprimer "{{name}}" ? Cela supprime aussi ses projets.',
     'noClients': 'Aucun client pour le moment.',
   },
   'projects': {
@@ -192,7 +214,8 @@ const Map<String, dynamic> fr = {
   'errors': {
     'network': 'Une erreur est survenue. Veuillez réessayer.',
     'notFound': 'Ressource introuvable.',
-    'timeEntryFields': 'Veuillez renseigner la description, le projet et le jour.',
+    'timeEntryFields':
+        'Veuillez renseigner la description, le projet et le jour.',
     'timeEntryStartEnd':
         'Veuillez renseigner une heure de début et de fin, ou cocher toute la journée/demi-journée.',
     'timeEntryAllDayHalf':
@@ -212,7 +235,12 @@ const Map<String, dynamic> fr = {
     'invalidMemberInvite':
         'Veuillez renseigner un e-mail valide et un rôle (administrateur, membre ou lecteur).',
     'noUserWithEmail': 'Aucun utilisateur avec cet e-mail.',
-    'cantRemoveOwner': 'Le propriétaire de l\'organisation ne peut pas être retiré.',
+    'cantRemoveOwner':
+        'Le propriétaire de l\'organisation ne peut pas être retiré.',
     'invalidClientForOrg': "Ce client n'appartient pas à cette organisation.",
+    'cantDeleteOwnAccount': 'Vous ne pouvez pas supprimer votre propre compte.',
+    'invalidAdminUserEdit':
+        'Veuillez renseigner un e-mail, un nom, un prénom et un rôle valides.',
+    'duplicateEmail': 'Cet e-mail est déjà utilisé.',
   },
 };
