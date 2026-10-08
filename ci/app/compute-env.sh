@@ -3,6 +3,7 @@
 export APPS="ui api ui-and-mobile"
 export APP_PREFIX="cwclock"
 export VERSION="$(grep -oE "^[0-9\.]+$" VERSION)"
+export UI_VERSION="${VERSION}-mobile"
 export VERSION_SHA="${VERSION}-${CI_COMMIT_SHORT_SHA}"
 export CWCLOCK_API_URL="https://api.cwclock.me"
 export CWCLOCK_UI_URL="https://www.cwclock.me"
