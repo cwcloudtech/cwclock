@@ -65,20 +65,38 @@ func BuildTarget(conn models.ExternalConnection) (Target, error) {
 	}
 }
 
+// syncOne runs one connection's op (upload/delete) in isolation so one
+// failing connection never aborts the others - or the caller's request. A
+// build error, an op error, and even a panic from a misbehaving provider
+// client are all logged and swallowed, never propagated: the invoice's own
+// DB row (not these external copies) is the source of truth, and there's no
+// panic-recovery middleware upstream, so a panic here would otherwise drop
+// the whole HTTP request.
+func syncOne(action string, conn models.ExternalConnection, op func(Target) error) {
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Error("external connection: "+action+" panicked", "type", conn.Type, "connectionId", conn.ID, "panic", r)
+		}
+	}()
+	target, err := BuildTarget(conn)
+	if err != nil {
+		slog.Error("external connection: unsupported type", "type", conn.Type, "connectionId", conn.ID, "error", err)
+		return
+	}
+	if err := op(target); err != nil {
+		slog.Error("external connection: "+action+" failed", "type", conn.Type, "connectionId", conn.ID, "error", err)
+	}
+}
+
 // SyncUpload pushes data to every one of an organization's external
-// connections, best-effort: a failing connection is logged and skipped
-// rather than returned, since the invoice's own DB row (not these external
-// copies) is the source of truth.
+// connections, best-effort: a failing connection (error or panic) is logged
+// and skipped rather than returned, since the invoice's own DB row (not
+// these external copies) is the source of truth.
 func SyncUpload(ctx context.Context, conns []models.ExternalConnection, year string, months []string, filename string, data []byte) {
 	for _, conn := range conns {
-		target, err := BuildTarget(conn)
-		if err != nil {
-			slog.Error("external connection: unsupported type", "type", conn.Type, "connectionId", conn.ID, "error", err)
-			continue
-		}
-		if err := target.Upload(ctx, year, months, filename, data); err != nil {
-			slog.Error("external connection: upload failed", "type", conn.Type, "connectionId", conn.ID, "error", err)
-		}
+		syncOne("upload", conn, func(t Target) error {
+			return t.Upload(ctx, year, months, filename, data)
+		})
 	}
 }
 
@@ -86,13 +104,8 @@ func SyncUpload(ctx context.Context, conns []models.ExternalConnection, year str
 // connections, best-effort (see SyncUpload).
 func SyncDelete(ctx context.Context, conns []models.ExternalConnection, year string, months []string, filename string) {
 	for _, conn := range conns {
-		target, err := BuildTarget(conn)
-		if err != nil {
-			slog.Error("external connection: unsupported type", "type", conn.Type, "connectionId", conn.ID, "error", err)
-			continue
-		}
-		if err := target.Delete(ctx, year, months, filename); err != nil {
-			slog.Error("external connection: delete failed", "type", conn.Type, "connectionId", conn.ID, "error", err)
-		}
+		syncOne("delete", conn, func(t Target) error {
+			return t.Delete(ctx, year, months, filename)
+		})
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"cwclock-api/internal/email"
@@ -92,9 +93,15 @@ func (d *ExportDeliveryService) deliverExternalConnection(ctx context.Context, t
 	now := time.Now()
 	year := externalconn.YearFolder(now)
 	months := externalconn.MonthCandidates(now)
+	// Best-effort per file: one report failing to upload is logged and
+	// skipped rather than aborting the rest, so a failing connection doesn't
+	// drop the other attachments (same policy as externalconn.SyncUpload for
+	// invoice PDFs).
 	for _, r := range reports {
 		if err := dest.Upload(ctx, year, months, r.Filename, r.Data); err != nil {
-			return fmt.Errorf("failed to upload %s: %w", r.Filename, err)
+			slog.Error("export delivery: upload failed",
+				"type", target.Connection.Type, "connectionId", target.Connection.ID,
+				"filename", r.Filename, "error", err)
 		}
 	}
 	return nil

@@ -272,6 +272,10 @@ const Invoices = () => {
     const invoiceId = deletingInvoice.id;
     setDeletingInvoice(null);
     await dispatch(deleteInvoiceApi(currentOrgId, invoiceId, user.token));
+    // Re-query the list from the server so the table reflects the removal,
+    // same as generate/preview do via runAction - deleting no longer relies
+    // solely on the optimistic store removal.
+    refreshInvoices();
   };
 
   return (
