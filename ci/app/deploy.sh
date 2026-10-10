@@ -17,10 +17,9 @@ echo "CWCLOCK_UI_URL=${CWCLOCK_UI_URL}" >> .env.cwclock.ui
 echo "CWCLOCK_MAX_IMAGE_SIZE=${CWCLOCK_MAX_IMAGE_SIZE}" >> .env.cwclock.ui
 
 docker ps -a | grep -i cwclock | awk '{system ("docker rm -f "$1)}' || :
-docker compose -f docker-compose-live.yml up -d --force-recreate
-if [[ $? != 0 ]]; then
+if ! docker manifest inspect "${CI_REGISTRY}/sf-ui:${UI_VERSION}" > /dev/null 2>&1; then
   export UI_VERSION="${VERSION}"
   echo "Deploying non-mobile version"
-  docker compose -f docker-compose-live.yml up -d --force-recreate
 fi
+docker compose -f docker-compose-live.yml up -d --force-recreate
 docker logs cwclock-db-migrate || :
