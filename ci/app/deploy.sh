@@ -18,7 +18,7 @@ echo "CWCLOCK_MAX_IMAGE_SIZE=${CWCLOCK_MAX_IMAGE_SIZE}" >> .env.cwclock.ui
 
 docker ps -a | grep -i cwclock | awk '{system ("docker rm -f "$1)}' || :
 docker login "${CI_REGISTRY}" --username "${CI_REGISTRY_USER}" --password "${CI_REGISTRY_PASSWORD}"
-if ! docker manifest inspect "${CI_REGISTRY}/sf-ui:${UI_VERSION}" > /dev/null 2>&1; then
+if ! docker buildx imagetools inspect "${CI_REGISTRY}/cwclock-ui:${UI_VERSION}" > /dev/null 2>&1; then
   export UI_VERSION="${VERSION}"
   echo "Deploying non-mobile version"
 fi
