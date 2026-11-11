@@ -14,13 +14,14 @@ import (
 )
 
 type ClientHandler struct {
+	auditor
 	clients   *store.ClientStore
 	orgs      *store.OrgStore
 	countries *store.CountryStore
 }
 
-func NewClientHandler(clients *store.ClientStore, orgs *store.OrgStore, countries *store.CountryStore) *ClientHandler {
-	return &ClientHandler{clients: clients, orgs: orgs, countries: countries}
+func NewClientHandler(clients *store.ClientStore, orgs *store.OrgStore, countries *store.CountryStore, audit *store.AuditStore) *ClientHandler {
+	return &ClientHandler{auditor: newAuditor(audit), clients: clients, orgs: orgs, countries: countries}
 }
 
 type clientPayload struct {
@@ -146,6 +147,8 @@ func (h *ClientHandler) Create(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditClientCreated, models.AuditSubjectClient, client.ID,
+		map[string]any{"name": client.Name})
 	writeJSON(w, http.StatusCreated, client)
 }
 
@@ -178,6 +181,8 @@ func (h *ClientHandler) Update(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditClientUpdated, models.AuditSubjectClient, id,
+		map[string]any{"name": client.Name})
 	writeJSON(w, http.StatusOK, client)
 }
 
@@ -230,15 +235,29 @@ func (h *ClientHandler) Transfer(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	// Attributed to the organization the client is leaving, which is the one
+	// whose data just changed hands; the destination is in the detail.
+	h.record(r, models.AuditClientTransferred, models.AuditSubjectClient, id, map[string]any{
+		"name": client.Name, "targetOrganizationId": p.TargetOrgID, "targetOrganizationName": targetOrg.Name,
+	})
 	writeJSON(w, http.StatusOK, updated)
 }
 
 func (h *ClientHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "clientId")
 
+	// Named before the delete: deleting a client takes its projects and time
+	// entries with it, so the entry should say more than an id.
+	var name string
+	if client, err := h.clients.FindByID(r.Context(), id); err == nil {
+		name = client.Name
+	}
+
 	if err := h.clients.Delete(r.Context(), id); err != nil {
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditClientDeleted, models.AuditSubjectClient, id,
+		map[string]any{"name": name})
 	writeJSON(w, http.StatusOK, map[string]string{"id": id})
 }

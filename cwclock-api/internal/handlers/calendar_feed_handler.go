@@ -20,6 +20,7 @@ import (
 // neither provider can send an Authorization header when polling a
 // subscribed calendar.
 type CalendarFeedHandler struct {
+	auditor
 	users      *store.UserStore
 	entries    *store.TimeEntryStore
 	projects   *store.ProjectStore
@@ -27,8 +28,11 @@ type CalendarFeedHandler struct {
 	apiBaseURL string
 }
 
-func NewCalendarFeedHandler(users *store.UserStore, entries *store.TimeEntryStore, projects *store.ProjectStore, clients *store.ClientStore, apiBaseURL string) *CalendarFeedHandler {
-	return &CalendarFeedHandler{users: users, entries: entries, projects: projects, clients: clients, apiBaseURL: apiBaseURL}
+func NewCalendarFeedHandler(users *store.UserStore, entries *store.TimeEntryStore, projects *store.ProjectStore, clients *store.ClientStore, audit *store.AuditStore, apiBaseURL string) *CalendarFeedHandler {
+	return &CalendarFeedHandler{
+		auditor: newAuditor(audit),
+		users:   users, entries: entries, projects: projects, clients: clients, apiBaseURL: apiBaseURL,
+	}
 }
 
 type calendarFeedStatus struct {
@@ -53,6 +57,9 @@ func (h *CalendarFeedHandler) Status(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, h.statusResponse(user))
 }
 
+// Enable/Disable/Regenerate are audited because the feed token is a
+// credential: it exposes a user's whole time history to anyone holding the
+// URL, with no session involved (see Feed).
 func (h *CalendarFeedHandler) Enable(w http.ResponseWriter, r *http.Request) {
 	userID, _ := middleware.UserIDFromContext(r.Context())
 	user, err := h.users.SetCalendarFeedEnabled(r.Context(), userID, true)
@@ -60,6 +67,7 @@ func (h *CalendarFeedHandler) Enable(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditCalendarFeedEnabled, models.AuditSubjectUser, userID, nil)
 	writeJSON(w, http.StatusOK, h.statusResponse(user))
 }
 
@@ -70,6 +78,7 @@ func (h *CalendarFeedHandler) Disable(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditCalendarFeedDisabled, models.AuditSubjectUser, userID, nil)
 	writeJSON(w, http.StatusOK, h.statusResponse(user))
 }
 
@@ -80,6 +89,7 @@ func (h *CalendarFeedHandler) Regenerate(w http.ResponseWriter, r *http.Request)
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditCalendarFeedRegenerated, models.AuditSubjectUser, userID, nil)
 	writeJSON(w, http.StatusOK, h.statusResponse(user))
 }
 

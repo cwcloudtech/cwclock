@@ -17,12 +17,30 @@ import (
 )
 
 type ExportJobHandler struct {
+	auditor
 	jobs      *store.ExportJobStore
 	scheduler *scheduler.ExportJobScheduler
 }
 
-func NewExportJobHandler(jobs *store.ExportJobStore, sched *scheduler.ExportJobScheduler) *ExportJobHandler {
-	return &ExportJobHandler{jobs: jobs, scheduler: sched}
+func NewExportJobHandler(jobs *store.ExportJobStore, sched *scheduler.ExportJobScheduler, audit *store.AuditStore) *ExportJobHandler {
+	return &ExportJobHandler{auditor: newAuditor(audit), jobs: jobs, scheduler: sched}
+}
+
+// auditExportJobDetail describes an export job for the trail by what it is
+// scheduled to do, never by the credentials its targets hold: only the target
+// types are named, not their keys, tokens or service accounts (see
+// auditConnectionDetail for the same reasoning).
+func auditExportJobDetail(job models.ExportJob) map[string]any {
+	types := make([]string, 0, len(job.Targets))
+	for _, target := range job.Targets {
+		types = append(types, target.Type)
+	}
+	return map[string]any{
+		"name":        job.Name,
+		"cron":        job.CronExpression,
+		"enabled":     job.Enabled,
+		"targetTypes": types,
+	}
 }
 
 type exportJobPayload struct {
@@ -227,6 +245,8 @@ func (h *ExportJobHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err := h.scheduler.ScheduleJob(job); err != nil {
 		slog.Error("failed to schedule export job", "error", err, "jobId", job.ID)
 	}
+	h.record(r, models.AuditExportJobCreated, models.AuditSubjectExportJob, job.ID,
+		auditExportJobDetail(job))
 	writeJSON(w, http.StatusCreated, toExportJobResponse(job))
 }
 
@@ -268,6 +288,8 @@ func (h *ExportJobHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if err := h.scheduler.ScheduleJob(job); err != nil {
 		slog.Error("failed to reschedule export job", "error", err, "jobId", job.ID)
 	}
+	h.record(r, models.AuditExportJobUpdated, models.AuditSubjectExportJob, job.ID,
+		auditExportJobDetail(job))
 	writeJSON(w, http.StatusOK, toExportJobResponse(job))
 }
 
@@ -293,16 +315,28 @@ func (h *ExportJobHandler) RunNow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.scheduler.RunNow(r.Context(), job)
+	// Recorded even though nothing is configured: running a job pushes this
+	// organization's reports out of the deployment, to whatever its targets
+	// point at.
+	h.record(r, models.AuditExportJobRun, models.AuditSubjectExportJob, job.ID,
+		auditExportJobDetail(job))
 	writeJSON(w, http.StatusOK, map[string]string{"id": job.ID})
 }
 
 func (h *ExportJobHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "jobId")
 
+	var name string
+	if job, err := h.jobs.FindByID(r.Context(), id); err == nil {
+		name = job.Name
+	}
+
 	if err := h.jobs.Delete(r.Context(), id); err != nil {
 		writeStoreError(w, err)
 		return
 	}
 	h.scheduler.UnscheduleJob(id)
+	h.record(r, models.AuditExportJobDeleted, models.AuditSubjectExportJob, id,
+		map[string]any{"name": name})
 	writeJSON(w, http.StatusOK, map[string]string{"id": id})
 }

@@ -4,3 +4,4 @@ export const AdminUsersListSUCCESS = "admin/UsersListSuccess";
 export const AdminUserUpdateSUCCESS = "admin/UserUpdateSuccess";
 export const AdminUserDeleteSUCCESS = "admin/UserDeleteSuccess";
 export const AdminOrgsListSUCCESS = "admin/OrgsListSuccess";
+export const AdminAuditListSUCCESS = "admin/AuditListSuccess";

@@ -7,12 +7,14 @@ import {
   AdminUserUpdateSUCCESS,
   AdminUserDeleteSUCCESS,
   AdminOrgsListSUCCESS,
+  AdminAuditListSUCCESS,
 } from "./Admin.types";
 import toastOptions from "../toastOptions";
 import { translate, getStoredLocale } from "../../i18n/translate";
 
 const USERS_ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/admin/users/`;
 const ORGS_ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/admin/organizations/`;
+const AUDIT_ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/admin/audit/`;
 
 const authConfig = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
 
@@ -73,6 +75,24 @@ export const listAllOrganizationsApi = (token) => async (dispatch) => {
   try {
     const { data } = await axios.get(ORGS_ENDPOINT, authConfig(token));
     dispatch({ type: AdminOrgsListSUCCESS, payload: data });
+    return data;
+  } catch (e) {
+    dispatch({ type: AdminERROR });
+  }
+};
+
+// listAuditApi loads one page of the audit trail. The filters and the page
+// are sent as query params and the backend decides what is visible, so a
+// hand-edited URL can't widen what comes back - the route itself is
+// superuser-only.
+export const listAuditApi = ({ page, size, action, subject }, token) => async (dispatch) => {
+  dispatch({ type: AdminLOADING });
+  try {
+    const { data } = await axios.get(AUDIT_ENDPOINT, {
+      ...authConfig(token),
+      params: { page, size, action: action || undefined, subject: subject || undefined },
+    });
+    dispatch({ type: AdminAuditListSUCCESS, payload: data });
     return data;
   } catch (e) {
     dispatch({ type: AdminERROR });

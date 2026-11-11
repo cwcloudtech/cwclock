@@ -40,16 +40,19 @@ type Config struct {
 }
 
 // Metrics bundles the /metrics HTTP handler, the per-request observer to
-// feed into the tracing middleware, and a shutdown hook.
+// feed into the tracing middleware, the audit-event observer to hand to the
+// audit store, and a shutdown hook.
 type Metrics struct {
-	Handler  http.Handler
-	Observe  middleware.EndpointObserver
-	Shutdown func(context.Context) error
+	Handler     http.Handler
+	Observe     middleware.EndpointObserver
+	RecordAudit store.AuditObserver
+	Shutdown    func(context.Context) error
 }
 
 // Setup registers the default Go/process collectors, the custom business
 // metrics (endpoint call counts/durations, user/client/project counts, task
-// duration in the last 24h), and returns everything the router/main need.
+// duration in the last 24h, audit events), and returns everything the
+// router/main need.
 func Setup(
 	ctx context.Context,
 	cfg Config,
@@ -114,6 +117,22 @@ func Setup(
 		return nil, err
 	}
 
+	// Audit events, labelled exactly as the brief asks: by action, by tenant
+	// and by user. Every one of those three is a bounded set on a CWClock
+	// deployment - action is the fixed models.Audit* list, and the
+	// organizations and accounts of a self-hosted time tracker number in the
+	// tens, not the millions - so the cardinality of the series is bounded
+	// too. That is the only reason a user id is acceptable as a label here;
+	// on a deployment with a large or open signup, "user" would have to go
+	// (an unbounded label is how a Prometheus server runs out of memory).
+	auditCounter, err := meter.Int64Counter(
+		"cwclock_audit_events_total",
+		metric.WithDescription("Count of audit trail entries per action, organization and user"),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := registerGauges(meter, orgs, clients, projects); err != nil {
 		return nil, err
 	}
@@ -128,9 +147,22 @@ func Setup(
 		requestDuration.Record(context.Background(), duration.Seconds(), attrs)
 	}
 
+	// An act with no organization (signing in) or no authenticated actor
+	// (finishing a password reset) gets "none" rather than an empty label
+	// value, so those series are legible in a query result instead of
+	// looking like a scrape bug.
+	recordAudit := func(action, organizationID, userID string) {
+		auditCounter.Add(context.Background(), 1, metric.WithAttributes(
+			attribute.String("action", action),
+			attribute.String("organization", utils.If(utils.IsNotBlank(organizationID), organizationID, "none")),
+			attribute.String("user", utils.If(utils.IsNotBlank(userID), userID, "none")),
+		))
+	}
+
 	return &Metrics{
-		Handler: promhttp.HandlerFor(registry, promhttp.HandlerOpts{Registry: registry}),
-		Observe: observe,
+		Handler:     promhttp.HandlerFor(registry, promhttp.HandlerOpts{Registry: registry}),
+		Observe:     observe,
+		RecordAudit: recordAudit,
 		Shutdown: func(ctx context.Context) error {
 			var errs []error
 			for _, fn := range shutdownFuncs {

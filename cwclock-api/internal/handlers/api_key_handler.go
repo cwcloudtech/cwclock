@@ -14,11 +14,12 @@ import (
 )
 
 type ApiKeyHandler struct {
+	auditor
 	keys *store.ApiKeyStore
 }
 
-func NewApiKeyHandler(keys *store.ApiKeyStore) *ApiKeyHandler {
-	return &ApiKeyHandler{keys: keys}
+func NewApiKeyHandler(keys *store.ApiKeyStore, audit *store.AuditStore) *ApiKeyHandler {
+	return &ApiKeyHandler{auditor: newAuditor(audit), keys: keys}
 }
 
 // List returns the connected user's own API keys - this is self-service,
@@ -67,6 +68,11 @@ func (h *ApiKeyHandler) Create(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	// An API key authenticates as its owner on every endpoint, so minting and
+	// revoking one is a credential change. The token itself is never in the
+	// detail - only its description, which is what identifies it in the UI.
+	h.record(r, models.AuditApiKeyCreated, models.AuditSubjectApiKey, key.ID,
+		map[string]any{"description": key.Description})
 	writeJSON(w, http.StatusCreated, models.ApiKeyCreated{
 		ID:          key.ID,
 		Description: key.Description,
@@ -84,5 +90,6 @@ func (h *ApiKeyHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditApiKeyDeleted, models.AuditSubjectApiKey, id, nil)
 	writeJSON(w, http.StatusOK, map[string]string{"id": id})
 }

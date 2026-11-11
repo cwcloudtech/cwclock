@@ -25,6 +25,7 @@ import (
 const mfaLoginTokenTTL = 5 * time.Minute
 
 type UserHandler struct {
+	auditor
 	users                *store.UserStore
 	webauthnCreds        *store.WebAuthnCredentialStore
 	jwtSecret            string
@@ -36,9 +37,10 @@ type UserHandler struct {
 	confirmationTokenTTL time.Duration
 }
 
-func NewUserHandler(users *store.UserStore, webauthnCreds *store.WebAuthnCredentialStore, jwtSecret string, maxImageSize int64, activationMode string, mailer *email.Sender, apiBaseURL, uiBaseURL string, confirmationTokenTTL time.Duration) *UserHandler {
+func NewUserHandler(users *store.UserStore, webauthnCreds *store.WebAuthnCredentialStore, audit *store.AuditStore, jwtSecret string, maxImageSize int64, activationMode string, mailer *email.Sender, apiBaseURL, uiBaseURL string, confirmationTokenTTL time.Duration) *UserHandler {
 	return &UserHandler{
-		users: users, webauthnCreds: webauthnCreds, jwtSecret: jwtSecret, maxImageSize: maxImageSize,
+		auditor: newAuditor(audit),
+		users:   users, webauthnCreds: webauthnCreds, jwtSecret: jwtSecret, maxImageSize: maxImageSize,
 		activationMode: activationMode, mailer: mailer, apiBaseURL: apiBaseURL, uiBaseURL: uiBaseURL,
 		confirmationTokenTTL: confirmationTokenTTL,
 	}
@@ -101,6 +103,11 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Attributed to the new account itself: there is no other actor, and the
+	// entry's point is that this account came into existence.
+	h.recordAs(r.Context(), user.ID, models.AuditAccountRegistered, models.AuditSubjectUser, user.ID,
+		map[string]any{"email": user.Email, "role": string(user.Role)})
+
 	writeJSON(w, http.StatusCreated, models.UserResponse{
 		ID: user.ID, Email: user.Email, Name: user.Name, Surname: user.Surname,
 		Role: user.Role, Token: token, Picture: user.Picture,
@@ -150,12 +157,27 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.recordAs(r.Context(), user.ID, models.AuditSignedIn, models.AuditSubjectUser, user.ID,
+		map[string]any{"method": "password"})
+
 	writeJSON(w, http.StatusOK, models.UserResponse{
 		ID: user.ID, Email: user.Email, Name: user.Name, Surname: user.Surname,
 		Role: user.Role, Token: token, Picture: user.Picture,
 		PictureX: user.PictureX, PictureY: user.PictureY,
 		I18nCode: models.I18nCodeForRole(user.Role, h.activationMode),
 	})
+}
+
+// Logout records the other half of a session. CWClock's sessions are
+// stateless JWTs, so there is nothing server-side to invalidate and the
+// client simply drops its token - this endpoint exists so the trail shows
+// when a session ended and not only when it began. It therefore does the
+// absolute minimum: no state is touched, and a client that never calls it
+// (or whose token has already expired) is unaffected.
+func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	userID, _ := middleware.UserIDFromContext(r.Context())
+	h.record(r, models.AuditSignedOut, models.AuditSubjectUser, userID, nil)
+	writeJSON(w, http.StatusOK, map[string]string{"message": "Signed out."})
 }
 
 // respondMFAChallenge replaces the normal login response when the account
@@ -369,6 +391,10 @@ func (h *UserHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 			h.redirectToLogin(w, r, "invalid")
 			return
 		}
+		// Only recorded when it changed something: the link can be clicked
+		// again on an already-confirmed account, and that is not an event.
+		h.recordAs(r.Context(), userID, models.AuditAccountConfirmed, models.AuditSubjectUser, userID,
+			map[string]any{"email": user.Email})
 	}
 
 	h.redirectToLogin(w, r, utils.EMPTY)
@@ -464,6 +490,12 @@ func (h *UserHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+
+	// Attributed to the account whose password changed: the caller proved
+	// they hold its emailed reset token, which is all the identity there is
+	// on this endpoint.
+	h.recordAs(r.Context(), userID, models.AuditAccountPasswordReset, models.AuditSubjectUser, userID,
+		map[string]any{"email": user.Email})
 
 	writeJSON(w, http.StatusOK, map[string]string{"message": "Password updated."})
 }

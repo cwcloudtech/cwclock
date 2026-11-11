@@ -1,7 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { FiClock, FiKey, FiCalendar } from "react-icons/fi";
-import { FaFileAlt, FaRegUserCircle, FaBuilding, FaUserShield, FaChartBar, FaFileInvoiceDollar, FaDownload } from "react-icons/fa";
+import { FaFileAlt, FaRegUserCircle, FaBuilding, FaUserShield, FaChartBar, FaFileInvoiceDollar, FaDownload, FaClipboardList } from "react-icons/fa";
 import { FaBuildingShield } from "react-icons/fa6";
 import Tooltip from "../../common/Tooltip";
 import { useI18n } from "../../../i18n/I18nContext";
@@ -23,6 +23,7 @@ const exportJobsItem = { to: "/dashboard/export-jobs", labelKey: "nav.exportJobs
 const adminItems = [
   { to: "/dashboard/admin", labelKey: "nav.users", Icon: FaUserShield },
   { to: "/dashboard/admin/organizations", labelKey: "nav.organizationsAdmin", Icon: FaBuildingShield },
+  { to: "/dashboard/admin/audit", labelKey: "nav.auditTrail", Icon: FaClipboardList },
 ];
 
 // Single sidebar nav that renders either as an icon rail or an expanded

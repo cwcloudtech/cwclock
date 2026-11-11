@@ -5,11 +5,16 @@ import {
   AdminUserUpdateSUCCESS,
   AdminUserDeleteSUCCESS,
   AdminOrgsListSUCCESS,
+  AdminAuditListSUCCESS,
 } from "./Admin.types";
 
 const initialstate = {
   users: [],
   organizations: [],
+  // The audit trail is paged server-side, so the slice holds one page at a
+  // time plus what the screen's controls need: the actions present in the
+  // whole trail (for the filter) and whether a next page exists.
+  audit: { entries: [], actions: [], hasMore: false },
   isLoading: false,
   isError: false,
 };
@@ -35,6 +40,17 @@ export const AdminReducer = (state = initialstate, { type, payload }) => {
     }
     case AdminOrgsListSUCCESS: {
       return { ...state, organizations: Array.isArray(payload) ? payload : [], isLoading: false };
+    }
+    case AdminAuditListSUCCESS: {
+      return {
+        ...state,
+        audit: {
+          entries: Array.isArray(payload?.entries) ? payload.entries : [],
+          actions: Array.isArray(payload?.actions) ? payload.actions : [],
+          hasMore: !!payload?.hasMore,
+        },
+        isLoading: false,
+      };
     }
     default: {
       return state;

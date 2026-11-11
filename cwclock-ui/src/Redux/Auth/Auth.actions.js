@@ -81,6 +81,21 @@ export const logoutUser = () => (dispatch) => {
   dispatch({ type: logout });
 };
 
+// logoutApi tells the backend the session is over so the sign-out is
+// recorded in the audit trail (there is no server-side session to
+// invalidate - see UserHandler.Logout). Deliberately silent on failure: not
+// being able to record the sign-out must never stop the user signing out, so
+// there is no toast and no rethrow, and the caller clears the token either
+// way.
+export const logoutApi = (token) => async () => {
+  if (!token) return;
+  try {
+    await axios.post(`${ENDPOINT}logout`, {}, { headers: { Authorization: `Bearer ${token}` } });
+  } catch (e) {
+    // Intentionally ignored.
+  }
+};
+
 // oidcLoginApi finishes an OIDC login: the backend redirect only carries a
 // bare session token (it never talks to the frontend origin directly), so
 // the full profile is fetched from /me the same way meApi refreshes it, then

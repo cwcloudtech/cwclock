@@ -18,6 +18,7 @@ import (
 )
 
 type OrganizationHandler struct {
+	auditor
 	orgs         *store.OrgStore
 	users        *store.UserStore
 	countries    *store.CountryStore
@@ -25,8 +26,11 @@ type OrganizationHandler struct {
 	maxImageSize int64
 }
 
-func NewOrganizationHandler(orgs *store.OrgStore, users *store.UserStore, countries *store.CountryStore, currencies *store.CurrencyStore, maxImageSize int64) *OrganizationHandler {
-	return &OrganizationHandler{orgs: orgs, users: users, countries: countries, currencies: currencies, maxImageSize: maxImageSize}
+func NewOrganizationHandler(orgs *store.OrgStore, users *store.UserStore, countries *store.CountryStore, currencies *store.CurrencyStore, audit *store.AuditStore, maxImageSize int64) *OrganizationHandler {
+	return &OrganizationHandler{
+		auditor: newAuditor(audit),
+		orgs:    orgs, users: users, countries: countries, currencies: currencies, maxImageSize: maxImageSize,
+	}
 }
 
 type organizationPayload struct {
@@ -230,6 +234,10 @@ func (h *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	// The organization the entry belongs to is the one just created, not one
+	// the route resolved - this endpoint has no {orgId}.
+	h.recordIn(r, org.ID, models.AuditOrgCreated, models.AuditSubjectOrganization, org.ID,
+		map[string]any{"name": org.Name})
 	writeJSON(w, http.StatusCreated, redactOrg(org))
 }
 
@@ -344,6 +352,8 @@ func (h *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditOrgUpdated, models.AuditSubjectOrganization, orgID,
+		map[string]any{"name": org.Name})
 	writeJSON(w, http.StatusOK, redactOrg(org))
 }
 
@@ -409,6 +419,8 @@ func (h *OrganizationHandler) AddExternalConnection(w http.ResponseWriter, r *ht
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditOrgConnectionAdded, models.AuditSubjectConnection, conns[0].ID,
+		auditConnectionDetail(conns[0]))
 	writeJSON(w, http.StatusOK, redactOrg(updated))
 }
 
@@ -423,16 +435,28 @@ func (h *OrganizationHandler) RemoveExternalConnection(w http.ResponseWriter, r 
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditOrgConnectionRemoved, models.AuditSubjectConnection, connID, nil)
 	writeJSON(w, http.StatusOK, redactOrg(org))
 }
 
 func (h *OrganizationHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
 
+	// Read the name before deleting, so the entry can say which organization
+	// this was rather than just leaving an id behind.
+	var name string
+	if org, err := h.orgs.FindByID(r.Context(), orgID); err == nil {
+		name = org.Name
+	}
+
 	if err := h.orgs.Delete(r.Context(), orgID); err != nil {
 		writeStoreError(w, err)
 		return
 	}
+	// Deliberately recorded with no organization: the row it would reference
+	// no longer exists (see auditor.recordIn). subject_id still names it.
+	h.recordIn(r, utils.EMPTY, models.AuditOrgDeleted, models.AuditSubjectOrganization, orgID,
+		map[string]any{"name": name})
 	writeJSON(w, http.StatusOK, map[string]string{"id": orgID})
 }
 
@@ -501,6 +525,8 @@ func (h *OrganizationHandler) AddMember(w http.ResponseWriter, r *http.Request) 
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditOrgMemberAdded, models.AuditSubjectUser, user.ID,
+		map[string]any{"email": user.Email, "role": p.Role})
 	writeJSON(w, http.StatusCreated, member)
 }
 
@@ -519,6 +545,8 @@ func (h *OrganizationHandler) UpdateMember(w http.ResponseWriter, r *http.Reques
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditOrgMemberRoleChanged, models.AuditSubjectUser, userID,
+		map[string]any{"email": member.Email, "role": p.Role})
 	writeJSON(w, http.StatusOK, member)
 }
 
@@ -541,6 +569,8 @@ func (h *OrganizationHandler) SetMemberRate(w http.ResponseWriter, r *http.Reque
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditOrgMemberRateChanged, models.AuditSubjectUser, userID,
+		map[string]any{"email": member.Email, "dailyRate": p.DailyRate})
 	writeJSON(w, http.StatusOK, member)
 }
 
@@ -552,6 +582,7 @@ func (h *OrganizationHandler) RemoveMember(w http.ResponseWriter, r *http.Reques
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditOrgMemberRemoved, models.AuditSubjectUser, userID, nil)
 	writeJSON(w, http.StatusOK, map[string]string{"userId": userID})
 }
 
@@ -584,5 +615,7 @@ func (h *OrganizationHandler) TransferOwnership(w http.ResponseWriter, r *http.R
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditOrgOwnershipTransferred, models.AuditSubjectOrganization, orgID,
+		map[string]any{"name": org.Name, "previousOwnerId": previousOwnerID, "newOwnerEmail": newOwner.Email})
 	writeJSON(w, http.StatusOK, redactOrg(org))
 }

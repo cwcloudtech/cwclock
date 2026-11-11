@@ -14,13 +14,18 @@ import (
 )
 
 type AdminHandler struct {
+	auditor
 	users         *store.UserStore
 	webauthnCreds *store.WebAuthnCredentialStore
+	audits        *store.AuditStore
 	maxImageSize  int64
 }
 
-func NewAdminHandler(users *store.UserStore, webauthnCreds *store.WebAuthnCredentialStore, maxImageSize int64) *AdminHandler {
-	return &AdminHandler{users: users, webauthnCreds: webauthnCreds, maxImageSize: maxImageSize}
+func NewAdminHandler(users *store.UserStore, webauthnCreds *store.WebAuthnCredentialStore, audit *store.AuditStore, maxImageSize int64) *AdminHandler {
+	return &AdminHandler{
+		auditor: newAuditor(audit),
+		users:   users, webauthnCreds: webauthnCreds, audits: audit, maxImageSize: maxImageSize,
+	}
 }
 
 func toUserMeResponse(u models.User) models.UserMeResponse {
@@ -123,11 +128,32 @@ func (h *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		fields.PictureY = p.PictureY
 	}
 
+	// The previous role has to be read before the update to say what changed.
+	// A failed read only costs the trail the "from" value, so it is not worth
+	// failing the edit over.
+	var previousRole models.GlobalRole
+	if before, err := h.users.FindByID(r.Context(), id); err == nil {
+		previousRole = before.Role
+	}
+
 	user, err := h.users.AdminUpdate(r.Context(), id, fields)
 	if err != nil {
 		writeStoreError(w, err)
 		return
 	}
+
+	// One entry per request, but under the action that describes what
+	// actually happened: a role change is the one a superadmin reviewing the
+	// trail will filter for, so it isn't buried under a generic "edited".
+	detail := map[string]any{"email": user.Email, "passwordChanged": fields.PasswordHash != nil}
+	action := models.AuditUserUpdatedByAdmin
+	if previousRole != user.Role {
+		action = models.AuditUserRoleChanged
+		detail["from"] = string(previousRole)
+		detail["to"] = string(user.Role)
+	}
+	h.record(r, action, models.AuditSubjectUser, id, detail)
+
 	writeJSON(w, http.StatusOK, toUserMeResponse(user))
 }
 
@@ -142,10 +168,20 @@ func (h *AdminHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Named before the delete: afterwards audit_log.user_id for this account's
+	// own past entries is nulled (ON DELETE SET NULL), so the email in this
+	// entry's detail is what keeps the trail readable.
+	var email string
+	if target, err := h.users.FindByID(r.Context(), id); err == nil {
+		email = target.Email
+	}
+
 	if err := h.users.Delete(r.Context(), id); err != nil {
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditUserDeleted, models.AuditSubjectUser, id,
+		map[string]any{"email": email})
 	writeJSON(w, http.StatusOK, map[string]string{"id": id})
 }
 
@@ -169,5 +205,22 @@ func (h *AdminHandler) DisableMFA(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	// Audited by name: one account weakening another account's security is
+	// exactly what an audit trail is for.
+	h.record(r, models.AuditUserMFACleared, models.AuditSubjectUser, id,
+		map[string]any{"email": user.Email})
 	writeJSON(w, http.StatusOK, toUserMeResponse(user))
+}
+
+// Audit serves the trail, newest first, paginated and filterable by action
+// and subject. Superuser-only, enforced by the route's RequireSuperuser
+// middleware and not by the screen: it names who decided what across every
+// organization, which no organization's own owner is entitled to see.
+func (h *AdminHandler) Audit(w http.ResponseWriter, r *http.Request) {
+	page, err := h.audits.List(r.Context(), auditFilterFromQuery(r))
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, page)
 }

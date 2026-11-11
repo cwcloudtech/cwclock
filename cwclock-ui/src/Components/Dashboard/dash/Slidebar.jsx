@@ -26,9 +26,10 @@ import Invoicesdiv from "../pages/Invoices";
 import ExportJobsdiv from "../pages/ExportJobs";
 import Admindiv from "../pages/Admin";
 import AdminOrganizationsdiv from "../pages/AdminOrganizations";
+import AdminAuditdiv from "../pages/AdminAudit";
 import ApiKeysdiv from "../pages/ApiKeys";
 import { useSelector, useDispatch } from "react-redux";
-import { meApi, logoutUser } from "../../../Redux/Auth/Auth.actions";
+import { meApi, logoutUser, logoutApi } from "../../../Redux/Auth/Auth.actions";
 import { listOrgsApi, selectOrg, listMembersApi } from "../../../Redux/Organizations/Org.actions";
 import { isAdminOrOwner as computeIsAdminOrOwner } from "../../common/permissions";
 
@@ -75,7 +76,12 @@ const Slidebar = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.token, dispatch, navigate]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Tell the backend first so the sign-out lands in the audit trail; the
+    // token is needed for that call and logoutUser drops it. It's
+    // best-effort (logoutApi never throws): a failed call must not leave the
+    // user stuck in a session they asked to end.
+    await dispatch(logoutApi(user.token));
     dispatch(logoutUser());
     navigate("/login");
   };
@@ -289,6 +295,7 @@ const Slidebar = () => {
             {isSuperuser && (
               <Route path="/admin/organizations" element={<AdminOrganizationsdiv />}></Route>
             )}
+            {isSuperuser && <Route path="/admin/audit" element={<AdminAuditdiv />}></Route>}
           </Routes>
         </div>
       </div>

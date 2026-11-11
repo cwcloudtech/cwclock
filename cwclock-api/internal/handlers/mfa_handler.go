@@ -31,6 +31,7 @@ const webauthnCeremonyTTL = 5 * time.Minute
 // UserHandler.Login; this handler only covers what happens once that
 // challenge has been issued, plus enrollment management.
 type MFAHandler struct {
+	auditor
 	users          *store.UserStore
 	webauthnCreds  *store.WebAuthnCredentialStore
 	jwtSecret      string
@@ -39,9 +40,10 @@ type MFAHandler struct {
 	issuer         string
 }
 
-func NewMFAHandler(users *store.UserStore, webauthnCreds *store.WebAuthnCredentialStore, jwtSecret, activationMode string, wa *webauthn.WebAuthn, issuer string) *MFAHandler {
+func NewMFAHandler(users *store.UserStore, webauthnCreds *store.WebAuthnCredentialStore, audit *store.AuditStore, jwtSecret, activationMode string, wa *webauthn.WebAuthn, issuer string) *MFAHandler {
 	return &MFAHandler{
-		users: users, webauthnCreds: webauthnCreds, jwtSecret: jwtSecret,
+		auditor: newAuditor(audit),
+		users:   users, webauthnCreds: webauthnCreds, jwtSecret: jwtSecret,
 		activationMode: activationMode, wa: wa, issuer: issuer,
 	}
 }
@@ -83,12 +85,18 @@ func (h *MFAHandler) loadWebAuthnUser(ctx context.Context, user models.User) (*w
 // respondSession finishes a login (password + verified second factor) by
 // minting the real session token, the same response shape UserHandler.Login
 // returns when MFA isn't enabled.
-func (h *MFAHandler) respondSession(w http.ResponseWriter, user models.User) {
+// respondSession issues the real session once a second factor checks out,
+// which is where an MFA-protected login actually becomes a sign-in - hence
+// the audit entry here rather than in UserHandler.Login, which only handed
+// out a challenge. method says which factor finished it.
+func (h *MFAHandler) respondSession(w http.ResponseWriter, r *http.Request, user models.User, method string) {
 	token, err := authtoken.Generate(h.jwtSecret, user.ID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
 		return
 	}
+	h.recordAs(r.Context(), user.ID, models.AuditSignedIn, models.AuditSubjectUser, user.ID,
+		map[string]any{"method": method})
 	writeJSON(w, http.StatusOK, models.UserResponse{
 		ID: user.ID, Email: user.Email, Name: user.Name, Surname: user.Surname,
 		Role: user.Role, Token: token, Picture: user.Picture,
@@ -134,7 +142,7 @@ func (h *MFAHandler) LoginTOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.respondSession(w, user)
+	h.respondSession(w, r, user, "password+totp")
 }
 
 type mfaChallengeTokenPayload struct {
@@ -227,7 +235,7 @@ func (h *MFAHandler) LoginWebAuthnFinish(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	h.respondSession(w, user)
+	h.respondSession(w, r, user, "password+webauthn")
 }
 
 // Status reports the connected user's current MFA enrollment, for the
@@ -323,6 +331,7 @@ func (h *MFAHandler) TOTPConfirm(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditMFATOTPEnabled, models.AuditSubjectUser, userID, nil)
 	writeJSON(w, http.StatusOK, map[string]bool{"totpEnabled": true})
 }
 
@@ -341,6 +350,12 @@ func (h *MFAHandler) TOTPDisable(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	// mfaStillEnabled says whether the account is still behind a second
+	// factor afterwards, which is the part that matters when reading the
+	// trail: turning off the last factor is a different event from turning
+	// off one of two.
+	h.record(r, models.AuditMFATOTPDisabled, models.AuditSubjectUser, userID,
+		map[string]any{"mfaStillEnabled": webauthnCount > 0})
 	writeJSON(w, http.StatusOK, map[string]bool{"totpEnabled": false})
 }
 
@@ -445,6 +460,8 @@ func (h *MFAHandler) WebAuthnRegisterFinish(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	h.record(r, models.AuditMFAWebAuthnRegistered, models.AuditSubjectCredential, stored.ID,
+		map[string]any{"name": name})
 	writeJSON(w, http.StatusCreated, stored)
 }
 
@@ -469,12 +486,15 @@ func (h *MFAHandler) WebAuthnDelete(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
-	if remaining == 0 && utils.IsBlank(user.MFATOTPSecret) {
+	stillEnabled := remaining > 0 || utils.IsNotBlank(user.MFATOTPSecret)
+	if !stillEnabled {
 		if _, err := h.users.SetMFAEnabled(r.Context(), userID, false); err != nil {
 			writeStoreError(w, err)
 			return
 		}
 	}
 
+	h.record(r, models.AuditMFAWebAuthnDeleted, models.AuditSubjectCredential, id,
+		map[string]any{"mfaStillEnabled": stillEnabled})
 	writeJSON(w, http.StatusOK, map[string]string{"id": id})
 }

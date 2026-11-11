@@ -62,6 +62,7 @@ func main() {
 	webauthnCredStore := store.NewWebAuthnCredentialStore(pool)
 	exportJobStore := store.NewExportJobStore(pool)
 	mailCounterStore := store.NewMailCounterStore(pool)
+	auditStore := store.NewAuditStore(pool)
 
 	mailer := email.NewSender(cfg.CWCloudAPIURL, cfg.CWCloudAPIKey, cfg.EmailFrom, cfg.APIBaseURL)
 
@@ -81,23 +82,23 @@ func main() {
 		panic(err)
 	}
 
-	userHandler := handlers.NewUserHandler(userStore, webauthnCredStore, cfg.JWTSecret, cfg.MaxImageSize, cfg.ActivationMode, mailer, cfg.APIBaseURL, cfg.UIBaseURL, cfg.ConfirmationEmailTTL)
-	orgHandler := handlers.NewOrganizationHandler(orgStore, userStore, countryStore, currencyStore, cfg.MaxImageSize)
-	clientHandler := handlers.NewClientHandler(clientStore, orgStore, countryStore)
+	userHandler := handlers.NewUserHandler(userStore, webauthnCredStore, auditStore, cfg.JWTSecret, cfg.MaxImageSize, cfg.ActivationMode, mailer, cfg.APIBaseURL, cfg.UIBaseURL, cfg.ConfirmationEmailTTL)
+	orgHandler := handlers.NewOrganizationHandler(orgStore, userStore, countryStore, currencyStore, auditStore, cfg.MaxImageSize)
+	clientHandler := handlers.NewClientHandler(clientStore, orgStore, countryStore, auditStore)
 	projectHandler := handlers.NewProjectHandler(projectStore, clientStore)
 	timeEntryHandler := handlers.NewTimeEntryHandler(timeEntryStore)
-	adminHandler := handlers.NewAdminHandler(userStore, webauthnCredStore, cfg.MaxImageSize)
-	mfaHandler := handlers.NewMFAHandler(userStore, webauthnCredStore, cfg.JWTSecret, cfg.ActivationMode, waInstance, mfaIssuer)
+	adminHandler := handlers.NewAdminHandler(userStore, webauthnCredStore, auditStore, cfg.MaxImageSize)
+	mfaHandler := handlers.NewMFAHandler(userStore, webauthnCredStore, auditStore, cfg.JWTSecret, cfg.ActivationMode, waInstance, mfaIssuer)
 	importHandler := handlers.NewImportHandler(userStore, clientStore, projectStore, timeEntryStore)
 	reportHandler := handlers.NewReportHandler(orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize)
-	apiKeyHandler := handlers.NewApiKeyHandler(apiKeyStore)
+	apiKeyHandler := handlers.NewApiKeyHandler(apiKeyStore, auditStore)
 	configHandler := handlers.NewConfigHandler(orgStore, cfg.APIBaseURL)
 	invoiceHandler := handlers.NewInvoiceHandler(invoiceStore, orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize, mailer, reportHandler, mailCounterStore, cfg.MailLimit)
 	currencyHandler := handlers.NewCurrencyHandler(currencyStore)
 	countryHandler := handlers.NewCountryHandler(countryStore)
 	fieldHandler := handlers.NewFieldHandler(fieldStore)
 	oidcProviders := oidc.BuildProviders(cfg)
-	oidcHandler := handlers.NewOIDCHandler(oidcProviders, userStore, webauthnCredStore, cfg.JWTSecret, cfg.APIBaseURL, cfg.UIBaseURL, cfg.OIDCKeycloakGroups, cfg.ActivationMode)
+	oidcHandler := handlers.NewOIDCHandler(oidcProviders, userStore, webauthnCredStore, auditStore, cfg.JWTSecret, cfg.APIBaseURL, cfg.UIBaseURL, cfg.OIDCKeycloakGroups, cfg.ActivationMode)
 	contactHandler := handlers.NewContactHandler(contact.New(cfg.CWCloudAPIURL, cfg.CWCloudContactFormID))
 
 	exportReportGenerator := handlers.NewExportReportGenerator(reportHandler, invoiceStore)
@@ -108,8 +109,8 @@ func main() {
 		panic(err)
 	}
 	defer exportScheduler.Stop()
-	exportJobHandler := handlers.NewExportJobHandler(exportJobStore, exportScheduler)
-	calendarFeedHandler := handlers.NewCalendarFeedHandler(userStore, timeEntryStore, projectStore, clientStore, cfg.APIBaseURL)
+	exportJobHandler := handlers.NewExportJobHandler(exportJobStore, exportScheduler, auditStore)
+	calendarFeedHandler := handlers.NewCalendarFeedHandler(userStore, timeEntryStore, projectStore, clientStore, auditStore, cfg.APIBaseURL)
 
 	met, err := metrics.Setup(ctx, metrics.Config{
 		Endpoint: cfg.OtelEndpoint,
@@ -121,6 +122,13 @@ func main() {
 		panic(err)
 	}
 	defer func() { _ = met.Shutdown(context.Background()) }()
+
+	// Audit events are counted on the same meter as everything else, so they
+	// land on both /metrics and the OTLP endpoint. Wired here rather than
+	// through the constructor because metrics.Setup needs the stores to build
+	// its gauges - the store necessarily exists first - and this runs before
+	// the server starts serving, so nothing can record an entry in between.
+	auditStore.SetObserver(met.RecordAudit)
 
 	r := router.New(
 		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler, mfaHandler, importHandler, apiKeyHandler, configHandler, invoiceHandler,

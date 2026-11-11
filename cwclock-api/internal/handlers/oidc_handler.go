@@ -23,6 +23,7 @@ const originParam = "origin"
 const originFrontend = "frontend"
 
 type OIDCHandler struct {
+	auditor
 	providers      []oidc.Provider
 	users          *store.UserStore
 	webauthnCreds  *store.WebAuthnCredentialStore
@@ -33,8 +34,9 @@ type OIDCHandler struct {
 	activationMode string
 }
 
-func NewOIDCHandler(providers []oidc.Provider, users *store.UserStore, webauthnCreds *store.WebAuthnCredentialStore, jwtSecret, apiBaseURL, uiBaseURL string, keycloakGroups []string, activationMode string) *OIDCHandler {
+func NewOIDCHandler(providers []oidc.Provider, users *store.UserStore, webauthnCreds *store.WebAuthnCredentialStore, audit *store.AuditStore, jwtSecret, apiBaseURL, uiBaseURL string, keycloakGroups []string, activationMode string) *OIDCHandler {
 	return &OIDCHandler{
+		auditor:        newAuditor(audit),
 		providers:      providers,
 		users:          users,
 		webauthnCreds:  webauthnCreds,
@@ -130,9 +132,16 @@ func (h *OIDCHandler) completeLogin(ctx context.Context, provider oidc.Provider,
 // factor: it mints the same short-lived challenge UserHandler.Login would,
 // leaving the caller to report it back so the client can clear it via
 // LoginTOTP/LoginWebAuthnFinish exactly as it would after a password login.
-func (h *OIDCHandler) finishSession(ctx context.Context, user models.User) (string, *models.MFAChallengeResponse, error) {
+func (h *OIDCHandler) finishSession(ctx context.Context, user models.User, provider string) (string, *models.MFAChallengeResponse, error) {
 	if !user.MFAEnabled {
 		token, err := authtoken.Generate(h.jwtSecret, user.ID)
+		if err == nil {
+			// Only this branch is a sign-in. The MFA branch below hands out a
+			// challenge, and MFAHandler.respondSession records the sign-in
+			// when that challenge is cleared.
+			h.recordAs(ctx, user.ID, models.AuditSignedIn, models.AuditSubjectUser, user.ID,
+				map[string]any{"method": "oidc", "provider": provider})
+		}
 		return token, nil, err
 	}
 
@@ -190,7 +199,7 @@ func (h *OIDCHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, challenge, err := h.finishSession(r.Context(), user)
+	token, challenge, err := h.finishSession(r.Context(), user, provider.Name)
 	if err != nil {
 		h.redirectWithError(w, r, "oidc_account_failed")
 		return
@@ -252,7 +261,7 @@ func (h *OIDCHandler) FrontendCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, challenge, err := h.finishSession(r.Context(), user)
+	token, challenge, err := h.finishSession(r.Context(), user, provider.Name)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error(), CodeInternal)
 		return

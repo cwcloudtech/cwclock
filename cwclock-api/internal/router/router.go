@@ -117,6 +117,12 @@ func New(
 				r.Use(middleware.Auth(jwtSecret, apiKeys))
 				r.Get("/me", userHandler.Me)
 
+				// Signing out is audited, not enforced (see
+				// UserHandler.Logout), so it sits next to /me rather than
+				// behind RequireActiveUser: a disabled or banned account must
+				// still be able to end its session.
+				r.Post("/logout", userHandler.Logout)
+
 				r.Group(func(r chi.Router) {
 					r.Use(middleware.RequireActiveUser(users, activationMode))
 					r.Put("/me", userHandler.UpdateProfile)
@@ -175,6 +181,16 @@ func New(
 			r.Use(middleware.RequireActiveUser(users, activationMode))
 			r.Use(middleware.RequireSuperuser(users))
 			r.Get("/", orgHandler.AdminList)
+		})
+
+		// The audit trail spans every organization and names who did what, so
+		// it's gated the same way as the other superuser-only screens - on
+		// the route, which is the only place that can be trusted.
+		r.Route("/admin/audit", func(r chi.Router) {
+			r.Use(middleware.Auth(jwtSecret, apiKeys))
+			r.Use(middleware.RequireActiveUser(users, activationMode))
+			r.Use(middleware.RequireSuperuser(users))
+			r.Get("/", adminHandler.Audit)
 		})
 
 		r.Route("/organizations", func(r chi.Router) {
