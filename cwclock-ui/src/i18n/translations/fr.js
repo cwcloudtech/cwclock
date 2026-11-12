@@ -59,6 +59,7 @@ const fr = {
     copy: "Copier",
     copied: "Copié dans le presse-papiers",
     copyId: "Copier l'ID",
+    copyFailed: "Impossible de copier dans le presse-papiers.",
   },
   cookieBanner: {
     title: "Avis relatif aux cookies",
@@ -384,6 +385,7 @@ const fr = {
   audit: {
     title: "Piste d'audit",
     intro: "Tous les actes qui modifient les droits ou la configuration de ce déploiement. Du plus récent au plus ancien ; en ajout seul, rien ici ne peut être modifié ni supprimé.",
+    action: "Action",
     filterByAction: "Filtrer par action",
     allActions: "Toutes les actions",
     filterBySubject: "Filtrer par sujet",

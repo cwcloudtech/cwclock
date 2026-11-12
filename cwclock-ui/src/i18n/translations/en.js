@@ -59,6 +59,7 @@ const en = {
     copy: "Copy",
     copied: "Copied to clipboard",
     copyId: "Copy ID",
+    copyFailed: "Could not copy to the clipboard.",
   },
   cookieBanner: {
     title: "Cookie notice",
@@ -383,6 +384,7 @@ const en = {
   audit: {
     title: "Audit trail",
     intro: "Every act that changes who can do what, or how this deployment is configured. Newest first; append-only, so nothing here can be edited or removed.",
+    action: "Action",
     filterByAction: "Filter by action",
     allActions: "All actions",
     filterBySubject: "Filter by subject",

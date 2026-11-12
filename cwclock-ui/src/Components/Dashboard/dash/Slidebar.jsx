@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import styles from "./STYLE/Slidebar.module.css";
 import { FaChevronLeft, FaChevronRight, FaUserCheck, FaGitAlt, FaBook, FaEnvelope, FaAndroid } from "react-icons/fa";
-import { FiLogOut, FiSun, FiMoon, FiGlobe } from "react-icons/fi";
+import { FiLogOut, FiSun, FiMoon, FiGlobe, FiCopy } from "react-icons/fi";
 import { Route, Routes, useNavigate, Link } from "react-router-dom";
 import Dropdown, { DropdownItem, DropdownText, DropdownDivider } from "../../common/Dropdown";
 import EditProfileModal from "../../common/EditProfileModal";
 import DisabledNotice from "../../common/DisabledNotice";
 import memberLabel from "../../common/memberLabel";
+import copyToClipboard from "../../common/copyToClipboard";
 import Tooltip from "../../common/Tooltip";
 import useAppVersion from "../../common/useAppVersion";
 import isAndroidDevice from "../../common/isAndroidDevice";
@@ -75,6 +76,11 @@ const Slidebar = () => {
     // in an infinite loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.token, dispatch, navigate]);
+
+  // The account's own id isn't shown anywhere else in the UI, and it's what
+  // the CLI, the API and the audit trail's subject filter all identify a
+  // user by - so the profile menu is where it's reachable from.
+  const handleCopyId = () => copyToClipboard(user.id, t);
 
   const handleLogout = async () => {
     // Tell the backend first so the sign-out lands in the audit trail; the
@@ -209,6 +215,18 @@ const Slidebar = () => {
                   <DropdownText>{memberLabel(user)}</DropdownText>
                   {(user.name || user.surname) && (
                     <DropdownText className={styles.profileEmail}>{user.email}</DropdownText>
+                  )}
+                  {user.id && (
+                    <DropdownItem
+                      onClick={() => {
+                        handleCopyId();
+                        close();
+                      }}
+                      title={user.id}
+                    >
+                      <FiCopy style={{ fontSize: "16px" }} />
+                      {t("common.copyId")}
+                    </DropdownItem>
                   )}
                   <DropdownItem
                     onClick={() => {

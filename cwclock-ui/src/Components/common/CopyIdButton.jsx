@@ -1,9 +1,8 @@
 import React from "react";
 import { FaRegCopy } from "react-icons/fa";
-import { toast } from "react-toastify";
 import Tooltip from "./Tooltip";
 import { useI18n } from "../../i18n/I18nContext";
-import toastOptions from "../../Redux/toastOptions";
+import copyToClipboard from "./copyToClipboard";
 
 const CopyIdButton = ({ id, className }) => {
   const { t } = useI18n();
@@ -13,9 +12,7 @@ const CopyIdButton = ({ id, className }) => {
   const handleCopy = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    navigator.clipboard.writeText(id).then(() => {
-      toast.success(t("common.copied"), toastOptions);
-    });
+    copyToClipboard(id, t);
   };
 
   return (

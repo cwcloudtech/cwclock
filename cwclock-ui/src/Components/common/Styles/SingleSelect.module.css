@@ -1,0 +1,40 @@
+/* Deliberately the same trigger as MultiSelect.module.css: the two sit side
+   by side in filter toolbars and must look like one control. */
+.trigger {
+  min-width: 140px;
+  max-width: 100%;
+  justify-content: space-between;
+  /* Matches the cw-input fields it sits beside, which are taller than
+     Dropdown's default trigger padding. */
+  height: 40px;
+  box-sizing: border-box;
+}
+
+.triggerLabel {
+  color: var(--cw-text-muted);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.triggerSummary {
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel {
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The option list can run to a few dozen entries (one per audited action),
+   so it scrolls rather than pushing the panel off the bottom of the page. */
+.list {
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FaSearch, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import CopyIdButton from "../common/CopyIdButton";
+import SingleSelect from "../common/SingleSelect";
 import { listAuditApi } from "../../Redux/Admin/Admin.actions";
 import { useI18n } from "../../i18n/I18nContext";
 import styles from "./Styles/AuditTrail.module.css";
@@ -67,19 +68,13 @@ const AuditTrail = () => {
       <p className="cw-subtitle">{t("audit.intro")}</p>
 
       <div className={styles.filters}>
-        <select
-          className="cw-select"
+        <SingleSelect
+          label={t("audit.action")}
+          allLabel={t("audit.allActions")}
           value={action}
-          onChange={(e) => changeAction(e.target.value)}
-          title={t("audit.filterByAction")}
-        >
-          <option value="">{t("audit.allActions")}</option>
-          {audit.actions.map((name) => (
-            <option key={name} value={name}>
-              {actionLabel(name)}
-            </option>
-          ))}
-        </select>
+          onChange={changeAction}
+          options={audit.actions.map((name) => ({ value: name, label: actionLabel(name) }))}
+        />
 
         <form className={styles.subjectForm} onSubmit={submitSubject}>
           <input

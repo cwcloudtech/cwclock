@@ -14,18 +14,21 @@
   margin-bottom: var(--cw-spacing);
 }
 
-.filters select {
-  max-width: 260px;
-}
-
 .subjectForm {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
+/* Wide enough for a full 36-character UUID without scrolling inside the
+   field - pasting one in and not being able to see it whole is the main way
+   this filter gets used wrong. */
 .subjectForm input {
-  min-width: 260px;
+  min-width: 25rem;
+  /* Same stack as index.css's `code`, so a pasted id lines up the way it
+     does in the subject column of the rows below. */
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+  font-size: 0.85rem;
 }
 
 .entryList {
