@@ -99,6 +99,35 @@ func (s *TimeEntryStore) FindByID(ctx context.Context, id string) (models.TimeEn
 	return scanTimeEntry(row)
 }
 
+// TimeEntryLabels names the rows an entry points at, in the form a human
+// reads them.
+type TimeEntryLabels struct {
+	UserEmail   string
+	ClientName  string
+	ProjectName string
+}
+
+// Labels resolves an entry's member, client and project to readable names in
+// one round trip. The audit trail snapshots these into the entry's detail
+// rather than storing the three ids, for two reasons: a superadmin reading
+// the trail cannot cross-reference four tables, and a client or project
+// deleted later takes its time entries with it (ON DELETE CASCADE in
+// V1__init.sql), so there would be nothing left to look the id up against.
+//
+// A row that is already gone, or a query that fails, yields an empty string
+// instead of an error: an entry whose client reads blank is still worth
+// writing, and the record itself is named by the entry's subject_id either
+// way.
+func (s *TimeEntryStore) Labels(ctx context.Context, e models.TimeEntry) TimeEntryLabels {
+	var l TimeEntryLabels
+	_ = s.pool.QueryRow(ctx, `
+		SELECT coalesce((SELECT email FROM users WHERE id = nullif($1, '')::uuid), ''),
+		       coalesce((SELECT data->>'name' FROM clients WHERE id = nullif($2, '')::uuid), ''),
+		       coalesce((SELECT data->>'name' FROM projects WHERE id = nullif($3, '')::uuid), '')
+	`, e.UserID, e.ClientID, e.ProjectID).Scan(&l.UserEmail, &l.ClientName, &l.ProjectName)
+	return l
+}
+
 // List returns one page of an organization's time entries, most recent
 // entry day/start first, along with whether more entries exist beyond this
 // page. When userID is non-empty, results are restricted to that user's own

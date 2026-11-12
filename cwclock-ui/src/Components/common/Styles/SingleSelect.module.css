@@ -24,8 +24,12 @@
   white-space: nowrap;
 }
 
+/* Wide enough for the longest option it is given: the audit action filter
+   now lists every action the API can filter on, and the longest of those in
+   French ("Authentification a deux facteurs reinitialisee") is ellipsised
+   away to nothing at the 260px this used to be. */
 .panel {
-  width: 260px;
+  width: 340px;
   display: flex;
   flex-direction: column;
 }

@@ -10,12 +10,14 @@ import (
 	"time"
 
 	"cwclock-api/internal/middleware"
+	"cwclock-api/internal/models"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/utils"
 )
 
 // ImportHandler handles bulk data imports from third-party tools.
 type ImportHandler struct {
+	auditor
 	users       *store.UserStore
 	clients     *store.ClientStore
 	projects    *store.ProjectStore
@@ -27,8 +29,10 @@ func NewImportHandler(
 	clients *store.ClientStore,
 	projects *store.ProjectStore,
 	timeEntries *store.TimeEntryStore,
+	audit *store.AuditStore,
 ) *ImportHandler {
 	return &ImportHandler{
+		auditor:     newAuditor(audit),
 		users:       users,
 		clients:     clients,
 		projects:    projects,
@@ -221,5 +225,12 @@ func (h *ImportHandler) ImportCSV(w http.ResponseWriter, r *http.Request) {
 		created++
 	}
 
+	// One entry for the whole import, with its counts, and the organization
+	// as its subject because that is what the load landed in. The rows it
+	// created are deliberately not recorded one by one: a few hundred
+	// record.created entries say nothing this one doesn't and would push
+	// every other act off the first page of the trail.
+	h.record(r, models.AuditRecordImported, models.AuditSubjectOrganization, orgID,
+		map[string]any{"created": created, "skipped": skipped})
 	writeJSON(w, http.StatusOK, importResult{Created: created, Skipped: skipped})
 }

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -13,12 +14,29 @@ import (
 )
 
 type ProjectHandler struct {
+	auditor
 	projects *store.ProjectStore
 	clients  *store.ClientStore
 }
 
-func NewProjectHandler(projects *store.ProjectStore, clients *store.ClientStore) *ProjectHandler {
-	return &ProjectHandler{projects: projects, clients: clients}
+func NewProjectHandler(projects *store.ProjectStore, clients *store.ClientStore, audit *store.AuditStore) *ProjectHandler {
+	return &ProjectHandler{auditor: newAuditor(audit), projects: projects, clients: clients}
+}
+
+// auditProjectDetail names a project and the client it bills to. The client
+// is named rather than referenced: an id means nothing on the audit screen,
+// and deleting a client takes its projects with it, so the id would be
+// unresolvable exactly when the entry matters. The daily rate is in there
+// because it is what the client is invoiced at - changing it changes money.
+func (h *ProjectHandler) auditProjectDetail(ctx context.Context, p models.Project) map[string]any {
+	detail := map[string]any{"name": p.Name}
+	if client, err := h.clients.FindByID(ctx, p.ClientID); err == nil {
+		detail["client"] = client.Name
+	}
+	if p.DailyRate != nil {
+		detail["dailyRate"] = *p.DailyRate
+	}
+	return detail
 }
 
 type projectPayload struct {
@@ -74,6 +92,8 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditProjectCreated, models.AuditSubjectProject, project.ID,
+		h.auditProjectDetail(r.Context(), project))
 	writeJSON(w, http.StatusCreated, project)
 }
 
@@ -104,15 +124,26 @@ func (h *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditProjectUpdated, models.AuditSubjectProject, id,
+		h.auditProjectDetail(r.Context(), project))
 	writeJSON(w, http.StatusOK, project)
 }
 
 func (h *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "projectId")
 
+	// Described before the delete, like a client's: afterwards nothing is
+	// left to say what was removed, and deleting a project takes every hour
+	// logged against it with it (ON DELETE CASCADE in V1__init.sql).
+	detail := map[string]any{}
+	if project, err := h.projects.FindByID(r.Context(), id); err == nil {
+		detail = h.auditProjectDetail(r.Context(), project)
+	}
+
 	if err := h.projects.Delete(r.Context(), id); err != nil {
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditProjectDeleted, models.AuditSubjectProject, id, detail)
 	writeJSON(w, http.StatusOK, map[string]string{"id": id})
 }

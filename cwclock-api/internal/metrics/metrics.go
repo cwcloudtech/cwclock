@@ -125,6 +125,11 @@ func Setup(
 	// too. That is the only reason a user id is acceptable as a label here;
 	// on a deployment with a large or open signup, "user" would have to go
 	// (an unbounded label is how a Prometheus server runs out of memory).
+	//
+	// Auditing time records (models.AuditRecord*) raises how fast these
+	// series increment but not how many of them exist: the label set is the
+	// same three bounded dimensions, and record.* adds four action values to
+	// a fixed list. A bulk CSV import counts as one event, not one per row.
 	auditCounter, err := meter.Int64Counter(
 		"cwclock_audit_events_total",
 		metric.WithDescription("Count of audit trail entries per action, organization and user"),

@@ -11,8 +11,14 @@ const PAGE_SIZE = 25;
 
 // AuditTrail is the superuser's view of what has been done across the whole
 // deployment - who signed in, who changed a role, who touched an
-// organization's credentials. It only ever reads: the trail is append-only
-// server-side, so there is nothing here to edit or delete.
+// organization's credentials, and who added, moved or deleted the hours that
+// get invoiced. It only ever reads: the trail is append-only server-side, so
+// there is nothing here to edit or delete.
+//
+// There are two dropdown filters rather than one because time records are
+// the highest-volume entries by far: without a subject-type filter, finding
+// the handful of access changes in a busy month would mean paging past
+// everyone's timesheets.
 //
 // Filtering and paging happen in the backend (GET /v1/admin/audit), not in
 // this component: the trail only grows, so it can't be loaded whole and
@@ -25,14 +31,15 @@ const AuditTrail = () => {
 
   const [page, setPage] = useState(1);
   const [action, setAction] = useState("");
+  const [subjectType, setSubjectType] = useState("");
   // subjectInput is what's typed; subject is what's been submitted. Keeping
   // them apart means the trail isn't re-queried on every keystroke.
   const [subjectInput, setSubjectInput] = useState("");
   const [subject, setSubject] = useState("");
 
   const load = useCallback(() => {
-    dispatch(listAuditApi({ page, size: PAGE_SIZE, action, subject }, user.token));
-  }, [dispatch, page, action, subject, user.token]);
+    dispatch(listAuditApi({ page, size: PAGE_SIZE, action, subjectType, subject }, user.token));
+  }, [dispatch, page, action, subjectType, subject, user.token]);
 
   useEffect(() => {
     load();
@@ -42,6 +49,11 @@ const AuditTrail = () => {
   // rarely a page of the new one, and would often come back empty.
   const changeAction = (next) => {
     setAction(next);
+    setPage(1);
+  };
+
+  const changeSubjectType = (next) => {
+    setSubjectType(next);
     setPage(1);
   };
 
@@ -56,6 +68,7 @@ const AuditTrail = () => {
   // translate() does with an unknown key, and here it is the right answer:
   // the raw name is still readable.
   const actionLabel = (name) => t(`audit.actions.${name}`);
+  const subjectLabel = (name) => t(`audit.subjects.${name}`);
 
   const formatDetail = (detail) =>
     Object.entries(detail || {})
@@ -74,6 +87,14 @@ const AuditTrail = () => {
           value={action}
           onChange={changeAction}
           options={audit.actions.map((name) => ({ value: name, label: actionLabel(name) }))}
+        />
+
+        <SingleSelect
+          label={t("audit.subjectType")}
+          allLabel={t("audit.allSubjects")}
+          value={subjectType}
+          onChange={changeSubjectType}
+          options={audit.subjectTypes.map((name) => ({ value: name, label: subjectLabel(name) }))}
         />
 
         <form className={styles.subjectForm} onSubmit={submitSubject}>
@@ -105,7 +126,7 @@ const AuditTrail = () => {
               <span className={styles.action}>{actionLabel(entry.action)}</span>
               <span className={styles.actor}>{entry.userEmail || t("audit.noActor")}</span>
               <span className={styles.subject} title={entry.subjectId}>
-                {t(`audit.subjects.${entry.subjectType}`)}
+                {subjectLabel(entry.subjectType)}
                 {entry.subjectId && <code className={styles.subjectId}>{entry.subjectId}</code>}
               </span>
               {/* Cells are ellipsised to keep one entry on one row, so the

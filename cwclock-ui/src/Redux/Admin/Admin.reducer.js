@@ -14,7 +14,7 @@ const initialstate = {
   // The audit trail is paged server-side, so the slice holds one page at a
   // time plus what the screen's controls need: the actions present in the
   // whole trail (for the filter) and whether a next page exists.
-  audit: { entries: [], actions: [], hasMore: false },
+  audit: { entries: [], actions: [], subjectTypes: [], hasMore: false },
   isLoading: false,
   isError: false,
 };
@@ -47,6 +47,7 @@ export const AdminReducer = (state = initialstate, { type, payload }) => {
         audit: {
           entries: Array.isArray(payload?.entries) ? payload.entries : [],
           actions: Array.isArray(payload?.actions) ? payload.actions : [],
+          subjectTypes: Array.isArray(payload?.subjectTypes) ? payload.subjectTypes : [],
           hasMore: !!payload?.hasMore,
         },
         isLoading: false,

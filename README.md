@@ -24,7 +24,7 @@ A live version is available at [cwclock.me](https://www.cwclock.me).
 * I18N (English and French for now)
 * Light/Dark mode
 * OpenTelemetry & OpenMetrics (Prometheus) observability
-* Append-only audit trail of every access and configuration change, with a superadmin screen
+* Append-only audit trail of every access, configuration and time-record change, with a superadmin screen
 * OIDC integration with Google OIDC, Github and Keycloak
 * MFA with TOTP and Yubikey
 * Contact form

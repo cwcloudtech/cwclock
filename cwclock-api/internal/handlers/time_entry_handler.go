@@ -36,11 +36,28 @@ func paginationParams(r *http.Request) (page, pageSize int) {
 }
 
 type TimeEntryHandler struct {
+	auditor
 	entries *store.TimeEntryStore
 }
 
-func NewTimeEntryHandler(entries *store.TimeEntryStore) *TimeEntryHandler {
-	return &TimeEntryHandler{entries: entries}
+func NewTimeEntryHandler(entries *store.TimeEntryStore, audit *store.AuditStore) *TimeEntryHandler {
+	return &TimeEntryHandler{auditor: newAuditor(audit), entries: entries}
+}
+
+// auditRecordDetail describes a time record for the trail: whose time it is,
+// what it was logged against, and which day. The member is named as well as
+// the acting account, because the two differ whenever an admin edits or
+// reassigns someone else's day - the case the trail is actually read for.
+// The text is in there too, since on an invoice it is the only thing telling
+// two otherwise identical entries apart.
+func auditRecordDetail(entry models.TimeEntry, l store.TimeEntryLabels) map[string]any {
+	return map[string]any{
+		"user":    l.UserEmail,
+		"client":  l.ClientName,
+		"project": l.ProjectName,
+		"day":     entry.Day,
+		"text":    entry.Text,
+	}
 }
 
 type timeEntryPayload struct {
@@ -166,6 +183,8 @@ func (h *TimeEntryHandler) Create(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	h.record(r, models.AuditRecordCreated, models.AuditSubjectRecord, entry.ID,
+		auditRecordDetail(entry, h.entries.Labels(r.Context(), entry)))
 	writeJSON(w, http.StatusCreated, entry)
 }
 
@@ -220,6 +239,15 @@ func (h *TimeEntryHandler) Update(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	detail := auditRecordDetail(updated, h.entries.Labels(r.Context(), updated))
+	// Moving an entry to another member moves billable time off one person's
+	// sheet and onto another's, so the trail says where it came from. Looked
+	// up only when that actually happened: the ordinary edit is a time or
+	// text change and shouldn't pay for a second query.
+	if utils.IsNotBlank(reassign.UserID) {
+		detail["previousUser"] = h.entries.Labels(r.Context(), entry).UserEmail
+	}
+	h.record(r, models.AuditRecordUpdated, models.AuditSubjectRecord, id, detail)
 	writeJSON(w, http.StatusOK, updated)
 }
 
@@ -240,5 +268,9 @@ func (h *TimeEntryHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	// entry was loaded above for the ownership check, so the deleted day and
+	// text are still in hand to describe what went.
+	h.record(r, models.AuditRecordDeleted, models.AuditSubjectRecord, id,
+		auditRecordDetail(entry, h.entries.Labels(r.Context(), entry)))
 	writeJSON(w, http.StatusOK, map[string]string{"id": id})
 }

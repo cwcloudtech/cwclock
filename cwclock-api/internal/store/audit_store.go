@@ -206,33 +206,13 @@ func (s *AuditStore) List(ctx context.Context, f AuditFilter) (models.AuditPage,
 		page.Entries = page.Entries[:limit-1]
 	}
 
-	page.Actions, err = s.actions(ctx)
-	if err != nil {
-		return models.AuditPage{}, err
-	}
+	// The filter values come from the code's own lists, not from a DISTINCT
+	// over audit_log: the table now grows with every time record, and the
+	// screen should not pay for a scan of it on each page load. See
+	// models.AuditActions.
+	page.Actions = models.AuditActions
+	page.SubjectTypes = models.AuditSubjectTypes
 	return page, nil
-}
-
-// actions lists the distinct actions the trail actually contains. The set is
-// small and fixed (it is models.Audit* , minus whatever has never happened on
-// this deployment), so a DISTINCT over the table is cheap enough to run with
-// each page.
-func (s *AuditStore) actions(ctx context.Context) ([]string, error) {
-	rows, err := s.pool.Query(ctx, `SELECT DISTINCT action FROM audit_log ORDER BY action`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	actions := []string{}
-	for rows.Next() {
-		var action string
-		if err := rows.Scan(&action); err != nil {
-			return nil, err
-		}
-		actions = append(actions, action)
-	}
-	return actions, rows.Err()
 }
 
 // nullUUID turns an empty id into a SQL NULL, so the nullable references in
