@@ -10,7 +10,9 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"cwclock-api/internal/authtoken"
+	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/notify"
 	"cwclock-api/internal/oidc"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/utils"
@@ -24,6 +26,7 @@ const originFrontend = "frontend"
 
 type OIDCHandler struct {
 	auditor
+	connTracker
 	providers      []oidc.Provider
 	users          *store.UserStore
 	webauthnCreds  *store.WebAuthnCredentialStore
@@ -32,6 +35,12 @@ type OIDCHandler struct {
 	uiBaseURL      string
 	keycloakGroups []string
 	activationMode string
+}
+
+// WithConn wires the IP↔user association + Discord sign-in notice (optional).
+func (h *OIDCHandler) WithConn(visits *store.SessionStore, enrich middleware.Enricher, disc *notify.Discord) *OIDCHandler {
+	h.setConn(visits, enrich, disc)
+	return h
 }
 
 func NewOIDCHandler(providers []oidc.Provider, users *store.UserStore, webauthnCreds *store.WebAuthnCredentialStore, audit *store.AuditStore, jwtSecret, apiBaseURL, uiBaseURL string, keycloakGroups []string, activationMode string) *OIDCHandler {
@@ -212,6 +221,8 @@ func (h *OIDCHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.associate(r, user.ID)
+	h.notifyLogin(r, user)
 	target := h.uiBaseURL + "/oidc/callback?token=" + url.QueryEscape(token)
 	http.Redirect(w, r, target, http.StatusFound)
 }
@@ -272,6 +283,8 @@ func (h *OIDCHandler) FrontendCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.associate(r, user.ID)
+	h.notifyLogin(r, user)
 	writeJSON(w, http.StatusOK, oidcTokenResponse{Token: token})
 }
 

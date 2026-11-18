@@ -16,6 +16,7 @@ import (
 	"cwclock-api/internal/authtoken"
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/notify"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/utils"
 )
@@ -32,12 +33,19 @@ const webauthnCeremonyTTL = 5 * time.Minute
 // challenge has been issued, plus enrollment management.
 type MFAHandler struct {
 	auditor
+	connTracker
 	users          *store.UserStore
 	webauthnCreds  *store.WebAuthnCredentialStore
 	jwtSecret      string
 	activationMode string
 	wa             *webauthn.WebAuthn
 	issuer         string
+}
+
+// WithConn wires the IP↔user association + Discord sign-in notice (optional).
+func (h *MFAHandler) WithConn(visits *store.SessionStore, enrich middleware.Enricher, disc *notify.Discord) *MFAHandler {
+	h.setConn(visits, enrich, disc)
+	return h
 }
 
 func NewMFAHandler(users *store.UserStore, webauthnCreds *store.WebAuthnCredentialStore, audit *store.AuditStore, jwtSecret, activationMode string, wa *webauthn.WebAuthn, issuer string) *MFAHandler {
@@ -97,6 +105,8 @@ func (h *MFAHandler) respondSession(w http.ResponseWriter, r *http.Request, user
 	}
 	h.recordAs(r.Context(), user.ID, models.AuditSignedIn, models.AuditSubjectUser, user.ID,
 		map[string]any{"method": method})
+	h.associate(r, user.ID)
+	h.notifyLogin(r, user)
 	writeJSON(w, http.StatusOK, models.UserResponse{
 		ID: user.ID, Email: user.Email, Name: user.Name, Surname: user.Surname,
 		Role: user.Role, Token: token, Picture: user.Picture,

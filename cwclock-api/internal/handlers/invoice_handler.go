@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -13,6 +14,7 @@ import (
 	"cwclock-api/internal/externalconn"
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/notify"
 	"cwclock-api/internal/report"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/utils"
@@ -35,6 +37,14 @@ type InvoiceHandler struct {
 	// monthly invoice/export-job email limit (see mailAllowed, ai-instruct-83).
 	mailCounters *store.MailCounterStore
 	mailLimit    int
+	disc         *notify.Discord // [INVOICE] generation alert (optional)
+}
+
+// WithNotifier wires the Discord transport so a generated invoice posts an
+// [INVOICE] alert. Optional and best-effort.
+func (h *InvoiceHandler) WithNotifier(disc *notify.Discord) *InvoiceHandler {
+	h.disc = disc
+	return h
 }
 
 func NewInvoiceHandler(
@@ -218,6 +228,7 @@ func (h *InvoiceHandler) Generate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	externalconn.SyncUpload(r.Context(), ic.org.ExternalConnections, externalconn.YearFolder(inv.CreatedAt), externalconn.MonthCandidates(inv.CreatedAt), inv.Number+".pdf", pdf)
+	notifyDiscord(h.disc, fmt.Sprintf("[INVOICE] :nerd: number = %s, org = %s, client = %s", inv.Number, orgID, ic.client.Name))
 
 	writeExportFile(w, "application/pdf", inv.Number+".pdf", pdf, nil)
 }

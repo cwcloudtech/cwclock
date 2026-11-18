@@ -14,6 +14,12 @@ export CWCLOCK_MAX_REPORT_SIZE=5000
 export CWCLOCK_ACTIVATION_MODE="email"
 export CWCLOCK_LIMIT_MAIL=100
 
+# Discord notifications (sign-in/out, bans, creations, cron, errors). Reuses the
+# runner secret DISCORD_TOKEN_PUBLIC under the non-prefixed name the api reads
+# (DISCORD_TOKEN, matching ~/strong-fish and ~/uprodit). deploy.sh writes it into
+# .env.cwclock.api explicitly, since it is neither CWCLOCK_- nor CWCLOUD_-prefixed.
+export DISCORD_TOKEN="${DISCORD_TOKEN_PUBLIC:-}"
+
 echo "VERSION=${VERSION}" > .env.ci
 echo "VERSION_SHA=${VERSION_SHA}" >> .env.ci
 

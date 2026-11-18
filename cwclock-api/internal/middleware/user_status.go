@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 
 	"cwclock-api/internal/models"
@@ -14,7 +15,7 @@ import (
 // the account later). The rejection carries an i18n_code that differs by
 // role and, for a disabled account, by the server's activation mode - see
 // models.I18nCodeForRole.
-func RequireActiveUser(users *store.UserStore, activationMode string) func(http.Handler) http.Handler {
+func RequireActiveUser(users *store.UserStore, activationMode string, alerter *BanAlerter) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			userID, _ := UserIDFromContext(r.Context())
@@ -25,6 +26,8 @@ func RequireActiveUser(users *store.UserStore, activationMode string) func(http.
 			}
 			switch user.Role {
 			case models.GlobalRoleBan:
+				alerter.Alert("user:"+user.ID,
+					fmt.Sprintf("banned user %s (id %s) tried %s %s", user.Email, user.ID, r.Method, r.URL.Path))
 				jsonErrorCode(w, http.StatusForbidden, "Your account has been banned by an administrator.", models.I18nAccountBanned)
 				return
 			case models.GlobalRoleDisabled:

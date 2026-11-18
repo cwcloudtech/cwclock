@@ -3,12 +3,14 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/notify"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/utils"
 )
@@ -17,10 +19,18 @@ type ProjectHandler struct {
 	auditor
 	projects *store.ProjectStore
 	clients  *store.ClientStore
+	disc     *notify.Discord // [PROJECT] creation alert (optional)
 }
 
 func NewProjectHandler(projects *store.ProjectStore, clients *store.ClientStore, audit *store.AuditStore) *ProjectHandler {
 	return &ProjectHandler{auditor: newAuditor(audit), projects: projects, clients: clients}
+}
+
+// WithNotifier wires the Discord transport so a new project posts a [PROJECT] alert.
+// Optional and best-effort.
+func (h *ProjectHandler) WithNotifier(disc *notify.Discord) *ProjectHandler {
+	h.disc = disc
+	return h
 }
 
 // auditProjectDetail names a project and the client it bills to. The client
@@ -94,6 +104,7 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	h.record(r, models.AuditProjectCreated, models.AuditSubjectProject, project.ID,
 		h.auditProjectDetail(r.Context(), project))
+	notifyDiscord(h.disc, fmt.Sprintf("[PROJECT] :nerd: name = %s, id = %s, org = %s", p.Name, project.ID, orgID))
 	writeJSON(w, http.StatusCreated, project)
 }
 

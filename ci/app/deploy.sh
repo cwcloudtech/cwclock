@@ -3,13 +3,19 @@
 source ./ci/app/compute-env.sh
 
 echo "" > .env.cwclock.db
-env|grep "POSTGRES_"|while read; do
-  echo "${REPLY}" >> .env.cwclock.db
+# Anchor to a real "VAR=" assignment line and read -r, so a multi-line value
+# (e.g. a cert/token with embedded newlines) can't have its continuation lines
+# matched on a bare substring and split into bogus env entries.
+env|grep -E "^POSTGRES_[A-Z0-9_]*="|while read -r line; do
+  echo "${line}" >> .env.cwclock.db
 done
 
 echo "JWT_SECRET=${JWT_SECRET}" > .env.cwclock.api
-env|grep -E "(CWCLOCK|CWCLOUD)_"|while read; do
-  echo "${REPLY}" >> .env.cwclock.api
+# DISCORD_TOKEN isn't CWCLOCK_/CWCLOUD_-prefixed, so (like JWT_SECRET) it's written
+# explicitly here, from the runner's DISCORD_TOKEN_PUBLIC (mapped in compute-env.sh).
+echo "DISCORD_TOKEN=${DISCORD_TOKEN}" >> .env.cwclock.api
+env|grep -E "^(CWCLOCK|CWCLOUD)_[A-Z0-9_]*="|while read -r line; do
+  echo "${line}" >> .env.cwclock.api
 done
 
 echo "CWCLOCK_API_URL=${CWCLOCK_API_URL}" > .env.cwclock.ui

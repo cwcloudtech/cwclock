@@ -11,6 +11,7 @@ import (
 	"github.com/robfig/cron/v3"
 
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/notify"
 	"cwclock-api/internal/store"
 )
 
@@ -67,6 +68,7 @@ type ExportJobScheduler struct {
 	reports  ExportReportGenerator
 	delivery ExportDeliveryService
 	entryIDs map[string]cron.EntryID // Maps export job ID to cron entry ID
+	disc     *notify.Discord         // [SCHEDULE] start/finish alerts (optional)
 }
 
 func NewExportJobScheduler(
@@ -81,6 +83,18 @@ func NewExportJobScheduler(
 		delivery: delivery,
 		entryIDs: make(map[string]cron.EntryID),
 	}
+}
+
+// WithNotifier wires the Discord transport so each cron run posts a [SCHEDULE]
+// start/finish notice. Optional and best-effort.
+func (s *ExportJobScheduler) WithNotifier(disc *notify.Discord) *ExportJobScheduler {
+	s.disc = disc
+	return s
+}
+
+// announce posts a Discord notice off the run's path (best-effort/async, nil-safe).
+func (s *ExportJobScheduler) announce(text string) {
+	go func() { _ = s.disc.SendText(context.Background(), text) }()
 }
 
 // Start starts the cron runner and schedules every currently-enabled export
@@ -179,6 +193,7 @@ func (s *ExportJobScheduler) UnscheduleJob(jobID string) {
 
 func (s *ExportJobScheduler) executeJob(ctx context.Context, job models.ExportJob) {
 	log.Printf("export job %s: starting", job.ID)
+	s.announce(fmt.Sprintf("[SCHEDULE] :clock: job = %s (%s) starting", job.Name, job.ID))
 
 	startTime, endTime, err := ParseTimePeriod(job.TimePeriod)
 	if err != nil {
@@ -215,6 +230,7 @@ func (s *ExportJobScheduler) executeJob(ctx context.Context, job models.ExportJo
 	}
 
 	log.Printf("export job %s: completed", job.ID)
+	s.announce(fmt.Sprintf("[SCHEDULE] :clock: job = %s (%s) ending", job.Name, job.ID))
 }
 
 // effectiveReportTypes drops "unpaid-invoices" when "all-invoices" is also

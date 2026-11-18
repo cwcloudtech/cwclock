@@ -3,12 +3,14 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/notify"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/utils"
 )
@@ -18,10 +20,18 @@ type ClientHandler struct {
 	clients   *store.ClientStore
 	orgs      *store.OrgStore
 	countries *store.CountryStore
+	disc      *notify.Discord // [CLIENT] creation alert (optional)
 }
 
 func NewClientHandler(clients *store.ClientStore, orgs *store.OrgStore, countries *store.CountryStore, audit *store.AuditStore) *ClientHandler {
 	return &ClientHandler{auditor: newAuditor(audit), clients: clients, orgs: orgs, countries: countries}
+}
+
+// WithNotifier wires the Discord transport so a new client posts a [CLIENT] alert.
+// Optional and best-effort.
+func (h *ClientHandler) WithNotifier(disc *notify.Discord) *ClientHandler {
+	h.disc = disc
+	return h
 }
 
 type clientPayload struct {
@@ -149,6 +159,7 @@ func (h *ClientHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	h.record(r, models.AuditClientCreated, models.AuditSubjectClient, client.ID,
 		map[string]any{"name": client.Name})
+	notifyDiscord(h.disc, fmt.Sprintf("[CLIENT] :nerd: name = %s, id = %s, org = %s", client.Name, client.ID, orgID))
 	writeJSON(w, http.StatusCreated, client)
 }
 

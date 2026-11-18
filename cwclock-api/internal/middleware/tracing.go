@@ -18,6 +18,11 @@ import (
 // third middleware re-deriving the same information.
 type EndpointObserver func(route, method string, status int, duration time.Duration)
 
+// ErrorFunc is an optional hook fired once for every 5xx response, used to raise a
+// Discord [ERROR] alert. It runs after the response is written, so it must post
+// asynchronously and never block. May be nil (disabled).
+type ErrorFunc func(method, route string, status int)
+
 // Instrument starts a tracing span for every request, logs one line per
 // request via logger, and (if observe is non-nil) reports the call to
 // observe for metrics. The span/log/metrics all use the same resolved chi
@@ -26,7 +31,7 @@ type EndpointObserver func(route, method string, status int, duration time.Durat
 // chi.RouteContext has settled on the matched pattern (e.g.
 // "/organizations/{orgId}/clients/{clientId}") instead of the raw path, so
 // they group by endpoint rather than by ID.
-func Instrument(tracer trace.Tracer, logger *slog.Logger, observe EndpointObserver) func(http.Handler) http.Handler {
+func Instrument(tracer trace.Tracer, logger *slog.Logger, observe EndpointObserver, onError ErrorFunc) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
@@ -50,6 +55,9 @@ func Instrument(tracer trace.Tracer, logger *slog.Logger, observe EndpointObserv
 				attribute.String("http.route", route),
 				attribute.Int("http.status_code", rec.status),
 			)
+			if cid := CIDFromContext(r.Context()); utils.IsNotBlank(cid) {
+				span.SetAttributes(attribute.String("cid", cid))
+			}
 			if rec.status >= 500 {
 				span.SetStatus(codes.Error, http.StatusText(rec.status))
 			}
@@ -58,6 +66,9 @@ func Instrument(tracer trace.Tracer, logger *slog.Logger, observe EndpointObserv
 
 			if observe != nil {
 				observe(route, r.Method, rec.status, duration)
+			}
+			if onError != nil && rec.status >= 500 {
+				onError(r.Method, route, rec.status)
 			}
 		})
 	}
@@ -70,12 +81,16 @@ func logRequest(ctx context.Context, logger *slog.Logger, method, route string, 
 	} else if status >= 400 {
 		level = slog.LevelWarn
 	}
-	logger.Log(ctx, level, "http request",
+	attrs := []any{
 		slog.String("method", method),
 		slog.String("route", route),
 		slog.Int("status", status),
 		slog.Duration("duration", duration),
-	)
+	}
+	if cid := CIDFromContext(ctx); utils.IsNotBlank(cid) {
+		attrs = append(attrs, slog.String("cid", cid))
+	}
+	logger.Log(ctx, level, "http request", attrs...)
 }
 
 type statusRecorder struct {

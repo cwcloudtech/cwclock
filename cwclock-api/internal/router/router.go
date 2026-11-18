@@ -46,23 +46,42 @@ func New(
 	tel *telemetry.Providers,
 	observe middleware.EndpointObserver,
 	metricsHandler http.Handler,
+	sessions middleware.VisitorStore,
+	ipBanHandler *handlers.IPBanHandler,
+	enricher middleware.Enricher,
+	banAlerter *middleware.BanAlerter,
+	onServerError middleware.ErrorFunc,
 ) http.Handler {
 	r := chi.NewRouter()
 
-	// Spans + request logs (+ metrics, via observe) for every endpoint call.
-	r.Use(middleware.Instrument(tel.Tracer, tel.Logger, observe))
+	// Outermost, so the correlation id is settled before anything logs it: every
+	// request carries an X-Cid (the caller's or a fresh one) on its context and
+	// response, and every span + access-log line is tagged with it.
+	r.Use(middleware.Correlation)
+
+	// Spans + request logs (+ metrics, via observe) for every endpoint call, plus a
+	// best-effort Discord [ERROR] alert on every 5xx (onServerError).
+	r.Use(middleware.Instrument(tel.Tracer, tel.Logger, observe, onServerError))
 
 	if corsEnabled {
 		r.Use(cors.Handler(cors.Options{
 			AllowedOrigins: corsAllowedOrigins,
 			AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-			AllowedHeaders: []string{"Authorization", "Content-Type", "X-Api-Key"},
+			AllowedHeaders: []string{"Authorization", "Content-Type", "X-Api-Key", "X-Cid"},
 			// Content-Disposition must be explicitly exposed, otherwise the
 			// browser hides it from JS on cross-origin responses (like report
 			// exports), so the frontend can't read the backend-provided
-			// filename and falls back to a generic one.
-			ExposedHeaders: []string{"Content-Disposition"},
+			// filename and falls back to a generic one. X-Cid is exposed so a
+			// client can read back the correlation id the server settled on.
+			ExposedHeaders: []string{"Content-Disposition", "X-Cid"},
 		}))
+	}
+
+	// The IP ban guard sits in front of every route: a banned address is refused on
+	// the login page and the public endpoints alike (403), and the visit is logged
+	// here (anonymously, once a day). Mounted only when a session store is wired.
+	if sessions != nil {
+		r.Use(middleware.BanIP(sessions, enricher, banAlerter))
 	}
 
 	r.Route("/v1", func(r chi.Router) {
@@ -124,7 +143,7 @@ func New(
 				r.Post("/logout", userHandler.Logout)
 
 				r.Group(func(r chi.Router) {
-					r.Use(middleware.RequireActiveUser(users, activationMode))
+					r.Use(middleware.RequireActiveUser(users, activationMode, banAlerter))
 					r.Put("/me", userHandler.UpdateProfile)
 					r.Put("/me/picture", userHandler.UpdatePicture)
 					r.Get("/search", userHandler.Search)
@@ -168,17 +187,30 @@ func New(
 
 		r.Route("/admin/users", func(r chi.Router) {
 			r.Use(middleware.Auth(jwtSecret, apiKeys))
-			r.Use(middleware.RequireActiveUser(users, activationMode))
+			r.Use(middleware.RequireActiveUser(users, activationMode, banAlerter))
 			r.Use(middleware.RequireSuperuser(users))
 			r.Get("/", adminHandler.ListUsers)
 			r.Put("/{id}", adminHandler.UpdateUser)
 			r.Delete("/{id}", adminHandler.DeleteUser)
 			r.Post("/{id}/disable-mfa", adminHandler.DisableMFA)
+			// Every address this account has connected from (IP administration).
+			r.Get("/{id}/ips", ipBanHandler.UserIPs)
+		})
+
+		// IP administration (superuser): the address roster, ban counts, and the
+		// ban/unban action. Gated the same way as the other superuser-only screens.
+		r.Route("/admin/ip-bans", func(r chi.Router) {
+			r.Use(middleware.Auth(jwtSecret, apiKeys))
+			r.Use(middleware.RequireActiveUser(users, activationMode, banAlerter))
+			r.Use(middleware.RequireSuperuser(users))
+			r.Get("/", ipBanHandler.ListIPs)
+			r.Get("/stats", ipBanHandler.Stats)
+			r.Put("/", ipBanHandler.BanIP)
 		})
 
 		r.Route("/admin/organizations", func(r chi.Router) {
 			r.Use(middleware.Auth(jwtSecret, apiKeys))
-			r.Use(middleware.RequireActiveUser(users, activationMode))
+			r.Use(middleware.RequireActiveUser(users, activationMode, banAlerter))
 			r.Use(middleware.RequireSuperuser(users))
 			r.Get("/", orgHandler.AdminList)
 		})
@@ -188,14 +220,14 @@ func New(
 		// the route, which is the only place that can be trusted.
 		r.Route("/admin/audit", func(r chi.Router) {
 			r.Use(middleware.Auth(jwtSecret, apiKeys))
-			r.Use(middleware.RequireActiveUser(users, activationMode))
+			r.Use(middleware.RequireActiveUser(users, activationMode, banAlerter))
 			r.Use(middleware.RequireSuperuser(users))
 			r.Get("/", adminHandler.Audit)
 		})
 
 		r.Route("/organizations", func(r chi.Router) {
 			r.Use(middleware.Auth(jwtSecret, apiKeys))
-			r.Use(middleware.RequireActiveUser(users, activationMode))
+			r.Use(middleware.RequireActiveUser(users, activationMode, banAlerter))
 			r.Post("/", orgHandler.Create)
 			r.Get("/", orgHandler.List)
 

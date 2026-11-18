@@ -13,6 +13,7 @@ import (
 	"cwclock-api/internal/externalconn"
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/notify"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/utils"
 )
@@ -24,6 +25,7 @@ type OrganizationHandler struct {
 	countries    *store.CountryStore
 	currencies   *store.CurrencyStore
 	maxImageSize int64
+	disc         *notify.Discord // [ORG] creation alert (optional)
 }
 
 func NewOrganizationHandler(orgs *store.OrgStore, users *store.UserStore, countries *store.CountryStore, currencies *store.CurrencyStore, audit *store.AuditStore, maxImageSize int64) *OrganizationHandler {
@@ -31,6 +33,13 @@ func NewOrganizationHandler(orgs *store.OrgStore, users *store.UserStore, countr
 		auditor: newAuditor(audit),
 		orgs:    orgs, users: users, countries: countries, currencies: currencies, maxImageSize: maxImageSize,
 	}
+}
+
+// WithNotifier wires the Discord transport so a new organization posts an [ORG]
+// alert. Optional and best-effort.
+func (h *OrganizationHandler) WithNotifier(disc *notify.Discord) *OrganizationHandler {
+	h.disc = disc
+	return h
 }
 
 type organizationPayload struct {
@@ -238,6 +247,7 @@ func (h *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 	// the route resolved - this endpoint has no {orgId}.
 	h.recordIn(r, org.ID, models.AuditOrgCreated, models.AuditSubjectOrganization, org.ID,
 		map[string]any{"name": org.Name})
+	notifyDiscord(h.disc, fmt.Sprintf("[ORG] :nerd: name = %s, id = %s, by = %s", org.Name, org.ID, userID))
 	writeJSON(w, http.StatusCreated, redactOrg(org))
 }
 

@@ -15,6 +15,7 @@ import (
 	"cwclock-api/internal/email"
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/notify"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/utils"
 )
@@ -26,6 +27,7 @@ const mfaLoginTokenTTL = 5 * time.Minute
 
 type UserHandler struct {
 	auditor
+	connTracker
 	users                *store.UserStore
 	webauthnCreds        *store.WebAuthnCredentialStore
 	jwtSecret            string
@@ -35,6 +37,12 @@ type UserHandler struct {
 	apiBaseURL           string
 	uiBaseURL            string
 	confirmationTokenTTL time.Duration
+}
+
+// WithConn wires the IP↔user association + Discord sign-in/out notices (optional).
+func (h *UserHandler) WithConn(visits *store.SessionStore, enrich middleware.Enricher, disc *notify.Discord) *UserHandler {
+	h.setConn(visits, enrich, disc)
+	return h
 }
 
 func NewUserHandler(users *store.UserStore, webauthnCreds *store.WebAuthnCredentialStore, audit *store.AuditStore, jwtSecret string, maxImageSize int64, activationMode string, mailer *email.Sender, apiBaseURL, uiBaseURL string, confirmationTokenTTL time.Duration) *UserHandler {
@@ -107,6 +115,8 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	// entry's point is that this account came into existence.
 	h.recordAs(r.Context(), user.ID, models.AuditAccountRegistered, models.AuditSubjectUser, user.ID,
 		map[string]any{"email": user.Email, "role": string(user.Role)})
+	h.associate(r, user.ID)
+	h.notifyRegister(r, user)
 
 	writeJSON(w, http.StatusCreated, models.UserResponse{
 		ID: user.ID, Email: user.Email, Name: user.Name, Surname: user.Surname,
@@ -159,6 +169,8 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	h.recordAs(r.Context(), user.ID, models.AuditSignedIn, models.AuditSubjectUser, user.ID,
 		map[string]any{"method": "password"})
+	h.associate(r, user.ID)
+	h.notifyLogin(r, user)
 
 	writeJSON(w, http.StatusOK, models.UserResponse{
 		ID: user.ID, Email: user.Email, Name: user.Name, Surname: user.Surname,
@@ -177,6 +189,9 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	userID, _ := middleware.UserIDFromContext(r.Context())
 	h.record(r, models.AuditSignedOut, models.AuditSubjectUser, userID, nil)
+	if u, err := h.users.FindByID(r.Context(), userID); err == nil {
+		h.notifyLogout(r, u)
+	}
 	writeJSON(w, http.StatusOK, map[string]string{"message": "Signed out."})
 }
 

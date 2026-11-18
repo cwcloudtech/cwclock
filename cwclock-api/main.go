@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"runtime"
@@ -12,8 +13,11 @@ import (
 	"cwclock-api/internal/contact"
 	"cwclock-api/internal/db"
 	"cwclock-api/internal/email"
+	"cwclock-api/internal/enrich"
 	"cwclock-api/internal/handlers"
 	"cwclock-api/internal/metrics"
+	"cwclock-api/internal/middleware"
+	"cwclock-api/internal/notify"
 	"cwclock-api/internal/oidc"
 	"cwclock-api/internal/router"
 	"cwclock-api/internal/scheduler"
@@ -63,8 +67,30 @@ func main() {
 	exportJobStore := store.NewExportJobStore(pool)
 	mailCounterStore := store.NewMailCounterStore(pool)
 	auditStore := store.NewAuditStore(pool)
+	sessionStore := store.NewSessionStore(pool)
 
 	mailer := email.NewSender(cfg.CWCloudAPIURL, cfg.CWCloudAPIKey, cfg.EmailFrom, cfg.APIBaseURL)
+
+	// Discord notifications (sign-in/out, bans, creations, cron, errors) + visitor
+	// geo enrichment. Both are best-effort and disabled (no-ops) without their config.
+	discord := notify.NewDiscord(cfg.DiscordToken)
+	enricher := enrich.NewGeo(cfg.IPInfoToken).Enrich
+
+	// A deduped "[BAN] :rotating_light:" alert when a banned IP/user keeps hitting
+	// the API, and an "[ERROR] :fire:" alert on every 5xx. Nil (disabled) without a webhook.
+	var banAlerter *middleware.BanAlerter
+	var onServerError middleware.ErrorFunc
+	if discord.Enabled() {
+		banAlerter = middleware.NewBanAlerter(func(ctx context.Context, text string) {
+			_ = discord.SendText(ctx, text)
+		})
+		onServerError = func(method, route string, status int) {
+			go func() {
+				_ = discord.SendText(context.Background(),
+					fmt.Sprintf("[ERROR] :fire: %d on %s %s", status, method, route))
+			}()
+		}
+	}
 
 	rpID := cfg.UIBaseURL
 	if u, err := url.Parse(cfg.UIBaseURL); err == nil && utils.IsNotBlank(u.Hostname()) {
@@ -82,28 +108,31 @@ func main() {
 		panic(err)
 	}
 
-	userHandler := handlers.NewUserHandler(userStore, webauthnCredStore, auditStore, cfg.JWTSecret, cfg.MaxImageSize, cfg.ActivationMode, mailer, cfg.APIBaseURL, cfg.UIBaseURL, cfg.ConfirmationEmailTTL)
-	orgHandler := handlers.NewOrganizationHandler(orgStore, userStore, countryStore, currencyStore, auditStore, cfg.MaxImageSize)
-	clientHandler := handlers.NewClientHandler(clientStore, orgStore, countryStore, auditStore)
-	projectHandler := handlers.NewProjectHandler(projectStore, clientStore, auditStore)
-	timeEntryHandler := handlers.NewTimeEntryHandler(timeEntryStore, auditStore)
+	userHandler := handlers.NewUserHandler(userStore, webauthnCredStore, auditStore, cfg.JWTSecret, cfg.MaxImageSize, cfg.ActivationMode, mailer, cfg.APIBaseURL, cfg.UIBaseURL, cfg.ConfirmationEmailTTL).
+		WithConn(sessionStore, enricher, discord)
+	orgHandler := handlers.NewOrganizationHandler(orgStore, userStore, countryStore, currencyStore, auditStore, cfg.MaxImageSize).WithNotifier(discord)
+	clientHandler := handlers.NewClientHandler(clientStore, orgStore, countryStore, auditStore).WithNotifier(discord)
+	projectHandler := handlers.NewProjectHandler(projectStore, clientStore, auditStore).WithNotifier(discord)
+	timeEntryHandler := handlers.NewTimeEntryHandler(timeEntryStore, auditStore).WithNotifier(discord)
 	adminHandler := handlers.NewAdminHandler(userStore, webauthnCredStore, auditStore, cfg.MaxImageSize)
-	mfaHandler := handlers.NewMFAHandler(userStore, webauthnCredStore, auditStore, cfg.JWTSecret, cfg.ActivationMode, waInstance, mfaIssuer)
+	mfaHandler := handlers.NewMFAHandler(userStore, webauthnCredStore, auditStore, cfg.JWTSecret, cfg.ActivationMode, waInstance, mfaIssuer).
+		WithConn(sessionStore, enricher, discord)
 	importHandler := handlers.NewImportHandler(userStore, clientStore, projectStore, timeEntryStore, auditStore)
 	reportHandler := handlers.NewReportHandler(orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize)
 	apiKeyHandler := handlers.NewApiKeyHandler(apiKeyStore, auditStore)
 	configHandler := handlers.NewConfigHandler(orgStore, cfg.APIBaseURL)
-	invoiceHandler := handlers.NewInvoiceHandler(invoiceStore, orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize, mailer, reportHandler, mailCounterStore, cfg.MailLimit)
+	invoiceHandler := handlers.NewInvoiceHandler(invoiceStore, orgStore, clientStore, projectStore, timeEntryStore, userStore, cfg.MaxReportSize, mailer, reportHandler, mailCounterStore, cfg.MailLimit).WithNotifier(discord)
 	currencyHandler := handlers.NewCurrencyHandler(currencyStore)
 	countryHandler := handlers.NewCountryHandler(countryStore)
 	fieldHandler := handlers.NewFieldHandler(fieldStore)
 	oidcProviders := oidc.BuildProviders(cfg)
-	oidcHandler := handlers.NewOIDCHandler(oidcProviders, userStore, webauthnCredStore, auditStore, cfg.JWTSecret, cfg.APIBaseURL, cfg.UIBaseURL, cfg.OIDCKeycloakGroups, cfg.ActivationMode)
+	oidcHandler := handlers.NewOIDCHandler(oidcProviders, userStore, webauthnCredStore, auditStore, cfg.JWTSecret, cfg.APIBaseURL, cfg.UIBaseURL, cfg.OIDCKeycloakGroups, cfg.ActivationMode).
+		WithConn(sessionStore, enricher, discord)
 	contactHandler := handlers.NewContactHandler(contact.New(cfg.CWCloudAPIURL, cfg.CWCloudContactFormID))
 
 	exportReportGenerator := handlers.NewExportReportGenerator(reportHandler, invoiceStore)
 	exportDelivery := handlers.NewExportDeliveryService(mailer, orgStore, mailCounterStore, cfg.MailLimit)
-	exportScheduler := scheduler.NewExportJobScheduler(exportJobStore, exportReportGenerator, exportDelivery)
+	exportScheduler := scheduler.NewExportJobScheduler(exportJobStore, exportReportGenerator, exportDelivery).WithNotifier(discord)
 	if err := exportScheduler.Start(ctx); err != nil {
 		tel.Logger.Error("failed to start export job scheduler", "error", err)
 		panic(err)
@@ -111,6 +140,7 @@ func main() {
 	defer exportScheduler.Stop()
 	exportJobHandler := handlers.NewExportJobHandler(exportJobStore, exportScheduler, auditStore)
 	calendarFeedHandler := handlers.NewCalendarFeedHandler(userStore, timeEntryStore, projectStore, clientStore, auditStore, cfg.APIBaseURL)
+	ipBanHandler := handlers.NewIPBanHandler(sessionStore).WithNotifier(discord)
 
 	met, err := metrics.Setup(ctx, metrics.Config{
 		Endpoint: cfg.OtelEndpoint,
@@ -135,6 +165,7 @@ func main() {
 		currencyHandler, countryHandler, fieldHandler, oidcHandler, contactHandler, exportJobHandler, calendarFeedHandler,
 		orgStore, userStore, apiKeyStore, cfg.JWTSecret, cfg.ActivationMode, cfg.CorsEnabled, cfg.CorsAllowedOrigins, cfg.Version, cfg.ManifestPath,
 		tel, met.Observe, met.Handler,
+		sessionStore, ipBanHandler, enricher, banAlerter, onServerError,
 	)
 
 	tel.Logger.Info("server started", "port", cfg.Port)

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -9,6 +10,7 @@ import (
 
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/notify"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/utils"
 )
@@ -38,10 +40,18 @@ func paginationParams(r *http.Request) (page, pageSize int) {
 type TimeEntryHandler struct {
 	auditor
 	entries *store.TimeEntryStore
+	disc    *notify.Discord // [RECORD] creation alert (optional)
 }
 
 func NewTimeEntryHandler(entries *store.TimeEntryStore, audit *store.AuditStore) *TimeEntryHandler {
 	return &TimeEntryHandler{auditor: newAuditor(audit), entries: entries}
+}
+
+// WithNotifier wires the Discord transport so a new time record posts a [RECORD]
+// alert. Optional and best-effort.
+func (h *TimeEntryHandler) WithNotifier(disc *notify.Discord) *TimeEntryHandler {
+	h.disc = disc
+	return h
 }
 
 // auditRecordDetail describes a time record for the trail: whose time it is,
@@ -185,6 +195,7 @@ func (h *TimeEntryHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	h.record(r, models.AuditRecordCreated, models.AuditSubjectRecord, entry.ID,
 		auditRecordDetail(entry, h.entries.Labels(r.Context(), entry)))
+	notifyDiscord(h.disc, fmt.Sprintf("[RECORD] :nerd: id = %s, org = %s, by = %s", entry.ID, orgID, userID))
 	writeJSON(w, http.StatusCreated, entry)
 }
 

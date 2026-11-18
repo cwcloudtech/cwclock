@@ -43,6 +43,11 @@ type Config struct {
 	EmailFrom                string
 	ConfirmationEmailTTL     time.Duration
 	ActivationMode           string
+	// DiscordToken is the {id}/{token} of a Discord Slack-compatible webhook; blank
+	// or "changeit" disables every Discord notification. IPInfoToken is an optional
+	// ipinfo.io token for visitor geo enrichment (ip-api.com needs none).
+	DiscordToken string
+	IPInfoToken  string
 }
 
 // defaultMaxImageSize is applied when CWCLOCK_MAX_IMAGE_SIZE is unset or
@@ -140,6 +145,8 @@ func Load() Config {
 		EmailFrom:                utils.GetEnv("CWCLOCK_MAIL_FROM", "noreply@cwcloud.tech"),
 		ConfirmationEmailTTL:     time.Duration(confirmationEmailExpirationHours) * time.Hour,
 		ActivationMode:           activationMode,
+		DiscordToken:             os.Getenv("DISCORD_TOKEN"),
+		IPInfoToken:              os.Getenv("CWCLOCK_IPINFO_TOKEN"),
 	}
 }
 
