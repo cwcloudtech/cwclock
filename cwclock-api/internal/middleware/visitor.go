@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
+
 	"cwclock-api/internal/models"
 	"cwclock-api/internal/utils"
 )
@@ -32,12 +34,16 @@ type VisitorStore interface {
 type Enricher func(ctx context.Context, ip string) (map[string]string, error)
 
 // BanIP sits in front of every route: a banned address is refused on the login
-// page and the public feed alike (403), and the visit is logged here - anonymously,
-// at most once per calendar day. The IP↔user association is recorded separately at
-// login/register/OIDC. The ban check fails open: a lookup error allows the request
-// rather than taking the whole site down over a moderation feature. An address that
-// will not parse is left alone (behind a trusted proxy the header is a real address).
-func BanIP(store VisitorStore, enrich Enricher, alerter *BanAlerter) func(http.Handler) http.Handler {
+// page and the public endpoints alike (403), and the visit is logged here - on
+// EVERY endpoint, not just login - attributed to the caller resolved from the
+// request's own token (or anonymously when there's none), at most once per
+// calendar day per (user, ip). This is the same per-request, once-a-day-per-pair
+// recording ~/strong-fish does, so a member browsing all afternoon from one
+// address is one row, bumped once. The ban check fails open: a lookup error
+// allows the request rather than taking the whole site down over a moderation
+// feature. An address that will not parse is left alone (behind a trusted proxy
+// the header is a real address).
+func BanIP(store VisitorStore, enrich Enricher, alerter *BanAlerter, secret string, apiKeys ApiKeyVerifier) func(http.Handler) http.Handler {
 	seen := newDayCache()
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -62,14 +68,54 @@ func BanIP(store VisitorStore, enrich Enricher, alerter *BanAlerter) func(http.H
 				return
 			}
 
-			// Log the visit anonymously, at most once a day per address (the DB is the
-			// real once-a-day authority; this cache keeps the hot path write-free).
-			if seen.firstToday(ip) {
-				go TrackVisit(store, enrich, nil, ip)
+			// Resolve who is behind the request from its own token (X-Api-Key, else
+			// the Bearer JWT - the same order Auth uses), and record the visit once a
+			// day per (user, ip). Anonymous callers are recorded once a day per ip.
+			var userID *string
+			if uid, ok := resolveCaller(secret, apiKeys, r); ok {
+				userID = &uid
+			}
+			if seen.firstToday(dayKey(userID, ip)) {
+				go TrackVisit(store, enrich, userID, ip)
 			}
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+// resolveCaller best-effort resolves the authenticated user id from a request's
+// X-Api-Key (authoritative, as in Auth) or its Bearer JWT, WITHOUT rejecting an
+// anonymous or invalid one - the ban guard uses it only to attribute a visit, so
+// an unresolved caller is simply recorded anonymously. The JWT path is a cheap
+// signature check; the X-Api-Key path is the same indexed lookup Auth runs.
+func resolveCaller(secret string, apiKeys ApiKeyVerifier, r *http.Request) (string, bool) {
+	if apiKey := r.Header.Get("X-Api-Key"); utils.IsNotBlank(apiKey) {
+		if apiKeys == nil {
+			return "", false
+		}
+		userID, err := apiKeys.VerifyHash(r.Context(), utils.HashToken(apiKey))
+		if err != nil || utils.IsBlank(userID) {
+			return "", false
+		}
+		return userID, true
+	}
+
+	header := r.Header.Get("Authorization")
+	if !strings.HasPrefix(header, "Bearer ") {
+		return "", false
+	}
+	claims := jwt.MapClaims{}
+	token, err := jwt.ParseWithClaims(strings.TrimPrefix(header, "Bearer "), claims, func(*jwt.Token) (any, error) {
+		return []byte(secret), nil
+	})
+	if err != nil || !token.Valid {
+		return "", false
+	}
+	sub, ok := claims["sub"].(string)
+	if !ok || utils.IsBlank(sub) {
+		return "", false
+	}
+	return sub, true
 }
 
 // TrackVisit upserts a visit and, when the address is newly recorded, enriches it
@@ -149,6 +195,15 @@ func (c *dayCache) firstToday(key string) bool {
 }
 
 func today() string { return time.Now().UTC().Format("2006-01-02") }
+
+// dayKey identifies a (member-or-anonymous, ip) pair for the day cache, so the
+// once-a-day recording is per (user, ip) rather than per ip alone.
+func dayKey(userID *string, ip string) string {
+	if userID != nil {
+		return *userID + "|" + ip
+	}
+	return "|" + ip
+}
 
 // isInfraPath reports whether a path is an operational endpoint the guard passes
 // straight through - the health check and the metrics scrape.

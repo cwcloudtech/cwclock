@@ -81,7 +81,7 @@ func New(
 	// the login page and the public endpoints alike (403), and the visit is logged
 	// here (anonymously, once a day). Mounted only when a session store is wired.
 	if sessions != nil {
-		r.Use(middleware.BanIP(sessions, enricher, banAlerter))
+		r.Use(middleware.BanIP(sessions, enricher, banAlerter, jwtSecret, apiKeys))
 	}
 
 	r.Route("/v1", func(r chi.Router) {
