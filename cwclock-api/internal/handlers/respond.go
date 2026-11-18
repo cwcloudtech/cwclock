@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -8,6 +9,12 @@ import (
 
 	"cwclock-api/internal/store"
 )
+
+// statusClientClosedRequest is nginx's 499 "Client Closed Request": the caller
+// hung up before the response was ready. It is not a server error, so we answer
+// with it rather than a 500 - that keeps a canceled request out of the error log
+// and out of the [ERROR] alerting that fires on 5xx.
+const statusClientClosedRequest = 499
 
 type errorBody struct {
 	Message  string `json:"message"`
@@ -102,6 +109,15 @@ func writeInvalidPassword(w http.ResponseWriter, code string) {
 // writeStoreError maps a store error to its HTTP status: 404 when the
 // resource doesn't exist, 400 for a duplicate email, 500 for anything else.
 func writeStoreError(w http.ResponseWriter, err error) {
+	// A canceled context means the client went away mid-flight (closed the tab,
+	// navigated, or an aborted fetch - common with React re-renders), not a server
+	// fault. The response won't be read anyway, so just record the cause at debug
+	// and answer 499 so it never lands in the error log or triggers 5xx alerting.
+	if errors.Is(err, context.Canceled) {
+		slog.Debug("request canceled by client", "error", err)
+		w.WriteHeader(statusClientClosedRequest)
+		return
+	}
 	if errors.Is(err, store.ErrNotFound) {
 		writeError(w, http.StatusNotFound, "Resource not found", CodeNotFound)
 		return
