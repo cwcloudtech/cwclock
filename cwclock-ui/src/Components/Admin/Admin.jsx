@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { FaRegEdit } from "react-icons/fa";
+import { FaRegEdit, FaEye } from "react-icons/fa";
 import { MdDeleteForever, MdSecurity } from "react-icons/md";
 import Tooltip from "../common/Tooltip";
 import ConfirmModal from "../common/ConfirmModal";
 import CopyIdButton from "../common/CopyIdButton";
 import memberLabel from "../common/memberLabel";
 import EditUserModal from "./EditUserModal";
+import UserIpsModal from "./UserIpsModal";
 import { listAllUsersApi, deleteUserApi, disableMfaApi } from "../../Redux/Admin/Admin.actions";
 import { useI18n } from "../../i18n/I18nContext";
 import styles from "./Styles/Admin.module.css";
@@ -28,6 +29,7 @@ const Admin = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [deletingUser, setDeletingUser] = useState(null);
   const [disablingMfaUser, setDisablingMfaUser] = useState(null);
+  const [viewingIpsUser, setViewingIpsUser] = useState(null);
   const [filter, setFilter] = useState("all");
 
   const filterLabel = (f) => (f === "all" ? t("admin.filterAll") : t(`common.globalRole${f.charAt(0).toUpperCase()}${f.slice(1)}`));
@@ -75,6 +77,11 @@ const Admin = () => {
             <span className={`${styles.roleBadge} ${roleBadgeClass[u.role] || ""}`}>{roleLabel(u.role)}</span>
             <div className={styles.rowActions}>
               <CopyIdButton id={u.id} className={styles.iconBtn} />
+              <Tooltip label={t("admin.viewIps")}>
+                <button type="button" className={styles.iconBtn} onClick={() => setViewingIpsUser(u)}>
+                  <FaEye style={{ fontSize: "17px" }} />
+                </button>
+              </Tooltip>
               {u.mfaEnabled && (
                 <Tooltip label={t("admin.disableMfa")}>
                   <button type="button" className={styles.iconBtn} onClick={() => setDisablingMfaUser(u)}>
@@ -106,6 +113,13 @@ const Admin = () => {
         show={!!editingUser}
         onClose={() => setEditingUser(null)}
         targetUser={editingUser}
+        token={user.token}
+      />
+
+      <UserIpsModal
+        show={!!viewingIpsUser}
+        onClose={() => setViewingIpsUser(null)}
+        targetUser={viewingIpsUser}
         token={user.token}
       />
 

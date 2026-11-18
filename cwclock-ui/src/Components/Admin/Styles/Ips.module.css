@@ -1,0 +1,192 @@
+.main {
+  /* Wider than users/organizations: a roster row carries many columns. */
+  max-width: 1200px;
+  padding: var(--cw-spacing-lg);
+  margin: 0 auto;
+}
+
+.statsRow {
+  display: flex;
+  gap: var(--cw-spacing);
+  margin-bottom: var(--cw-spacing);
+}
+
+.statCard {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 18px;
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-sm);
+  background-color: var(--cw-surface);
+}
+
+.statValue {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.statLabel {
+  color: var(--cw-text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: var(--cw-spacing);
+}
+
+.subjectForm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.subjectForm input {
+  min-width: 22rem;
+}
+
+.ipList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Roster row: address, members, location, network, connections, last seen,
+   status, actions. */
+.ipRow {
+  display: grid;
+  grid-template-columns:
+    minmax(120px, auto) minmax(140px, 1.6fr) minmax(130px, 1.4fr)
+    minmax(110px, 1fr) minmax(50px, auto) minmax(130px, auto) minmax(70px, auto) auto;
+  align-items: center;
+  gap: var(--cw-spacing);
+}
+
+/* Per-user modal row: address, location, connections, last seen, status, actions. */
+.userIpRow {
+  display: grid;
+  grid-template-columns: minmax(120px, auto) minmax(140px, 1.6fr) minmax(50px, auto) minmax(130px, auto) minmax(70px, auto) auto;
+  align-items: center;
+  gap: var(--cw-spacing);
+}
+
+.ipAddr {
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.members,
+.geo,
+.network,
+.seen {
+  color: var(--cw-text-muted);
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.count {
+  font-weight: 600;
+  text-align: right;
+}
+
+.seen {
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--cw-text-muted);
+}
+
+.bannedBadge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: var(--cw-danger-light);
+  color: var(--cw-danger);
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  justify-self: end;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 6px 10px;
+  color: var(--cw-text-muted);
+  border-radius: var(--cw-radius-sm);
+  cursor: pointer;
+  transition: background-color var(--cw-transition), color var(--cw-transition);
+}
+
+.iconBtn:hover {
+  color: var(--cw-primary-700);
+  background-color: var(--cw-primary-tint);
+}
+
+.iconBtnDanger:hover {
+  color: var(--cw-danger);
+  background-color: var(--cw-danger-light);
+}
+
+.iconBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--cw-spacing-lg);
+  border: 1px dashed var(--cw-border);
+  border-radius: var(--cw-radius-sm);
+  color: var(--cw-text-muted);
+  text-align: center;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cw-spacing);
+  margin-top: var(--cw-spacing);
+}
+
+.pageLabel {
+  color: var(--cw-text-muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 960px) {
+  .ipRow,
+  .userIpRow {
+    grid-template-columns: 1fr auto;
+    row-gap: 4px;
+  }
+
+  .members,
+  .geo,
+  .network,
+  .seen {
+    grid-column: 1 / -1;
+    white-space: normal;
+  }
+}

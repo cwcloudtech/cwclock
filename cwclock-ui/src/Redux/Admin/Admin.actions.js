@@ -10,11 +10,12 @@ import {
   AdminAuditListSUCCESS,
 } from "./Admin.types";
 import toastOptions from "../toastOptions";
-import { translate, getStoredLocale } from "../../i18n/translate";
+import { translate, getStoredLocale, apiErrorMessage } from "../../i18n/translate";
 
 const USERS_ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/admin/users/`;
 const ORGS_ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/admin/organizations/`;
 const AUDIT_ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/admin/audit/`;
+const IPBANS_ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/admin/ip-bans/`;
 
 const authConfig = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
 
@@ -102,5 +103,59 @@ export const listAuditApi = ({ page, size, action, subjectType, subject }, token
     return data;
   } catch (e) {
     dispatch({ type: AdminERROR });
+  }
+};
+
+// --- IP administration (superuser) ------------------------------------------
+// These hold their result in the calling component's local state rather than in
+// the admin redux slice (like the per-user MFA calls): the IP roster and a
+// member's IP list are screen-local, not shared app state. They surface errors
+// as a toast and rethrow so the component can stop its spinner.
+
+// listIpBansApi loads one page of the address roster (every address seen, plus
+// any banned before being seen), filtered by term and paged (0-based). Returns
+// { results, page, pageSize, hasNext }.
+export const listIpBansApi = (term, page, token) => async () => {
+  try {
+    const { data } = await axios.get(IPBANS_ENDPOINT, {
+      ...authConfig(token),
+      params: { term: term || undefined, page },
+    });
+    return data;
+  } catch (e) {
+    toast.error(apiErrorMessage(e, getStoredLocale()), toastOptions);
+    throw e;
+  }
+};
+
+// ipStatsApi returns { total, banned } for the badges above the roster.
+export const ipStatsApi = (token) => async () => {
+  const { data } = await axios.get(`${IPBANS_ENDPOINT}stats`, authConfig(token));
+  return data;
+};
+
+// putIpBanApi bans or unbans an address (one endpoint, action selects the op).
+export const putIpBanApi = ({ ip, action, motif }, token) => async () => {
+  try {
+    await axios.put(IPBANS_ENDPOINT, { ip, action, motif: motif || "" }, authConfig(token));
+    toast.success(
+      translate(getStoredLocale(), action === "unban" ? "toasts.ipUnbanned" : "toasts.ipBanned"),
+      toastOptions,
+    );
+  } catch (e) {
+    toast.error(apiErrorMessage(e, getStoredLocale()), toastOptions);
+    throw e;
+  }
+};
+
+// listUserIpsApi returns the addresses one account has connected from, newest
+// first: [{ ip, count, firstSeen, lastSeen, banned, geo }].
+export const listUserIpsApi = (id, token) => async () => {
+  try {
+    const { data } = await axios.get(`${USERS_ENDPOINT}${id}/ips`, authConfig(token));
+    return data;
+  } catch (e) {
+    toast.error(apiErrorMessage(e, getStoredLocale()), toastOptions);
+    throw e;
   }
 };

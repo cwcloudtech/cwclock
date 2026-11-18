@@ -1,9 +1,10 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { FiClock, FiKey, FiCalendar } from "react-icons/fi";
-import { FaFileAlt, FaRegUserCircle, FaBuilding, FaUserShield, FaChartBar, FaFileInvoiceDollar, FaDownload, FaClipboardList } from "react-icons/fa";
+import { FaFileAlt, FaRegUserCircle, FaBuilding, FaUserShield, FaChartBar, FaFileInvoiceDollar, FaDownload, FaClipboardList, FaNetworkWired } from "react-icons/fa";
 import { FaBuildingShield } from "react-icons/fa6";
 import Tooltip from "../../common/Tooltip";
+import useAppVersion from "../../common/useAppVersion";
 import { useI18n } from "../../../i18n/I18nContext";
 import styles from "./STYLE/SidebarNav.module.css";
 
@@ -23,6 +24,7 @@ const exportJobsItem = { to: "/dashboard/export-jobs", labelKey: "nav.exportJobs
 const adminItems = [
   { to: "/dashboard/admin", labelKey: "nav.users", Icon: FaUserShield },
   { to: "/dashboard/admin/organizations", labelKey: "nav.organizationsAdmin", Icon: FaBuildingShield },
+  { to: "/dashboard/admin/ip-bans", labelKey: "nav.ipManagement", Icon: FaNetworkWired },
   { to: "/dashboard/admin/audit", labelKey: "nav.auditTrail", Icon: FaClipboardList },
 ];
 
@@ -33,6 +35,7 @@ const adminItems = [
 // unlike the admin section below which is global-superuser-only (isSuperuser).
 const SidebarNav = ({ expanded, isSuperuser, showInvoices }) => {
   const { t } = useI18n();
+  const appVersion = useAppVersion();
   let links = showInvoices
     ? [...items.slice(0, 3), invoicesItem, exportJobsItem, ...items.slice(3)]
     : items;
@@ -54,6 +57,15 @@ const SidebarNav = ({ expanded, isSuperuser, showInvoices }) => {
           </Tooltip>
         );
       })}
+      {appVersion && (
+        <div
+          className={styles.version}
+          style={{ marginTop: "auto", padding: "10px 6px", textAlign: "center", color: "var(--cw-text-muted)", fontSize: "0.72rem" }}
+          title={`v${appVersion}`}
+        >
+          v{appVersion}
+        </div>
+      )}
     </nav>
   );
 };

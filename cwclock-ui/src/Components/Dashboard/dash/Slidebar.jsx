@@ -28,6 +28,7 @@ import ExportJobsdiv from "../pages/ExportJobs";
 import Admindiv from "../pages/Admin";
 import AdminOrganizationsdiv from "../pages/AdminOrganizations";
 import AdminAuditdiv from "../pages/AdminAudit";
+import AdminIpsdiv from "../pages/AdminIps";
 import ApiKeysdiv from "../pages/ApiKeys";
 import { useSelector, useDispatch } from "react-redux";
 import { meApi, logoutUser, logoutApi } from "../../../Redux/Auth/Auth.actions";
@@ -314,6 +315,7 @@ const Slidebar = () => {
               <Route path="/admin/organizations" element={<AdminOrganizationsdiv />}></Route>
             )}
             {isSuperuser && <Route path="/admin/audit" element={<AdminAuditdiv />}></Route>}
+            {isSuperuser && <Route path="/admin/ip-bans" element={<AdminIpsdiv />}></Route>}
           </Routes>
         </div>
       </div>
