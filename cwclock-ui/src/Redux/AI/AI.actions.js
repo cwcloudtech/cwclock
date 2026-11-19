@@ -114,6 +114,21 @@ export const shareConnectionApi = (connectionId, email, token) => async () => {
   }
 };
 
+// searchShareableEmailsApi powers the share picker's autocomplete, restricted
+// server-side to people the caller may share with (all users for an admin, else
+// the members of the organizations they own). Returns [{email, name, surname}].
+export const searchShareableEmailsApi = (query, token) => async () => {
+  try {
+    const { data } = await axios.get(`${BASE}/shareable-emails`, {
+      params: { q: query },
+      ...authConfig(token),
+    });
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+};
+
 export const unshareConnectionApi = (connectionId, userId, token) => async () => {
   try {
     await axios.delete(`${BASE}/connections/${connectionId}/shares/${userId}`, authConfig(token));

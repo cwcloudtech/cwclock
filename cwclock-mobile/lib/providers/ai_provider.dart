@@ -104,6 +104,20 @@ class AiNotifier extends Notifier<AiState> {
     await ref.read(apiClientProvider).dio.delete('/ai/connections/$connectionId/shares/$userId');
   }
 
+  /// Emails the caller may share with (admin: everyone matching; otherwise the
+  /// members of the organizations they own). Restricted server-side; free text
+  /// is still accepted by shareConnection.
+  Future<List<String>> searchShareableEmails(String query) async {
+    final response = await ref.read(apiClientProvider).dio.get(
+      '/ai/shareable-emails',
+      queryParameters: {'q': query},
+    );
+    return (response.data as List)
+        .map((e) => (e as Map)['email'] as String? ?? '')
+        .where((s) => s.isNotEmpty)
+        .toList();
+  }
+
   // --- chat + conversations ---
 
   Future<void> listConversations() async {

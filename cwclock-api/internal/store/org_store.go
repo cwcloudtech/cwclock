@@ -552,6 +552,38 @@ func (s *OrgStore) ListMembers(ctx context.Context, orgID string) ([]models.Memb
 	return members, rows.Err()
 }
 
+// ShareableMembers returns the distinct members (by account) of every
+// organization ownerID OWNS, whose email matches query (ILIKE, empty matches
+// all), excluding ownerID themselves. Used by the AI subscription share picker
+// (ai-instruct-132) so a non-admin owner can only autocomplete people they
+// actually know — the members of their own organizations. Only UserID, Email,
+// Name and Surname are populated.
+func (s *OrgStore) ShareableMembers(ctx context.Context, ownerID, query string, limit int) ([]models.Member, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT DISTINCT u.id, u.email, COALESCE(u.data->>'name', ''), COALESCE(u.data->>'surname', '')
+		FROM organization_members m
+		JOIN organizations o ON o.id = m.organization_id
+		JOIN users u ON u.id = m.user_id
+		WHERE o.owner_id = $1 AND u.id <> $1 AND u.email ILIKE '%' || $2 || '%'
+		ORDER BY u.email
+		LIMIT $3
+	`, ownerID, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	members := []models.Member{}
+	for rows.Next() {
+		var m models.Member
+		if err := rows.Scan(&m.UserID, &m.Email, &m.Name, &m.Surname); err != nil {
+			return nil, err
+		}
+		members = append(members, m)
+	}
+	return members, rows.Err()
+}
+
 // TransferOwnership makes newOwnerID the organization's owner. The previous
 // owner is demoted to admin (keeping meaningful access) and the new owner's
 // membership row (which must already exist) is promoted to owner.

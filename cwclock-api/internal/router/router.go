@@ -236,6 +236,7 @@ func New(
 			r.Use(middleware.RequireActiveUser(users, activationMode, banAlerter))
 
 			r.Get("/providers", aiHandler.Providers)
+			r.Get("/shareable-emails", aiHandler.ShareableEmails)
 
 			r.Route("/connections", func(r chi.Router) {
 				r.Get("/", aiHandler.List)

@@ -357,6 +357,65 @@ func (h *AIHandler) Unshare(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"userId": targetID})
 }
 
+// aiShareableContact is one autocomplete suggestion for the share picker: an
+// email the caller is allowed to share a subscription with, plus a display name.
+type aiShareableContact struct {
+	Email   string `json:"email"`
+	Name    string `json:"name"`
+	Surname string `json:"surname"`
+}
+
+// ShareableEmails powers the share picker's autocomplete, restricted to the people
+// the caller actually knows (ai-instruct-132): a superuser may share with ANY
+// account, so it searches every user; anyone else may only share with the members
+// of the organizations THEY own, so it searches those. Free text is still accepted
+// by Share itself — this only bounds the suggestions.
+func (h *AIHandler) ShareableEmails(w http.ResponseWriter, r *http.Request) {
+	userID, ok := aiUserID(r)
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "Authentication required", CodeInvalidCredentials)
+		return
+	}
+	query := strings.TrimSpace(r.URL.Query().Get("q"))
+
+	user, err := h.users.FindByID(r.Context(), userID)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+
+	contacts := []aiShareableContact{}
+	if user.Role == models.GlobalRoleSuperuser {
+		// An admin can reach everyone, but only once they've typed something — an
+		// empty term must not dump the whole user table.
+		if query == "" {
+			writeJSON(w, http.StatusOK, contacts)
+			return
+		}
+		users, err := h.users.SearchByEmail(r.Context(), query, 10)
+		if err != nil {
+			writeStoreError(w, err)
+			return
+		}
+		for _, u := range users {
+			if u.ID == userID {
+				continue
+			}
+			contacts = append(contacts, aiShareableContact{Email: u.Email, Name: u.Name, Surname: u.Surname})
+		}
+	} else {
+		members, err := h.orgs.ShareableMembers(r.Context(), userID, query, 20)
+		if err != nil {
+			writeStoreError(w, err)
+			return
+		}
+		for _, m := range members {
+			contacts = append(contacts, aiShareableContact{Email: m.Email, Name: m.Name, Surname: m.Surname})
+		}
+	}
+	writeJSON(w, http.StatusOK, contacts)
+}
+
 // --- asking ---
 
 type chatSettings struct {

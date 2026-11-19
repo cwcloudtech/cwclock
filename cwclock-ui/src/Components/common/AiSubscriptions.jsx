@@ -17,6 +17,7 @@ import {
   listSharesApi,
   shareConnectionApi,
   unshareConnectionApi,
+  searchShareableEmailsApi,
 } from "../../Redux/AI/AI.actions";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
@@ -24,6 +25,19 @@ import memberLabel from "./memberLabel";
 import styles from "./Styles/AiSubscriptions.module.css";
 
 const emptyForm = { provider: "", name: "", token: "", model: "", baseUrl: "", maxTokens: "" };
+
+// randomSuffix is eight random hex chars, the tail of a suggested subscription
+// name, so "gpt-4o-mini" twice over reads as two different subscriptions (same
+// idea as uprodit's AiConnections).
+const randomSuffix = () => {
+  const bytes = new Uint8Array(4);
+  if (window.crypto?.getRandomValues) {
+    window.crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+};
 
 // AiSubscriptions is the self-service "AI subscriptions" section shown in
 // EditProfileModal (ai-instruct-132): add a connection to an AI provider with your
@@ -38,6 +52,7 @@ const AiSubscriptions = ({ token }) => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null); // connection being edited, or null
   const [form, setForm] = useState(emptyForm);
+  const [formSuffix, setFormSuffix] = useState(randomSuffix);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState(null);
@@ -46,6 +61,7 @@ const AiSubscriptions = ({ token }) => {
   const [sharing, setSharing] = useState(null); // connection whose shares are open
   const [shares, setShares] = useState([]);
   const [shareEmail, setShareEmail] = useState("");
+  const [shareSuggestions, setShareSuggestions] = useState([]);
   const [shareBusy, setShareBusy] = useState(false);
 
   useEffect(() => {
@@ -53,12 +69,38 @@ const AiSubscriptions = ({ token }) => {
     dispatch(listConnectionsApi(token));
   }, [dispatch, token]);
 
+  // Debounced autocomplete of people the user may share with (admin: everyone;
+  // otherwise the members of the organizations they own).
+  useEffect(() => {
+    if (!sharing) return undefined;
+    const term = shareEmail.trim();
+    if (term.length < 2) {
+      setShareSuggestions([]);
+      return undefined;
+    }
+    let cancelled = false;
+    const handle = setTimeout(async () => {
+      const results = await dispatch(searchShareableEmailsApi(term, token));
+      if (!cancelled) setShareSuggestions(results);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+  }, [shareEmail, sharing, dispatch, token]);
+
   const selectedProvider = providers.find((p) => p.name === form.provider);
   const providerOptions = providers.map((p) => ({ value: p.name, label: p.label }));
+
+  // The default name a blank field falls back to: "<model>-<random>", so two
+  // connections on the same model still read apart.
+  const effectiveModel = form.model.trim() || selectedProvider?.defaultModel || "";
+  const suggestedName = effectiveModel ? `${effectiveModel}-${formSuffix}` : "";
 
   const openAdd = () => {
     setEditing(null);
     setForm(emptyForm);
+    setFormSuffix(randomSuffix());
     setError("");
     setShowForm(true);
   };
@@ -92,7 +134,7 @@ const AiSubscriptions = ({ token }) => {
     }
     const payload = {
       provider: form.provider,
-      name: form.name.trim(),
+      name: form.name.trim() || suggestedName,
       token: form.token.trim(),
       model: form.model.trim(),
       baseUrl: form.baseUrl.trim(),
@@ -253,7 +295,7 @@ const AiSubscriptions = ({ token }) => {
               type="text"
               value={form.name}
               onChange={(e) => setField("name", e.target.value)}
-              placeholder={t("ai.namePlaceholder")}
+              placeholder={suggestedName || t("ai.namePlaceholder")}
             />
           </div>
           <div className="cw-field">
@@ -273,13 +315,21 @@ const AiSubscriptions = ({ token }) => {
           </div>
           <div className="cw-field">
             <label className="cw-label">{t("ai.model")}</label>
+            {/* Suggestions, not a fixed list — a vendor may ship a model the day
+                before the catalogue hears of it, and the API takes whatever is typed. */}
             <input
               className="cw-input"
               type="text"
+              list="ai-model-suggestions"
               value={form.model}
               onChange={(e) => setField("model", e.target.value)}
               placeholder={selectedProvider?.defaultModel || t("ai.modelPlaceholder")}
             />
+            <datalist id="ai-model-suggestions">
+              {(selectedProvider?.models || []).map((m) => (
+                <option key={m} value={m} />
+              ))}
+            </datalist>
           </div>
           <div className="cw-field">
             <label className="cw-label">{t("ai.baseUrl")}</label>
@@ -321,10 +371,16 @@ const AiSubscriptions = ({ token }) => {
           <input
             className="cw-input"
             type="email"
+            list="ai-share-suggestions"
             value={shareEmail}
             onChange={(e) => setShareEmail(e.target.value)}
             placeholder={t("ai.shareEmailPlaceholder")}
           />
+          <datalist id="ai-share-suggestions">
+            {shareSuggestions.map((s) => (
+              <option key={s.email} value={s.email} label={memberLabel(s)} />
+            ))}
+          </datalist>
           <Button type="submit" size="sm" disabled={shareBusy || !shareEmail.trim()}>
             {t("ai.shareAdd")}
           </Button>

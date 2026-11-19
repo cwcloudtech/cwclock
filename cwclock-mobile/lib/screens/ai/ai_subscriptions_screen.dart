@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -56,12 +59,16 @@ class _AiSubscriptionsScreenState extends ConsumerState<AiSubscriptionsScreen> {
     var maxTokens = editing != null && editing.maxTokens > 0 ? editing.maxTokens.toString() : '';
     var busy = false;
     String? formError;
+    final suffix = _randomSuffix();
 
     await showDialog<void>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setLocal) {
           final selected = providers.where((p) => p.name == provider).firstOrNull;
+          final effectiveModel =
+              model.trim().isNotEmpty ? model.trim() : (selected?.defaultModel ?? '');
+          final suggestedName = effectiveModel.isNotEmpty ? '$effectiveModel-$suffix' : '';
           return AlertDialog(
             title: Text(editing != null ? t('ai.editSubscription') : t('ai.addSubscription')),
             content: SingleChildScrollView(
@@ -79,7 +86,7 @@ class _AiSubscriptionsScreenState extends ConsumerState<AiSubscriptionsScreen> {
                   AppFormField(
                     label: t('ai.name'),
                     value: name,
-                    placeholder: t('ai.namePlaceholder'),
+                    placeholder: suggestedName.isNotEmpty ? suggestedName : t('ai.namePlaceholder'),
                     onChanged: (v) => name = v,
                   ),
                   AppFormField(
@@ -89,11 +96,17 @@ class _AiSubscriptionsScreenState extends ConsumerState<AiSubscriptionsScreen> {
                     placeholder: editing != null ? t('ai.keyLeaveBlank') : (selected?.keyHint ?? ''),
                     onChanged: (v) => token = v,
                   ),
-                  AppFormField(
+                  _AutocompleteField(
                     label: t('ai.model'),
-                    value: model,
+                    initialValue: model,
                     placeholder: selected?.defaultModel ?? t('ai.modelPlaceholder'),
-                    onChanged: (v) => model = v,
+                    optionsBuilder: (text) {
+                      final models = selected?.models ?? const <String>[];
+                      final q = text.trim().toLowerCase();
+                      if (q.isEmpty) return models;
+                      return models.where((m) => m.toLowerCase().contains(q));
+                    },
+                    onChanged: (v) => setLocal(() => model = v),
                   ),
                   AppFormField(
                     label: t('ai.baseUrl'),
@@ -139,7 +152,7 @@ class _AiSubscriptionsScreenState extends ConsumerState<AiSubscriptionsScreen> {
                         });
                         final payload = {
                           'provider': provider,
-                          'name': name.trim(),
+                          'name': name.trim().isNotEmpty ? name.trim() : suggestedName,
                           'token': token.trim(),
                           'model': model.trim(),
                           'baseUrl': baseUrl.trim(),
@@ -228,12 +241,18 @@ class _AiSubscriptionsScreenState extends ConsumerState<AiSubscriptionsScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: AppFormField(
-                        value: email,
+                      child: _AutocompleteField(
+                        initialValue: email,
                         keyboardType: TextInputType.emailAddress,
-                        textCapitalization: TextCapitalization.none,
                         placeholder: t('ai.shareEmailPlaceholder'),
-                        onChanged: (v) => email = v,
+                        optionsBuilder: (text) async {
+                          try {
+                            return await ref.read(aiProvider.notifier).searchShareableEmails(text.trim());
+                          } catch (_) {
+                            return const <String>[];
+                          }
+                        },
+                        onChanged: (v) => setLocal(() => email = v),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -421,5 +440,99 @@ extension _FirstOrNull<T> on Iterable<T> {
   T? get firstOrNull {
     final it = iterator;
     return it.moveNext() ? it.current : null;
+  }
+}
+
+final _rand = Random();
+
+/// Eight random hex chars, the tail of a suggested subscription name (same idea
+/// as uprodit's AiConnections), so two connections on the same model read apart.
+String _randomSuffix() =>
+    List.generate(4, (_) => _rand.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+
+/// A text field with a dropdown of suggestions (a datalist-style autocomplete),
+/// used for the model (suggestions from the provider's catalogue) and the share
+/// email (suggestions fetched from the server). Free text is always accepted.
+class _AutocompleteField extends StatelessWidget {
+  final String? label;
+  final String initialValue;
+  final FutureOr<Iterable<String>> Function(String text) optionsBuilder;
+  final ValueChanged<String> onChanged;
+  final String? placeholder;
+  final TextInputType? keyboardType;
+
+  const _AutocompleteField({
+    this.label,
+    required this.initialValue,
+    required this.optionsBuilder,
+    required this.onChanged,
+    this.placeholder,
+    this.keyboardType,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    return Padding(
+      padding: EdgeInsets.only(bottom: AppSpacing.of(2)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (label != null)
+            Padding(
+              padding: EdgeInsets.only(bottom: AppSpacing.of(0.5)),
+              child: Text(label!, style: TextStyle(fontSize: 13, color: colors.textMuted)),
+            ),
+          Autocomplete<String>(
+            initialValue: TextEditingValue(text: initialValue),
+            optionsBuilder: (value) => optionsBuilder(value.text),
+            onSelected: onChanged,
+            fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+              return TextField(
+                controller: controller,
+                focusNode: focusNode,
+                keyboardType: keyboardType,
+                textCapitalization: TextCapitalization.none,
+                style: TextStyle(fontSize: 16, color: colors.text),
+                decoration: InputDecoration(
+                  hintText: placeholder,
+                  hintStyle: TextStyle(color: colors.textMuted),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.of(1.5),
+                    vertical: AppSpacing.of(1.25),
+                  ),
+                ),
+                onChanged: onChanged,
+                onSubmitted: (_) => onFieldSubmitted(),
+              );
+            },
+            optionsViewBuilder: (context, onSelected, options) {
+              return Align(
+                alignment: Alignment.topLeft,
+                child: Material(
+                  elevation: 4,
+                  borderRadius: BorderRadius.circular(AppRadius.value),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 220, maxWidth: 320),
+                    child: ListView(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.zero,
+                      children: [
+                        for (final option in options)
+                          ListTile(
+                            dense: true,
+                            title: Text(option),
+                            onTap: () => onSelected(option),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 }
