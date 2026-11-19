@@ -60,7 +60,7 @@ const SidebarNav = ({ expanded, isSuperuser, showInvoices }) => {
       {appVersion && (
         <div
           className={styles.version}
-          style={{ marginTop: "auto", padding: "10px 6px", textAlign: "center", color: "var(--cw-text-muted)", fontSize: "0.72rem" }}
+          style={{ marginTop: "auto", padding: "10px 6px", textAlign: "center", color: "var(--cw-text-muted)", fontSize: "0.72rem", fontStyle: "italic" }}
           title={`v${appVersion}`}
         >
           v{appVersion}

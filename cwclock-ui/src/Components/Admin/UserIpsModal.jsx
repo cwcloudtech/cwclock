@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { FaBan, FaUnlock } from "react-icons/fa";
 import Modal from "../common/Modal";
-import Tooltip from "../common/Tooltip";
+import Button from "../common/Button";
+import Spinner from "../spinner/Spinner";
+import EmptyState from "../common/EmptyState";
 import memberLabel from "../common/memberLabel";
 import { listUserIpsApi, putIpBanApi } from "../../Redux/Admin/Admin.actions";
 import { useI18n } from "../../i18n/I18nContext";
@@ -10,25 +11,23 @@ import { geoLabel } from "./geoLabel";
 import styles from "./Styles/Ips.module.css";
 
 // UserIpsModal shows every address an account has connected from (the "eye"
-// button on each row of the admin Users screen), with its geolocation,
-// connection count and last-seen, and lets a superuser ban/unban the address
-// inline. The ban is the SAME global IP ban the IP-management screen manages -
-// banning here blocks the address for everyone, not just this user.
+// button on each row of the admin Users screen), as a clean table with its
+// geolocation, connection count and first/last seen, and lets a superuser
+// ban/unban the address inline. The ban is the SAME global IP ban the IP
+// management screen manages - banning here blocks the address for everyone.
 const UserIpsModal = ({ show, targetUser, token, onClose }) => {
   const { t, locale } = useI18n();
   const dispatch = useDispatch();
-  const [ips, setIps] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [ips, setIps] = useState(null); // null = loading
   const [busyIp, setBusyIp] = useState(null);
 
   useEffect(() => {
     if (!show || !targetUser) return;
     let cancelled = false;
-    setLoading(true);
+    setIps(null);
     dispatch(listUserIpsApi(targetUser.id, token))
       .then((data) => !cancelled && setIps(Array.isArray(data) ? data : []))
-      .catch(() => !cancelled && setIps([]))
-      .finally(() => !cancelled && setLoading(false));
+      .catch(() => !cancelled && setIps([]));
     return () => {
       cancelled = true;
     };
@@ -38,11 +37,11 @@ const UserIpsModal = ({ show, targetUser, token, onClose }) => {
     const action = entry.banned ? "unban" : "ban";
     setBusyIp(entry.ip);
     // Optimistic flip, rolled back if the call fails.
-    setIps((prev) => prev.map((e) => (e.ip === entry.ip ? { ...e, banned: !e.banned } : e)));
+    setIps((list) => list.map((x) => (x.ip === entry.ip ? { ...x, banned: !x.banned } : x)));
     try {
       await dispatch(putIpBanApi({ ip: entry.ip, action, motif: "" }, token));
     } catch {
-      setIps((prev) => prev.map((e) => (e.ip === entry.ip ? { ...e, banned: entry.banned } : e)));
+      setIps((list) => list.map((x) => (x.ip === entry.ip ? { ...x, banned: entry.banned } : x)));
     } finally {
       setBusyIp(null);
     }
@@ -50,48 +49,62 @@ const UserIpsModal = ({ show, targetUser, token, onClose }) => {
 
   if (!targetUser) return null;
 
+  const fmt = (d) => (d ? new Date(d).toLocaleString(locale) : "—");
+
   return (
-    <Modal show={show} title={t("admin.userIpsTitle", { name: memberLabel(targetUser) })} onClose={onClose}>
-      {loading ? (
-        <p className="cw-subtitle">{t("common.loading")}</p>
+    <Modal show={show} title={t("admin.userIpsTitle", { name: memberLabel(targetUser) })} onClose={onClose} wide>
+      <p className={styles.modalHelp}>{t("admin.userIpsHelp")}</p>
+
+      {ips === null ? (
+        <Spinner />
       ) : ips.length === 0 ? (
-        <p className="cw-subtitle">{t("admin.noIps")}</p>
+        <EmptyState title={t("admin.noIps")} body={t("admin.noIpsBody")} />
       ) : (
-        <ul className={`cw-list ${styles.ipList}`}>
-          {ips.map((entry) => (
-            <li className={`cw-list-item ${styles.userIpRow}`} key={entry.ip}>
-              <code className={styles.ipAddr}>{entry.ip}</code>
-              <span className={styles.geo}>{geoLabel(entry.geo) || "—"}</span>
-              <span className={styles.count}>{entry.count}</span>
-              <span className={styles.seen} title={entry.lastSeen ? new Date(entry.lastSeen).toISOString() : ""}>
-                {entry.lastSeen ? new Date(entry.lastSeen).toLocaleString(locale) : "—"}
-              </span>
-              <span>
-                {entry.banned ? (
-                  <span className={styles.bannedBadge}>{t("admin.banned")}</span>
-                ) : (
-                  <span className={styles.muted}>—</span>
-                )}
-              </span>
-              <div className={styles.rowActions}>
-                <Tooltip label={entry.banned ? t("admin.unban") : t("admin.ban")}>
-                  <button
-                    type="button"
-                    className={`${styles.iconBtn} ${entry.banned ? "" : styles.iconBtnDanger}`}
-                    onClick={() => toggleBan(entry)}
-                    disabled={busyIp === entry.ip}
-                  >
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>{t("admin.ipAddress")}</th>
+                <th>{t("admin.ipLocation")}</th>
+                <th className={styles.num}>{t("admin.ipConnections")}</th>
+                <th>{t("admin.ipFirstSeen")}</th>
+                <th>{t("admin.ipLastSeen")}</th>
+                <th>{t("admin.ipStatus")}</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {ips.map((entry) => (
+                <tr key={entry.ip}>
+                  <td>
+                    <code>{entry.ip}</code>
+                  </td>
+                  <td className={styles.muted}>{geoLabel(entry.geo) || "—"}</td>
+                  <td className={styles.num}>{entry.count}</td>
+                  <td className={styles.muted}>{fmt(entry.firstSeen)}</td>
+                  <td className={styles.muted}>{fmt(entry.lastSeen)}</td>
+                  <td>
                     {entry.banned ? (
-                      <FaUnlock style={{ fontSize: "15px" }} />
+                      <span className={styles.bannedBadge}>{t("admin.banned")}</span>
                     ) : (
-                      <FaBan style={{ fontSize: "15px" }} />
+                      <span className={styles.muted}>—</span>
                     )}
-                  </button>
-                </Tooltip>
-              </div>
-            </li>
-          ))}
-        </ul>
+                  </td>
+                  <td className={styles.num}>
+                    <Button
+                      size="sm"
+                      variant={entry.banned ? "secondary" : "danger"}
+                      onClick={() => toggleBan(entry)}
+                      disabled={busyIp === entry.ip}
+                    >
+                      {entry.banned ? t("admin.unban") : t("admin.ban")}
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </Modal>
   );

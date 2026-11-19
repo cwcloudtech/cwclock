@@ -13,12 +13,17 @@
   width: 100%;
   max-width: 420px;
   max-height: 90vh;
+  /* .wide below widens it for table-heavy content (e.g. the per-user IP list). */
   background-color: var(--cw-surface);
   border-radius: var(--cw-radius);
   box-shadow: var(--cw-shadow-lg);
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.wide {
+  max-width: 860px;
 }
 
 .header {

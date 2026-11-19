@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import Tooltip from "./Tooltip";
 import styles from "./Styles/Modal.module.css";
 
-const Modal = ({ show, title, onClose, children, footer }) => {
+const Modal = ({ show, title, onClose, children, footer, wide }) => {
   useEffect(() => {
     if (!show) return;
     const onKeyDown = (e) => e.key === "Escape" && onClose?.();
@@ -15,7 +15,7 @@ const Modal = ({ show, title, onClose, children, footer }) => {
   return (
     <div className={styles.backdrop} onMouseDown={onClose}>
       <div
-        className={styles.dialog}
+        className={`${styles.dialog} ${wide ? styles.wide : ""}`}
         role="dialog"
         aria-modal="true"
         onMouseDown={(e) => e.stopPropagation()}

@@ -69,12 +69,53 @@
   gap: var(--cw-spacing);
 }
 
-/* Per-user modal row: address, location, connections, last seen, status, actions. */
-.userIpRow {
-  display: grid;
-  grid-template-columns: minmax(120px, auto) minmax(140px, 1.6fr) minmax(50px, auto) minmax(130px, auto) minmax(70px, auto) auto;
-  align-items: center;
-  gap: var(--cw-spacing);
+/* Per-user IP modal: a clean table (address, location, connections, first/last
+   seen, status, action) rather than a cramped grid - inspired by ~/strong-fish. */
+.modalHelp {
+  margin: 0 0 var(--cw-spacing);
+  color: var(--cw-text-muted);
+  font-size: 0.88rem;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.table th {
+  text-align: left;
+  padding: 8px 10px;
+  color: var(--cw-text-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--cw-border);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--cw-border);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover td {
+  background-color: var(--cw-bg-alt);
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .ipAddr {
@@ -176,8 +217,7 @@
 }
 
 @media (max-width: 960px) {
-  .ipRow,
-  .userIpRow {
+  .ipRow {
     grid-template-columns: 1fr auto;
     row-gap: 4px;
   }
