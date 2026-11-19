@@ -16,6 +16,7 @@ import { useTheme } from "../../common/ThemeContext";
 import { useI18n, LANGUAGES } from "../../../i18n/I18nContext";
 import logo from "../../../assets/images/cwclock-logo.svg";
 import TimeTracker from "../pages/TimeTracker";
+import AiAssistantdiv from "../pages/AiAssistant";
 import SidebarNav from "./SidebarNav";
 
 import Calendardiv from "../pages/Calendar";
@@ -33,6 +34,7 @@ import ApiKeysdiv from "../pages/ApiKeys";
 import { useSelector, useDispatch } from "react-redux";
 import { meApi, logoutUser, logoutApi } from "../../../Redux/Auth/Auth.actions";
 import { listOrgsApi, selectOrg, listMembersApi } from "../../../Redux/Organizations/Org.actions";
+import { listConnectionsApi } from "../../../Redux/AI/AI.actions";
 import { isAdminOrOwner as computeIsAdminOrOwner } from "../../common/permissions";
 
 const Slidebar = () => {
@@ -54,9 +56,13 @@ const Slidebar = () => {
   const { locale, setLocale, t } = useI18n();
   const { user } = useSelector((state) => state.auth);
   const { organizations, currentOrgId, members } = useSelector((state) => state.organizations);
+  const { connections } = useSelector((state) => state.ai);
   const currentOrg = organizations.find((o) => o.id === currentOrgId);
   const isSuperuser = user.role === "superuser";
   const showInvoices = computeIsAdminOrOwner(user, members);
+  // The assistant chat shows only once the user has (or has been shared) at least
+  // one AI subscription (ai-instruct-132).
+  const aiEnabled = connections.length > 0;
 
   useEffect(() => {
     if (currentOrgId) {
@@ -71,6 +77,7 @@ const Slidebar = () => {
     }
     dispatch(meApi(user.token));
     dispatch(listOrgsApi(user.token));
+    dispatch(listConnectionsApi(user.token));
     // Depend on the token only: meApi syncs the profile (role, name, picture...)
     // into this same user object, so depending on the whole object would
     // re-trigger this effect on every successful sync, calling meApi again
@@ -297,11 +304,12 @@ const Slidebar = () => {
               {expanded ? <FaChevronLeft /> : <FaChevronRight />}
             </button>
           </Tooltip>
-          <SidebarNav expanded={expanded} isSuperuser={isSuperuser} showInvoices={showInvoices} />
+          <SidebarNav expanded={expanded} isSuperuser={isSuperuser} showInvoices={showInvoices} aiEnabled={aiEnabled} />
         </div>
         <div className={styles.pages}>
           <Routes>
             <Route path="/timetracker" element={<TimeTracker />}></Route>
+            {aiEnabled && <Route path="/assistant" element={<AiAssistantdiv />}></Route>}
             <Route path="/calendar" element={<Calendardiv />}></Route>
             <Route path="/reports" element={<Reportsdiv />}></Route>
             <Route path="/organizations" element={<Organizationsdiv />}></Route>

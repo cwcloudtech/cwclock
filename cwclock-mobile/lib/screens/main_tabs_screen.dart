@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/ai_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/main_tab_provider.dart';
 import '../providers/organizations_provider.dart';
 import '../providers/permissions.dart' as perm;
 import '../providers/session_provider.dart';
 import '../theme.dart';
+import 'ai/ai_chat_screen.dart';
 import 'invoices/invoices_screen.dart';
 import 'reports/reports_screen.dart';
 import 'settings/settings_screen.dart';
@@ -39,6 +41,15 @@ class _MainTabsScreenState extends ConsumerState<MainTabsScreen> {
     if (orgId != null) {
       Future.microtask(() => ref.read(organizationsProvider.notifier).listMembers(orgId));
     }
+    // Load the AI subscriptions so the Assistant tab appears once one exists
+    // (ai-instruct-132), best-effort like the other startup loads.
+    Future.microtask(() async {
+      try {
+        await ref.read(aiProvider.notifier).listConnections();
+      } catch (_) {
+        /* leave the tab hidden on a transient failure */
+      }
+    });
   }
 
   @override
@@ -48,11 +59,14 @@ class _MainTabsScreenState extends ConsumerState<MainTabsScreen> {
     final session = ref.watch(sessionProvider);
     final members = ref.watch(organizationsProvider).members;
     final showInvoices = perm.isAdminOrOwner(session.user, members);
+    final aiEnabled = ref.watch(aiProvider).enabled;
     final activeTab = ref.watch(mainTabProvider);
 
     final tabs = <_TabDef>[
       _TabDef(MainTab.timeTracker, t('timeTracker.title'), Icons.access_time, const TimeTrackerScreen()),
       _TabDef(MainTab.reports, t('reports.title'), Icons.description_outlined, const ReportsScreen()),
+      if (aiEnabled)
+        _TabDef(MainTab.assistant, t('ai.chatTab'), Icons.auto_awesome, const AiChatScreen()),
       if (showInvoices)
         _TabDef(MainTab.invoices, t('invoices.title'), Icons.receipt_long_outlined, const InvoicesScreen()),
       _TabDef(MainTab.settings, t('settings.title'), Icons.settings_outlined, const SettingsScreen()),

@@ -5,6 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// what index "Settings" resolves to. Lets any screen (e.g. AppTopBar's
 /// avatar action, ai-instruct-121) switch straight to Settings without
 /// knowing the current tab layout.
-enum MainTab { timeTracker, reports, invoices, settings }
+enum MainTab { timeTracker, reports, assistant, invoices, settings }
 
 final mainTabProvider = StateProvider<MainTab>((ref) => MainTab.timeTracker);

@@ -8,6 +8,7 @@ import 'models/time_entry.dart';
 import 'providers/session_provider.dart';
 import 'screens/admin/admin_organizations_screen.dart';
 import 'screens/admin/admin_users_screen.dart';
+import 'screens/ai/ai_subscriptions_screen.dart';
 import 'screens/clients/client_form_screen.dart';
 import 'screens/clients/clients_screen.dart';
 import 'screens/export_jobs/export_jobs_screen.dart';
@@ -159,6 +160,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/organizations',
         builder: (context, state) => const AdminOrganizationsScreen(),
+      ),
+      GoRoute(
+        path: '/ai/subscriptions',
+        builder: (context, state) => const AiSubscriptionsScreen(),
       ),
     ],
   );

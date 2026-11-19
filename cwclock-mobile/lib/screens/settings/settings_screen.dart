@@ -233,6 +233,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ref.read(themeModeProvider.notifier).toggle(),
                   margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
                 ),
+                AppButton(
+                  // Per-user AI subscriptions (ai-instruct-132): add/share the
+                  // keys that unlock the Assistant tab.
+                  title: t('ai.subscriptionsTitle'),
+                  icon: Icons.auto_awesome,
+                  variant: AppButtonVariant.secondary,
+                  onPressed: () => context.push('/ai/subscriptions'),
+                  margin: EdgeInsets.only(top: AppSpacing.of(1.5)),
+                ),
                 if (updateState.availableVersion != null) ...[
                   if (updateState.downloading)
                     Padding(

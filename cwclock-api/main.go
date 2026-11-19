@@ -68,6 +68,7 @@ func main() {
 	mailCounterStore := store.NewMailCounterStore(pool)
 	auditStore := store.NewAuditStore(pool)
 	sessionStore := store.NewSessionStore(pool)
+	aiStore := store.NewAIStore(pool)
 
 	mailer := email.NewSender(cfg.CWCloudAPIURL, cfg.CWCloudAPIKey, cfg.EmailFrom, cfg.APIBaseURL)
 
@@ -142,6 +143,12 @@ func main() {
 	calendarFeedHandler := handlers.NewCalendarFeedHandler(userStore, timeEntryStore, projectStore, clientStore, auditStore, cfg.APIBaseURL)
 	ipBanHandler := handlers.NewIPBanHandler(sessionStore).WithNotifier(discord)
 
+	// The AI assistant (ai-instruct-132). The cwclock_api tool calls this very API
+	// over the loopback (never through the corporate proxy or the public URL), as the
+	// signed-in user, so its own Auth/OrgMembership/RequireRole gates decide what the
+	// model may read or generate.
+	aiHandler := handlers.NewAIHandler(aiStore, userStore, orgStore, fmt.Sprintf("http://127.0.0.1:%s", cfg.Port))
+
 	met, err := metrics.Setup(ctx, metrics.Config{
 		Endpoint: cfg.OtelEndpoint,
 		Proto:    cfg.OtelProto,
@@ -162,7 +169,7 @@ func main() {
 
 	r := router.New(
 		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler, mfaHandler, importHandler, apiKeyHandler, configHandler, invoiceHandler,
-		currencyHandler, countryHandler, fieldHandler, oidcHandler, contactHandler, exportJobHandler, calendarFeedHandler,
+		currencyHandler, countryHandler, fieldHandler, oidcHandler, contactHandler, exportJobHandler, calendarFeedHandler, aiHandler,
 		orgStore, userStore, apiKeyStore, cfg.JWTSecret, cfg.ActivationMode, cfg.CorsEnabled, cfg.CorsAllowedOrigins, cfg.Version, cfg.ManifestPath,
 		tel, met.Observe, met.Handler,
 		sessionStore, ipBanHandler, enricher, banAlerter, onServerError,

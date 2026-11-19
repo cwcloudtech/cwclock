@@ -34,6 +34,7 @@ func New(
 	contactHandler *handlers.ContactHandler,
 	exportJobHandler *handlers.ExportJobHandler,
 	calendarFeedHandler *handlers.CalendarFeedHandler,
+	aiHandler *handlers.AIHandler,
 	orgs *store.OrgStore,
 	users *store.UserStore,
 	apiKeys middleware.ApiKeyVerifier,
@@ -223,6 +224,37 @@ func New(
 			r.Use(middleware.RequireActiveUser(users, activationMode, banAlerter))
 			r.Use(middleware.RequireSuperuser(users))
 			r.Get("/", adminHandler.Audit)
+		})
+
+		// The AI assistant (ai-instruct-132): a user's model subscriptions
+		// (connections) and who they share them with, plus the chat — answered
+		// as an agent with cwclock's own API offered as a tool. Signed-in,
+		// active users only; the chat spends the caller's own (or a shared)
+		// subscription, there is no global provider key.
+		r.Route("/ai", func(r chi.Router) {
+			r.Use(middleware.Auth(jwtSecret, apiKeys))
+			r.Use(middleware.RequireActiveUser(users, activationMode, banAlerter))
+
+			r.Get("/providers", aiHandler.Providers)
+
+			r.Route("/connections", func(r chi.Router) {
+				r.Get("/", aiHandler.List)
+				r.Post("/", aiHandler.Create)
+				r.Post("/order", aiHandler.Reorder)
+				r.Put("/{id}", aiHandler.Update)
+				r.Delete("/{id}", aiHandler.Delete)
+				r.Get("/{id}/shares", aiHandler.ListShares)
+				r.Post("/{id}/shares", aiHandler.Share)
+				r.Delete("/{id}/shares/{userId}", aiHandler.Unshare)
+			})
+
+			r.Post("/chat", aiHandler.Chat)
+
+			r.Route("/conversations", func(r chi.Router) {
+				r.Get("/", aiHandler.ListConversations)
+				r.Delete("/", aiHandler.DeleteConversations)
+				r.Get("/{id}", aiHandler.GetConversation)
+			})
 		})
 
 		r.Route("/organizations", func(r chi.Router) {

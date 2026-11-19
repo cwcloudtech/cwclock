@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { FiClock, FiKey, FiCalendar } from "react-icons/fi";
+import { FiClock, FiKey, FiCalendar, FiMessageSquare } from "react-icons/fi";
 import { FaFileAlt, FaRegUserCircle, FaBuilding, FaUserShield, FaChartBar, FaFileInvoiceDollar, FaDownload, FaClipboardList, FaNetworkWired } from "react-icons/fa";
 import { FaBuildingShield } from "react-icons/fa6";
 import Tooltip from "../../common/Tooltip";
@@ -20,6 +20,7 @@ const items = [
 
 const invoicesItem = { to: "/dashboard/invoices", labelKey: "nav.invoices", Icon: FaFileInvoiceDollar };
 const exportJobsItem = { to: "/dashboard/export-jobs", labelKey: "nav.exportJobs", Icon: FaDownload };
+const assistantItem = { to: "/dashboard/assistant", labelKey: "nav.assistant", Icon: FiMessageSquare };
 
 const adminItems = [
   { to: "/dashboard/admin", labelKey: "nav.users", Icon: FaUserShield },
@@ -33,12 +34,14 @@ const adminItems = [
 // components that duplicated the same link list. Invoices and Export Jobs
 // only show for an admin/owner of the current organization (showInvoices),
 // unlike the admin section below which is global-superuser-only (isSuperuser).
-const SidebarNav = ({ expanded, isSuperuser, showInvoices }) => {
+const SidebarNav = ({ expanded, isSuperuser, showInvoices, aiEnabled }) => {
   const { t } = useI18n();
   const appVersion = useAppVersion();
   let links = showInvoices
     ? [...items.slice(0, 3), invoicesItem, exportJobsItem, ...items.slice(3)]
     : items;
+  // The assistant sits just after the time tracker once a subscription exists.
+  if (aiEnabled) links = [links[0], assistantItem, ...links.slice(1)];
   if (isSuperuser) links = [...links, ...adminItems];
   return (
     <nav className={styles.nav}>

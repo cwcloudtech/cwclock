@@ -1,0 +1,9 @@
+export const AiLOADING = "ai/Loading";
+export const AiERROR = "ai/Error";
+export const AiProvidersSUCCESS = "ai/ProvidersSuccess";
+export const AiConnectionsSUCCESS = "ai/ConnectionsSuccess";
+export const AiConversationsSUCCESS = "ai/ConversationsSuccess";
+export const AiConversationSUCCESS = "ai/ConversationSuccess";
+export const AiConversationRESET = "ai/ConversationReset";
+export const AiSENDING = "ai/Sending";
+export const AiSendDONE = "ai/SendDone";
