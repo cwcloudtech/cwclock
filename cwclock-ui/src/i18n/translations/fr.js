@@ -648,6 +648,7 @@ const fr = {
     welcomeBody: "Posez des questions sur votre temps, vos clients et vos projets — ou demandez-lui de générer un rapport ou une facture. Par exemple : « Combien d'heures avons-nous saisies sur Acme le mois dernier ? »",
     askPlaceholder: "Posez une question sur votre temps, vos clients, projets, rapports ou factures…",
     send: "Envoyer",
+    generatedBy: "Généré par",
     chatNoSubscriptionTitle: "Aucun abonnement IA",
     chatNoSubscriptionBody: "Ajoutez un abonnement IA depuis votre profil pour commencer à discuter avec l'assistant.",
   },

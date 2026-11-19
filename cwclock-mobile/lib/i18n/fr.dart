@@ -290,6 +290,7 @@ const Map<String, dynamic> fr = {
     'shareEmpty': 'Pas encore partagé.',
     'history': 'Historique',
     'newChat': 'Nouvelle conversation',
+    'generatedBy': 'Généré par',
     'noConversations': "Aucune conversation pour l'instant.",
     'clearHistory': "Effacer l'historique",
     'clearHistoryTitle': 'Effacer toutes les conversations',

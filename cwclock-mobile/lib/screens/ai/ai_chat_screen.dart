@@ -12,7 +12,14 @@ import '../../widgets/markdown_text.dart';
 class _Msg {
   final String role; // user | assistant | error
   final String content;
-  const _Msg(this.role, this.content);
+  // Credit of what produced an assistant answer (empty for user / error messages).
+  final String model;
+  final String connection;
+  final DateTime? createdAt;
+  const _Msg(this.role, this.content, {this.model = '', this.connection = '', this.createdAt});
+
+  /// The model, or the subscription name when the provider reported none.
+  String get credited => model.isNotEmpty ? model : connection;
 }
 
 /// The assistant chat (ai-instruct-132) — the mobile counterpart of cwclock-ui's
@@ -81,7 +88,8 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
           ..addAll([
             for (final ex in conv.exchanges) ...[
               _Msg('user', ex.question),
-              _Msg('assistant', ex.answer),
+              _Msg('assistant', ex.answer,
+                  model: ex.model, connection: ex.connection, createdAt: ex.createdAt),
             ],
           ]);
         _conversationId = conv.id;
@@ -112,7 +120,8 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
             orgId: orgId,
           );
       setState(() {
-        _messages.add(_Msg('assistant', res['message'] as String? ?? ''));
+        _messages.add(_Msg('assistant', res['message'] as String? ?? '',
+            model: res['model'] as String? ?? '', createdAt: DateTime.now()));
         final convId = res['conversationId'] as String?;
         if (convId != null && convId.isNotEmpty) _conversationId = convId;
       });
@@ -319,9 +328,40 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
         ),
         child: isError
             ? Text(m.content, style: TextStyle(color: colors.danger))
-            : MarkdownText(m.content, color: colors.text),
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  MarkdownText(m.content, color: colors.text),
+                  if (_creditLine(m).isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      _creditLine(m),
+                      style: TextStyle(color: colors.textMuted, fontSize: 11, fontStyle: FontStyle.italic),
+                    ),
+                  ],
+                ],
+              ),
       ),
     );
+  }
+
+  // Credit under an assistant answer: which model / subscription produced it, and
+  // when (ported from uprodit). `credited` is the model, or the subscription name
+  // when the provider reported none.
+  String _creditLine(_Msg m) {
+    final who = m.credited;
+    final date = m.createdAt == null ? '' : _formatDate(m.createdAt!);
+    final parts = <String>[
+      if (who.isNotEmpty) '${_t('ai.generatedBy')} $who',
+      if (date.isNotEmpty) date,
+    ];
+    return parts.join(' · ');
+  }
+
+  String _formatDate(DateTime value) {
+    final d = value.toLocal();
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${d.year}-${two(d.month)}-${two(d.day)} ${two(d.hour)}:${two(d.minute)}';
   }
 
   Widget _typing(BuildContext context) {

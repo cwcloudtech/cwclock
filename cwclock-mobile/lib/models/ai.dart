@@ -1,6 +1,7 @@
 // The AI assistant (ai-instruct-132) wire types, mirroring cwclock-api's
-// internal/models/ai.go and the web app's Redux shapes. Dates are ignored here
-// (the UI doesn't show them); everything else is projected.
+// internal/models/ai.go and the web app's Redux shapes. An exchange carries the
+// credit of what produced its answer (model / subscription / when); other dates
+// are ignored (the UI doesn't show them).
 
 /// One entry of the provider catalogue (GET /v1/ai/providers).
 class AiProviderInfo {
@@ -105,19 +106,42 @@ class AiConnectionShare {
   }
 }
 
-/// One stored exchange within a conversation.
+/// One stored exchange within a conversation. The credit fields say which model /
+/// subscription produced the answer and when (createdAt arrives as an RFC3339 string).
 class AiExchange {
   final String question;
   final String answer;
+  final String model;
+  final String connection;
+  final DateTime? createdAt;
 
-  const AiExchange({required this.question, required this.answer});
+  const AiExchange({
+    required this.question,
+    required this.answer,
+    this.model = '',
+    this.connection = '',
+    this.createdAt,
+  });
 
   factory AiExchange.fromJson(Map<String, dynamic> json) {
     return AiExchange(
       question: json['question'] as String? ?? '',
       answer: json['answer'] as String? ?? '',
+      model: json['model'] as String? ?? '',
+      connection: json['connection'] as String? ?? '',
+      createdAt: _parseAiDate(json['createdAt']),
     );
   }
+
+  /// The model, or the subscription name when the provider reported none.
+  String get credited => model.isNotEmpty ? model : connection;
+}
+
+/// Parses an RFC3339 timestamp (how the API sends createdAt) to local time;
+/// null for an absent or unparseable value.
+DateTime? _parseAiDate(dynamic value) {
+  if (value is! String || value.isEmpty) return null;
+  return DateTime.tryParse(value)?.toLocal();
 }
 
 /// A conversation thread (list form carries no exchanges; a read carries them).

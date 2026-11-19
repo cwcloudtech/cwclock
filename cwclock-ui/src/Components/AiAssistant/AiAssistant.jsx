@@ -19,6 +19,15 @@ import { apiErrorMessage } from "../../i18n/translate";
 import toastOptions from "../../Redux/toastOptions";
 import styles from "./Styles/AiAssistant.module.css";
 
+// The API sends an exchange's createdAt as an RFC3339 string (not epoch millis);
+// render it in the user's locale, and fall back to "" on an absent/unparseable value.
+const formatCreditDate = (value, locale) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" });
+};
+
 const AiAssistant = () => {
   const { t, locale } = useI18n();
   const dispatch = useDispatch();
@@ -61,7 +70,13 @@ const AiAssistant = () => {
       const loaded = [];
       (conv.exchanges || []).forEach((ex) => {
         loaded.push({ role: "user", content: ex.question });
-        loaded.push({ role: "assistant", content: ex.answer });
+        loaded.push({
+          role: "assistant",
+          content: ex.answer,
+          model: ex.model,
+          connection: ex.connection,
+          createdAt: ex.createdAt,
+        });
       });
       setMessages(loaded);
       setConversationId(conv.id);
@@ -80,7 +95,10 @@ const AiAssistant = () => {
       const res = await dispatch(
         sendChatApi({ message: text, conversationId, connectionId, orgId: currentOrgId }, user.token)
       );
-      setMessages((prev) => [...prev, { role: "assistant", content: res.message }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: res.message, model: res.model, createdAt: new Date().toISOString() },
+      ]);
       if (res.conversationId) setConversationId(res.conversationId);
       dispatch(listConversationsApi(user.token));
     } catch (err) {
@@ -170,7 +188,27 @@ const AiAssistant = () => {
                   : styles.messageAssistant
               }`}
             >
-              {m.role === "assistant" ? <Markdown>{m.content}</Markdown> : <span>{m.content}</span>}
+              {m.role === "assistant" ? (
+                <>
+                  <Markdown>{m.content}</Markdown>
+                  {(() => {
+                    // Credit under each answer: which model / subscription produced it, and when
+                    // (ported from uprodit). `model || connection` — the model, or the subscription
+                    // name when the provider reported none.
+                    const who = m.model || m.connection;
+                    const date = formatCreditDate(m.createdAt, locale);
+                    if (!who && !date) return null;
+                    return (
+                      <p className={styles.credit}>
+                        {who ? `${t("ai.generatedBy")} ${who}${date ? " · " : ""}` : ""}
+                        {date}
+                      </p>
+                    );
+                  })()}
+                </>
+              ) : (
+                <span>{m.content}</span>
+              )}
             </div>
           ))}
           {isSending && (

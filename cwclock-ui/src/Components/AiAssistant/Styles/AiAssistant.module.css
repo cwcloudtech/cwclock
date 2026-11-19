@@ -240,6 +240,14 @@
   animation-delay: 0.4s;
 }
 
+/* Small italic credit under an assistant answer: the model / subscription and when. */
+.credit {
+  margin: 6px 0 0;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--cw-text-muted);
+}
+
 @keyframes aiBlink {
   0%,
   80%,
