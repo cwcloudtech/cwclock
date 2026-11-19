@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { FiSend, FiPlus, FiTrash2, FiMessageSquare } from "react-icons/fi";
+import { FiSend, FiPlus, FiTrash2, FiMessageSquare, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { toast } from "react-toastify";
 import Markdown from "../common/Markdown";
 import SingleSelect from "../common/SingleSelect";
@@ -40,7 +40,27 @@ const AiAssistant = () => {
   const [conversationId, setConversationId] = useState(null);
   const [connectionId, setConnectionId] = useState("");
   const [confirmClear, setConfirmClear] = useState(false);
+  // The conversations rail collapses to a thin bar (like uprodit), remembered
+  // across reloads. localStorage can throw (private mode) — the toggle still works.
+  const [historyCollapsed, setHistoryCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("cwclock.assistant.historyCollapsed") === "1";
+    } catch {
+      return false;
+    }
+  });
   const scrollRef = useRef(null);
+
+  const toggleHistory = () =>
+    setHistoryCollapsed((collapsed) => {
+      const next = !collapsed;
+      try {
+        localStorage.setItem("cwclock.assistant.historyCollapsed", next ? "1" : "0");
+      } catch {
+        /* storage unavailable; the toggle still works, just isn't remembered */
+      }
+      return next;
+    });
 
   useEffect(() => {
     dispatch(listConnectionsApi(user.token));
@@ -140,32 +160,49 @@ const AiAssistant = () => {
 
   return (
     <div className={styles.main}>
-      <aside className={styles.sidebar}>
-        <button type="button" className={styles.newChatBtn} onClick={newChat}>
-          <FiPlus /> {t("ai.newChat")}
-        </button>
-        <div className={styles.conversationList}>
-          {conversations.length === 0 ? (
-            <p className={styles.sidebarEmpty}>{t("ai.noConversations")}</p>
-          ) : (
-            conversations.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                className={`${styles.conversationItem} ${c.id === conversationId ? styles.conversationActive : ""}`}
-                onClick={() => openConversation(c.id)}
-                title={c.title}
-              >
-                <FiMessageSquare className={styles.conversationIcon} />
-                <span className={styles.conversationTitle}>{c.title}</span>
-              </button>
-            ))
-          )}
+      <aside className={`${styles.sidebar} ${historyCollapsed ? styles.sidebarCollapsed : ""}`}>
+        <div className={styles.sidebarHeader}>
+          <Tooltip label={historyCollapsed ? t("ai.showHistory") : t("ai.hideHistory")} position="right">
+            <button
+              type="button"
+              className={styles.collapseBtn}
+              onClick={toggleHistory}
+              aria-label={historyCollapsed ? t("ai.showHistory") : t("ai.hideHistory")}
+            >
+              {historyCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
+            </button>
+          </Tooltip>
+          {!historyCollapsed && <span className={styles.sidebarTitle}>{t("ai.conversations")}</span>}
         </div>
-        {conversations.length > 0 && (
-          <button type="button" className={styles.clearBtn} onClick={() => setConfirmClear(true)}>
-            <FiTrash2 /> {t("ai.clearHistory")}
-          </button>
+        {!historyCollapsed && (
+          <>
+            <button type="button" className={styles.newChatBtn} onClick={newChat}>
+              <FiPlus /> {t("ai.newChat")}
+            </button>
+            <div className={styles.conversationList}>
+              {conversations.length === 0 ? (
+                <p className={styles.sidebarEmpty}>{t("ai.noConversations")}</p>
+              ) : (
+                conversations.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className={`${styles.conversationItem} ${c.id === conversationId ? styles.conversationActive : ""}`}
+                    onClick={() => openConversation(c.id)}
+                    title={c.title}
+                  >
+                    <FiMessageSquare className={styles.conversationIcon} />
+                    <span className={styles.conversationTitle}>{c.title}</span>
+                  </button>
+                ))
+              )}
+            </div>
+            {conversations.length > 0 && (
+              <button type="button" className={styles.clearBtn} onClick={() => setConfirmClear(true)}>
+                <FiTrash2 /> {t("ai.clearHistory")}
+              </button>
+            )}
+          </>
         )}
       </aside>
 

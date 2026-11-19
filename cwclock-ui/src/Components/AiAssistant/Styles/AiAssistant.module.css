@@ -15,6 +15,50 @@
   padding: var(--cw-spacing-sm);
   gap: var(--cw-spacing-sm);
   min-height: 0;
+  transition: width var(--cw-transition);
+}
+
+/* Collapsed: a thin rail with just the expand toggle. */
+.sidebarCollapsed {
+  width: auto;
+  padding: var(--cw-spacing-sm) 6px;
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebarTitle {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cw-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.collapseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-sm);
+  background-color: var(--cw-bg-alt);
+  color: var(--cw-text-muted);
+  cursor: pointer;
+  transition: background-color var(--cw-transition), color var(--cw-transition);
+}
+
+.collapseBtn:hover {
+  background-color: var(--cw-primary-tint);
+  color: var(--cw-primary);
 }
 
 .newChatBtn,
