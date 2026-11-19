@@ -174,35 +174,54 @@ const AiAssistant = () => {
           </Tooltip>
           {!historyCollapsed && <span className={styles.sidebarTitle}>{t("ai.conversations")}</span>}
         </div>
+
+        {/* New chat and Clear stay available when collapsed — icon-only with a
+            tooltip, like the main sidebar and uprodit. */}
+        <Tooltip label={historyCollapsed ? t("ai.newChat") : null} position="right">
+          <button
+            type="button"
+            className={`${styles.newChatBtn} ${historyCollapsed ? styles.iconOnly : ""}`}
+            onClick={newChat}
+            aria-label={t("ai.newChat")}
+          >
+            <FiPlus />
+            {!historyCollapsed && <span>{t("ai.newChat")}</span>}
+          </button>
+        </Tooltip>
+
         {!historyCollapsed && (
-          <>
-            <button type="button" className={styles.newChatBtn} onClick={newChat}>
-              <FiPlus /> {t("ai.newChat")}
-            </button>
-            <div className={styles.conversationList}>
-              {conversations.length === 0 ? (
-                <p className={styles.sidebarEmpty}>{t("ai.noConversations")}</p>
-              ) : (
-                conversations.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    className={`${styles.conversationItem} ${c.id === conversationId ? styles.conversationActive : ""}`}
-                    onClick={() => openConversation(c.id)}
-                    title={c.title}
-                  >
-                    <FiMessageSquare className={styles.conversationIcon} />
-                    <span className={styles.conversationTitle}>{c.title}</span>
-                  </button>
-                ))
-              )}
-            </div>
-            {conversations.length > 0 && (
-              <button type="button" className={styles.clearBtn} onClick={() => setConfirmClear(true)}>
-                <FiTrash2 /> {t("ai.clearHistory")}
-              </button>
+          <div className={styles.conversationList}>
+            {conversations.length === 0 ? (
+              <p className={styles.sidebarEmpty}>{t("ai.noConversations")}</p>
+            ) : (
+              conversations.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`${styles.conversationItem} ${c.id === conversationId ? styles.conversationActive : ""}`}
+                  onClick={() => openConversation(c.id)}
+                  title={c.title}
+                >
+                  <FiMessageSquare className={styles.conversationIcon} />
+                  <span className={styles.conversationTitle}>{c.title}</span>
+                </button>
+              ))
             )}
-          </>
+          </div>
+        )}
+
+        {conversations.length > 0 && (
+          <Tooltip label={historyCollapsed ? t("ai.clearHistory") : null} position="right">
+            <button
+              type="button"
+              className={`${styles.clearBtn} ${historyCollapsed ? styles.iconOnly : ""}`}
+              onClick={() => setConfirmClear(true)}
+              aria-label={t("ai.clearHistory")}
+            >
+              <FiTrash2 />
+              {!historyCollapsed && <span>{t("ai.clearHistory")}</span>}
+            </button>
+          </Tooltip>
         )}
       </aside>
 

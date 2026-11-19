@@ -61,6 +61,14 @@
   color: var(--cw-primary);
 }
 
+/* Collapsed-rail buttons: a square icon, centered, like the main sidebar. */
+.iconOnly {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  align-self: center;
+}
+
 .newChatBtn,
 .clearBtn {
   display: flex;
@@ -85,6 +93,9 @@
 
 .clearBtn {
   color: var(--cw-text-muted);
+  /* Stick to the bottom of the rail — redundant when the conversation list
+     (flex: 1) is present and expanded, but needed when it's hidden (collapsed). */
+  margin-top: auto;
 }
 
 .clearBtn:hover {
