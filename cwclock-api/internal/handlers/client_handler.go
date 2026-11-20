@@ -159,7 +159,7 @@ func (h *ClientHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	h.record(r, models.AuditClientCreated, models.AuditSubjectClient, client.ID,
 		map[string]any{"name": client.Name})
-	notifyDiscord(h.disc, fmt.Sprintf("[CLIENT] :nerd: name = %s, id = %s, org = %s", client.Name, client.ID, orgID))
+	notifyDiscord(h.disc, fmt.Sprintf("[CLIENT] :nerd: name = %s, id = %s, org = %s, by = %s", client.Name, client.ID, orgID, actingEmail(r)))
 	writeJSON(w, http.StatusCreated, client)
 }
 

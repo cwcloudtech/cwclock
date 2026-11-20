@@ -247,7 +247,7 @@ func (h *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 	// the route resolved - this endpoint has no {orgId}.
 	h.recordIn(r, org.ID, models.AuditOrgCreated, models.AuditSubjectOrganization, org.ID,
 		map[string]any{"name": org.Name})
-	notifyDiscord(h.disc, fmt.Sprintf("[ORG] :nerd: name = %s, id = %s, by = %s", org.Name, org.ID, userID))
+	notifyDiscord(h.disc, fmt.Sprintf("[ORG] :nerd: name = %s, id = %s, by = %s", org.Name, org.ID, actingEmail(r)))
 	writeJSON(w, http.StatusCreated, redactOrg(org))
 }
 
@@ -509,6 +509,22 @@ func (h *OrganizationHandler) ListMembers(w http.ResponseWriter, r *http.Request
 		return
 	}
 	writeJSON(w, http.StatusOK, redactRates(r, members))
+}
+
+// ListContributors is everyone who has ever logged time in the organization,
+// including people who have left it or whose account is disabled — so a report
+// for a former collaborator's old records can still resolve their user id (which
+// the current members list would no longer contain). Each row flags whether they
+// are still a member and still active.
+func (h *OrganizationHandler) ListContributors(w http.ResponseWriter, r *http.Request) {
+	orgID, _ := middleware.OrgIDFromContext(r.Context())
+
+	contributors, err := h.orgs.ListContributors(r.Context(), orgID)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, contributors)
 }
 
 func (h *OrganizationHandler) AddMember(w http.ResponseWriter, r *http.Request) {

@@ -195,7 +195,7 @@ func (h *TimeEntryHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	h.record(r, models.AuditRecordCreated, models.AuditSubjectRecord, entry.ID,
 		auditRecordDetail(entry, h.entries.Labels(r.Context(), entry)))
-	notifyDiscord(h.disc, fmt.Sprintf("[RECORD] :nerd: id = %s, org = %s, by = %s", entry.ID, orgID, userID))
+	notifyDiscord(h.disc, fmt.Sprintf("[RECORD] :nerd: id = %s, org = %s, by = %s", entry.ID, orgID, actingEmail(r)))
 	writeJSON(w, http.StatusCreated, entry)
 }
 

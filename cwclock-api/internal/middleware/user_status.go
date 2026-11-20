@@ -34,6 +34,9 @@ func RequireActiveUser(users *store.UserStore, activationMode string, alerter *B
 				jsonErrorCode(w, http.StatusForbidden, "Your account is disabled. Please contact an administrator.", models.I18nCodeForRole(user.Role, activationMode))
 				return
 			}
+			// Carry the email forward so handlers can name the acting user in a
+			// Discord notification without another lookup.
+			r = r.WithContext(WithUserEmail(r.Context(), user.Email))
 			next.ServeHTTP(w, r)
 		})
 	}

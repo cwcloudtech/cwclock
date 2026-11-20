@@ -552,6 +552,48 @@ func (s *OrgStore) ListMembers(ctx context.Context, orgID string) ([]models.Memb
 	return members, rows.Err()
 }
 
+// ListContributors returns every account that has ever logged time in the
+// organization — distinct over the org's time entries — joined to the members
+// list so each row says whether they are still a member (and with what role) and
+// whether their account is still active (not disabled/banned). Unlike
+// ListMembers, this includes people who have LEFT the org or been DEACTIVATED,
+// so a report for a former collaborator's old records can still resolve their
+// user id. Ordered members-first, then by name/email for a stable listing.
+func (s *OrgStore) ListContributors(ctx context.Context, orgID string) ([]models.Contributor, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT DISTINCT
+			u.id,
+			u.email,
+			COALESCE(u.data->>'name', ''),
+			COALESCE(u.data->>'surname', ''),
+			COALESCE(m.role, '') AS role,
+			(m.user_id IS NOT NULL) AS is_member,
+			(COALESCE(u.data->>'role', '') NOT IN ('disabled', 'ban')) AS active
+		FROM time_entries t
+		JOIN users u ON u.id = t.user_id
+		LEFT JOIN organization_members m
+			ON m.organization_id = t.organization_id AND m.user_id = u.id
+		WHERE t.organization_id = $1
+		ORDER BY is_member DESC, COALESCE(u.data->>'name', ''), u.email
+	`, orgID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	contributors := []models.Contributor{}
+	for rows.Next() {
+		var c models.Contributor
+		var role string
+		if err := rows.Scan(&c.UserID, &c.Email, &c.Name, &c.Surname, &role, &c.Member, &c.Active); err != nil {
+			return nil, err
+		}
+		c.Role = models.Role(role)
+		contributors = append(contributors, c)
+	}
+	return contributors, rows.Err()
+}
+
 // ShareableMembers returns the distinct members (by account) of every
 // organization ownerID OWNS, whose email matches query (ILIKE, empty matches
 // all), excluding ownerID themselves. Used by the AI subscription share picker

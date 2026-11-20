@@ -292,6 +292,11 @@ func New(
 					r.With(middleware.RequireRole(models.RoleAdmin)).Put("/{userId}/rate", orgHandler.SetMemberRate)
 				})
 
+				// Everyone who has ever logged time here, former members and disabled
+				// accounts included — so a report for a collaborator who has left can
+				// still resolve their user id. Reporting-oriented, so member-gated.
+				r.With(middleware.RequireRole(models.RoleMember)).Get("/contributors", orgHandler.ListContributors)
+
 				r.Route("/clients", func(r chi.Router) {
 					r.Get("/", clientHandler.List)
 					r.With(middleware.RequireRole(models.RoleAdmin)).Post("/", clientHandler.Create)

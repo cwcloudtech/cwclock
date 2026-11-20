@@ -228,7 +228,7 @@ func (h *InvoiceHandler) Generate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	externalconn.SyncUpload(r.Context(), ic.org.ExternalConnections, externalconn.YearFolder(inv.CreatedAt), externalconn.MonthCandidates(inv.CreatedAt), inv.Number+".pdf", pdf)
-	notifyDiscord(h.disc, fmt.Sprintf("[INVOICE] :nerd: number = %s, org = %s, client = %s", inv.Number, orgID, ic.client.Name))
+	notifyDiscord(h.disc, fmt.Sprintf("[INVOICE] :nerd: number = %s, org = %s, client = %s, by = %s", inv.Number, orgID, ic.client.Name, actingEmail(r)))
 
 	writeExportFile(w, "application/pdf", inv.Number+".pdf", pdf, nil)
 }

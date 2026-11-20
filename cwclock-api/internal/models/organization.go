@@ -125,3 +125,21 @@ type Member struct {
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 }
+
+// Contributor is anyone who has ever logged time in an organization, whether or
+// not they are still a member. It's how a report for a collaborator who has LEFT
+// the organization, or whose account was DEACTIVATED, can still be built: their
+// time entries persist (keyed by user id) even after they're removed from the
+// members list, so resolving the person here gives the user id the reports need.
+type Contributor struct {
+	UserID  string `json:"userId"`
+	Email   string `json:"email"`
+	Name    string `json:"name"`
+	Surname string `json:"surname"`
+	// Role is their CURRENT membership role, or "" when they are no longer a member.
+	Role Role `json:"role,omitempty"`
+	// Member is true when they are still in the organization's members list.
+	Member bool `json:"member"`
+	// Active is true when their account is not disabled or banned.
+	Active bool `json:"active"`
+}

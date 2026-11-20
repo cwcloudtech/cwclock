@@ -133,3 +133,16 @@ func (h *IPBanHandler) UserIPs(w http.ResponseWriter, r *http.Request) {
 func notifyDiscord(disc *notify.Discord, text string) {
 	go func() { _ = disc.SendText(context.Background(), text) }()
 }
+
+// actingEmail names the signed-in user for a notification's "by = …" field: their
+// email (set on the context by RequireActiveUser), falling back to their id, then
+// "unknown". So every user-triggered Discord notice can say who did it.
+func actingEmail(r *http.Request) string {
+	if email, ok := middleware.UserEmailFromContext(r.Context()); ok && strings.TrimSpace(email) != "" {
+		return email
+	}
+	if id, ok := middleware.UserIDFromContext(r.Context()); ok && strings.TrimSpace(id) != "" {
+		return id
+	}
+	return "unknown"
+}

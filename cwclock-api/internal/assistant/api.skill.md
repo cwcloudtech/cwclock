@@ -22,6 +22,16 @@ Use the ids from that context. When the user has one organization, use it. When 
 
 **Exception — a question about a *person*** (how much time someone logged, or a report/export for them): do **not** pick a single organization. A person can belong to several of your organizations, so look across **all** of them — find the person in each org's members and account for every org they belong to, never just the first (or the current) one.
 
+## Acting as a platform administrator
+
+By default you work **only within the organizations in your account context** — the ones the user belongs to. **When the user explicitly asks you to act "as an admin" / "en tant qu'administrateur"** (e.g. "as an admin, across all organizations", "platform-wide", "every user on the platform"), do **not** limit yourself to their own organizations or members — reach the whole platform through the **superuser-only admin endpoints**:
+
+- **`GET /v1/admin/organizations`** — *every* organization on the platform (id, name, owner), not just the caller's. Use the ids it returns to then run the normal organization-scoped reads and reports (`/v1/organizations/{orgId}/...`) on any of them: a superuser is an implicit owner of every organization, so those calls work even for orgs the caller isn't a member of.
+- **`GET /v1/admin/users`** — *every* user account (optionally narrow it with one or more repeatable `?email=` params, matched case-insensitively). Use it for "list all users", "find the account for `<email>` across the platform", etc.
+- **`GET /v1/admin/audit`** — the platform-wide audit trail (who did what), when asked.
+
+These require the **global superuser role**. The tool runs as the signed-in user, so if the caller is **not** an admin the call comes back `forbidden` (status 401/403): **tell the user they don't have administrator rights for that and stop — do not silently fall back to their own organizations, and do not retry.** Only go platform-wide when the user actually asked to act as an admin; otherwise stay within their own organizations.
+
 ## Resolving names to ids
 
 The user talks in names; the API works in ids. Resolve first, then act.
@@ -29,6 +39,7 @@ The user talks in names; the API works in ids. Resolve first, then act.
 - **Clients:** `GET /v1/organizations/{orgId}/clients` — the list of clients, each with `id` and a name. Match the name the user gave (case-insensitively) to get the `clientId`.
 - **Projects:** `GET /v1/organizations/{orgId}/projects` (all projects) or `GET /v1/organizations/{orgId}/clients/{clientId}/projects` (one client's). Each has an `id`, a name and its `clientId`.
 - **People (members):** `GET /v1/organizations/{orgId}/members` — each member has `userId`, `email`, `name`, `surname` and `role`. This is how you turn an **email, name or firstname** into the `userId` you need for a per-person report. Match on any of those fields. A person may be a member of **several** of your organizations, so when the question is about them, resolve their `userId` in **each** organization and run the report in each (skipping any where they are not a member).
+- **Former / deactivated people:** `/members` lists only the organization's **current** members. For old records of a collaborator who has **left the organization** or whose account was **deactivated**, they won't be in `/members` — but their time entries are still there (reports read entries by `userId` regardless of current membership). Resolve them through **`GET /v1/organizations/{orgId}/contributors`** instead: every account that has **ever** logged time in the org, each with `userId`, `email`, `name`, `surname`, their current `role` (empty if they left), `member` (still a member?) and `active` (account not disabled/banned?). Match the person there, then run the report with their `userId` exactly as for a current member. Reach for `contributors` whenever `/members` doesn't contain the person the user named and the question is about past time.
 
 ## Reports — the figures behind the hours
 

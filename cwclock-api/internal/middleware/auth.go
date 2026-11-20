@@ -15,6 +15,11 @@ type contextKey string
 
 const userIDKey contextKey = "userID"
 
+// userEmailKey carries the signed-in user's email, set by RequireActiveUser
+// (which already loads the account), so handlers can name the acting user in a
+// Discord notification without another store lookup.
+const userEmailKey contextKey = "userEmail"
+
 // ApiKeyVerifier resolves the user an API key token's hash belongs to. It's
 // a narrow interface (rather than importing *store.ApiKeyStore directly) so
 // this package doesn't depend on store.
@@ -79,4 +84,16 @@ func unauthorized(w http.ResponseWriter, message string) {
 func UserIDFromContext(ctx context.Context) (string, bool) {
 	id, ok := ctx.Value(userIDKey).(string)
 	return id, ok
+}
+
+// WithUserEmail returns a context carrying the signed-in user's email.
+func WithUserEmail(ctx context.Context, email string) context.Context {
+	return context.WithValue(ctx, userEmailKey, email)
+}
+
+// UserEmailFromContext is the signed-in user's email when RequireActiveUser has
+// run on the route, else ("", false).
+func UserEmailFromContext(ctx context.Context) (string, bool) {
+	email, ok := ctx.Value(userEmailKey).(string)
+	return email, ok
 }

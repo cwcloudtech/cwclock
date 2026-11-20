@@ -104,7 +104,7 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	h.record(r, models.AuditProjectCreated, models.AuditSubjectProject, project.ID,
 		h.auditProjectDetail(r.Context(), project))
-	notifyDiscord(h.disc, fmt.Sprintf("[PROJECT] :nerd: name = %s, id = %s, org = %s", p.Name, project.ID, orgID))
+	notifyDiscord(h.disc, fmt.Sprintf("[PROJECT] :nerd: name = %s, id = %s, org = %s, by = %s", p.Name, project.ID, orgID, actingEmail(r)))
 	writeJSON(w, http.StatusCreated, project)
 }
 
