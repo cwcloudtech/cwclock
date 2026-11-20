@@ -20,13 +20,15 @@ Your account context (just below your instructions) lists the organizations you 
 
 Use the ids from that context. When the user has one organization, use it. When they have several and it's ambiguous which they mean, ask — or use the "current organization" named in the context if one is given.
 
+**Exception — a question about a *person*** (how much time someone logged, or a report/export for them): do **not** pick a single organization. A person can belong to several of your organizations, so look across **all** of them — find the person in each org's members and account for every org they belong to, never just the first (or the current) one.
+
 ## Resolving names to ids
 
 The user talks in names; the API works in ids. Resolve first, then act.
 
 - **Clients:** `GET /v1/organizations/{orgId}/clients` — the list of clients, each with `id` and a name. Match the name the user gave (case-insensitively) to get the `clientId`.
 - **Projects:** `GET /v1/organizations/{orgId}/projects` (all projects) or `GET /v1/organizations/{orgId}/clients/{clientId}/projects` (one client's). Each has an `id`, a name and its `clientId`.
-- **People (members):** `GET /v1/organizations/{orgId}/members` — each member has `userId`, `email`, `name`, `surname` and `role`. This is how you turn an **email, name or firstname** into the `userId` you need for a per-person report. Match on any of those fields.
+- **People (members):** `GET /v1/organizations/{orgId}/members` — each member has `userId`, `email`, `name`, `surname` and `role`. This is how you turn an **email, name or firstname** into the `userId` you need for a per-person report. Match on any of those fields. A person may be a member of **several** of your organizations, so when the question is about them, resolve their `userId` in **each** organization and run the report in each (skipping any where they are not a member).
 
 ## Reports — the figures behind the hours
 
@@ -49,7 +51,7 @@ The user talks in names; the API works in ids. Resolve first, then act.
 - **Billed amounts** are only present for admins/owners; a member sees durations without money.
 - **A working day is not always 8 hours.** When you turn hours into days (or days into hours — "how many days is that?", "that's X days at the client's rate"), use the **client's configured day length (`hoursPerDay` on `GET .../clients`)**, which is set per client (and from the organization's default) — **never a hard-coded 8. If no value is set, use 7 hours.** The reports already apply this for you: rows carry a computed `days` value next to their duration, so prefer the report's own `days` figures over dividing hours yourself.
 
-**"How much time did <person> log?"** → `GET .../members`, match the person by email/name/firstname → `userId`; then `POST .../reports/summary` with `users.ids = ["<userId>"]` and the date range, and read the total duration back.
+**"How much time did <person> log?"** → for **each** of your organizations (from your account context / `GET /v1/organizations`): `GET .../members`, match the person by email/name/firstname → `userId` (skip an org where they are not a member); then `POST .../reports/summary` with `users.ids = ["<userId>"]` and the date range. Sum the durations across the orgs they belong to, or present them per organization — never just the first org. **Always pass their `userId` in the `users` filter**, for a read and equally for any export of that person's time (resolve the id first, then filter on it).
 
 ## Invoices — preview then issue
 
