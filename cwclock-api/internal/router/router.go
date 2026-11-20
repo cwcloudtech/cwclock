@@ -35,6 +35,7 @@ func New(
 	exportJobHandler *handlers.ExportJobHandler,
 	calendarFeedHandler *handlers.CalendarFeedHandler,
 	aiHandler *handlers.AIHandler,
+	aiDownloadHandler *handlers.AIDownloadHandler,
 	orgs *store.OrgStore,
 	users *store.UserStore,
 	apiKeys middleware.ApiKeyVerifier,
@@ -105,6 +106,15 @@ func New(
 		// this URL directly once subscribed and can't send an Authorization
 		// header, so the per-user secret token in the path is the only guard.
 		r.Get("/calendar-feed/{token}", calendarFeedHandler.Feed)
+
+		// Public download of a file the AI assistant generated (a report/invoice
+		// PDF). No auth for the same reason as the feed above — a link clicked
+		// from the chat sends no Authorization header — so the guard is the
+		// unguessable capability in the id (`{userId}-ttl-{random}`) plus a short
+		// TTL. Served only when the download store is wired.
+		if aiDownloadHandler != nil {
+			r.Get("/ai-downloads/{id}", aiDownloadHandler.Download)
+		}
 
 		r.Route("/oidc", func(r chi.Router) {
 			r.Get("/", oidcHandler.ListProviders)

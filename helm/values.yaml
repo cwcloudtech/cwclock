@@ -29,6 +29,9 @@ api:
     CWCLOCK_MAX_REPORT_SIZE: 5000
     CWCLOCK_ACTIVATION_MODE: admin
     CWCLOCK_LIMIT_MAIL: 100
+    # AI assistant downloadable reports/invoices (TTL'd temp files + purge job).
+    CWCLOCK_AI_DOWNLOAD_TTL: 30m
+    CWCLOCK_AI_DOWNLOAD_SWEEP_INTERVAL: 5m
 
 db:
   enabled: true

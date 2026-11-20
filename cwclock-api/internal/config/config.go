@@ -48,6 +48,17 @@ type Config struct {
 	// ipinfo.io token for visitor geo enrichment (ip-api.com needs none).
 	DiscordToken string
 	IPInfoToken  string
+	// AI-assistant downloadable files (reports / invoices the agent generates as PDFs).
+	// AIDownloadDir is the base folder they're written under, one random sub-folder
+	// per file; AIDownloadTTL is how long a generated file (and its download link)
+	// stays usable before the background sweeper removes it; AIDownloadMaxBytes caps a
+	// single generated file.
+	AIDownloadDir      string
+	AIDownloadTTL      time.Duration
+	AIDownloadMaxBytes int64
+	// AIDownloadSweep is how often the background purge job runs (deleting files
+	// past their TTL); logged, not notified.
+	AIDownloadSweep time.Duration
 }
 
 // defaultMaxImageSize is applied when CWCLOCK_MAX_IMAGE_SIZE is unset or
@@ -69,6 +80,16 @@ const defaultConfirmationEmailExpirationHours int = 24
 // parsable number; it caps how many invoice/export-job emails a non-
 // superuser-owned organization may send per calendar month (ai-instruct-83).
 const defaultMailLimit int = 100
+
+// AI-assistant download defaults (ai-instruct-132 follow-up). The files the
+// assistant generates (report/invoice PDFs) are short-lived: kept only long
+// enough for the user to click the link the agent posts.
+const (
+	defaultAIDownloadDir            = "storage"
+	defaultAIDownloadTTL            = 30 * time.Minute
+	defaultAIDownloadSweep          = 5 * time.Minute
+	defaultAIDownloadMaxBytes int64 = 25 * 1024 * 1024
+)
 
 func Load() Config {
 	user := os.Getenv("POSTGRES_USER")
@@ -114,6 +135,21 @@ func Load() Config {
 		mailLimit = defaultMailLimit
 	}
 
+	aiDownloadTTL, err := time.ParseDuration(strings.TrimSpace(os.Getenv("CWCLOCK_AI_DOWNLOAD_TTL")))
+	if err != nil || aiDownloadTTL <= 0 {
+		aiDownloadTTL = defaultAIDownloadTTL
+	}
+
+	aiDownloadMaxBytes, err := strconv.ParseInt(os.Getenv("CWCLOCK_AI_DOWNLOAD_MAX_BYTES"), 10, 64)
+	if err != nil || aiDownloadMaxBytes <= 0 {
+		aiDownloadMaxBytes = defaultAIDownloadMaxBytes
+	}
+
+	aiDownloadSweep, err := time.ParseDuration(strings.TrimSpace(os.Getenv("CWCLOCK_AI_DOWNLOAD_SWEEP_INTERVAL")))
+	if err != nil || aiDownloadSweep <= 0 {
+		aiDownloadSweep = defaultAIDownloadSweep
+	}
+
 	return Config{
 		Port:                     utils.GetEnv("PORT", "8080"),
 		DatabaseURL:              fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, pass, host, port, db, sslmode),
@@ -147,6 +183,10 @@ func Load() Config {
 		ActivationMode:           activationMode,
 		DiscordToken:             os.Getenv("DISCORD_TOKEN"),
 		IPInfoToken:              os.Getenv("CWCLOCK_IPINFO_TOKEN"),
+		AIDownloadDir:            utils.GetEnv("CWCLOCK_AI_DOWNLOAD_DIR", defaultAIDownloadDir),
+		AIDownloadTTL:            aiDownloadTTL,
+		AIDownloadMaxBytes:       aiDownloadMaxBytes,
+		AIDownloadSweep:          aiDownloadSweep,
 	}
 }
 

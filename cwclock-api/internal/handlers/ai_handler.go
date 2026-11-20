@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"cwclock-api/internal/ai"
+	"cwclock-api/internal/aidownload"
 	"cwclock-api/internal/assistant"
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
@@ -52,13 +53,18 @@ type AIHandler struct {
 	// (e.g. http://127.0.0.1:8080), so a self-call never leaves the host.
 	apiBaseURL string
 	client     *ai.Client
+	// downloads is where a generated report/invoice PDF is parked so the agent can
+	// hand the user a download link. Nil disables that (the tool then just names the
+	// generated file, as before).
+	downloads *aidownload.Store
 }
 
 // NewAIHandler builds the /v1/ai handler. users resolves a share target and its
 // account; orgs feeds the account context the chat injects so the model knows which
-// organization ids to target; apiBaseURL backs the cwclock_api tool.
-func NewAIHandler(connections *store.AIStore, users *store.UserStore, orgs *store.OrgStore, apiBaseURL string) *AIHandler {
-	return &AIHandler{connections: connections, users: users, orgs: orgs, apiBaseURL: apiBaseURL, client: ai.New()}
+// organization ids to target; apiBaseURL backs the cwclock_api tool; downloads (may
+// be nil) parks generated report/invoice PDFs so the agent can share a link.
+func NewAIHandler(connections *store.AIStore, users *store.UserStore, orgs *store.OrgStore, apiBaseURL string, downloads *aidownload.Store) *AIHandler {
+	return &AIHandler{connections: connections, users: users, orgs: orgs, apiBaseURL: apiBaseURL, client: ai.New(), downloads: downloads}
 }
 
 func aiUserID(r *http.Request) (string, bool) {

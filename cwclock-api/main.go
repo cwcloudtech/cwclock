@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-webauthn/webauthn/webauthn"
 
+	"cwclock-api/internal/aidownload"
 	"cwclock-api/internal/config"
 	"cwclock-api/internal/contact"
 	"cwclock-api/internal/db"
@@ -146,8 +147,13 @@ func main() {
 	// The AI assistant (ai-instruct-132). The cwclock_api tool calls this very API
 	// over the loopback (never through the corporate proxy or the public URL), as the
 	// signed-in user, so its own Auth/OrgMembership/RequireRole gates decide what the
-	// model may read or generate.
-	aiHandler := handlers.NewAIHandler(aiStore, userStore, orgStore, fmt.Sprintf("http://127.0.0.1:%s", cfg.Port))
+	// model may read or generate. A report/invoice PDF it generates is parked in the
+	// download store (served from the public API URL, swept on a TTL) so the agent
+	// can hand the user a clickable link.
+	aiDownloadStore := aidownload.New(cfg.AIDownloadDir, cfg.AIDownloadTTL, cfg.AIDownloadSweep, cfg.AIDownloadMaxBytes, cfg.APIBaseURL, tel.Logger)
+	go aiDownloadStore.StartSweeper(ctx)
+	aiHandler := handlers.NewAIHandler(aiStore, userStore, orgStore, fmt.Sprintf("http://127.0.0.1:%s", cfg.Port), aiDownloadStore)
+	aiDownloadHandler := handlers.NewAIDownloadHandler(aiDownloadStore)
 
 	met, err := metrics.Setup(ctx, metrics.Config{
 		Endpoint: cfg.OtelEndpoint,
@@ -169,7 +175,7 @@ func main() {
 
 	r := router.New(
 		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler, mfaHandler, importHandler, apiKeyHandler, configHandler, invoiceHandler,
-		currencyHandler, countryHandler, fieldHandler, oidcHandler, contactHandler, exportJobHandler, calendarFeedHandler, aiHandler,
+		currencyHandler, countryHandler, fieldHandler, oidcHandler, contactHandler, exportJobHandler, calendarFeedHandler, aiHandler, aiDownloadHandler,
 		orgStore, userStore, apiKeyStore, cfg.JWTSecret, cfg.ActivationMode, cfg.CorsEnabled, cfg.CorsAllowedOrigins, cfg.Version, cfg.ManifestPath,
 		tel, met.Observe, met.Handler,
 		sessionStore, ipBanHandler, enricher, banAlerter, onServerError,

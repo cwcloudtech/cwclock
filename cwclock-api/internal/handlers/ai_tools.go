@@ -173,7 +173,6 @@ func (h *AIHandler) toolCwclockAPI(r *http.Request, method, path string, body js
 		return aiToolJSON(map[string]any{"error": "the cwclock API could not be reached"})
 	}
 	defer resp.Body.Close()
-	raw, _ := io.ReadAll(io.LimitReader(resp.Body, apiToolMaxBytes))
 	contentType := resp.Header.Get("Content-Type")
 
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
@@ -184,27 +183,61 @@ func (h *AIHandler) toolCwclockAPI(r *http.Request, method, path string, body js
 		})
 	}
 
-	// A report (JSON) is returned verbatim; an invoice/report file (PDF/CSV) is
-	// binary — hand back its status and generated filename (the invoice number),
-	// since the model cannot read the bytes.
-	if !aiLooksTextual(contentType) || !utf8.Valid(raw) {
-		result := map[string]any{"status": resp.StatusCode, "contentType": contentType}
-		if filename := aiDispositionFilename(resp.Header.Get("Content-Disposition")); filename != "" {
-			result["filename"] = filename
-		}
-		if method == http.MethodPost && resp.StatusCode < 300 {
-			result["note"] = "a file was generated (report or invoice); its name is the filename above " +
-				"and it is available in the app. The file's contents are not shown here."
-		} else {
-			result["note"] = "binary response, not shown"
-		}
-		return aiToolJSON(result)
+	// A JSON/text body is read small — just enough to ground an answer. A generated
+	// file (PDF/CSV) is binary and must be read whole so it can be parked for the
+	// user to download, hence the larger cap when a download store is wired.
+	binary := !aiLooksTextual(contentType)
+	limit := int64(apiToolMaxBytes)
+	if binary && h.downloads != nil && h.downloads.MaxBytes() > 0 {
+		limit = h.downloads.MaxBytes()
+	}
+	raw, _ := io.ReadAll(io.LimitReader(resp.Body, limit))
+
+	if binary || !utf8.Valid(raw) {
+		return h.toolFileResult(r, method, resp.StatusCode, contentType, resp.Header.Get("Content-Disposition"), raw)
 	}
 
 	text, truncated := aiCapText(raw)
 	return aiToolJSON(map[string]any{
 		"status": resp.StatusCode, "contentType": contentType, "body": text, "truncated": truncated,
 	})
+}
+
+// toolFileResult handles a binary (file) response — an invoice or an exported
+// report PDF/CSV. When a download store is wired and the caller is known, it parks
+// the bytes and hands the model a `downloadUrl` to post as a clickable link;
+// otherwise it just names the file. Either way the model never sees the bytes.
+func (h *AIHandler) toolFileResult(r *http.Request, method string, status int, contentType, disposition string, raw []byte) string {
+	filename := aiDispositionFilename(disposition)
+	result := map[string]any{"status": status, "contentType": contentType}
+	if filename != "" {
+		result["filename"] = filename
+	}
+
+	if status < 300 && len(raw) > 0 && h.downloads != nil {
+		if userID, ok := aiUserID(r); ok {
+			name := filename
+			if name == "" {
+				name = aiFallbackFilename(contentType)
+			}
+			if url, _, err := h.downloads.Save(userID, name, raw); err == nil {
+				result["filename"] = name
+				result["downloadUrl"] = url
+				result["note"] = "a file was generated. Give the user this exact downloadUrl as a clickable " +
+					"Markdown link — [" + name + "](" + url + ") — and tell them the link is temporary. " +
+					"Never invent, alter or guess a download URL; only ever use one a tool returned."
+				return aiToolJSON(result)
+			}
+		}
+	}
+
+	if method == http.MethodPost && status < 300 {
+		result["note"] = "a file was generated (report or invoice); its name is the filename above " +
+			"and it is available in the app. The file's contents are not shown here."
+	} else {
+		result["note"] = "binary response, not shown"
+	}
+	return aiToolJSON(result)
 }
 
 // aiLooksTextual is true for the content types whose body is worth returning
@@ -235,6 +268,20 @@ func aiDispositionFilename(disposition string) string {
 		return ""
 	}
 	return strings.TrimSpace(params["filename"])
+}
+
+// aiFallbackFilename names a generated file when the response carried no
+// Content-Disposition, from its content type.
+func aiFallbackFilename(contentType string) string {
+	ct := strings.ToLower(contentType)
+	switch {
+	case strings.Contains(ct, "pdf"):
+		return "document.pdf"
+	case strings.Contains(ct, "csv"):
+		return "export.csv"
+	default:
+		return "download"
+	}
 }
 
 // aiToolJSON encodes a tool result; a marshalling failure still comes back as a JSON

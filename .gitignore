@@ -35,3 +35,6 @@ charts
 *.keystore
 *.jks
 mobile-release.keystore
+
+# AI-assistant generated, short-lived report/invoice downloads (ai-instruct-132)
+cwclock-api/storage/
