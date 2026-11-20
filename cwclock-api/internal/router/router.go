@@ -363,7 +363,7 @@ func New(
 
 	// Generated after every /v1 route above is registered, so it's always in
 	// sync with the router — never a hand-maintained spec file to go stale.
-	spec := openapi.Generate(r, "CWClock API", apiVersion)
+	spec := openapi.Generate(r, "CWClock API", apiVersion, handlers.EndpointDocs())
 	r.Get("/openapi.json", handlers.NewOpenAPIHandler(spec))
 	r.Get("/", handlers.ServeSwaggerUI)
 
