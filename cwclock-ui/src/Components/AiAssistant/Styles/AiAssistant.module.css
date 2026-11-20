@@ -119,11 +119,32 @@
   padding: 6px 4px;
 }
 
+/* A row = the clickable conversation body + its own trash icon. */
+.conversationRow {
+  display: flex;
+  align-items: center;
+  border-radius: var(--cw-radius-sm);
+  transition: background-color var(--cw-transition);
+}
+
+.conversationRow:hover {
+  background-color: var(--cw-primary-tint);
+}
+
+.conversationActive {
+  background-color: var(--cw-primary-tint);
+}
+
+.conversationActive .conversationTitle {
+  color: var(--cw-primary);
+}
+
 .conversationItem {
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 8px 10px;
   border: none;
   background: none;
@@ -132,16 +153,27 @@
   cursor: pointer;
   text-align: left;
   font-size: 0.85rem;
-  transition: background-color var(--cw-transition);
 }
 
-.conversationItem:hover {
-  background-color: var(--cw-primary-tint);
+/* Per-row trash: muted, turns danger-red on hover (like uprodit). */
+.conversationDelete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-right: 4px;
+  border: none;
+  background: none;
+  color: var(--cw-text-muted);
+  border-radius: var(--cw-radius-sm);
+  cursor: pointer;
+  transition: color var(--cw-transition);
 }
 
-.conversationActive {
-  background-color: var(--cw-primary-tint);
-  color: var(--cw-primary);
+.conversationDelete:hover {
+  color: var(--cw-danger);
 }
 
 .conversationIcon {

@@ -39,7 +39,10 @@ const AiAssistant = () => {
   const [input, setInput] = useState("");
   const [conversationId, setConversationId] = useState(null);
   const [connectionId, setConnectionId] = useState("");
-  const [confirmClear, setConfirmClear] = useState(false);
+  // What a confirmation is pending for: null, { type: "all" } (clear everything),
+  // or { type: "one", id } (one conversation's trash icon). One modal serves both,
+  // like uprodit.
+  const [confirm, setConfirm] = useState(null);
   // The conversations rail collapses to a thin bar (like uprodit), remembered
   // across reloads. localStorage can throw (private mode) — the toggle still works.
   const [historyCollapsed, setHistoryCollapsed] = useState(() => {
@@ -135,11 +138,21 @@ const AiAssistant = () => {
     }
   };
 
-  const handleClearAll = async () => {
-    setConfirmClear(false);
+  // Runs the pending confirmation — clear-all, or a single conversation's trash icon.
+  // deleteConversationsApi re-fetches the list itself on success.
+  const runConfirm = async () => {
+    const target = confirm;
+    setConfirm(null);
+    if (!target) return;
     try {
-      await dispatch(deleteConversationsApi({ all: true }, user.token));
-      newChat();
+      if (target.type === "all") {
+        await dispatch(deleteConversationsApi({ all: true }, user.token));
+        newChat();
+      } else {
+        await dispatch(deleteConversationsApi({ ids: [target.id] }, user.token));
+        // Deleting the open thread drops you back to a fresh chat.
+        if (target.id === conversationId) newChat();
+      }
     } catch (err) {
       /* toast already shown */
     }
@@ -195,16 +208,29 @@ const AiAssistant = () => {
               <p className={styles.sidebarEmpty}>{t("ai.noConversations")}</p>
             ) : (
               conversations.map((c) => (
-                <button
+                <div
                   key={c.id}
-                  type="button"
-                  className={`${styles.conversationItem} ${c.id === conversationId ? styles.conversationActive : ""}`}
-                  onClick={() => openConversation(c.id)}
-                  title={c.title}
+                  className={`${styles.conversationRow} ${c.id === conversationId ? styles.conversationActive : ""}`}
                 >
-                  <FiMessageSquare className={styles.conversationIcon} />
-                  <span className={styles.conversationTitle}>{c.title}</span>
-                </button>
+                  <button
+                    type="button"
+                    className={styles.conversationItem}
+                    onClick={() => openConversation(c.id)}
+                    title={c.title}
+                  >
+                    <FiMessageSquare className={styles.conversationIcon} />
+                    <span className={styles.conversationTitle}>{c.title}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.conversationDelete}
+                    onClick={() => setConfirm({ type: "one", id: c.id })}
+                    aria-label={t("ai.delete")}
+                    title={t("ai.delete")}
+                  >
+                    <FiTrash2 />
+                  </button>
+                </div>
               ))
             )}
           </div>
@@ -215,7 +241,7 @@ const AiAssistant = () => {
             <button
               type="button"
               className={`${styles.clearBtn} ${historyCollapsed ? styles.iconOnly : ""}`}
-              onClick={() => setConfirmClear(true)}
+              onClick={() => setConfirm({ type: "all" })}
               aria-label={t("ai.clearHistory")}
             >
               <FiTrash2 />
@@ -305,12 +331,12 @@ const AiAssistant = () => {
       </section>
 
       <ConfirmModal
-        show={confirmClear}
-        title={t("ai.clearHistoryTitle")}
-        body={t("ai.clearHistoryBody")}
-        confirmLabel={t("ai.clearHistory")}
-        onConfirm={handleClearAll}
-        onCancel={() => setConfirmClear(false)}
+        show={confirm !== null}
+        title={confirm?.type === "all" ? t("ai.clearHistoryTitle") : t("ai.deleteConversationTitle")}
+        body={confirm?.type === "all" ? t("ai.clearHistoryBody") : t("ai.deleteConversationBody")}
+        confirmLabel={confirm?.type === "all" ? t("ai.clearHistory") : t("ai.delete")}
+        onConfirm={runConfirm}
+        onCancel={() => setConfirm(null)}
       />
     </div>
   );
