@@ -78,6 +78,10 @@ func New(baseDir string, ttl, sweep time.Duration, maxBytes int64, publicBase st
 // handing the bytes over). Zero/negative means "no explicit cap".
 func (s *Store) MaxBytes() int64 { return s.maxBytes }
 
+// TTL is how long a generated file (and its download link) stays usable. The chat
+// surfaces this so it can show a link as expired once a message is older than it.
+func (s *Store) TTL() time.Duration { return s.ttl }
+
 // SweepInterval is how often the background purge job runs (the configured value;
 // falls back to one minute if misconfigured, so the ticker never gets a non-
 // positive period).

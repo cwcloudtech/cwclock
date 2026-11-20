@@ -450,6 +450,18 @@ type chatResponse struct {
 	Model          string         `json:"model"`
 	ConversationID string         `json:"conversationId"`
 	Title          string         `json:"title"`
+	// DownloadTTLSeconds lets the chat show a download link as expired once the
+	// message carrying it is older than this (0 / omitted when downloads are off).
+	DownloadTTLSeconds int `json:"downloadTtlSeconds,omitempty"`
+}
+
+// downloadTTLSeconds is the lifetime of a generated-file download link, in whole
+// seconds, or 0 when downloads aren't wired.
+func (h *AIHandler) downloadTTLSeconds() int {
+	if h.downloads == nil {
+		return 0
+	}
+	return int(h.downloads.TTL().Seconds())
 }
 
 // maxChatHistory bounds how much of a conversation is sent back to the model.
@@ -531,6 +543,7 @@ func (h *AIHandler) Chat(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, chatResponse{
 		Status: "ok", Message: answer.Message, Usage: answer.Usage, Model: answer.Model,
 		ConversationID: conversation.ID, Title: conversation.Title,
+		DownloadTTLSeconds: h.downloadTTLSeconds(),
 	})
 }
 

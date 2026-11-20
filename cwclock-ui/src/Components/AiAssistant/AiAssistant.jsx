@@ -43,6 +43,13 @@ const AiAssistant = () => {
   // or { type: "one", id } (one conversation's trash icon). One modal serves both,
   // like uprodit.
   const [confirm, setConfirm] = useState(null);
+  // How long a generated-file download link stays valid, as the API reports it
+  // (null until a chat/conversation response tells us). A message older than this
+  // has its download link shown as expired.
+  const [downloadTtlSeconds, setDownloadTtlSeconds] = useState(null);
+  // A 30s heartbeat so a link flips to "expired" on screen without needing a new
+  // message to force a re-render.
+  const [, setNowTick] = useState(0);
   // The conversations rail collapses to a thin bar (like uprodit), remembered
   // across reloads. localStorage can throw (private mode) — the toggle still works.
   const [historyCollapsed, setHistoryCollapsed] = useState(() => {
@@ -82,6 +89,11 @@ const AiAssistant = () => {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, isSending]);
 
+  useEffect(() => {
+    const id = setInterval(() => setNowTick((n) => n + 1), 30000);
+    return () => clearInterval(id);
+  }, []);
+
   const newChat = () => {
     setMessages([]);
     setConversationId(null);
@@ -90,6 +102,7 @@ const AiAssistant = () => {
   const openConversation = async (id) => {
     try {
       const conv = await dispatch(getConversationApi(id, user.token));
+      if (conv.downloadTtlSeconds) setDownloadTtlSeconds(conv.downloadTtlSeconds);
       const loaded = [];
       (conv.exchanges || []).forEach((ex) => {
         loaded.push({ role: "user", content: ex.question });
@@ -118,6 +131,7 @@ const AiAssistant = () => {
       const res = await dispatch(
         sendChatApi({ message: text, conversationId, connectionId, orgId: currentOrgId }, user.token)
       );
+      if (res.downloadTtlSeconds) setDownloadTtlSeconds(res.downloadTtlSeconds);
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: res.message, model: res.model, createdAt: new Date().toISOString() },
@@ -272,7 +286,15 @@ const AiAssistant = () => {
             >
               {m.role === "assistant" ? (
                 <>
-                  <Markdown>{m.content}</Markdown>
+                  <Markdown
+                    downloadExpiresAt={
+                      downloadTtlSeconds && m.createdAt
+                        ? new Date(m.createdAt).getTime() + downloadTtlSeconds * 1000
+                        : null
+                    }
+                  >
+                    {m.content}
+                  </Markdown>
                   {(() => {
                     // Credit under each answer: which model / subscription produced it, and when
                     // (ported from uprodit). `model || connection` — the model, or the subscription

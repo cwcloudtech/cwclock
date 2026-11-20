@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+
+	"cwclock-api/internal/models"
 )
 
 // A user's threads with the assistant: listing them, reading one with its exchanges,
@@ -40,7 +42,12 @@ func (h *AIHandler) GetConversation(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, conversation)
+	// Embed the conversation flat and add the download-link lifetime, so reopening a
+	// thread can show each generated-file link as still valid or expired.
+	writeJSON(w, http.StatusOK, struct {
+		models.AIConversation
+		DownloadTTLSeconds int `json:"downloadTtlSeconds,omitempty"`
+	}{AIConversation: conversation, DownloadTTLSeconds: h.downloadTTLSeconds()})
 }
 
 type deleteConversationsPayload struct {

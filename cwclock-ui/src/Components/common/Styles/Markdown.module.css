@@ -51,6 +51,50 @@
   text-decoration: underline;
 }
 
+/* A generated-file download link, while still valid: a small chip with an icon. */
+.downloadLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px 2px 7px;
+  border: 1px solid var(--cw-primary);
+  border-radius: 999px;
+  color: var(--cw-primary);
+  text-decoration: none;
+  font-weight: 500;
+  line-height: 1.6;
+  transition: background-color var(--cw-transition);
+}
+
+.downloadLink:hover {
+  background-color: var(--cw-primary-tint);
+  text-decoration: none;
+}
+
+.downloadIcon {
+  flex-shrink: 0;
+  font-size: 0.9em;
+}
+
+/* The same link once its file has passed the download TTL: muted, struck, no link. */
+.downloadExpired {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border: 1px dashed var(--cw-border);
+  border-radius: 999px;
+  color: var(--cw-text-muted);
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+.downloadExpiredTag {
+  text-decoration: none;
+  font-size: 0.82em;
+  font-style: italic;
+}
+
 .markdown code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.85em;
