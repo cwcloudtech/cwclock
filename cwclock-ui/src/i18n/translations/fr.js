@@ -363,6 +363,8 @@ const fr = {
     usersTitle: "Utilisateurs",
     showFilterUsers: "Afficher les utilisateurs {{filter}}",
     filterAll: "tous",
+    searchPlaceholder: "Rechercher par nom, e-mail ou id…",
+    noUsersMatch: "Aucun utilisateur ne correspond à votre recherche.",
     deleteUserTitle: "Supprimer l'utilisateur",
     deleteUserBody: "Supprimer « {{email}} » ? Cette action est irréversible.",
     editUserTitle: "Modifier {{email}}",

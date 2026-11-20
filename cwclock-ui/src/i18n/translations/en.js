@@ -363,6 +363,8 @@ const en = {
     usersTitle: "Users",
     showFilterUsers: "Show {{filter}} users",
     filterAll: "all",
+    searchPlaceholder: "Search by name, email or id…",
+    noUsersMatch: "No users match your search.",
     deleteUserTitle: "Delete user",
     deleteUserBody: 'Delete "{{email}}"? This cannot be undone.',
     editUserTitle: "Edit {{email}}",

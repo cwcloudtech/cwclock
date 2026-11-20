@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FaRegEdit, FaEye } from "react-icons/fa";
+import { FiSearch } from "react-icons/fi";
 import { MdDeleteForever, MdSecurity } from "react-icons/md";
 import Tooltip from "../common/Tooltip";
 import ConfirmModal from "../common/ConfirmModal";
@@ -31,6 +32,7 @@ const Admin = () => {
   const [disablingMfaUser, setDisablingMfaUser] = useState(null);
   const [viewingIpsUser, setViewingIpsUser] = useState(null);
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
 
   const filterLabel = (f) => (f === "all" ? t("admin.filterAll") : t(`common.globalRole${f.charAt(0).toUpperCase()}${f.slice(1)}`));
   const roleLabel = (role) => t(`common.globalRole${(role || "confirmed").charAt(0).toUpperCase()}${(role || "confirmed").slice(1)}`);
@@ -49,25 +51,50 @@ const Admin = () => {
     setDisablingMfaUser(null);
   };
 
-  const visibleUsers = users.filter((u) => filter === "all" || (u.role || "confirmed") === filter);
+  // Free-text search across name, surname, email and id (and the combined label),
+  // case-insensitive, on top of the role filter.
+  const query = search.trim().toLowerCase();
+  const matchesSearch = (u) =>
+    !query ||
+    [u.name, u.surname, u.email, u.id, memberLabel(u)]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(query));
+  const visibleUsers = users.filter(
+    (u) => (filter === "all" || (u.role || "confirmed") === filter) && matchesSearch(u)
+  );
 
   return (
     <div className={styles.main}>
       <h1 className="cw-title">{t("admin.usersTitle")}</h1>
 
-      <div className={styles.filters}>
-        {FILTERS.map((f) => (
-          <button
-            key={f}
-            type="button"
-            className={`${styles.filterBtn} ${filter === f ? styles.filterBtnActive : ""}`}
-            onClick={() => setFilter(f)}
-            title={t("admin.showFilterUsers", { filter: filterLabel(f) })}
-          >
-            {filterLabel(f)}
-          </button>
-        ))}
+      <div className={styles.toolbar}>
+        <div className={styles.filters}>
+          {FILTERS.map((f) => (
+            <button
+              key={f}
+              type="button"
+              className={`${styles.filterBtn} ${filter === f ? styles.filterBtnActive : ""}`}
+              onClick={() => setFilter(f)}
+              title={t("admin.showFilterUsers", { filter: filterLabel(f) })}
+            >
+              {filterLabel(f)}
+            </button>
+          ))}
+        </div>
+        <div className={styles.search}>
+          <FiSearch className={styles.searchIcon} aria-hidden="true" />
+          <input
+            type="search"
+            className={styles.searchInput}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("admin.searchPlaceholder")}
+            aria-label={t("admin.searchPlaceholder")}
+          />
+        </div>
       </div>
+
+      {visibleUsers.length === 0 && <p className={styles.empty}>{t("admin.noUsersMatch")}</p>}
 
       <ul className={`cw-list ${styles.userList}`}>
         {visibleUsers.map((u) => (
