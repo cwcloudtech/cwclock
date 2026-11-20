@@ -43,6 +43,7 @@ The user talks in names; the API works in ids. Resolve first, then act.
 ```
 
 - `dateRangeStart` / `dateRangeEnd` are required (`YYYY-MM-DD`). The `clients`, `projects` and `users` filters are each optional — omit one to not filter on it.
+- **Resolve relative periods against today's date** (given in your account context). **"This month" / "ce mois" means the *current* calendar month — from the 1st of the month that today falls in, through today — never a previous month.** Likewise "this week"/"this year" run from the start of the current week/year through today, "last month" is the whole previous calendar month, and "last N days" ends today. When a relative period is at all ambiguous, state the exact `YYYY-MM-DD` range you used so the user can correct it.
 - **`summary`** returns aggregated totals, per-project durations and per-day buckets — use it for "how many hours…", "how much did we bill…", "which project took longest". It carries a `totals` object and grouped `rows`.
 - **`detailed`** returns one row per time entry — use it when the user wants the individual entries.
 - **Billed amounts** are only present for admins/owners; a member sees durations without money.

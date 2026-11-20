@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -616,6 +617,10 @@ func (h *AIHandler) writeProviderError(w http.ResponseWriter, connection models.
 func (h *AIHandler) accountContext(r *http.Request, userID, currentOrgID string) string {
 	var out strings.Builder
 	out.WriteString("# Your CWClock account\n\n")
+
+	// Today's date, so the model can resolve relative periods ("this month", "last
+	// week") correctly — see the date-range rules in the API skill.
+	fmt.Fprintf(&out, "- Today's date is %s.\n", time.Now().Format("2006-01-02"))
 
 	if user, err := h.users.FindByID(r.Context(), userID); err == nil {
 		if name := strings.TrimSpace(user.Name + " " + user.Surname); name != "" {
