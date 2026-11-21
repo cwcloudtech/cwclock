@@ -12,6 +12,7 @@ const Map<String, dynamic> fr = {
     'retry': 'Réessayer',
     'share': 'Partager',
     'confirm': 'Confirmer',
+    'clear': 'Effacer',
   },
   'onboarding': {
     'title': 'Connexion à CWClock',
@@ -138,6 +139,8 @@ const Map<String, dynamic> fr = {
     'deleteOrgTitle': "Supprimer l'organisation",
     'deleteOrgBody': 'Supprimer « {{name}} » ? Cette action est irréversible.',
     'noOrganizations': 'Aucune organisation.',
+    'searchUsers': 'Rechercher par nom, e-mail ou ID',
+    'searchOrganizations': 'Rechercher par nom, propriétaire ou ID',
   },
   'organizations': {
     'profileTitle': "Profil de l'organisation",

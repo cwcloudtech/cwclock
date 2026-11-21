@@ -12,6 +12,7 @@ const Map<String, dynamic> en = {
     'retry': 'Retry',
     'share': 'Share',
     'confirm': 'Confirm',
+    'clear': 'Clear',
   },
   'onboarding': {
     'title': 'Connect to CWClock',
@@ -135,6 +136,8 @@ const Map<String, dynamic> en = {
     'deleteOrgTitle': 'Delete organization',
     'deleteOrgBody': 'Delete "{{name}}"? This cannot be undone.',
     'noOrganizations': 'No organizations.',
+    'searchUsers': 'Search by name, e-mail or ID',
+    'searchOrganizations': 'Search by name, owner or ID',
   },
   'organizations': {
     'profileTitle': 'Organization profile',

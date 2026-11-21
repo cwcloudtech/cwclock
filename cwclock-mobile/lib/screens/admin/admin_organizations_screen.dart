@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,12 +25,42 @@ class AdminOrganizationsScreen extends ConsumerStatefulWidget {
 
 class _AdminOrganizationsScreenState
     extends ConsumerState<AdminOrganizationsScreen> {
+  final _scrollController = ScrollController();
+  final _searchController = TextEditingController();
+  Timer? _debounce;
+
   @override
   void initState() {
     super.initState();
     Future.microtask(
-      () => ref.read(adminProvider.notifier).listOrganizations(),
+      () => ref.read(adminProvider.notifier).listOrganizations(startIndex: 0),
     );
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final threshold = _scrollController.position.maxScrollExtent * 0.6;
+    if (_scrollController.position.pixels >= threshold) {
+      ref.read(adminProvider.notifier).loadMoreOrganizations();
+    }
+  }
+
+  // Debounced so a page isn't fetched on every keystroke; mirrors the web
+  // admin search's 400ms debounce.
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      ref.read(adminProvider.notifier).searchOrganizations(value.trim());
+    });
   }
 
   void _showError(String message) {
@@ -111,24 +143,83 @@ class _AdminOrganizationsScreenState
     return Scaffold(
       appBar: AppTopBar(title: t('admin.organizationsTitle')),
       body: SafeArea(
-        child: adminState.orgsLoading && orgs.isEmpty
-            ? const Center(child: CircularProgressIndicator())
-            : orgs.isEmpty
-            ? Padding(
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.of(2)),
-                child: Text(
-                  t('admin.noOrganizations'),
-                  style: TextStyle(color: AppColors.of(context).textMuted),
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.of(2),
+                AppSpacing.of(1),
+                AppSpacing.of(2),
+                AppSpacing.of(1),
+              ),
+              child: TextField(
+                controller: _searchController,
+                onChanged: _onSearchChanged,
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: t('admin.searchOrganizations'),
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchController.text.isEmpty
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.clear),
+                          tooltip: t('common.clear'),
+                          onPressed: () {
+                            _searchController.clear();
+                            _debounce?.cancel();
+                            ref
+                                .read(adminProvider.notifier)
+                                .searchOrganizations('');
+                          },
+                        ),
+                  border: const OutlineInputBorder(),
                 ),
-              )
-            : ListView.separated(
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.of(2)),
-                itemCount: orgs.length,
-                separatorBuilder: (_, _) =>
-                    Divider(height: 1, color: AppColors.of(context).border),
-                itemBuilder: (context, index) {
-                  final org = orgs[index];
-                  return ListTile(
+              ),
+            ),
+            Expanded(
+              child: adminState.orgsLoading && orgs.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : orgs.isEmpty
+                  ? Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppSpacing.of(2),
+                      ),
+                      child: Text(
+                        t('admin.noOrganizations'),
+                        style: TextStyle(
+                          color: AppColors.of(context).textMuted,
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
+                      controller: _scrollController,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppSpacing.of(2),
+                      ),
+                      itemCount:
+                          orgs.length + (adminState.orgsLoadingMore ? 1 : 0),
+                      separatorBuilder: (_, _) => Divider(
+                        height: 1,
+                        color: AppColors.of(context).border,
+                      ),
+                      itemBuilder: (context, index) {
+                        if (index >= orgs.length) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Center(
+                              child: SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                        final org = orgs[index];
+                        return ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: DataUriImage(
                       picture: org.picture,
@@ -180,7 +271,10 @@ class _AdminOrganizationsScreenState
                       ],
                     ),
                   );
-                },
+                      },
+                    ),
+                  ),
+                ],
               ),
       ),
     );
