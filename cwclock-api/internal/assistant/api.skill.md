@@ -34,6 +34,16 @@ By default you work **only within the organizations in your account context** �
 
 These require the **global superuser role**. The tool runs as the signed-in user, so if the caller is **not** an admin the call comes back `forbidden` (status 401/403): **tell the user they don't have administrator rights for that and stop — do not silently fall back to their own organizations, and do not retry.** Only go platform-wide when the user actually asked to act as an admin; otherwise stay within their own organizations.
 
+### "Who is `<id>`, and what do they work on?"
+
+When the user hands you a bare account id (a UUID) and asks who it is and/or what they're working on, do this — **as an admin it works for any account, even one that shares none of your organizations**:
+
+1. **Identify the account** — `GET /v1/admin/users?term=<id>` returns it (name, surname, email, global role).
+2. **Find their organizations** — `GET /v1/admin/users/{id}/organizations` returns every organization the account is **a member of or has logged time in**, newest activity first: each has the org `id`, `name`, their `role` there (empty when they only logged time without being, or no longer being, a member), `member`, `worked` and `lastEntryAt`. **If this list is empty, the account belongs to no organization — say exactly that and stop.**
+3. **See what they work on** — for the organizations it returns (start with the most recent `lastEntryAt`), run `POST /v1/organizations/{orgId}/reports/summary` with `users.ids = ["<id>"]` over a recent range (e.g. the current month); the per-project durations are what they're working on. Use `reports/detailed` for the individual entries. A superuser is an implicit owner of every org, so these reports work even for orgs you aren't a member of.
+
+Steps 1–2 are **admin** endpoints. If the tool runs as a **non-admin** they come back `forbidden` — then you can only answer for an account that shares one of **your own** organizations: find it via each org's `/members` or `/contributors` (below) and report from there; if it's in none of yours, tell the user you can't look that account up (it isn't in any of your organizations, and you'd need admin rights to search platform-wide).
+
 ## Resolving names to ids
 
 The user talks in names; the API works in ids. Resolve first, then act.

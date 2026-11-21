@@ -206,6 +206,10 @@ func New(
 			r.Post("/{id}/disable-mfa", adminHandler.DisableMFA)
 			// Every address this account has connected from (IP administration).
 			r.Get("/{id}/ips", ipBanHandler.UserIPs)
+			// The organizations this account is a member of or has logged time
+			// in - so an admin can answer "who is <id> and what do they work
+			// on" without iterating every organization. Empty = no org.
+			r.Get("/{id}/organizations", orgHandler.AdminUserOrganizations)
 		})
 
 		// IP administration (superuser): the address roster, ban counts, and the

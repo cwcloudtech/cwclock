@@ -284,6 +284,22 @@ func (h *OrganizationHandler) AdminList(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
+// AdminUserOrganizations returns the organizations a given account is a member
+// of or has logged time in, for the superuser's "who is this account and what
+// do they work on" lookup - so an admin can find a user's organizations (and
+// from there their work, via each org's reports) without iterating every org.
+// An empty list means the account belongs to no organization. Superuser-only
+// (mounted under /admin/users).
+func (h *OrganizationHandler) AdminUserOrganizations(w http.ResponseWriter, r *http.Request) {
+	userID := chi.URLParam(r, "id")
+	orgs, err := h.orgs.ListUserOrganizations(r.Context(), userID)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, orgs)
+}
+
 func (h *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
 	orgID, _ := middleware.OrgIDFromContext(r.Context())
 

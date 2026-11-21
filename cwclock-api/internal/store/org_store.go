@@ -616,6 +616,51 @@ func (s *OrgStore) ListContributors(ctx context.Context, orgID string) ([]models
 	return contributors, rows.Err()
 }
 
+// ListUserOrganizations returns every organization a given account is
+// associated with - a current member of, or one it has logged time in (or
+// both) - newest activity first, for the superuser's "who is this account and
+// what do they work on" lookup. It works for any account platform-wide,
+// regardless of the caller's own memberships, so an admin can resolve a user's
+// organizations without iterating every org. An empty result means the account
+// belongs to no organization.
+func (s *OrgStore) ListUserOrganizations(ctx context.Context, userID string) ([]models.UserOrganization, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT o.id,
+			COALESCE(o.data->>'name', '') AS name,
+			COALESCE(m.role, '') AS role,
+			(m.user_id IS NOT NULL) AS is_member,
+			(te.last_entry_at IS NOT NULL) AS worked,
+			te.last_entry_at
+		FROM organizations o
+		LEFT JOIN organization_members m
+			ON m.organization_id = o.id AND m.user_id = $1
+		LEFT JOIN (
+			SELECT organization_id, MAX(created_at) AS last_entry_at
+			FROM time_entries
+			WHERE user_id = $1
+			GROUP BY organization_id
+		) te ON te.organization_id = o.id
+		WHERE m.user_id IS NOT NULL OR te.organization_id IS NOT NULL
+		ORDER BY te.last_entry_at DESC NULLS LAST, name
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	orgs := []models.UserOrganization{}
+	for rows.Next() {
+		var uo models.UserOrganization
+		var role string
+		if err := rows.Scan(&uo.ID, &uo.Name, &role, &uo.Member, &uo.Worked, &uo.LastEntryAt); err != nil {
+			return nil, err
+		}
+		uo.Role = models.Role(role)
+		orgs = append(orgs, uo)
+	}
+	return orgs, rows.Err()
+}
+
 // ShareableMembers returns the distinct members (by account) of every
 // organization ownerID OWNS, whose email matches query (ILIKE, empty matches
 // all), excluding ownerID themselves. Used by the AI subscription share picker

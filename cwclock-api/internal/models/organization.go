@@ -143,3 +143,23 @@ type Contributor struct {
 	// Active is true when their account is not disabled or banned.
 	Active bool `json:"active"`
 }
+
+// UserOrganization is one organization a given account is associated with -
+// a current member of, or one it has logged time in (or both) - for the
+// superuser's "who is this account and what do they work on" lookup. It lets an
+// admin find a user's organizations (and from there, their work, via each org's
+// reports) without iterating every organization on the platform; an empty list
+// means the account belongs to no organization.
+type UserOrganization struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// Role is their current membership role, or "" when they only logged time
+	// in the org without being (or no longer being) a member.
+	Role Role `json:"role,omitempty"`
+	// Member is true when they are currently in the organization's members list.
+	Member bool `json:"member"`
+	// Worked is true when they have at least one time entry in the organization.
+	Worked bool `json:"worked"`
+	// LastEntryAt is when they last logged time there (nil when they never did).
+	LastEntryAt *time.Time `json:"lastEntryAt,omitempty"`
+}
