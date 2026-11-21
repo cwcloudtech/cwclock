@@ -130,10 +130,19 @@ func Generate(r chi.Router, title, version string, docs map[string]EndpointDoc) 
 			return nil
 		}
 
-		item, ok := paths[route]
+		// chi emits "/v1/foo/" for a sub-router's index route ("/"), which
+		// shows up inconsistently next to the slash-less routes. Drop the
+		// trailing slash for the path emitted in the spec; the docs and
+		// public-route lookups below still key on the original chi route.
+		specPath := route
+		if trimmed := strings.TrimRight(specPath, "/"); trimmed != "" {
+			specPath = trimmed
+		}
+
+		item, ok := paths[specPath]
 		if !ok {
 			item = PathItem{}
-			paths[route] = item
+			paths[specPath] = item
 		}
 
 		var params []Parameter
@@ -142,7 +151,7 @@ func Generate(r chi.Router, title, version string, docs map[string]EndpointDoc) 
 		}
 
 		op := Operation{
-			Summary:    method + " " + route,
+			Summary:    method + " " + specPath,
 			Tags:       []string{tagFor(route)},
 			Parameters: params,
 			Responses:  map[string]Response{"200": {Description: "OK"}},

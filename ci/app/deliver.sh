@@ -4,6 +4,10 @@ source ./ci/app/compute-env.sh
 
 sha="$(git rev-parse --short HEAD)"
 details="$(git log --pretty=format:"%an, %ar : %s" -1)"
+# Escape backslashes then double quotes so a commit message containing quotes
+# can't produce invalid JSON in manifest.json (jq isn't available in CI).
+details="${details//\\/\\\\}"
+details="${details//\"/\\\"}"
 
 echo '{"version":"'"${VERSION}"'", "sha":"'"${sha}"'", "details":"'"${details}"'"}' > manifest.json
 
