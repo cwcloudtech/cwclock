@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -263,9 +264,12 @@ func (h *OrganizationHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 // AdminList returns every organization, regardless of membership, for the
-// superuser's organization-management screen.
+// superuser's organization-management screen. A ?search= term narrows the
+// list to the organizations whose name, owner email or id contains it
+// (case-insensitive substring), for the admin search box and the assistant's
+// admin organization lookups.
 func (h *OrganizationHandler) AdminList(w http.ResponseWriter, r *http.Request) {
-	orgs, err := h.orgs.ListAllWithOwner(r.Context())
+	orgs, err := h.orgs.ListAllWithOwner(r.Context(), strings.TrimSpace(r.URL.Query().Get("search")))
 	if err != nil {
 		writeStoreError(w, err)
 		return

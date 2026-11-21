@@ -204,13 +204,22 @@ func (s *UserStore) ListByEmails(ctx context.Context, emails []string) ([]models
 	return users, rows.Err()
 }
 
-// List returns every registered user, for the superuser's user management screen.
-func (s *UserStore) List(ctx context.Context) ([]models.User, error) {
+// List returns every registered user, for the superuser's user management
+// screen. When search is non-empty the roster is narrowed to the accounts
+// whose email, name, surname or id contains that term (case-insensitive
+// substring) - the same filter the assistant's admin user lookups use. An
+// empty search returns every account.
+func (s *UserStore) List(ctx context.Context, search string) ([]models.User, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT id, email, data, created_at, updated_at
 		FROM users
+		WHERE $1 = ''
+		   OR email ILIKE '%' || $1 || '%'
+		   OR COALESCE(data->>'name', '') ILIKE '%' || $1 || '%'
+		   OR COALESCE(data->>'surname', '') ILIKE '%' || $1 || '%'
+		   OR id::text ILIKE '%' || $1 || '%'
 		ORDER BY created_at
-	`)
+	`, search)
 	if err != nil {
 		return nil, err
 	}

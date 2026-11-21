@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FaRegEdit, FaExchangeAlt } from "react-icons/fa";
+import { FiSearch } from "react-icons/fi";
 import { MdDeleteForever } from "react-icons/md";
 import Tooltip from "../common/Tooltip";
 import ConfirmModal from "../common/ConfirmModal";
@@ -20,10 +21,22 @@ const Organizations = () => {
   const [editingOrg, setEditingOrg] = useState(null);
   const [transferringOrg, setTransferringOrg] = useState(null);
   const [deletingOrg, setDeletingOrg] = useState(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     dispatch(listAllOrganizationsApi(user.token));
   }, [dispatch, user.token]);
+
+  // Free-text search across the organization name, its owner's email and its
+  // id (case-insensitive) over the fully-loaded admin list.
+  const query = search.trim().toLowerCase();
+  const visibleOrgs = organizations.filter(
+    (org) =>
+      !query ||
+      [org.name, org.ownerEmail, org.id]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query))
+  );
 
   const handleDelete = async () => {
     const orgId = deletingOrg.id;
@@ -36,8 +49,24 @@ const Organizations = () => {
     <div className={styles.main}>
       <h1 className="cw-title">{t("admin.organizationsTitle")}</h1>
 
+      <div className={styles.toolbar}>
+        <div className={styles.search}>
+          <FiSearch className={styles.searchIcon} aria-hidden="true" />
+          <input
+            type="search"
+            className={styles.searchInput}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("admin.searchOrgsPlaceholder")}
+            aria-label={t("admin.searchOrgsPlaceholder")}
+          />
+        </div>
+      </div>
+
+      {visibleOrgs.length === 0 && <p className={styles.empty}>{t("admin.noOrgsMatch")}</p>}
+
       <ul className={`cw-list ${styles.userList}`}>
-        {organizations.map((org) => (
+        {visibleOrgs.map((org) => (
           <li className={`cw-list-item ${styles.orgRow}`} key={org.id}>
             <span className={styles.denomination}>{org.name}</span>
             <span className={styles.email}>{org.ownerEmail}</span>

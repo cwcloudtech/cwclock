@@ -374,6 +374,8 @@ const en = {
     globalRole: "Global role",
     saveUser: "Save this user",
     organizationsTitle: "Organizations",
+    searchOrgsPlaceholder: "Search by name, owner or id…",
+    noOrgsMatch: "No organizations match your search.",
     deleteOrgTitle: "Delete organization",
     deleteOrgBody: 'Delete "{{name}}"? This cannot be undone.',
     editOrgTitle: "Edit {{name}}",

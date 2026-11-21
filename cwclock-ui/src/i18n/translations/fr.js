@@ -374,6 +374,8 @@ const fr = {
     globalRole: "Rôle global",
     saveUser: "Enregistrer cet utilisateur",
     organizationsTitle: "Organisations",
+    searchOrgsPlaceholder: "Rechercher par nom, propriétaire ou id…",
+    noOrgsMatch: "Aucune organisation ne correspond à votre recherche.",
     deleteOrgTitle: "Supprimer l'organisation",
     deleteOrgBody: "Supprimer « {{name}} » ? Cette action est irréversible.",
     editOrgTitle: "Modifier {{name}}",

@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -48,14 +49,17 @@ func toUserMeResponse(u models.User) models.UserMeResponse {
 // screen - or, when one or more ?email= query params are given (repeatable,
 // OR logic), only the accounts matching one of those emails
 // case-insensitively, for the CLI's id-or-email fallback on
-// `cwclock admin user` (see ai-instruct-99).
+// `cwclock admin user` (see ai-instruct-99). A ?search= term narrows the
+// full roster to the accounts whose name, surname, email or id contains it
+// (case-insensitive substring), for the admin search box and the assistant's
+// admin user lookups.
 func (h *AdminHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	var users []models.User
 	var err error
 	if emails := r.URL.Query()["email"]; len(emails) > 0 {
 		users, err = h.users.ListByEmails(r.Context(), emails)
 	} else {
-		users, err = h.users.List(r.Context())
+		users, err = h.users.List(r.Context(), strings.TrimSpace(r.URL.Query().Get("search")))
 	}
 	if err != nil {
 		writeStoreError(w, err)
