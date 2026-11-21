@@ -4,7 +4,6 @@ import Modal from "../common/Modal";
 import ConfigForm from "../common/ConfigForm";
 import applyImageField from "../common/applyImageField";
 import { updateOrgApi } from "../../Redux/Organizations/Org.actions";
-import { listAllOrganizationsApi } from "../../Redux/Admin/Admin.actions";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
 import useCurrencies from "../common/useCurrencies";
@@ -36,7 +35,7 @@ const emptyFields = {
   currency: "",
 };
 
-const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
+const EditOrgModal = ({ show, onClose, targetOrg, token, onSaved }) => {
   const { t, locale } = useI18n();
   const dispatch = useDispatch();
   const [fields, setFields] = useState(emptyFields);
@@ -129,7 +128,9 @@ const EditOrgModal = ({ show, onClose, targetOrg, token }) => {
     setError("");
     try {
       await dispatch(updateOrgApi(targetOrg.id, fields, token));
-      await dispatch(listAllOrganizationsApi(token));
+      // Let the parent reload the (paged) list from the top so its infinite-scroll
+      // page state stays in sync with what the slice now holds.
+      onSaved?.();
       onClose();
     } catch (err) {
       setError(apiErrorMessage(err, locale));

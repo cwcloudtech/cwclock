@@ -59,6 +59,33 @@
   padding: 6px 2px;
 }
 
+/* Infinite scroll: a near-invisible probe the IntersectionObserver watches to
+   load the next page, plus the bottom "loading more" spinner. */
+.sentinel {
+  height: 1px;
+}
+
+.loadingMore {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--cw-border);
+  border-top-color: var(--cw-primary);
+  border-radius: 50%;
+  animation: admin-spin 0.7s linear infinite;
+}
+
+@keyframes admin-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .filterBtn {
   padding: 5px 14px;
   border: 1px solid var(--cw-border);

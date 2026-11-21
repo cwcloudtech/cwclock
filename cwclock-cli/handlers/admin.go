@@ -238,28 +238,25 @@ func findAdminUser(users []client.AdminUser, id string) (client.AdminUser, bool)
 	return client.AdminUser{}, false
 }
 
-// resolveAdminUser resolves identifier as a user id or, when it isn't
-// shaped like one (or isn't found by id), as an email via the admin users
-// endpoint's ?email= filter, picking the first match (see ai-instruct-99).
+// resolveAdminUser resolves identifier (a user id or an email) through the
+// admin users endpoint's ?term= filter, preferring an exact id or email match
+// over an incidental substring hit (see ai-instruct-99).
 func resolveAdminUser(cli *client.Client, identifier string) (client.AdminUser, error) {
 	trimmed := strings.TrimSpace(identifier)
 
-	if utils.IsValidUUID(trimmed) {
-		users, err := cli.AdminListUsers()
-		if err != nil {
-			return client.AdminUser{}, err
-		}
-		if user, found := findAdminUser(users, trimmed); found {
-			return user, nil
-		}
-	}
-
-	matches, err := cli.AdminFindUsersByEmail([]string{trimmed})
+	matches, err := cli.AdminFindUsers(trimmed)
 	if err != nil {
 		return client.AdminUser{}, err
 	}
 	if len(matches) == 0 {
 		return client.AdminUser{}, fmt.Errorf("user %q not found by id or email", trimmed)
+	}
+
+	lower := strings.ToLower(trimmed)
+	for _, user := range matches {
+		if user.ID == trimmed || strings.ToLower(user.Email) == lower {
+			return user, nil
+		}
 	}
 	return matches[0], nil
 }

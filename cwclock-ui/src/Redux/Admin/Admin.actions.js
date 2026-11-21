@@ -17,18 +17,31 @@ const ORGS_ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/admin/organizations/`;
 const AUDIT_ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/admin/audit/`;
 const IPBANS_ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/admin/ip-bans/`;
 
+// Page size for the server-paginated admin lists (startIndex is a 0-based page
+// number, maxResults the page size), consumed by the infinite-scroll screens.
+export const ADMIN_PAGE_SIZE = Number(process.env.REACT_APP_PAGE_SIZE) || 20;
+
 const authConfig = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
 
-export const listAllUsersApi = (token) => async (dispatch) => {
-  dispatch({ type: AdminLOADING });
-  try {
-    const { data } = await axios.get(USERS_ENDPOINT, authConfig(token));
-    dispatch({ type: AdminUsersListSUCCESS, payload: data });
-    return data;
-  } catch (e) {
-    dispatch({ type: AdminERROR });
-  }
-};
+// listAllUsersApi loads one page of the user roster. term filters by
+// name/surname/email/id (case-insensitive, a UUID id matches too), role filters
+// by global role, and startIndex/maxResults page the result. The reducer
+// appends when startIndex > 0 (infinite scroll) and replaces on page 0.
+export const listAllUsersApi =
+  (token, { term = "", role = "", startIndex = 0, maxResults = ADMIN_PAGE_SIZE } = {}) =>
+  async (dispatch) => {
+    dispatch({ type: AdminLOADING });
+    try {
+      const { data } = await axios.get(USERS_ENDPOINT, {
+        ...authConfig(token),
+        params: { term: term || undefined, role: role || undefined, startIndex, maxResults },
+      });
+      dispatch({ type: AdminUsersListSUCCESS, payload: data });
+      return data;
+    } catch (e) {
+      dispatch({ type: AdminERROR });
+    }
+  };
 
 export const updateUserApi = (id, fields, token) => async (dispatch) => {
   dispatch({ type: AdminLOADING });
@@ -71,16 +84,25 @@ export const disableMfaApi = (id, token) => async (dispatch) => {
   }
 };
 
-export const listAllOrganizationsApi = (token) => async (dispatch) => {
-  dispatch({ type: AdminLOADING });
-  try {
-    const { data } = await axios.get(ORGS_ENDPOINT, authConfig(token));
-    dispatch({ type: AdminOrgsListSUCCESS, payload: data });
-    return data;
-  } catch (e) {
-    dispatch({ type: AdminERROR });
-  }
-};
+// listAllOrganizationsApi loads one page of the organization roster. term
+// filters by name/owner-email/id (case-insensitive, a UUID id matches too), and
+// startIndex/maxResults page the result. The reducer appends when
+// startIndex > 0 (infinite scroll) and replaces on page 0.
+export const listAllOrganizationsApi =
+  (token, { term = "", startIndex = 0, maxResults = ADMIN_PAGE_SIZE } = {}) =>
+  async (dispatch) => {
+    dispatch({ type: AdminLOADING });
+    try {
+      const { data } = await axios.get(ORGS_ENDPOINT, {
+        ...authConfig(token),
+        params: { term: term || undefined, startIndex, maxResults },
+      });
+      dispatch({ type: AdminOrgsListSUCCESS, payload: data });
+      return data;
+    } catch (e) {
+      dispatch({ type: AdminERROR });
+    }
+  };
 
 // listAuditApi loads one page of the audit trail. The filters and the page
 // are sent as query params and the backend decides what is visible, so a

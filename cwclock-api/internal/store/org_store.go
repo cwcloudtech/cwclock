@@ -242,24 +242,37 @@ func (s *OrgStore) ListForUser(ctx context.Context, userID string) ([]models.Org
 // ListAll returns every organization, for the superuser's org-management screen.
 // ListAllWithOwner returns every organization with its owner's email, for
 // the superuser's organization-management screen.
-// ListAllWithOwner returns every organization with its owner's email, for the
-// superuser's organization-management screen. When search is non-empty the
-// list is narrowed to the organizations whose name, owner email or id contains
-// that term (case-insensitive substring) - the same filter the assistant's
-// admin organization lookups use. An empty search returns every organization.
-func (s *OrgStore) ListAllWithOwner(ctx context.Context, search string) ([]models.OrganizationWithOwner, error) {
-	rows, err := s.pool.Query(ctx, `
-		SELECT o.id, o.owner_id, o.data, o.created_at, o.updated_at, u.email
-		FROM organizations o
-		JOIN users u ON u.id = o.owner_id
+// ListAllWithOwner returns one page of organizations with their owner's email,
+// for the superuser's organization-management screen (infinite-scroll) and the
+// assistant's admin lookups. When term is non-empty the list is narrowed to
+// the organizations whose name, owner email or id contains it (case-insensitive
+// substring); limit/offset page the filtered set (offset = startIndex *
+// maxResults). The second return value is the total count behind the filter,
+// so the caller can tell whether more pages remain.
+func (s *OrgStore) ListAllWithOwner(ctx context.Context, term string, limit, offset int) ([]models.OrganizationWithOwner, int64, error) {
+	const where = `
 		WHERE $1 = ''
 		   OR COALESCE(o.data->>'name', '') ILIKE '%' || $1 || '%'
 		   OR u.email ILIKE '%' || $1 || '%'
-		   OR o.id::text ILIKE '%' || $1 || '%'
+		   OR o.id::text ILIKE '%' || $1 || '%'`
+
+	var total int64
+	if err := s.pool.QueryRow(ctx, `
+		SELECT COUNT(*)
+		FROM organizations o
+		JOIN users u ON u.id = o.owner_id`+where, term).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	rows, err := s.pool.Query(ctx, `
+		SELECT o.id, o.owner_id, o.data, o.created_at, o.updated_at, u.email
+		FROM organizations o
+		JOIN users u ON u.id = o.owner_id`+where+`
 		ORDER BY o.created_at DESC
-	`, search)
+		LIMIT $2 OFFSET $3
+	`, term, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -269,14 +282,14 @@ func (s *OrgStore) ListAllWithOwner(ctx context.Context, search string) ([]model
 		var raw []byte
 		var ownerEmail string
 		if err := rows.Scan(&o.ID, &o.OwnerID, &raw, &o.CreatedAt, &o.UpdatedAt, &ownerEmail); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		if err := applyOrgData(&o, raw); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		orgs = append(orgs, models.OrganizationWithOwner{Organization: o, OwnerEmail: ownerEmail})
 	}
-	return orgs, rows.Err()
+	return orgs, total, rows.Err()
 }
 
 func (s *OrgStore) Update(ctx context.Context, id string, f OrganizationFields) (models.Organization, error) {

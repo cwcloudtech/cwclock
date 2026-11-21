@@ -9,8 +9,13 @@ import {
 } from "./Admin.types";
 
 const initialstate = {
+  // users / organizations accumulate across infinite-scroll pages; *Total is
+  // the full count behind the current filter, so the screen knows when to stop
+  // asking for more (loaded length < total ⇒ a next page exists).
   users: [],
+  usersTotal: 0,
   organizations: [],
+  organizationsTotal: 0,
   // The audit trail is paged server-side, so the slice holds one page at a
   // time plus what the screen's controls need: the actions present in the
   // whole trail (for the filter) and whether a next page exists.
@@ -28,7 +33,15 @@ export const AdminReducer = (state = initialstate, { type, payload }) => {
       return { ...state, isLoading: false, isError: true };
     }
     case AdminUsersListSUCCESS: {
-      return { ...state, users: Array.isArray(payload) ? payload : [], isLoading: false };
+      const results = Array.isArray(payload?.results) ? payload.results : [];
+      const startIndex = payload?.startIndex ?? 0;
+      const users = startIndex > 0 ? [...state.users, ...results] : results;
+      return {
+        ...state,
+        users,
+        usersTotal: payload?.totalResults ?? users.length,
+        isLoading: false,
+      };
     }
     case AdminUserUpdateSUCCESS: {
       const users = state.users.map((u) => (u.id === payload.id ? payload : u));
@@ -36,10 +49,18 @@ export const AdminReducer = (state = initialstate, { type, payload }) => {
     }
     case AdminUserDeleteSUCCESS: {
       const users = state.users.filter((u) => u.id !== payload);
-      return { ...state, users, isLoading: false };
+      return { ...state, users, usersTotal: Math.max(0, state.usersTotal - 1), isLoading: false };
     }
     case AdminOrgsListSUCCESS: {
-      return { ...state, organizations: Array.isArray(payload) ? payload : [], isLoading: false };
+      const results = Array.isArray(payload?.results) ? payload.results : [];
+      const startIndex = payload?.startIndex ?? 0;
+      const organizations = startIndex > 0 ? [...state.organizations, ...results] : results;
+      return {
+        ...state,
+        organizations,
+        organizationsTotal: payload?.totalResults ?? organizations.length,
+        isLoading: false,
+      };
     }
     case AdminAuditListSUCCESS: {
       return {

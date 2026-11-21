@@ -101,13 +101,13 @@ func (h *IPBanHandler) BanIP(w http.ResponseWriter, r *http.Request) {
 			writeStoreError(w, err)
 			return
 		}
-		notifyDiscord(h.disc, fmt.Sprintf("[BAN] :no_entry: ip = %s, motif = %s, by = %s", ip, p.Motif, callerID))
+		notifyDiscord(h.disc, fmt.Sprintf("[BAN] :no_entry: ip = %s, motif = %s, by = %s", ip, p.Motif, actingEmail(r)))
 	case models.IPActionUnban:
 		if err := h.sessions.UnbanIp(r.Context(), ip); err != nil {
 			writeStoreError(w, err)
 			return
 		}
-		notifyDiscord(h.disc, fmt.Sprintf("[UNBAN] :white_check_mark: ip = %s, by = %s", ip, callerID))
+		notifyDiscord(h.disc, fmt.Sprintf("[UNBAN] :white_check_mark: ip = %s, by = %s", ip, actingEmail(r)))
 	default:
 		writeError(w, http.StatusBadRequest, "Unknown action (expected 'ban' or 'unban')", CodeInvalidRequestBody)
 		return

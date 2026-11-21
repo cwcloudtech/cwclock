@@ -6,11 +6,10 @@ import Button from "../common/Button";
 import RequiredMark from "../common/RequiredMark";
 import useEmailAutocomplete from "../common/useEmailAutocomplete";
 import { transferOwnershipApi } from "../../Redux/Organizations/Org.actions";
-import { listAllOrganizationsApi } from "../../Redux/Admin/Admin.actions";
 import { useI18n } from "../../i18n/I18nContext";
 import { apiErrorMessage } from "../../i18n/translate";
 
-const TransferOwnershipModal = ({ show, onClose, targetOrg, token }) => {
+const TransferOwnershipModal = ({ show, onClose, targetOrg, token, onSaved }) => {
   const { t, locale } = useI18n();
   const dispatch = useDispatch();
   const [email, setEmail] = useState("");
@@ -39,7 +38,8 @@ const TransferOwnershipModal = ({ show, onClose, targetOrg, token }) => {
     setConfirmingTransfer(false);
     try {
       await dispatch(transferOwnershipApi(targetOrg.id, email, token));
-      await dispatch(listAllOrganizationsApi(token));
+      // Parent reloads the paged list from the top so infinite-scroll state stays in sync.
+      onSaved?.();
       onClose();
     } catch (err) {
       setError(apiErrorMessage(err, locale));

@@ -29,6 +29,17 @@ func NewAdminHandler(users *store.UserStore, webauthnCreds *store.WebAuthnCreden
 	}
 }
 
+// toUserMeResponses maps a slice of users to the wire shape, always returning
+// a non-nil slice so it serializes as [] (and the paged envelope's results
+// field never comes back null for the frontend to map over).
+func toUserMeResponses(users []models.User) []models.UserMeResponse {
+	results := make([]models.UserMeResponse, len(users))
+	for i, u := range users {
+		results[i] = toUserMeResponse(u)
+	}
+	return results
+}
+
 func toUserMeResponse(u models.User) models.UserMeResponse {
 	return models.UserMeResponse{
 		ID:         u.ID,
@@ -45,32 +56,27 @@ func toUserMeResponse(u models.User) models.UserMeResponse {
 	}
 }
 
-// ListUsers returns every account, for the superuser's user-management
-// screen - or, when one or more ?email= query params are given (repeatable,
-// OR logic), only the accounts matching one of those emails
-// case-insensitively, for the CLI's id-or-email fallback on
-// `cwclock admin user` (see ai-instruct-99). A ?search= term narrows the
-// full roster to the accounts whose name, surname, email or id contains it
-// (case-insensitive substring), for the admin search box and the assistant's
-// admin user lookups.
+// ListUsers returns one page of accounts as a SearchResult envelope, for the
+// superuser's user-management screen (infinite-scroll), the CLI's
+// `cwclock admin user` lookups and the assistant's admin user lookups.
+// ?term= filters by name/surname/email/id (case-insensitive substring, so a
+// UUID id matches too), ?role= filters by global role, and ?startIndex (0-based
+// page) / ?maxResults page the result.
 func (h *AdminHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
-	var users []models.User
-	var err error
-	if emails := r.URL.Query()["email"]; len(emails) > 0 {
-		users, err = h.users.ListByEmails(r.Context(), emails)
-	} else {
-		users, err = h.users.List(r.Context(), strings.TrimSpace(r.URL.Query().Get("search")))
-	}
+	startIndex, maxResults := pagedParams(r)
+	term := strings.TrimSpace(r.URL.Query().Get("term"))
+	role := strings.TrimSpace(r.URL.Query().Get("role"))
+	users, total, err := h.users.List(r.Context(), term, role, maxResults, startIndex*maxResults)
 	if err != nil {
 		writeStoreError(w, err)
 		return
 	}
-
-	results := make([]models.UserMeResponse, len(users))
-	for i, u := range users {
-		results[i] = toUserMeResponse(u)
-	}
-	writeJSON(w, http.StatusOK, results)
+	writeJSON(w, http.StatusOK, pagedResponse{
+		StartIndex:   startIndex,
+		MaxResults:   maxResults,
+		TotalResults: total,
+		Results:      toUserMeResponses(users),
+	})
 }
 
 func validGlobalRole(role string) bool {

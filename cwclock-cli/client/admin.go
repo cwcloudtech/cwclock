@@ -6,7 +6,25 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"strconv"
 )
+
+// adminListPageSize is the page size the CLI requests when walking the paged
+// admin list endpoints to collect every row. The API caps maxResults well
+// above this, so each request returns a full page until the last one.
+const adminListPageSize = 100
+
+// adminUsersPage / adminOrgsPage mirror cwclock-api's SearchResult envelope
+// (startIndex is a 0-based page number, not a row offset).
+type adminUsersPage struct {
+	TotalResults int64       `json:"totalResults"`
+	Results      []AdminUser `json:"results"`
+}
+
+type adminOrgsPage struct {
+	TotalResults int64               `json:"totalResults"`
+	Results      []AdminOrganization `json:"results"`
+}
 
 // AdminOrganization adds the owner's email to an Organization, mirroring
 // cwclock-api's OrganizationWithOwner: the superuser's organization list
@@ -56,59 +74,91 @@ func adminUserPath(id string) string {
 	return adminUsersPath() + "/" + url.PathEscape(id)
 }
 
-func (c *Client) AdminListOrganizations() ([]AdminOrganization, error) {
-	responseBody, err := c.httpRequest(adminOrganizationsPath(), "GET", bytes.Buffer{})
-	if err != nil {
-		return nil, err
-	}
-	defer responseBody.Close()
-
-	var orgs []AdminOrganization
-	if err := json.NewDecoder(responseBody).Decode(&orgs); err != nil {
-		return nil, fmt.Errorf("failed to decode admin organizations response: %w", err)
-	}
-	return orgs, nil
-}
-
-func (c *Client) AdminListUsers() ([]AdminUser, error) {
-	responseBody, err := c.httpRequest(adminUsersPath(), "GET", bytes.Buffer{})
-	if err != nil {
-		return nil, err
-	}
-	defer responseBody.Close()
-
-	var users []AdminUser
-	if err := json.NewDecoder(responseBody).Decode(&users); err != nil {
-		return nil, fmt.Errorf("failed to decode admin users response: %w", err)
-	}
-	return users, nil
-}
-
-// AdminFindUsersByEmail resolves one or more emails (OR logic) against
-// GET /admin/users?email=..., repeated per email - used as the CLI's
-// id-or-email fallback for `cwclock admin user` (see ai-instruct-99).
-func (c *Client) AdminFindUsersByEmail(emails []string) ([]AdminUser, error) {
+// pagedQuery builds a ?startIndex=&maxResults= query string for one page of a
+// paged admin list endpoint.
+func pagedQuery(startIndex int) string {
 	values := url.Values{}
-	for _, email := range emails {
-		values.Add("email", email)
-	}
+	values.Set("startIndex", strconv.Itoa(startIndex))
+	values.Set("maxResults", strconv.Itoa(adminListPageSize))
+	return "?" + values.Encode()
+}
 
-	path := adminUsersPath()
-	if len(values) > 0 {
-		path += "?" + values.Encode()
+// AdminListOrganizations walks every page of the paged /admin/organizations
+// endpoint and returns the full list, so the CLI keeps its "list all" behaviour
+// over the server-paginated response.
+func (c *Client) AdminListOrganizations() ([]AdminOrganization, error) {
+	var all []AdminOrganization
+	for startIndex := 0; ; startIndex++ {
+		responseBody, err := c.httpRequest(adminOrganizationsPath()+pagedQuery(startIndex), "GET", bytes.Buffer{})
+		if err != nil {
+			return nil, err
+		}
+		var page adminOrgsPage
+		decodeErr := json.NewDecoder(responseBody).Decode(&page)
+		responseBody.Close()
+		if decodeErr != nil {
+			return nil, fmt.Errorf("failed to decode admin organizations response: %w", decodeErr)
+		}
+		all = append(all, page.Results...)
+		if len(page.Results) < adminListPageSize || int64(len(all)) >= page.TotalResults {
+			break
+		}
 	}
+	return all, nil
+}
 
-	responseBody, err := c.httpRequest(path, "GET", bytes.Buffer{})
-	if err != nil {
-		return nil, err
+// AdminListUsers walks every page of the paged /admin/users endpoint and
+// returns the full list, so the CLI keeps its "list all" behaviour over the
+// server-paginated response.
+func (c *Client) AdminListUsers() ([]AdminUser, error) {
+	var all []AdminUser
+	for startIndex := 0; ; startIndex++ {
+		responseBody, err := c.httpRequest(adminUsersPath()+pagedQuery(startIndex), "GET", bytes.Buffer{})
+		if err != nil {
+			return nil, err
+		}
+		var page adminUsersPage
+		decodeErr := json.NewDecoder(responseBody).Decode(&page)
+		responseBody.Close()
+		if decodeErr != nil {
+			return nil, fmt.Errorf("failed to decode admin users response: %w", decodeErr)
+		}
+		all = append(all, page.Results...)
+		if len(page.Results) < adminListPageSize || int64(len(all)) >= page.TotalResults {
+			break
+		}
 	}
-	defer responseBody.Close()
+	return all, nil
+}
 
-	var users []AdminUser
-	if err := json.NewDecoder(responseBody).Decode(&users); err != nil {
-		return nil, fmt.Errorf("failed to decode admin users response: %w", err)
+// AdminFindUsers resolves term (an id or an email, or any name fragment)
+// against GET /admin/users?term=..., walking every page. The server matches it
+// case-insensitively against name/surname/email/id, so this is the CLI's
+// id-or-email lookup for `cwclock admin user` (see ai-instruct-99).
+func (c *Client) AdminFindUsers(term string) ([]AdminUser, error) {
+	var all []AdminUser
+	for startIndex := 0; ; startIndex++ {
+		values := url.Values{}
+		values.Set("term", term)
+		values.Set("startIndex", strconv.Itoa(startIndex))
+		values.Set("maxResults", strconv.Itoa(adminListPageSize))
+
+		responseBody, err := c.httpRequest(adminUsersPath()+"?"+values.Encode(), "GET", bytes.Buffer{})
+		if err != nil {
+			return nil, err
+		}
+		var page adminUsersPage
+		decodeErr := json.NewDecoder(responseBody).Decode(&page)
+		responseBody.Close()
+		if decodeErr != nil {
+			return nil, fmt.Errorf("failed to decode admin users response: %w", decodeErr)
+		}
+		all = append(all, page.Results...)
+		if len(page.Results) < adminListPageSize || int64(len(all)) >= page.TotalResults {
+			break
+		}
 	}
-	return users, nil
+	return all, nil
 }
 
 func (c *Client) AdminUpdateUser(id string, payload AdminUserPayload) (AdminUser, error) {

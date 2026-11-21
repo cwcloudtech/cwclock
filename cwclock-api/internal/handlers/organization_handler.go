@@ -263,18 +263,25 @@ func (h *OrganizationHandler) List(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, redactOrgs(orgs))
 }
 
-// AdminList returns every organization, regardless of membership, for the
-// superuser's organization-management screen. A ?search= term narrows the
-// list to the organizations whose name, owner email or id contains it
-// (case-insensitive substring), for the admin search box and the assistant's
-// admin organization lookups.
+// AdminList returns one page of organizations, regardless of membership, as a
+// SearchResult envelope, for the superuser's organization-management screen
+// (infinite-scroll) and the assistant's admin lookups. ?term= filters by
+// name/owner-email/id (case-insensitive substring) and ?startIndex (0-based
+// page) / ?maxResults page the result.
 func (h *OrganizationHandler) AdminList(w http.ResponseWriter, r *http.Request) {
-	orgs, err := h.orgs.ListAllWithOwner(r.Context(), strings.TrimSpace(r.URL.Query().Get("search")))
+	startIndex, maxResults := pagedParams(r)
+	term := strings.TrimSpace(r.URL.Query().Get("term"))
+	orgs, total, err := h.orgs.ListAllWithOwner(r.Context(), term, maxResults, startIndex*maxResults)
 	if err != nil {
 		writeStoreError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, redactOrgsWithOwner(orgs))
+	writeJSON(w, http.StatusOK, pagedResponse{
+		StartIndex:   startIndex,
+		MaxResults:   maxResults,
+		TotalResults: total,
+		Results:      redactOrgsWithOwner(orgs),
+	})
 }
 
 func (h *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
