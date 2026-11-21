@@ -252,9 +252,10 @@ func resolveAdminUser(cli *client.Client, identifier string) (client.AdminUser, 
 		return client.AdminUser{}, fmt.Errorf("user %q not found by id or email", trimmed)
 	}
 
-	lower := strings.ToLower(trimmed)
+	// Prefer an exact id or email match over an incidental substring hit, matching
+	// case-insensitively like the server's ?term= filter.
 	for _, user := range matches {
-		if user.ID == trimmed || strings.ToLower(user.Email) == lower {
+		if strings.EqualFold(user.ID, trimmed) || strings.EqualFold(user.Email, trimmed) {
 			return user, nil
 		}
 	}
