@@ -499,6 +499,9 @@ const en = {
         deleted: "Export job deleted",
         run: "Export job run manually",
       },
+      ai: {
+        call: "AI assistant call",
+      },
     },
     subjects: {
       user: "Account",
@@ -510,6 +513,7 @@ const en = {
       credential: "Security key",
       connection: "External connection",
       exportJob: "Export job",
+      aiConnection: "AI connection",
     },
     details: {
       name: "Name",
@@ -543,6 +547,11 @@ const en = {
       previousUser: "Previously assigned to",
       created: "Created",
       skipped: "Skipped",
+      model: "Model",
+      input: "Input tokens",
+      output: "Output tokens",
+      cached: "Cached tokens",
+      connection: "Connection",
     },
   },
   apiKeys: {

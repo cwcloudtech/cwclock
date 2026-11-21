@@ -88,6 +88,12 @@ const (
 	AuditExportJobUpdated = "exportJob.updated"
 	AuditExportJobDeleted = "exportJob.deleted"
 	AuditExportJobRun     = "exportJob.run"
+	// The AI assistant. One entry per chat question (not per provider round
+	// trip of its agent loop), carrying the provider, the model that answered
+	// and the tokens the answer consumed, so spend can be read per account.
+	// The question and the answer are never copied here: they are the user's
+	// own conversation, kept in their history, not an administrative fact.
+	AuditAICall = "ai.call"
 )
 
 // Audit subject types - what the action's subject_id points at.
@@ -101,6 +107,8 @@ const (
 	AuditSubjectCredential   = "credential"
 	AuditSubjectConnection   = "connection"
 	AuditSubjectExportJob    = "exportJob"
+	// AuditSubjectAIConnection is the AI subscription a call was spent through.
+	AuditSubjectAIConnection = "aiConnection"
 )
 
 // AuditActions and AuditSubjectTypes are the constants above as lists, for
@@ -160,6 +168,7 @@ var AuditActions = []string{
 	AuditExportJobUpdated,
 	AuditExportJobDeleted,
 	AuditExportJobRun,
+	AuditAICall,
 }
 
 var AuditSubjectTypes = []string{
@@ -172,6 +181,7 @@ var AuditSubjectTypes = []string{
 	AuditSubjectCredential,
 	AuditSubjectConnection,
 	AuditSubjectExportJob,
+	AuditSubjectAIConnection,
 }
 
 // AuditEntry is one recorded act, as the superadmin screen reads it.

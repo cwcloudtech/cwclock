@@ -500,6 +500,9 @@ const fr = {
         deleted: "Tâche d'export supprimée",
         run: "Tâche d'export lancée manuellement",
       },
+      ai: {
+        call: "Appel à l'assistant IA",
+      },
     },
     subjects: {
       user: "Compte",
@@ -511,6 +514,7 @@ const fr = {
       credential: "Clé de sécurité",
       connection: "Connexion externe",
       exportJob: "Tâche d'export",
+      aiConnection: "Connexion IA",
     },
     details: {
       name: "Nom",
@@ -544,6 +548,11 @@ const fr = {
       previousUser: "Précédemment attribuée à",
       created: "Créées",
       skipped: "Ignorées",
+      model: "Modèle",
+      input: "Tokens en entrée",
+      output: "Tokens en sortie",
+      cached: "Tokens en cache",
+      connection: "Connexion",
     },
   },
   apiKeys: {

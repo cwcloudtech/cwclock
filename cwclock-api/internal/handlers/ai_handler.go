@@ -46,6 +46,7 @@ const (
 // exists is not a question this answers). The credential is the user's own stored
 // token; there is no global provider key.
 type AIHandler struct {
+	auditor
 	connections *store.AIStore
 	users       *store.UserStore
 	orgs        *store.OrgStore
@@ -62,9 +63,10 @@ type AIHandler struct {
 // NewAIHandler builds the /v1/ai handler. users resolves a share target and its
 // account; orgs feeds the account context the chat injects so the model knows which
 // organization ids to target; apiBaseURL backs the cwclock_api tool; downloads (may
-// be nil) parks generated report/invoice PDFs so the agent can share a link.
-func NewAIHandler(connections *store.AIStore, users *store.UserStore, orgs *store.OrgStore, apiBaseURL string, downloads *aidownload.Store) *AIHandler {
-	return &AIHandler{connections: connections, users: users, orgs: orgs, apiBaseURL: apiBaseURL, client: ai.New(), downloads: downloads}
+// be nil) parks generated report/invoice PDFs so the agent can share a link; audit
+// records each chat question's token spend in the superadmin trail.
+func NewAIHandler(connections *store.AIStore, users *store.UserStore, orgs *store.OrgStore, apiBaseURL string, downloads *aidownload.Store, audit *store.AuditStore) *AIHandler {
+	return &AIHandler{auditor: newAuditor(audit), connections: connections, users: users, orgs: orgs, apiBaseURL: apiBaseURL, client: ai.New(), downloads: downloads}
 }
 
 func aiUserID(r *http.Request) (string, bool) {
@@ -539,6 +541,19 @@ func (h *AIHandler) Chat(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+
+	// One entry per question: the agent loop may have called the provider
+	// several times, but answer carries the totals it settled on, and that is
+	// also what the conversation stores. Recorded once the exchange is
+	// persisted, so the trail never names a call the user's history lacks.
+	h.record(r, models.AuditAICall, models.AuditSubjectAIConnection, connection.ID, map[string]any{
+		"provider":   connection.Provider,
+		"model":      answeredWith(answer.Model, connection.Model),
+		"input":      answer.Tokens.Input,
+		"output":     answer.Tokens.Output,
+		"cached":     answer.Tokens.Cached,
+		"connection": connection.Name,
+	})
 
 	writeJSON(w, http.StatusOK, chatResponse{
 		Status: "ok", Message: answer.Message, Usage: answer.Usage, Model: answer.Model,
