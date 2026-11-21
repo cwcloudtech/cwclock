@@ -327,15 +327,6 @@ const AiAssistant = () => {
         </div>
 
         <form className={styles.composer} onSubmit={handleSend}>
-          {connections.length > 1 && (
-            <SingleSelect
-              label={t("ai.model")}
-              allLabel={connections[0] ? connections[0].name || connections[0].provider : ""}
-              options={connectionOptions}
-              value={connectionId}
-              onChange={setConnectionId}
-            />
-          )}
           <textarea
             className={styles.textarea}
             value={input}
@@ -344,6 +335,20 @@ const AiAssistant = () => {
             placeholder={t("ai.askPlaceholder")}
             rows={1}
           />
+          {connections.length > 1 && (
+            // Sits between the message field and Send. Opens upward (and
+            // right-aligned) so its panel isn't clipped off the bottom of the
+            // viewport by the composer pinned to the foot of the chat pane.
+            <SingleSelect
+              label={t("ai.model")}
+              allLabel={connections[0] ? connections[0].name || connections[0].provider : ""}
+              options={connectionOptions}
+              value={connectionId}
+              onChange={setConnectionId}
+              direction="up"
+              align="end"
+            />
+          )}
           <Tooltip label={t("ai.send")}>
             <button type="submit" className={styles.sendBtn} disabled={isSending || !input.trim()}>
               <FiSend />

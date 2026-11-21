@@ -11,12 +11,14 @@ import styles from "./Styles/SingleSelect.module.css";
 // allLabel is the entry that clears the filter; it's always first, and
 // selecting anything closes the panel (unlike MultiSelect, where the point
 // is to tick several in a row).
-const SingleSelect = ({ label, options, value, onChange, allLabel }) => {
+const SingleSelect = ({ label, options, value, onChange, allLabel, direction, align }) => {
   const summary = options.find((o) => o.value === value)?.label || allLabel;
 
   return (
     <Dropdown
       title={label}
+      direction={direction}
+      align={align}
       triggerClassName={styles.trigger}
       trigger={
         <>

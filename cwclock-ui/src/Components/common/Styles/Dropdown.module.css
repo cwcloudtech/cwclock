@@ -50,6 +50,14 @@
   right: 0;
 }
 
+/* Opens above the trigger instead of below — for a trigger pinned to the
+   bottom of the viewport (e.g. the AI chat composer), where a downward menu
+   would open off-screen. */
+.dropUp {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
 .item {
   display: flex;
   align-items: center;
