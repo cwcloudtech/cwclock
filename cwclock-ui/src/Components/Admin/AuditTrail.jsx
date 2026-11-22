@@ -93,55 +93,60 @@ const AuditTrail = () => {
       <p className="cw-subtitle">{t("audit.intro")}</p>
 
       <div className={styles.filters}>
-        <SingleSelect
-          label={t("audit.action")}
-          allLabel={t("audit.allActions")}
-          value={action}
-          onChange={changeAction}
-          options={audit.actions.map((name) => ({ value: name, label: actionLabel(name) }))}
-        />
-
-        <SingleSelect
-          label={t("audit.subjectType")}
-          allLabel={t("audit.allSubjects")}
-          value={subjectType}
-          onChange={changeSubjectType}
-          options={audit.subjectTypes.map((name) => ({ value: name, label: subjectLabel(name) }))}
-        />
-
-        <form className={styles.subjectForm} onSubmit={submitSubject}>
-          <input
-            className="cw-input"
-            type="text"
-            value={subjectInput}
-            placeholder={t("audit.subjectPlaceholder")}
-            onChange={(e) => setSubjectInput(e.target.value)}
+        <div className={styles.filterRow}>
+          <SingleSelect
+            label={t("audit.action")}
+            allLabel={t("audit.allActions")}
+            value={action}
+            onChange={changeAction}
+            options={audit.actions.map((name) => ({ value: name, label: actionLabel(name) }))}
           />
-          <button type="submit" className="cw-button cw-button--sm" title={t("audit.filterBySubject")}>
-            <FaSearch style={{ fontSize: "14px" }} />
-          </button>
-        </form>
 
-        <label className={styles.dateField}>
-          <span>{t("audit.from")}</span>
-          <input
-            className="cw-input"
-            type="date"
-            value={from}
-            max={to || undefined}
-            onChange={(e) => changeFrom(e.target.value)}
+          <SingleSelect
+            label={t("audit.subjectType")}
+            allLabel={t("audit.allSubjects")}
+            value={subjectType}
+            onChange={changeSubjectType}
+            options={audit.subjectTypes.map((name) => ({ value: name, label: subjectLabel(name) }))}
           />
-        </label>
-        <label className={styles.dateField}>
-          <span>{t("audit.to")}</span>
-          <input
-            className="cw-input"
-            type="date"
-            value={to}
-            min={from || undefined}
-            onChange={(e) => changeTo(e.target.value)}
-          />
-        </label>
+
+          <form className={styles.subjectForm} onSubmit={submitSubject}>
+            <input
+              className="cw-input"
+              type="text"
+              value={subjectInput}
+              placeholder={t("audit.subjectPlaceholder")}
+              onChange={(e) => setSubjectInput(e.target.value)}
+            />
+            <button type="submit" className="cw-button cw-button--sm" title={t("audit.filterBySubject")}>
+              <FaSearch style={{ fontSize: "14px" }} />
+            </button>
+          </form>
+        </div>
+
+        {/* Date range on its own second row. */}
+        <div className={styles.filterRow}>
+          <label className={styles.dateField}>
+            <span>{t("audit.from")}</span>
+            <input
+              className="cw-input"
+              type="date"
+              value={from}
+              max={to || undefined}
+              onChange={(e) => changeFrom(e.target.value)}
+            />
+          </label>
+          <label className={styles.dateField}>
+            <span>{t("audit.to")}</span>
+            <input
+              className="cw-input"
+              type="date"
+              value={to}
+              min={from || undefined}
+              onChange={(e) => changeTo(e.target.value)}
+            />
+          </label>
+        </div>
       </div>
 
       {audit.entries.length === 0 ? (

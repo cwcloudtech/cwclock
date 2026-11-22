@@ -8,10 +8,18 @@
 
 .filters {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: var(--cw-spacing);
+}
+
+/* One line of filters; the selects/subject search are on the first row and the
+   date range on the second. */
+.filterRow {
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-bottom: var(--cw-spacing);
 }
 
 .subjectForm {
