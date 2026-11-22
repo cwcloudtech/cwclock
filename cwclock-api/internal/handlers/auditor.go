@@ -75,6 +75,8 @@ func auditFilterFromQuery(r *http.Request) store.AuditFilter {
 		Action:      r.URL.Query().Get("action"),
 		SubjectType: r.URL.Query().Get("subjectType"),
 		SubjectID:   r.URL.Query().Get("subject"),
+		From:        r.URL.Query().Get("from"),
+		To:          r.URL.Query().Get("to"),
 		Page:        page,
 		Size:        size,
 	}

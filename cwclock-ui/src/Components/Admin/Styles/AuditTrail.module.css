@@ -20,6 +20,20 @@
   gap: 6px;
 }
 
+/* Date-range filter: a small "From"/"To" label paired with a native date input,
+   sitting in the same flex row as the other filters. */
+.dateField {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--cw-text-muted, #6b7280);
+}
+
+.dateField input {
+  width: auto;
+}
+
 /* Wide enough for a full 36-character UUID without scrolling inside the
    field - pasting one in and not being able to see it whole is the main way
    this filter gets used wrong. */

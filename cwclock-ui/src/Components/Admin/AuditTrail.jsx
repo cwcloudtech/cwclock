@@ -36,10 +36,12 @@ const AuditTrail = () => {
   // them apart means the trail isn't re-queried on every keystroke.
   const [subjectInput, setSubjectInput] = useState("");
   const [subject, setSubject] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
 
   const load = useCallback(() => {
-    dispatch(listAuditApi({ page, size: PAGE_SIZE, action, subjectType, subject }, user.token));
-  }, [dispatch, page, action, subjectType, subject, user.token]);
+    dispatch(listAuditApi({ page, size: PAGE_SIZE, action, subjectType, subject, from, to }, user.token));
+  }, [dispatch, page, action, subjectType, subject, from, to, user.token]);
 
   useEffect(() => {
     load();
@@ -54,6 +56,16 @@ const AuditTrail = () => {
 
   const changeSubjectType = (next) => {
     setSubjectType(next);
+    setPage(1);
+  };
+
+  const changeFrom = (next) => {
+    setFrom(next);
+    setPage(1);
+  };
+
+  const changeTo = (next) => {
+    setTo(next);
     setPage(1);
   };
 
@@ -109,6 +121,27 @@ const AuditTrail = () => {
             <FaSearch style={{ fontSize: "14px" }} />
           </button>
         </form>
+
+        <label className={styles.dateField}>
+          <span>{t("audit.from")}</span>
+          <input
+            className="cw-input"
+            type="date"
+            value={from}
+            max={to || undefined}
+            onChange={(e) => changeFrom(e.target.value)}
+          />
+        </label>
+        <label className={styles.dateField}>
+          <span>{t("audit.to")}</span>
+          <input
+            className="cw-input"
+            type="date"
+            value={to}
+            min={from || undefined}
+            onChange={(e) => changeTo(e.target.value)}
+          />
+        </label>
       </div>
 
       {audit.entries.length === 0 ? (

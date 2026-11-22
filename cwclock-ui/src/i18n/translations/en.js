@@ -425,6 +425,8 @@ const en = {
     subjectType: "Subject type",
     allSubjects: "All subject types",
     subjectPlaceholder: "Subject id (user, organization, client, time record...)",
+    from: "From",
+    to: "To",
     noActor: "No signed-in account",
     emptyTitle: "No entries",
     emptyBody: "Nothing matches these filters yet.",

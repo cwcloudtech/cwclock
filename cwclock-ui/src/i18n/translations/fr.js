@@ -426,6 +426,8 @@ const fr = {
     subjectType: "Type de sujet",
     allSubjects: "Tous les types de sujet",
     subjectPlaceholder: "Identifiant du sujet (utilisateur, organisation, client, entrée de temps...)",
+    from: "Du",
+    to: "Au",
     noActor: "Aucun compte connecté",
     emptyTitle: "Aucune entrée",
     emptyBody: "Rien ne correspond encore à ces filtres.",

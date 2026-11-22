@@ -136,6 +136,8 @@ type AuditFilter struct {
 	Action      string
 	SubjectType string
 	SubjectID   string
+	From        string // YYYY-MM-DD, inclusive lower bound on created_at
+	To          string // YYYY-MM-DD, inclusive upper bound (the whole day)
 	Page        int
 	Size        int
 }
@@ -171,9 +173,11 @@ func (s *AuditStore) List(ctx context.Context, f AuditFilter) (models.AuditPage,
 		WHERE ($3 = '' OR action = $3)
 		  AND ($4 = '' OR subject_type = $4)
 		  AND ($5 = '' OR subject_id = $5)
+		  AND ($6 = '' OR created_at >= $6::date)
+		  AND ($7 = '' OR created_at < ($7::date + 1))
 		ORDER BY created_at DESC, id DESC
 		LIMIT $1 OFFSET $2
-	`, limit, offset, f.Action, f.SubjectType, f.SubjectID)
+	`, limit, offset, f.Action, f.SubjectType, f.SubjectID, f.From, f.To)
 	if err != nil {
 		return models.AuditPage{}, err
 	}

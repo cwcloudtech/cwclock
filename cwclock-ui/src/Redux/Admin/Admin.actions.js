@@ -108,7 +108,7 @@ export const listAllOrganizationsApi =
 // are sent as query params and the backend decides what is visible, so a
 // hand-edited URL can't widen what comes back - the route itself is
 // superuser-only.
-export const listAuditApi = ({ page, size, action, subjectType, subject }, token) => async (dispatch) => {
+export const listAuditApi = ({ page, size, action, subjectType, subject, from, to }, token) => async (dispatch) => {
   dispatch({ type: AdminLOADING });
   try {
     const { data } = await axios.get(AUDIT_ENDPOINT, {
@@ -119,6 +119,8 @@ export const listAuditApi = ({ page, size, action, subjectType, subject }, token
         action: action || undefined,
         subjectType: subjectType || undefined,
         subject: subject || undefined,
+        from: from || undefined,
+        to: to || undefined,
       },
     });
     dispatch({ type: AdminAuditListSUCCESS, payload: data });
