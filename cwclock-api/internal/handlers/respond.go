@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/store"
 )
 
@@ -87,7 +88,23 @@ func writeJSON(w http.ResponseWriter, status int, body any) {
 	}
 }
 
+// genericServerMessage is all the client is ever told about a 5xx: a raw
+// SQL/driver/internal error leaks internals and means nothing to a user. The
+// real cause is stashed for the [ERROR] Discord alert, and the X-Cid response
+// header lets support tie the two together.
+const genericServerMessage = "An unexpected error occurred"
+
 func writeError(w http.ResponseWriter, status int, message string, i18nCode string) {
+	// A 5xx is the server's fault, so its detail never reaches the client - it is
+	// handed to the error alert instead, and the client gets a generic message.
+	// Any i18n code still rides along, so a code with a real meaning is still
+	// translated by the frontend.
+	if status >= http.StatusInternalServerError {
+		if reporter, ok := w.(middleware.ServerErrorReporter); ok {
+			reporter.ReportServerError(message)
+		}
+		message = genericServerMessage
+	}
 	writeJSON(w, status, errorBody{Message: message, I18nCode: i18nCode})
 }
 

@@ -19,9 +19,18 @@ import (
 type EndpointObserver func(route, method string, status int, duration time.Duration)
 
 // ErrorFunc is an optional hook fired once for every 5xx response, used to raise a
-// Discord [ERROR] alert. It runs after the response is written, so it must post
+// Discord [ERROR] alert. It carries the request's correlation id and the server
+// error's detail (the cause the client is NOT shown), so the alert is
+// actionable. It runs after the response is written, so it must post
 // asynchronously and never block. May be nil (disabled).
-type ErrorFunc func(method, route string, status int)
+type ErrorFunc func(method, route string, status int, cid, detail string)
+
+// ServerErrorReporter is implemented by the response recorder: a handler stashes
+// the raw detail of a 5xx on it (writeError), so the [ERROR] alert can carry it
+// while the client only ever sees a generic message.
+type ServerErrorReporter interface {
+	ReportServerError(detail string)
+}
 
 // Instrument starts a tracing span for every request, logs one line per
 // request via logger, and (if observe is non-nil) reports the call to
@@ -68,7 +77,7 @@ func Instrument(tracer trace.Tracer, logger *slog.Logger, observe EndpointObserv
 				observe(route, r.Method, rec.status, duration)
 			}
 			if onError != nil && rec.status >= 500 {
-				onError(r.Method, route, rec.status)
+				onError(r.Method, route, rec.status, CIDFromContext(r.Context()), rec.serverError)
 			}
 		})
 	}
@@ -96,9 +105,17 @@ func logRequest(ctx context.Context, logger *slog.Logger, method, route string, 
 type statusRecorder struct {
 	http.ResponseWriter
 	status int
+	// serverError is the detail of a 5xx the handler chose not to disclose to the
+	// client (set via ReportServerError), surfaced only in the [ERROR] alert.
+	serverError string
 }
 
 func (r *statusRecorder) WriteHeader(status int) {
 	r.status = status
 	r.ResponseWriter.WriteHeader(status)
+}
+
+// ReportServerError records the undisclosed detail of a 5xx for the alert hook.
+func (r *statusRecorder) ReportServerError(detail string) {
+	r.serverError = detail
 }

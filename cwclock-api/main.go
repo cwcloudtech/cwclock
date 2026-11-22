@@ -86,10 +86,13 @@ func main() {
 		banAlerter = middleware.NewBanAlerter(func(ctx context.Context, text string) {
 			_ = discord.SendText(ctx, text)
 		})
-		onServerError = func(method, route string, status int) {
+		onServerError = func(method, route string, status int, cid, detail string) {
+			if detail == "" {
+				detail = "(no detail)"
+			}
 			go func() {
 				_ = discord.SendText(context.Background(),
-					fmt.Sprintf("[ERROR] :fire: %d on %s %s", status, method, route))
+					fmt.Sprintf("[ERROR] :fire: %d on %s %s, cid = %s : %s", status, method, route, cid, detail))
 			}()
 		}
 	}

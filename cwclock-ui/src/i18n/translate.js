@@ -39,10 +39,21 @@ export const translate = (locale, key, vars) => {
 // message the API sent, then to a generic network-error string.
 export const apiErrorMessage = (error, locale) => {
   const data = error?.response?.data;
+  let message = translate(locale, "errors.network");
   if (data?.i18n_code) {
     const translated = resolve(dictionaries[locale] ?? dictionaries.en, data.i18n_code);
-    if (translated) return translated;
+    if (translated) message = translated;
+    else if (data?.message) message = data.message;
+  } else if (data?.message) {
+    message = data.message;
   }
-  if (data?.message) return data.message;
-  return translate(locale, "errors.network");
+  // A 5xx is a server fault the user can't act on (the message is generic):
+  // append the correlation id (X-Cid response header) so it can be quoted to
+  // support, tying the toast to the [ERROR] alert and the logs. A 4xx message
+  // stands on its own and gets no id.
+  const cid = error?.response?.headers?.["x-cid"];
+  if (Number(error?.response?.status) >= 500 && cid) {
+    message = `${message} (ref: ${cid})`;
+  }
+  return message;
 };
