@@ -1,13 +1,57 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { FaSearch, FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import CopyIdButton from "../common/CopyIdButton";
+import { FaSearch, FaChevronLeft, FaChevronRight, FaRegCopy, FaCheck } from "react-icons/fa";
 import SingleSelect from "../common/SingleSelect";
 import { listAuditApi } from "../../Redux/Admin/Admin.actions";
 import { useI18n } from "../../i18n/I18nContext";
 import styles from "./Styles/AuditTrail.module.css";
 
 const PAGE_SIZE = 25;
+
+// A per-column value + copy button, mirroring uprodit's AdminOperations CopyCell:
+// the button reveals on row hover and flips from a copy icon to a check for a
+// moment on success. Renders a muted dash (and no button) when there's nothing
+// to copy, so every column reads consistently.
+const CopyCell = ({ className = "", value, title, children }) => {
+  const { t } = useI18n();
+  const [copied, setCopied] = useState(false);
+  const timer = useRef(null);
+
+  useEffect(() => () => timer.current && clearTimeout(timer.current), []);
+
+  const text = value == null ? "" : String(value);
+
+  const copy = () => {
+    if (!navigator.clipboard?.writeText) return;
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopied(true);
+        if (timer.current) clearTimeout(timer.current);
+        timer.current = setTimeout(() => setCopied(false), 1500);
+      })
+      .catch(() => {});
+  };
+
+  return (
+    <span className={`${styles.copyCell} ${className}`}>
+      <span className={styles.copyValue} title={title}>
+        {children != null && children !== "" ? children : <span className={styles.cellEmpty}>—</span>}
+      </span>
+      {text && (
+        <button
+          type="button"
+          className={styles.copyBtn}
+          onClick={copy}
+          title={t("common.copy")}
+          aria-label={t("common.copy")}
+        >
+          {copied ? <FaCheck /> : <FaRegCopy />}
+        </button>
+      )}
+    </span>
+  );
+};
 
 // AuditTrail is the superuser's view of what has been done across the whole
 // deployment - who signed in, who changed a role, who touched an
@@ -156,28 +200,41 @@ const AuditTrail = () => {
         </div>
       ) : (
         <ul className={`cw-list ${styles.entryList}`}>
-          {audit.entries.map((entry) => (
-            <li className={`cw-list-item ${styles.entryRow}`} key={entry.id}>
-              <span className={styles.when} title={new Date(entry.createdAt).toISOString()}>
-                {new Date(entry.createdAt).toLocaleString(locale)}
-              </span>
-              <span className={styles.action}>{actionLabel(entry.action)}</span>
-              <span className={styles.actor}>{entry.userEmail || t("audit.noActor")}</span>
-              <span className={styles.subject} title={entry.subjectId}>
-                {subjectLabel(entry.subjectType)}
-                {entry.subjectId && <code className={styles.subjectId}>{entry.subjectId}</code>}
-              </span>
-              {/* Cells are ellipsised to keep one entry on one row, so the
-                  full text has to be reachable - hence the title here and on
-                  the subject above. */}
-              <span className={styles.detail} title={formatDetail(entry.detail)}>
-                {formatDetail(entry.detail)}
-              </span>
-              <div className={styles.rowActions}>
-                <CopyIdButton id={entry.subjectId} className={styles.iconBtn} />
-              </div>
-            </li>
-          ))}
+          {audit.entries.map((entry) => {
+            const when = new Date(entry.createdAt).toLocaleString(locale);
+            const actor = entry.userEmail || "";
+            const detail = formatDetail(entry.detail);
+            return (
+              <li className={`cw-list-item ${styles.entryRow}`} key={entry.id}>
+                <CopyCell
+                  className={styles.when}
+                  value={when}
+                  title={new Date(entry.createdAt).toISOString()}
+                >
+                  {when}
+                </CopyCell>
+                <CopyCell className={styles.action} value={actionLabel(entry.action)}>
+                  {actionLabel(entry.action)}
+                </CopyCell>
+                <CopyCell className={styles.actor} value={actor} title={actor}>
+                  {entry.userEmail || <span className={styles.cellEmpty}>{t("audit.noActor")}</span>}
+                </CopyCell>
+                {/* The subject copies its id (what anyone actually pastes
+                    elsewhere), falling back to the subject label. */}
+                <CopyCell
+                  className={styles.subject}
+                  value={entry.subjectId || subjectLabel(entry.subjectType)}
+                  title={entry.subjectId}
+                >
+                  {subjectLabel(entry.subjectType)}
+                  {entry.subjectId && <code className={styles.subjectId}>{entry.subjectId}</code>}
+                </CopyCell>
+                <CopyCell className={styles.detail} value={detail} title={detail}>
+                  {detail}
+                </CopyCell>
+              </li>
+            );
+          })}
         </ul>
       )}
 
