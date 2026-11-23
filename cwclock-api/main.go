@@ -155,7 +155,7 @@ func main() {
 	// can hand the user a clickable link.
 	aiDownloadStore := aidownload.New(cfg.AIDownloadDir, cfg.AIDownloadTTL, cfg.AIDownloadSweep, cfg.AIDownloadMaxBytes, cfg.APIBaseURL, tel.Logger)
 	go aiDownloadStore.StartSweeper(ctx)
-	aiHandler := handlers.NewAIHandler(aiStore, userStore, orgStore, fmt.Sprintf("http://127.0.0.1:%s", cfg.Port), aiDownloadStore, auditStore)
+	aiHandler := handlers.NewAIHandler(aiStore, userStore, orgStore, fmt.Sprintf("http://127.0.0.1:%s", cfg.Port), aiDownloadStore, auditStore).WithNotifier(discord)
 	aiDownloadHandler := handlers.NewAIDownloadHandler(aiDownloadStore)
 
 	met, err := metrics.Setup(ctx, metrics.Config{

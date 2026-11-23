@@ -16,6 +16,7 @@ import (
 	"cwclock-api/internal/assistant"
 	"cwclock-api/internal/middleware"
 	"cwclock-api/internal/models"
+	"cwclock-api/internal/notify"
 	"cwclock-api/internal/store"
 	"cwclock-api/internal/utils"
 )
@@ -58,6 +59,10 @@ type AIHandler struct {
 	// hand the user a download link. Nil disables that (the tool then just names the
 	// generated file, as before).
 	downloads *aidownload.Store
+	// disc posts an [AI] alert per chat question with the token spend, so the running
+	// cost is visible without opening the audit trail. Optional and best-effort (a
+	// nil/disabled transport is a no-op and never affects the answer).
+	disc *notify.Discord
 }
 
 // NewAIHandler builds the /v1/ai handler. users resolves a share target and its
@@ -67,6 +72,14 @@ type AIHandler struct {
 // records each chat question's token spend in the superadmin trail.
 func NewAIHandler(connections *store.AIStore, users *store.UserStore, orgs *store.OrgStore, apiBaseURL string, downloads *aidownload.Store, audit *store.AuditStore) *AIHandler {
 	return &AIHandler{auditor: newAuditor(audit), connections: connections, users: users, orgs: orgs, apiBaseURL: apiBaseURL, client: ai.New(), downloads: downloads}
+}
+
+// WithNotifier wires the Discord transport so each chat question posts an [AI]
+// alert naming the asker, the provider/model and the tokens it spent. Optional
+// and best-effort (a nil/disabled transport never affects the answer).
+func (h *AIHandler) WithNotifier(disc *notify.Discord) *AIHandler {
+	h.disc = disc
+	return h
 }
 
 func aiUserID(r *http.Request) (string, bool) {
@@ -554,6 +567,13 @@ func (h *AIHandler) Chat(w http.ResponseWriter, r *http.Request) {
 		"cached":     answer.Tokens.Cached,
 		"connection": connection.Name,
 	})
+
+	// Mirror the token spend to Discord so the running cost is visible without
+	// opening the audit trail: same totals the audit entry and the conversation
+	// carry. Best-effort and off the request path.
+	notifyDiscord(h.disc, fmt.Sprintf("[AI] :robot: %s prompted the assistant (%s / %s) — tokens consumed: %d input + %d output (%d cached)",
+		actingEmail(r), connection.Provider, answeredWith(answer.Model, connection.Model),
+		answer.Tokens.Input, answer.Tokens.Output, answer.Tokens.Cached))
 
 	writeJSON(w, http.StatusOK, chatResponse{
 		Status: "ok", Message: answer.Message, Usage: answer.Usage, Model: answer.Model,
