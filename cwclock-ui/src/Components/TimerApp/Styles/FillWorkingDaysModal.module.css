@@ -23,6 +23,19 @@
   min-width: 140px;
 }
 
+/* The client / project autocompletes share one line and each fill half of it;
+   the AutocompleteSelect's trigger button stretches to its cell. */
+.row .select {
+  flex: 1 1 160px;
+  min-width: 0;
+  display: flex;
+}
+
+.row .select > button {
+  flex: 1;
+  width: 100%;
+}
+
 .checkbox {
   display: flex;
   align-items: center;

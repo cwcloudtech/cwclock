@@ -26,8 +26,9 @@ const FillWorkingDaysModal = ({ show, onClose }) => {
   const now = new Date();
   const [clientId, setClientId] = useState("");
   const [projectId, setProjectId] = useState("");
+  // Default to the whole current month (first to last day).
   const [from, setFrom] = useState(fmtDay(new Date(now.getFullYear(), now.getMonth(), 1)));
-  const [to, setTo] = useState(fmtDay(now));
+  const [to, setTo] = useState(fmtDay(new Date(now.getFullYear(), now.getMonth() + 1, 0)));
   const [text, setText] = useState("");
   const [half, setHalf] = useState(false);
 
@@ -115,21 +116,25 @@ const FillWorkingDaysModal = ({ show, onClose }) => {
   return (
     <Modal show={show} title={t("timeTracker.fillWorkingDays")} onClose={onClose} footer={footer} wide>
       <div className={styles.grid}>
-        <AutocompleteSelect
-          label={t("timeTracker.fill.client")}
-          placeholder={t("timeTracker.fill.client")}
-          options={clientOptions}
-          value={clientId}
-          onChange={setClientId}
-        />
-        <AutocompleteSelect
-          label={t("timeTracker.fill.project")}
-          placeholder={t("timeTracker.fill.project")}
-          options={projectOptions}
-          value={projectId}
-          onChange={setProjectId}
-          disabled={!clientId}
-        />
+        <div className={styles.row}>
+          <AutocompleteSelect
+            className={styles.select}
+            label={t("timeTracker.fill.client")}
+            placeholder={t("timeTracker.fill.client")}
+            options={clientOptions}
+            value={clientId}
+            onChange={setClientId}
+          />
+          <AutocompleteSelect
+            className={styles.select}
+            label={t("timeTracker.fill.project")}
+            placeholder={t("timeTracker.fill.project")}
+            options={projectOptions}
+            value={projectId}
+            onChange={setProjectId}
+            disabled={!clientId}
+          />
+        </div>
         <div className={styles.row}>
           <label className={styles.field}>
             <span>{t("timeTracker.fill.from")}</span>
