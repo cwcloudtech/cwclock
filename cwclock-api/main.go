@@ -184,6 +184,17 @@ func main() {
 		sessionStore, ipBanHandler, enricher, banAlerter, onServerError,
 	)
 
+	// Announce the boot to Discord, the way shadai does: a "[START] :rocket:" so
+	// the channel shows a deploy went through and which version is now up.
+	// Best-effort and off the main path (a slow/failed webhook must never hold
+	// up the listen).
+	if discord.Enabled() {
+		go func() {
+			_ = discord.SendText(context.Background(),
+				fmt.Sprintf("[START] :rocket: the cwclock API is up, version %s", cfg.Version))
+		}()
+	}
+
 	tel.Logger.Info("server started", "port", cfg.Port)
 	if err := http.ListenAndServe(":"+cfg.Port, r); err != nil {
 		tel.Logger.Error("server stopped", "error", err)
