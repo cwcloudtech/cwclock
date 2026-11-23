@@ -1,7 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { FiClock, FiKey, FiCalendar, FiMessageSquare } from "react-icons/fi";
-import { FaFileAlt, FaRegUserCircle, FaBuilding, FaUserShield, FaChartBar, FaFileInvoiceDollar, FaDownload, FaClipboardList, FaNetworkWired } from "react-icons/fa";
+import { FaFileAlt, FaRegUserCircle, FaBuilding, FaUserShield, FaChartBar, FaFileInvoiceDollar, FaDownload, FaClipboardList, FaNetworkWired, FaRegCalendarCheck } from "react-icons/fa";
 import { FaBuildingShield } from "react-icons/fa6";
 import Tooltip from "../../common/Tooltip";
 import useAppVersion from "../../common/useAppVersion";
@@ -27,6 +27,7 @@ const adminItems = [
   { to: "/dashboard/admin/organizations", labelKey: "nav.organizationsAdmin", Icon: FaBuildingShield },
   { to: "/dashboard/admin/ip-bans", labelKey: "nav.ipManagement", Icon: FaNetworkWired },
   { to: "/dashboard/admin/audit", labelKey: "nav.auditTrail", Icon: FaClipboardList },
+  { to: "/dashboard/admin/holidays", labelKey: "nav.holidays", Icon: FaRegCalendarCheck },
 ];
 
 // Single sidebar nav that renders either as an icon rail or an expanded

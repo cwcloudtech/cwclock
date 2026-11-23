@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { FiCalendar, FiUpload } from "react-icons/fi";
+import { FiCalendar, FiUpload, FiGrid } from "react-icons/fi";
 import styles from "./Styles/TaskInput.module.css";
 import useTimer from "./useTimer";
 import useDateHook from "./useDateHook";
@@ -10,6 +10,7 @@ import projectLabel from "../common/projectLabel";
 import AutocompleteSelect from "../common/AutocompleteSelect";
 import Tooltip from "../common/Tooltip";
 import padTimeString from "../common/padTimeString";
+import FillWorkingDaysModal from "./FillWorkingDaysModal";
 import { useI18n } from "../../i18n/I18nContext";
 
 const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
@@ -20,6 +21,7 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
   const [name, setName] = useState("");
   const [projectId, setProjectId] = useState("");
   const [allDayDate, setAllDayDate] = useState("");
+  const [showFill, setShowFill] = useState(false);
   const allDayInputRef = useRef(null);
   const { start } = useSelector((state) => state.tasks);
   const { user } = useSelector((state) => state.auth);
@@ -149,8 +151,23 @@ const TaskInput = ({ isAdminOrOwner, onImportClick }) => {
               <FiCalendar fontSize="16px" />
             </button>
           </Tooltip>
+          {/* Fill every working day in a range (skipping weekends & holidays)
+              for a client/project — its own modal picks them, so unlike the
+              all-day button it needs no selected project. */}
+          <Tooltip label={t("timeTracker.fillWorkingDays")} position="bottom">
+            <button
+              type="button"
+              className={styles.AllDayIconBtn}
+              onClick={() => setShowFill(true)}
+              disabled={timerOn}
+              aria-label={t("timeTracker.fillWorkingDays")}
+            >
+              <FiGrid fontSize="16px" />
+            </button>
+          </Tooltip>
         </div>
       </div>
+      <FillWorkingDaysModal show={showFill} onClose={() => setShowFill(false)} />
     </div>
   );
 };

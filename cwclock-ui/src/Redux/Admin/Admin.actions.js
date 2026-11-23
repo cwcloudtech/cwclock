@@ -183,3 +183,32 @@ export const listUserIpsApi = (id, token) => async () => {
     throw e;
   }
 };
+
+// --- Public holidays (superuser decision table, keyed by ISO country) --------
+// These are plain API helpers (like the IP lookups): they return the data and
+// don't touch the admin reducer, since the Holidays screen keeps its own list.
+
+const HOLIDAYS_ENDPOINT = `${process.env.REACT_APP_APIURL}/v1/admin/holidays/`;
+
+export const listHolidaysApi = (token, country) => async () => {
+  const { data } = await axios.get(HOLIDAYS_ENDPOINT, {
+    ...authConfig(token),
+    params: country ? { country } : {},
+  });
+  return data;
+};
+
+export const createHolidayApi = (body, token) => async () => {
+  const { data } = await axios.post(HOLIDAYS_ENDPOINT, body, authConfig(token));
+  return data;
+};
+
+export const updateHolidayApi = (id, body, token) => async () => {
+  const { data } = await axios.put(`${HOLIDAYS_ENDPOINT}${id}`, body, authConfig(token));
+  return data;
+};
+
+export const deleteHolidayApi = (id, token) => async () => {
+  await axios.delete(`${HOLIDAYS_ENDPOINT}${id}`, authConfig(token));
+  return id;
+};

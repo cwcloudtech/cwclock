@@ -62,6 +62,7 @@ func main() {
 	clientStore := store.NewClientStore(pool)
 	projectStore := store.NewProjectStore(pool)
 	timeEntryStore := store.NewTimeEntryStore(pool)
+	holidayStore := store.NewHolidayStore(pool)
 	apiKeyStore := store.NewApiKeyStore(pool)
 	invoiceStore := store.NewInvoiceStore(pool)
 	webauthnCredStore := store.NewWebAuthnCredentialStore(pool)
@@ -157,6 +158,8 @@ func main() {
 	go aiDownloadStore.StartSweeper(ctx)
 	aiHandler := handlers.NewAIHandler(aiStore, userStore, orgStore, fmt.Sprintf("http://127.0.0.1:%s", cfg.Port), aiDownloadStore, auditStore).WithNotifier(discord)
 	aiDownloadHandler := handlers.NewAIDownloadHandler(aiDownloadStore)
+	holidayHandler := handlers.NewHolidayHandler(holidayStore, auditStore)
+	workingDayHandler := handlers.NewWorkingDayHandler(timeEntryStore, clientStore, orgStore, projectStore, holidayStore, auditStore).WithNotifier(discord)
 
 	met, err := metrics.Setup(ctx, metrics.Config{
 		Endpoint: cfg.OtelEndpoint,
@@ -179,6 +182,7 @@ func main() {
 	r := router.New(
 		userHandler, orgHandler, clientHandler, projectHandler, timeEntryHandler, reportHandler, adminHandler, mfaHandler, importHandler, apiKeyHandler, configHandler, invoiceHandler,
 		currencyHandler, countryHandler, fieldHandler, oidcHandler, contactHandler, exportJobHandler, calendarFeedHandler, aiHandler, aiDownloadHandler,
+		holidayHandler, workingDayHandler,
 		orgStore, userStore, apiKeyStore, cfg.JWTSecret, cfg.ActivationMode, cfg.CorsEnabled, cfg.CorsAllowedOrigins, cfg.Version, cfg.ManifestPath,
 		tel, met.Observe, met.Handler,
 		sessionStore, ipBanHandler, enricher, banAlerter, onServerError,

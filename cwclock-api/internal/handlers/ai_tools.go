@@ -46,20 +46,23 @@ func (h *AIHandler) aiTools() []ai.Tool {
 		{
 			Name: toolCwclockAPIName,
 			Description: "Call CWClock's own HTTP API as the signed-in user, to ground your answer in " +
-				"their real data and to generate reports and invoices. It runs with the user's OWN " +
-				"permissions: a user who is not allowed gets a forbidden result you must relay as " +
-				"'you don't have permission' without retrying. Use method GET to read (clients, projects, " +
-				"members, time entries, invoices) and method POST to generate (reports, invoices). The " +
-				"skill lists the useful paths, how organization-scoped paths work, and how to resolve a " +
-				"client/project/person name to its id. Never claim to have changed, deleted or sent " +
-				"anything — this tool only reads and generates reports/invoices.",
+				"their real data, to generate reports and invoices, and to fill a client/project's " +
+				"working days with time entries. It runs with the user's OWN permissions: a user who is " +
+				"not allowed gets a forbidden result you must relay as 'you don't have permission' " +
+				"without retrying. Use method GET to read (clients, projects, members, time entries, " +
+				"invoices, and the working-days preview) and method POST to generate (reports, invoices) " +
+				"or to fill working days. The skill lists the useful paths, how organization-scoped paths " +
+				"work, and how to resolve a client/project/person name to its id. The ONLY records this " +
+				"tool can create are time entries, via the working-days fill endpoint, and ONLY after you " +
+				"have previewed the exact days and the user has confirmed; it can otherwise never change, " +
+				"delete or send anything, so never claim it did.",
 			Parameters: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
 					"method": map[string]any{
 						"type":        "string",
 						"enum":        []string{"GET", "POST"},
-						"description": "GET to read, POST to generate a report or invoice. Defaults to GET.",
+						"description": "GET to read, POST to generate a report/invoice or to fill working days (only after the user confirms the previewed days). Defaults to GET.",
 					},
 					"path": map[string]any{
 						"type": "string",

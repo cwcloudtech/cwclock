@@ -80,6 +80,11 @@ const (
 	// once per row: a per-row trail of a bulk load says nothing the single
 	// entry doesn't, and would bury every other act on the screen.
 	AuditRecordImported = "record.imported"
+	// Filling a range of working days (the "fill working days" action / the
+	// assistant) creates one all-day record per working day in one request. Like
+	// an import, it is recorded once with its counts and range rather than once
+	// per day, so a month's fill doesn't bury the rest of the trail.
+	AuditRecordFilled = "record.filled"
 	// Export jobs are configuration: a schedule, a set of recipients, and
 	// (in their targets) credentials for an S3 bucket, a Drive or a git
 	// remote. Running one on demand pushes data out of the deployment, so
@@ -94,6 +99,12 @@ const (
 	// The question and the answer are never copied here: they are the user's
 	// own conversation, kept in their history, not an administrative fact.
 	AuditAICall = "ai.call"
+	// Public-holiday decision table (superuser, deployment-wide). Who added,
+	// changed or removed a country's holiday rules — config that decides which
+	// days a fill treats as non-working.
+	AuditHolidayCreated = "holiday.created"
+	AuditHolidayUpdated = "holiday.updated"
+	AuditHolidayDeleted = "holiday.deleted"
 )
 
 // Audit subject types - what the action's subject_id points at.
@@ -109,6 +120,8 @@ const (
 	AuditSubjectExportJob    = "exportJob"
 	// AuditSubjectAIConnection is the AI subscription a call was spent through.
 	AuditSubjectAIConnection = "aiConnection"
+	// AuditSubjectHoliday is a row of the public-holiday decision table.
+	AuditSubjectHoliday = "holiday"
 )
 
 // AuditActions and AuditSubjectTypes are the constants above as lists, for
@@ -164,11 +177,15 @@ var AuditActions = []string{
 	AuditRecordUpdated,
 	AuditRecordDeleted,
 	AuditRecordImported,
+	AuditRecordFilled,
 	AuditExportJobCreated,
 	AuditExportJobUpdated,
 	AuditExportJobDeleted,
 	AuditExportJobRun,
 	AuditAICall,
+	AuditHolidayCreated,
+	AuditHolidayUpdated,
+	AuditHolidayDeleted,
 }
 
 var AuditSubjectTypes = []string{
@@ -182,6 +199,7 @@ var AuditSubjectTypes = []string{
 	AuditSubjectConnection,
 	AuditSubjectExportJob,
 	AuditSubjectAIConnection,
+	AuditSubjectHoliday,
 }
 
 // AuditEntry is one recorded act, as the superadmin screen reads it.

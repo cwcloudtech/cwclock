@@ -15,8 +15,30 @@ import toastOptions from "../toastOptions";
 import { translate, getStoredLocale, apiErrorMessage } from "../../i18n/translate";
 
 const ENDPOINT = (orgId) => `${process.env.REACT_APP_APIURL}/v1/organizations/${orgId}/time-entries/`;
+const WORKING_DAYS_ENDPOINT = (orgId, clientId) =>
+  `${process.env.REACT_APP_APIURL}/v1/organizations/${orgId}/clients/${clientId}/working-days`;
+const FILL_ENDPOINT = (orgId) => `${process.env.REACT_APP_APIURL}/v1/organizations/${orgId}/time-entries/fill`;
 
 const authConfig = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
+
+// workingDaysApi previews the working days a fill would create for a client
+// over [from, to]: the resolved country's weekends and public holidays are
+// skipped, and (with projectId) days already logged on that project are
+// flagged. Read-only - returns the response data, doesn't touch the store.
+export const workingDaysApi = (orgId, clientId, { from, to, projectId }, token) => async () => {
+  const params = { from, to };
+  if (projectId) params.projectId = projectId;
+  const { data } = await axios.get(WORKING_DAYS_ENDPOINT(orgId, clientId), { ...authConfig(token), params });
+  return data;
+};
+
+// fillWorkingDaysApi creates one all-day (or half-day) entry per working day in
+// the range, skipping weekends, holidays and already-logged days. Returns
+// { created, skipped }; the caller reloads the task list on success.
+export const fillWorkingDaysApi = (body, orgId, token) => async () => {
+  const { data } = await axios.post(FILL_ENDPOINT(orgId), body, authConfig(token));
+  return data;
+};
 
 export const startTask = (payload) => (dispatch) => {
   dispatch({ type: start, payload: payload });

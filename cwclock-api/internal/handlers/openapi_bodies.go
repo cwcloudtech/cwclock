@@ -77,8 +77,11 @@ func EndpointDocs() map[string]openapi.EndpointDoc {
 		"PUT /v1/organizations/{orgId}/projects/{projectId}":          body(projectPayload{}),
 
 		// --- time entries ---
-		"POST /v1/organizations/{orgId}/time-entries/":    body(timeEntryPayload{}),
-		"PUT /v1/organizations/{orgId}/time-entries/{id}": body(timeEntryPayload{}),
+		"POST /v1/organizations/{orgId}/time-entries/":     body(timeEntryPayload{}),
+		"PUT /v1/organizations/{orgId}/time-entries/{id}":  body(timeEntryPayload{}),
+		"POST /v1/organizations/{orgId}/time-entries/fill": body(fillPayload{}),
+		"POST /v1/admin/holidays/":                         body(holidayPayload{}),
+		"PUT /v1/admin/holidays/{id}":                      body(holidayPayload{}),
 
 		// --- reports (POST with a filter body, streamed PDF/CSV or JSON) ---
 		"POST /v1/organizations/{orgId}/reports/detailed": body(exportRequest{}),
@@ -101,6 +104,8 @@ func EndpointDocs() map[string]openapi.EndpointDoc {
 		"GET /v1/admin/organizations/":                     q(p("term"), ints("startIndex"), ints("maxResults")),
 		"GET /v1/admin/ip-bans/":                           q(p("term"), ints("page")),
 		"GET /v1/admin/audit/":                             q(ints("page"), ints("size"), p("action"), p("subjectType"), p("subject")),
+		"GET /v1/admin/holidays/":                          q(p("country")),
+		"GET /v1/organizations/{orgId}/clients/{clientId}/working-days": q(openapi.Param{Name: "from", Required: true}, openapi.Param{Name: "to", Required: true}, p("projectId")),
 		"GET /v1/organizations/{orgId}/projects/":          q(p("clientId")),
 		"GET /v1/organizations/{orgId}/time-entries/":      q(ints("page"), ints("pageSize")),
 		"GET /v1/organizations/{orgId}/time-entries/range": q(openapi.Param{Name: "start", Required: true}, openapi.Param{Name: "end", Required: true}),

@@ -78,6 +78,8 @@ const (
 	CodeInvalidMFACode              = "errors.invalidMfaCode"
 	CodeMailLimitExceeded           = "errors.mailLimitExceeded"
 	CodeConfigTokenRequired         = "errors.configTokenRequired"
+	CodeInvalidHoliday              = "errors.invalidHoliday"
+	CodeInvalidDateRange            = "errors.invalidDateRange"
 )
 
 func writeJSON(w http.ResponseWriter, status int, body any) {

@@ -36,6 +36,8 @@ func New(
 	calendarFeedHandler *handlers.CalendarFeedHandler,
 	aiHandler *handlers.AIHandler,
 	aiDownloadHandler *handlers.AIDownloadHandler,
+	holidayHandler *handlers.HolidayHandler,
+	workingDayHandler *handlers.WorkingDayHandler,
 	orgs *store.OrgStore,
 	users *store.UserStore,
 	apiKeys middleware.ApiKeyVerifier,
@@ -240,6 +242,19 @@ func New(
 			r.Get("/", adminHandler.Audit)
 		})
 
+		// Public-holiday decision table (superuser, deployment-wide): the
+		// "Jours fériés" admin screen. Keyed by ISO country code; the
+		// working-day resolver reads the same rows.
+		r.Route("/admin/holidays", func(r chi.Router) {
+			r.Use(middleware.Auth(jwtSecret, apiKeys))
+			r.Use(middleware.RequireActiveUser(users, activationMode, banAlerter))
+			r.Use(middleware.RequireSuperuser(users))
+			r.Get("/", holidayHandler.List)
+			r.Post("/", holidayHandler.Create)
+			r.Put("/{id}", holidayHandler.Update)
+			r.Delete("/{id}", holidayHandler.Delete)
+		})
+
 		// The AI assistant (ai-instruct-132): a user's model subscriptions
 		// (connections) and who they share them with, plus the chat — answered
 		// as an agent with cwclock's own API offered as a tool. Signed-in,
@@ -308,6 +323,11 @@ func New(
 					r.With(middleware.RequireRole(models.RoleAdmin)).Delete("/{clientId}", clientHandler.Delete)
 					r.With(middleware.RequireRole(models.RoleOwner)).Put("/{clientId}/transfer", clientHandler.Transfer)
 
+					// Read-only working-days preview for the client's resolved
+					// country (client's own, else the org's): the working days,
+					// and the weekends/holidays a fill would skip.
+					r.With(middleware.RequireRole(models.RoleMember)).Get("/{clientId}/working-days", workingDayHandler.WorkingDays)
+
 					r.Route("/{clientId}/projects", func(r chi.Router) {
 						r.Get("/", projectHandler.List)
 						r.With(middleware.RequireRole(models.RoleAdmin)).Post("/", projectHandler.Create)
@@ -324,6 +344,10 @@ func New(
 					r.Get("/", timeEntryHandler.List)
 					r.Get("/range", timeEntryHandler.ListRange)
 					r.With(middleware.RequireRole(models.RoleMember)).Post("/", timeEntryHandler.Create)
+					// Fill a date range's working days with all-day entries
+					// (skips weekends, the resolved country's holidays, and
+					// days already logged on the project).
+					r.With(middleware.RequireRole(models.RoleMember)).Post("/fill", workingDayHandler.Fill)
 					r.With(middleware.RequireRole(models.RoleMember)).Put("/{id}", timeEntryHandler.Update)
 					r.With(middleware.RequireRole(models.RoleMember)).Delete("/{id}", timeEntryHandler.Delete)
 				})
