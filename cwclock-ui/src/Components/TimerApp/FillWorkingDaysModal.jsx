@@ -9,7 +9,15 @@ import toastOptions from "../../Redux/toastOptions";
 import { workingDaysApi, fillWorkingDaysApi, getTasksApi } from "../../Redux/Tasks/Task.actions";
 import styles from "./Styles/FillWorkingDaysModal.module.css";
 
-const fmtDay = (d) => d.toISOString().slice(0, 10);
+// Format a Date as a local "YYYY-MM-DD" day key. NOT toISOString(), which
+// converts to UTC and in a positive-offset timezone (e.g. France) shifts a
+// local-midnight date back a day — that would push the month boundaries off by
+// one (the 1st into the previous month, the last day one short).
+const fmtDay = (d) => {
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${month}-${day}`;
+};
 
 // Fill every working day in a date range with an all-day entry for a client /
 // project, skipping weekends, the resolved country's public holidays, and days
