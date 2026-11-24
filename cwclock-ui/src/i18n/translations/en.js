@@ -452,7 +452,14 @@ const en = {
       easterOffset: "Days from Easter Sunday",
       easterHint: "e.g. +1 = Easter Monday, +39 = Ascension, +50 = Whit Monday.",
       weekday: "Weekday",
-      types: { fixed: "Fixed date", easter: "Easter-relative", weekend: "Weekend" },
+      occurrence: "Occurrence",
+      nth: { 1: "First", 2: "Second", 3: "Third", 4: "Fourth", 5: "Fifth", last: "Last" },
+      types: {
+        fixed: "Fixed date",
+        easter: "Easter-relative",
+        weekend: "Weekend",
+        nthWeekday: "Weekday of the month",
+      },
       weekdays: {
         monday: "Monday",
         tuesday: "Tuesday",

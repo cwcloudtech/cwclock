@@ -14,6 +14,10 @@ const (
 	// weekend). It is configurable per country because the weekend isn't
 	// Saturday/Sunday everywhere (e.g. Friday/Saturday in parts of the world).
 	HolidayWeekend HolidayType = "weekend"
+	// HolidayNthWeekday is the Nth occurrence of a weekday in a month (e.g. the
+	// 4th Thursday of November = Thanksgiving, the last Monday of May = Memorial
+	// Day). Common in the US and Australia.
+	HolidayNthWeekday HolidayType = "nthWeekday"
 )
 
 // Weekdays are the valid values of a weekday rule's Weekday field (lowercase
@@ -34,6 +38,11 @@ type PublicHoliday struct {
 	Day   int `json:"day,omitempty"`
 	// Easter rule: days offset from Easter Sunday (may be negative).
 	EasterOffset int `json:"easterOffset,omitempty"`
-	// Weekday rule: the non-working weekday, lowercase English ("saturday").
+	// Weekday rule (weekend) OR nth-weekday rule: the weekday, lowercase
+	// English ("saturday", "monday").
 	Weekday string `json:"weekday,omitempty"`
+	// Nth-weekday rule: which occurrence of Weekday in Month — 1..5, or -1 for
+	// the last (e.g. Month 11 / Thursday / 4 = Thanksgiving; Month 5 / Monday /
+	// -1 = Memorial Day).
+	Nth int `json:"nth,omitempty"`
 }

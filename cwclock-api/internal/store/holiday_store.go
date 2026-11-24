@@ -30,6 +30,7 @@ type HolidayFields struct {
 	Day          int
 	EasterOffset int
 	Weekday      string
+	Nth          int
 }
 
 // holidayData is the jsonb payload stored in public_holidays.data.
@@ -40,6 +41,7 @@ type holidayData struct {
 	Day          int                `json:"day,omitempty"`
 	EasterOffset int                `json:"easterOffset,omitempty"`
 	Weekday      string             `json:"weekday,omitempty"`
+	Nth          int                `json:"nth,omitempty"`
 }
 
 func toHolidayData(f HolidayFields) holidayData {
@@ -52,6 +54,10 @@ func toHolidayData(f HolidayFields) holidayData {
 		d.EasterOffset = f.EasterOffset
 	case models.HolidayWeekend:
 		d.Weekday = f.Weekday
+	case models.HolidayNthWeekday:
+		d.Month = f.Month
+		d.Weekday = f.Weekday
+		d.Nth = f.Nth
 	}
 	return d
 }
@@ -75,6 +81,7 @@ func scanHoliday(row pgx.Row) (models.PublicHoliday, error) {
 	h.Day = d.Day
 	h.EasterOffset = d.EasterOffset
 	h.Weekday = d.Weekday
+	h.Nth = d.Nth
 	return h, nil
 }
 

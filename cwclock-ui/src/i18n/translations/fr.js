@@ -452,7 +452,14 @@ const fr = {
       easterOffset: "Jours depuis le dimanche de Pâques",
       easterHint: "ex. +1 = lundi de Pâques, +39 = Ascension, +50 = lundi de Pentecôte.",
       weekday: "Jour de la semaine",
-      types: { fixed: "Date fixe", easter: "Relatif à Pâques", weekend: "Week-end" },
+      occurrence: "Occurrence",
+      nth: { 1: "Premier", 2: "Deuxième", 3: "Troisième", 4: "Quatrième", 5: "Cinquième", last: "Dernier" },
+      types: {
+        fixed: "Date fixe",
+        easter: "Relatif à Pâques",
+        weekend: "Week-end",
+        nthWeekday: "Jour de semaine du mois",
+      },
       weekdays: {
         monday: "Lundi",
         tuesday: "Mardi",

@@ -15,9 +15,12 @@ import { toast } from "react-toastify";
 import toastOptions from "../../Redux/toastOptions";
 import styles from "./Styles/Holidays.module.css";
 
-const TYPES = ["fixed", "easter", "weekend"];
+const TYPES = ["fixed", "easter", "weekend", "nthWeekday"];
 // Monday-first for display; values are the lowercase English the API expects.
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+// Which occurrence of a weekday in the month; -1 is the last one.
+const NTHS = [1, 2, 3, 4, 5, -1];
+const nthKey = (n) => (n === -1 ? "last" : String(n));
 
 // Holidays is the superuser-only public-holiday (and weekend) decision table,
 // keyed by ISO country code. The working-day fill reads these rows to decide
@@ -49,6 +52,10 @@ const Holidays = () => {
     load();
   }, [load]);
 
+  // Localised month name ("November") from a 1-based month number.
+  const monthName = (m) =>
+    m >= 1 && m <= 12 ? new Date(2000, m - 1, 1).toLocaleDateString(locale, { month: "long" }) : "";
+
   // A human-readable "when" for a rule row.
   const ruleWhen = (h) => {
     if (h.type === "fixed") {
@@ -56,6 +63,9 @@ const Holidays = () => {
     }
     if (h.type === "easter") {
       return `${t("admin.holidays.easter")} ${h.easterOffset >= 0 ? "+" : ""}${h.easterOffset}`;
+    }
+    if (h.type === "nthWeekday") {
+      return `${t(`admin.holidays.nth.${nthKey(h.nth)}`)} ${t(`admin.holidays.weekdays.${h.weekday}`)} · ${monthName(h.month)}`;
     }
     return t(`admin.holidays.weekdays.${h.weekday}`);
   };
@@ -179,6 +189,7 @@ const HolidayModal = ({ holiday, token, onClose, onSaved }) => {
   const [day, setDay] = useState(holiday.day || 1);
   const [easterOffset, setEasterOffset] = useState(holiday.easterOffset ?? 0);
   const [weekday, setWeekday] = useState(holiday.weekday || "saturday");
+  const [nth, setNth] = useState(holiday.nth ?? 1);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -189,6 +200,10 @@ const HolidayModal = ({ holiday, token, onClose, onSaved }) => {
       body.day = Number(day);
     } else if (type === "easter") {
       body.easterOffset = Number(easterOffset);
+    } else if (type === "nthWeekday") {
+      body.month = Number(month);
+      body.weekday = weekday;
+      body.nth = Number(nth);
     } else {
       body.weekday = weekday;
     }
@@ -290,6 +305,34 @@ const HolidayModal = ({ holiday, token, onClose, onSaved }) => {
               ))}
             </select>
           </label>
+        )}
+        {type === "nthWeekday" && (
+          <div className={styles.row2}>
+            <label className={styles.field}>
+              <span>{t("admin.holidays.occurrence")}</span>
+              <select className="cw-input" value={nth} onChange={(e) => setNth(e.target.value)}>
+                {NTHS.map((n) => (
+                  <option key={n} value={n}>
+                    {t(`admin.holidays.nth.${nthKey(n)}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className={styles.field}>
+              <span>{t("admin.holidays.weekday")}</span>
+              <select className="cw-input" value={weekday} onChange={(e) => setWeekday(e.target.value)}>
+                {WEEKDAYS.map((wd) => (
+                  <option key={wd} value={wd}>
+                    {t(`admin.holidays.weekdays.${wd}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className={styles.field}>
+              <span>{t("admin.holidays.month")}</span>
+              <input className="cw-input" type="number" min={1} max={12} value={month} onChange={(e) => setMonth(e.target.value)} />
+            </label>
+          </div>
         )}
       </div>
     </Modal>

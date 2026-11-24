@@ -54,8 +54,36 @@ func (c *Calendar) dateFor(rule models.PublicHoliday, year int) (time.Time, bool
 		return time.Date(year, time.Month(rule.Month), rule.Day, 0, 0, 0, 0, time.UTC), true
 	case models.HolidayEaster:
 		return Easter(year).AddDate(0, 0, rule.EasterOffset), true
+	case models.HolidayNthWeekday:
+		wd, ok := weekdayNumbers[rule.Weekday]
+		if !ok || rule.Month < 1 || rule.Month > 12 {
+			return time.Time{}, false
+		}
+		return nthWeekdayOfMonth(year, time.Month(rule.Month), wd, rule.Nth)
 	}
 	return time.Time{}, false
+}
+
+// nthWeekdayOfMonth returns the nth occurrence of weekday wd in the given month
+// (nth 1..5), or the last occurrence when nth == -1. ok=false when nth is out
+// of range or the nth occurrence doesn't exist that month (e.g. a 5th Monday).
+func nthWeekdayOfMonth(year int, month time.Month, wd time.Weekday, nth int) (time.Time, bool) {
+	if nth == -1 {
+		// Day 0 of the next month is the last day of this one.
+		last := time.Date(year, month+1, 0, 0, 0, 0, 0, time.UTC)
+		back := (int(last.Weekday()) - int(wd) + 7) % 7
+		return last.AddDate(0, 0, -back), true
+	}
+	if nth < 1 || nth > 5 {
+		return time.Time{}, false
+	}
+	first := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
+	fwd := (int(wd) - int(first.Weekday()) + 7) % 7
+	d := time.Date(year, month, 1+fwd+(nth-1)*7, 0, 0, 0, 0, time.UTC)
+	if d.Month() != month {
+		return time.Time{}, false
+	}
+	return d, true
 }
 
 // weekdayNumbers maps lowercase English weekday names to time.Weekday.

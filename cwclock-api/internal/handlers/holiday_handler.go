@@ -32,6 +32,7 @@ type holidayPayload struct {
 	Day          int                `json:"day"`
 	EasterOffset int                `json:"easterOffset"`
 	Weekday      string             `json:"weekday"`
+	Nth          int                `json:"nth"`
 }
 
 // validate checks a holiday rule and returns the normalised country code, or
@@ -49,28 +50,38 @@ func (p holidayPayload) validate(w http.ResponseWriter) (string, store.HolidayFi
 		writeError(w, http.StatusBadRequest, "Please provide a holiday name", CodeInvalidHoliday)
 		return "", store.HolidayFields{}, false
 	}
-	f := store.HolidayFields{Name: name, Type: p.Type, Month: p.Month, Day: p.Day, EasterOffset: p.EasterOffset, Weekday: strings.ToLower(strings.TrimSpace(p.Weekday))}
+	f := store.HolidayFields{Name: name, Type: p.Type, Month: p.Month, Day: p.Day, EasterOffset: p.EasterOffset, Weekday: strings.ToLower(strings.TrimSpace(p.Weekday)), Nth: p.Nth}
 	switch p.Type {
 	case models.HolidayFixed:
 		if p.Month < 1 || p.Month > 12 || p.Day < 1 || p.Day > 31 {
 			writeError(w, http.StatusBadRequest, "A fixed holiday needs a month (1-12) and day (1-31)", CodeInvalidHoliday)
 			return "", store.HolidayFields{}, false
 		}
-		f.EasterOffset, f.Weekday = 0, ""
+		f.EasterOffset, f.Weekday, f.Nth = 0, "", 0
 	case models.HolidayEaster:
 		if p.EasterOffset < -60 || p.EasterOffset > 60 {
 			writeError(w, http.StatusBadRequest, "An easter-relative holiday needs an offset between -60 and 60 days", CodeInvalidHoliday)
 			return "", store.HolidayFields{}, false
 		}
-		f.Month, f.Day, f.Weekday = 0, 0, ""
+		f.Month, f.Day, f.Weekday, f.Nth = 0, 0, "", 0
 	case models.HolidayWeekend:
 		if _, ok := holiday.ParseWeekday(f.Weekday); !ok {
 			writeError(w, http.StatusBadRequest, "A weekend rule needs a weekday (monday..sunday)", CodeInvalidHoliday)
 			return "", store.HolidayFields{}, false
 		}
-		f.Month, f.Day, f.EasterOffset = 0, 0, 0
+		f.Month, f.Day, f.EasterOffset, f.Nth = 0, 0, 0, 0
+	case models.HolidayNthWeekday:
+		if _, ok := holiday.ParseWeekday(f.Weekday); !ok || p.Month < 1 || p.Month > 12 {
+			writeError(w, http.StatusBadRequest, "An nth-weekday rule needs a month (1-12) and a weekday (monday..sunday)", CodeInvalidHoliday)
+			return "", store.HolidayFields{}, false
+		}
+		if p.Nth != -1 && (p.Nth < 1 || p.Nth > 5) {
+			writeError(w, http.StatusBadRequest, "The occurrence must be 1-5, or -1 for the last", CodeInvalidHoliday)
+			return "", store.HolidayFields{}, false
+		}
+		f.Day, f.EasterOffset = 0, 0
 	default:
-		writeError(w, http.StatusBadRequest, "Holiday type must be 'fixed', 'easter' or 'weekend'", CodeInvalidHoliday)
+		writeError(w, http.StatusBadRequest, "Holiday type must be 'fixed', 'easter', 'weekend' or 'nthWeekday'", CodeInvalidHoliday)
 		return "", store.HolidayFields{}, false
 	}
 	return country, f, true
