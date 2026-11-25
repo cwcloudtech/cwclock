@@ -280,6 +280,11 @@ func New(
 
 			r.Post("/chat", aiHandler.Chat)
 
+			// CWAI external-adapter interface (ai-instruct-133): CWCloud spends
+			// the caller's AI subscription (picked by the request's `adapter`
+			// name, else the default) as a plain LLM gateway.
+			r.Post("/cwcloud/adapter", aiHandler.CWCloudAdapter)
+
 			r.Route("/conversations", func(r chi.Router) {
 				r.Get("/", aiHandler.ListConversations)
 				r.Delete("/", aiHandler.DeleteConversations)

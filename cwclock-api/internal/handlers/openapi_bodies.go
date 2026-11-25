@@ -58,6 +58,7 @@ func EndpointDocs() map[string]openapi.EndpointDoc {
 		"POST /v1/ai/connections/order":       body(aiOrderPayload{}),
 		"POST /v1/ai/connections/{id}/shares": body(aiGrantPayload{}),
 		"POST /v1/ai/chat":                    body(chatPayload{}),
+		"POST /v1/ai/cwcloud/adapter":         body(cwcloudAdapterPayload{}),
 		"DELETE /v1/ai/conversations/":        body(deleteConversationsPayload{}),
 
 		// --- organizations / members ---
