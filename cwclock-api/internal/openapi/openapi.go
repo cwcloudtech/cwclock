@@ -45,19 +45,30 @@ type Parameter struct {
 	Schema   *Schema `json:"schema"`
 }
 
-// EndpointDoc is the hand-maintained request shape of a route — the parts the
-// router walk cannot derive: the JSON body struct, and the query / header
-// parameters the handler reads. The body schema is still reflected from the
-// struct (see schemaOf), so only the route→doc mapping
-// (handlers.EndpointDocs) is maintained by hand.
+// EndpointDoc is the hand-maintained shape of a route — the parts the router
+// walk cannot derive: the JSON body struct, the query / header parameters the
+// handler reads, and (for a contract endpoint only) the bodies it answers with.
+// Every schema is still reflected from the struct (see schemaOf), so only the
+// route→doc mapping (handlers.EndpointDocs) is maintained by hand.
 type EndpointDoc struct {
 	Body   reflect.Type
 	Query  []Param
 	Header []Param
-	// Response is the 200 JSON body struct, reflected like Body. Left nil, the
-	// route just documents a generic "OK" — set it for endpoints whose reply
-	// shape is part of a contract (e.g. the CWAI external adapter).
-	Response reflect.Type
+	// Answer is the 200 JSON body struct and Failure the refusal body, both
+	// reflected like Body (so they track the structs the handler marshals) and
+	// each described by its own sentence. Answer is emitted under "200",
+	// Failure under "default"; left nil, neither is, and the route keeps the
+	// bare "OK" every other route carries.
+	//
+	// Almost no route wants these: a reply shape is readable in the handler,
+	// and a response schema maintained by hand drifts from the code. They are
+	// for the endpoint written to somebody else's contract — the CWAI external
+	// adapter — whose integrator reads /openapi.json and never this repository,
+	// and to whom "OK" says nothing. See handlers.EndpointDocs (contract).
+	Answer             reflect.Type
+	AnswerDescription  string
+	Failure            reflect.Type
+	FailureDescription string
 }
 
 // Param is one query or header parameter. Type defaults to "string".
@@ -88,6 +99,8 @@ type Schema struct {
 	Items      *Schema            `json:"items,omitempty"`
 }
 
+// Response is one documented response. Most carry a Description alone ("OK"):
+// Content is set only where the body is documented too (see EndpointDoc.Answer).
 type Response struct {
 	Description string               `json:"description"`
 	Content     map[string]MediaType `json:"content,omitempty"`
@@ -123,10 +136,15 @@ var publicRoutes = map[string]bool{
 // X-Api-Key, either satisfies it - mirroring middleware.Auth) for every
 // route except the known-public ones (login/register/currencies).
 //
-// docs maps "METHOD /route" to the request shape the walk can't derive: the
-// JSON body struct (whose schema is reflected, so it tracks the struct), and
-// the query / header parameters the handler reads. Only that route→doc mapping
-// (see handlers.EndpointDocs) is maintained by hand.
+// docs maps "METHOD /route" to the shape the walk can't derive: the JSON body
+// struct (whose schema is reflected, so it tracks the struct), the query /
+// header parameters the handler reads, and, for the rare route documenting its
+// reply, the answer and refusal bodies. Only that route→doc mapping (see
+// handlers.EndpointDocs) is maintained by hand.
+//
+// Every route answers "200": {"description": "OK"} unless its doc declares an
+// answer, which is what all but the contract endpoints want — a response schema
+// the generator invented would be worse than none.
 func Generate(r chi.Router, title, version string, docs map[string]EndpointDoc) Spec {
 	paths := map[string]PathItem{}
 
@@ -178,10 +196,19 @@ func Generate(r chi.Router, title, version string, docs map[string]EndpointDoc) 
 					Content:  map[string]MediaType{"application/json": {Schema: schemaOf(doc.Body)}},
 				}
 			}
-			if doc.Response != nil {
+			// A documented answer replaces the bare 200, and a documented
+			// refusal is added under "default" — the status-agnostic slot, since
+			// one refusal shape covers every code the handler can answer with.
+			if doc.Answer != nil {
 				op.Responses["200"] = Response{
-					Description: "OK",
-					Content:     map[string]MediaType{"application/json": {Schema: schemaOf(doc.Response)}},
+					Description: describedOr(doc.AnswerDescription, "OK"),
+					Content:     map[string]MediaType{"application/json": {Schema: schemaOf(doc.Answer)}},
+				}
+			}
+			if doc.Failure != nil {
+				op.Responses["default"] = Response{
+					Description: describedOr(doc.FailureDescription, "Error"),
+					Content:     map[string]MediaType{"application/json": {Schema: schemaOf(doc.Failure)}},
 				}
 			}
 		}
@@ -311,6 +338,15 @@ func jsonFieldName(f reflect.StructField) (name string, skip, inline bool) {
 		return f.Name, false, false
 	}
 	return first, false, false
+}
+
+// describedOr is a documented response's description, falling back to the
+// generic one when the doc declares a schema but no sentence to go with it.
+func describedOr(description, fallback string) string {
+	if strings.TrimSpace(description) == "" {
+		return fallback
+	}
+	return description
 }
 
 // paramType defaults a query/header parameter's schema type to "string".

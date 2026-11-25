@@ -23,9 +23,22 @@ import (
 func EndpointDocs() map[string]openapi.EndpointDoc {
 	t := reflect.TypeOf
 	body := func(v any) openapi.EndpointDoc { return openapi.EndpointDoc{Body: t(v)} }
-	// bodyResp documents both the request body and the 200 response body — for
-	// endpoints whose reply shape is part of a contract (the CWAI adapter).
-	bodyResp := func(req, resp any) openapi.EndpointDoc { return openapi.EndpointDoc{Body: t(req), Response: t(resp)} }
+	// contract documents a route's whole exchange — the request body, the 200
+	// answer and the refusal — each with a sentence of its own. Only an endpoint
+	// written to somebody else's contract wants this: whoever integrates against
+	// it reads /openapi.json and never this repository, so "OK" tells them
+	// nothing about the fields their parser has to read. Every other route stays
+	// on body(...) and the bare 200, because its reply is readable in the handler
+	// and a response schema maintained by hand would drift from it.
+	contract := func(in, out, bad any, success, refusal string) openapi.EndpointDoc {
+		return openapi.EndpointDoc{
+			Body:               t(in),
+			Answer:             t(out),
+			AnswerDescription:  success,
+			Failure:            t(bad),
+			FailureDescription: refusal,
+		}
+	}
 	q := func(query ...openapi.Param) openapi.EndpointDoc { return openapi.EndpointDoc{Query: query} }
 	p := func(name string) openapi.Param { return openapi.Param{Name: name} }
 	ints := func(name string) openapi.Param { return openapi.Param{Name: name, Type: "integer"} }
@@ -61,8 +74,15 @@ func EndpointDocs() map[string]openapi.EndpointDoc {
 		"POST /v1/ai/connections/order":       body(aiOrderPayload{}),
 		"POST /v1/ai/connections/{id}/shares": body(aiGrantPayload{}),
 		"POST /v1/ai/chat":                    body(chatPayload{}),
-		"POST /v1/ai/cwcloud/adapter":         bodyResp(cwcloudAdapterPayload{}, cwcloudAdapterResponse{}),
-		"DELETE /v1/ai/conversations/":        body(deleteConversationsPayload{}),
+		// The CWAI external adapter, the one endpoint whose reply is a contract
+		// somebody else parses: https://www.cwcloud.tech/docs/tutorials/cwai#external-adapter-interface
+		"POST /v1/ai/cwcloud/adapter": contract(cwcloudAdapterPayload{}, cwcloudAdapterResponse{}, errorBody{},
+			"The answer. `status` is \"ok\", the assistant's reply is the text in `message` (Markdown, and the only place it is — nothing is attached), "+
+				"and `usage` carries what the call cost on the subscription that was spent: `prompt_tokens`, `completion_tokens` and their sum `total_tokens`.",
+			"A refusal, carrying no answer: `message` says what went wrong and `i18n_code` is cwclock's own code for it. "+
+				"The HTTP status says it too — 400 a malformed body or an empty prompt, 401 a bad or missing credential, 404 an `adapter` naming a subscription that is not the caller's, "+
+				"428 a caller with no AI subscription at all, 502 a provider that refused or could not be reached."),
+		"DELETE /v1/ai/conversations/": body(deleteConversationsPayload{}),
 
 		// --- organizations / members ---
 		"POST /v1/organizations/":                              body(organizationPayload{}),
@@ -101,18 +121,18 @@ func EndpointDocs() map[string]openapi.EndpointDoc {
 		"PUT /v1/organizations/{orgId}/export-jobs/{jobId}": body(exportJobPayload{}),
 
 		// --- GET query params (main list / search endpoints) ---
-		"GET /v1/fields":                                   q(p("country")),
-		"GET /v1/user/confirmation":                        q(openapi.Param{Name: "token", Required: true}),
-		"GET /v1/users/search":                             q(p("q")),
-		"GET /v1/admin/users/":                             q(p("term"), p("role"), ints("startIndex"), ints("maxResults")),
-		"GET /v1/admin/organizations/":                     q(p("term"), ints("startIndex"), ints("maxResults")),
-		"GET /v1/admin/ip-bans/":                           q(p("term"), ints("page")),
-		"GET /v1/admin/audit/":                             q(ints("page"), ints("size"), p("action"), p("subjectType"), p("subject")),
-		"GET /v1/admin/holidays/":                          q(p("country")),
+		"GET /v1/fields":               q(p("country")),
+		"GET /v1/user/confirmation":    q(openapi.Param{Name: "token", Required: true}),
+		"GET /v1/users/search":         q(p("q")),
+		"GET /v1/admin/users/":         q(p("term"), p("role"), ints("startIndex"), ints("maxResults")),
+		"GET /v1/admin/organizations/": q(p("term"), ints("startIndex"), ints("maxResults")),
+		"GET /v1/admin/ip-bans/":       q(p("term"), ints("page")),
+		"GET /v1/admin/audit/":         q(ints("page"), ints("size"), p("action"), p("subjectType"), p("subject")),
+		"GET /v1/admin/holidays/":      q(p("country")),
 		"GET /v1/organizations/{orgId}/clients/{clientId}/working-days": q(openapi.Param{Name: "from", Required: true}, openapi.Param{Name: "to", Required: true}, p("projectId")),
-		"GET /v1/organizations/{orgId}/projects/":          q(p("clientId")),
-		"GET /v1/organizations/{orgId}/time-entries/":      q(ints("page"), ints("pageSize")),
-		"GET /v1/organizations/{orgId}/time-entries/range": q(openapi.Param{Name: "start", Required: true}, openapi.Param{Name: "end", Required: true}),
-		"GET /v1/organizations/{orgId}/invoices/":          q(p("clientId"), p("start"), p("end")),
+		"GET /v1/organizations/{orgId}/projects/":                       q(p("clientId")),
+		"GET /v1/organizations/{orgId}/time-entries/":                   q(ints("page"), ints("pageSize")),
+		"GET /v1/organizations/{orgId}/time-entries/range":              q(openapi.Param{Name: "start", Required: true}, openapi.Param{Name: "end", Required: true}),
+		"GET /v1/organizations/{orgId}/invoices/":                       q(p("clientId"), p("start"), p("end")),
 	}
 }
