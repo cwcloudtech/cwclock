@@ -96,6 +96,14 @@ func (h *AIHandler) CWCloudAdapter(w http.ResponseWriter, r *http.Request) {
 	if msg := strings.TrimSpace(p.Message); msg != "" {
 		turns = append(turns, ai.Turn{Role: models.AIChatRoleUser, Text: msg})
 	}
+	// Regenerate: CWCloud wants the last answer redone, so drop trailing
+	// assistant turns — the model re-answers the last question instead of being
+	// handed its own previous reply as the final turn.
+	if p.Regenerate {
+		for len(turns) > 0 && turns[len(turns)-1].Role == models.AIChatRoleAssistant {
+			turns = turns[:len(turns)-1]
+		}
+	}
 	if len(turns) == 0 {
 		writeError(w, http.StatusBadRequest, "Ask something", codeAIEmptyMessage)
 		return
@@ -151,7 +159,10 @@ func (h *AIHandler) adapterConnectionID(r *http.Request, userID, adapter string)
 		return ""
 	}
 	for _, c := range connections {
-		if strings.EqualFold(strings.TrimSpace(c.Name), adapter) {
+		// Match the subscription name (case-insensitive) or its id, so CWCloud
+		// can register the adapter by either. Resolving in Go (not SQL) means a
+		// non-uuid adapter name never reaches a uuid cast.
+		if strings.EqualFold(strings.TrimSpace(c.Name), adapter) || c.ID == adapter {
 			return c.ID
 		}
 	}
