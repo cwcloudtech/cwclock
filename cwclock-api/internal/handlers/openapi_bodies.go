@@ -23,6 +23,9 @@ import (
 func EndpointDocs() map[string]openapi.EndpointDoc {
 	t := reflect.TypeOf
 	body := func(v any) openapi.EndpointDoc { return openapi.EndpointDoc{Body: t(v)} }
+	// bodyResp documents both the request body and the 200 response body — for
+	// endpoints whose reply shape is part of a contract (the CWAI adapter).
+	bodyResp := func(req, resp any) openapi.EndpointDoc { return openapi.EndpointDoc{Body: t(req), Response: t(resp)} }
 	q := func(query ...openapi.Param) openapi.EndpointDoc { return openapi.EndpointDoc{Query: query} }
 	p := func(name string) openapi.Param { return openapi.Param{Name: name} }
 	ints := func(name string) openapi.Param { return openapi.Param{Name: name, Type: "integer"} }
@@ -58,7 +61,7 @@ func EndpointDocs() map[string]openapi.EndpointDoc {
 		"POST /v1/ai/connections/order":       body(aiOrderPayload{}),
 		"POST /v1/ai/connections/{id}/shares": body(aiGrantPayload{}),
 		"POST /v1/ai/chat":                    body(chatPayload{}),
-		"POST /v1/ai/cwcloud/adapter":         body(cwcloudAdapterPayload{}),
+		"POST /v1/ai/cwcloud/adapter":         bodyResp(cwcloudAdapterPayload{}, cwcloudAdapterResponse{}),
 		"DELETE /v1/ai/conversations/":        body(deleteConversationsPayload{}),
 
 		// --- organizations / members ---

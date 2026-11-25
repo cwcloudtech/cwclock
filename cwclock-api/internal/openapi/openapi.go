@@ -54,6 +54,10 @@ type EndpointDoc struct {
 	Body   reflect.Type
 	Query  []Param
 	Header []Param
+	// Response is the 200 JSON body struct, reflected like Body. Left nil, the
+	// route just documents a generic "OK" — set it for endpoints whose reply
+	// shape is part of a contract (e.g. the CWAI external adapter).
+	Response reflect.Type
 }
 
 // Param is one query or header parameter. Type defaults to "string".
@@ -85,7 +89,8 @@ type Schema struct {
 }
 
 type Response struct {
-	Description string `json:"description"`
+	Description string               `json:"description"`
+	Content     map[string]MediaType `json:"content,omitempty"`
 }
 
 type Components struct {
@@ -171,6 +176,12 @@ func Generate(r chi.Router, title, version string, docs map[string]EndpointDoc) 
 				op.RequestBody = &RequestBody{
 					Required: true,
 					Content:  map[string]MediaType{"application/json": {Schema: schemaOf(doc.Body)}},
+				}
+			}
+			if doc.Response != nil {
+				op.Responses["200"] = Response{
+					Description: "OK",
+					Content:     map[string]MediaType{"application/json": {Schema: schemaOf(doc.Response)}},
 				}
 			}
 		}
