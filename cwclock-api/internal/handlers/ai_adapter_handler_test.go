@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"strings"
 	"testing"
 
+	"cwclock-api/internal/assistant"
 	"cwclock-api/internal/models"
 )
 
@@ -62,6 +64,64 @@ func TestPickAdapterConnection(t *testing.T) {
 		}
 		if got := pickAdapterConnection(byID, "claude"); got != "claude" {
 			t.Errorf("pickAdapterConnection(%q) = %q; want %q", "claude", got, "claude")
+		}
+	})
+}
+
+// adapterSystem is the system prompt an adapter question is answered under: the
+// chat's own prompt (skill + account context + language rule), then the rule about
+// answering through an external integration, and only then whatever `system` turns
+// CWCloud sent — appended, and subordinate to cwclock's own.
+func TestAdapterSystem(t *testing.T) {
+	const context = "# Your CWClock account\n\n- Today's date is 2026-11-25."
+	const caller = "You are CWCloud's helpdesk bot. Be terse."
+
+	got := adapterSystem(context, "fr", caller)
+
+	if !strings.HasPrefix(got, assistant.Skill) {
+		t.Error("the cwclock skill must come first, so CWCloud's own prompt can never replace it")
+	}
+	if !strings.Contains(got, context) {
+		t.Error("the account context is missing — the model would not know who is asking")
+	}
+	if !strings.Contains(got, chatLanguageRule("fr")) {
+		t.Error("the language rule is missing")
+	}
+	if !strings.Contains(got, adapterIntegrationRule) {
+		t.Error("the external-integration rule is missing")
+	}
+	if !strings.Contains(got, "downloadUrl") || !strings.Contains(got, "[filename](downloadUrl)") {
+		t.Error("the rule must tell the model to hand a generated file over as the exact downloadUrl")
+	}
+	if !strings.Contains(got, caller) {
+		t.Error("CWCloud's own system turns are missing")
+	}
+	if !strings.Contains(got, adapterCallerSystemHeading+"\n\n"+caller) {
+		t.Error("CWCloud's system turns must sit under the heading that subordinates them")
+	}
+	if strings.Index(got, caller) < strings.Index(got, adapterIntegrationRule) {
+		t.Error("CWCloud's system turns must come after cwclock's own rules, not before")
+	}
+
+	t.Run("no caller instructions", func(t *testing.T) {
+		got := adapterSystem(context, "en", "   ")
+		if strings.Contains(got, adapterCallerSystemHeading) {
+			t.Error("the caller-instructions heading must be left out when CWCloud sent no system turn")
+		}
+		if !strings.HasSuffix(got, adapterIntegrationRule) {
+			t.Error("the integration rule should then be the last block")
+		}
+	})
+
+	t.Run("no account context", func(t *testing.T) {
+		got := adapterSystem("", "", "")
+		if !strings.HasPrefix(got, assistant.Skill+"\n\n"+chatLanguageRule("")) {
+			t.Error("an empty context must be skipped, not joined as a blank block")
+		}
+		// One blank line between the blocks adapterSystem joins (the embedded
+		// skill has its own blank lines, so only the joints are checked).
+		if !strings.Contains(got, chatLanguageRule("")+"\n\n"+adapterIntegrationRule) {
+			t.Error("blocks are joined by exactly one blank line")
 		}
 	})
 }
