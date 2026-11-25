@@ -4,7 +4,7 @@
 
 Implement an endpoint: 
 
-POST /ai/cwcloud/adapter which implement this interface contract: https://www.cwcloud.tech/docs/tutorials/cwai#external-adapter-interface
+`POST /v1/ai/cwcloud/adapter` which implement this interface contract: https://www.cwcloud.tech/docs/tutorials/cwai#external-adapter-interface
 
 ```json
 {
