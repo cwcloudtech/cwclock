@@ -66,9 +66,9 @@ type cwcloudAdapterResponse struct {
 // context and tools), spending one of the caller's AI subscriptions. POST
 // /v1/ai/cwcloud/adapter, authenticated as the cwclock user whose subscription is
 // spent (Bearer or X-Api-Key, like every /v1/ai route).
-// The subscription is picked by the `adapter` field (matched against a
-// subscription name as a contained, case-insensitive substring), falling back to
-// the caller's default.
+// The subscription is picked by the `adapter` field, which must carry its name
+// or its id (contained, case-insensitive — see pickAdapterConnection), falling
+// back to the caller's default.
 func (h *AIHandler) CWCloudAdapter(w http.ResponseWriter, r *http.Request) {
 	userID, ok := aiUserID(r)
 	if !ok {
@@ -161,9 +161,9 @@ func (h *AIHandler) CWCloudAdapter(w http.ResponseWriter, r *http.Request) {
 }
 
 // adapterConnectionID resolves the `adapter` field to a subscription id: the
-// caller's connection whose name contains it (case-insensitively) or whose id is
-// it exactly, or "" to let the default (first) be used — matching the spec's "if
-// it's not matching, take the first subscription".
+// caller's connection whose name or id the adapter carries (contained,
+// case-insensitive), or "" to let the default (first) be used — matching the
+// spec's "if it's not matching, take the first subscription".
 func (h *AIHandler) adapterConnectionID(r *http.Request, userID, adapter string) string {
 	if strings.TrimSpace(adapter) == "" {
 		return ""
@@ -177,42 +177,61 @@ func (h *AIHandler) adapterConnectionID(r *http.Request, userID, adapter string)
 
 // pickAdapterConnection is which subscription an `adapter` string names, out of
 // the ones the caller may spend (ListFor order: their own before the ones shared
-// with them, then position/created_at). The name is matched as a contained,
-// case-insensitive substring — both sides trimmed — so an adapter registered in
-// CWCloud as "claude" finds a subscription called "Claude (daily driver)".
+// with them, then position/created_at).
 //
-// Several can match, so the tiers run from the most certain to the least: the id
-// exactly, then a name that IS the adapter, then a name that merely contains it;
-// within a tier the list's own order decides, which keeps "test" from picking
-// "test (big)" and the result stable. Resolving in Go (not SQL) means a non-uuid
-// adapter name never reaches a uuid cast. "" when nothing matches at all.
+// The containment runs adapter-side: `adapter` is a label somebody writes in
+// CWCloud's own catalogue ("cwclock big model", "timesheet assistant (claude)"),
+// and what it has to carry is enough to say which subscription is meant — its
+// name or its id, case-insensitively, both sides trimmed. So "cwclock big model"
+// finds a subscription called "Big model", while a bare "big" finds nothing and
+// falls back. NOT the other way round: a subscription called "Big model" is not
+// what somebody asking for "big" asked for.
+//
+// Several subscriptions can be carried by one label, so the tiers run from the
+// most certain to the least: the adapter IS the id, the adapter IS the name, the
+// adapter contains the id, then the longest name it contains — "daily driver"
+// carries both "daily driver" and "driver" and means the longer one. Within a
+// tier the list's own order decides, which keeps the pick stable. A blank name is
+// never contained by anything, or it would answer every adapter.
+//
+// Resolving in Go (not SQL) means a non-uuid adapter name never reaches a uuid
+// cast, and a name holding a `%` or `_` is matched as those characters rather
+// than as a pattern. "" when nothing matches at all, which leaves the default
+// subscription to answer.
 func pickAdapterConnection(connections []models.AIConnection, adapter string) string {
 	adapter = strings.TrimSpace(adapter)
 	if adapter == "" {
 		return ""
 	}
-	needle := strings.ToLower(adapter)
-	var exact, contained string
+	label := strings.ToLower(adapter)
+
+	var exactName, carriedID, carriedName string
+	carriedNameLen := 0
 	for _, c := range connections {
 		if c.ID == adapter {
 			return c.ID
 		}
-		name := strings.ToLower(strings.TrimSpace(c.Name))
-		switch {
-		case name == needle:
-			if exact == "" {
-				exact = c.ID
-			}
-		case strings.Contains(name, needle):
-			if contained == "" {
-				contained = c.ID
-			}
+		name := strings.TrimSpace(c.Name)
+		lowerName := strings.ToLower(name)
+		if name != "" && lowerName == label && exactName == "" {
+			exactName = c.ID
+		}
+		if id := strings.ToLower(strings.TrimSpace(c.ID)); id != "" &&
+			strings.Contains(label, id) && carriedID == "" {
+			carriedID = c.ID
+		}
+		// The longest name the label carries wins, so a label holding "daily
+		// driver" is not answered by a subscription merely called "driver".
+		if name != "" && strings.Contains(label, lowerName) && len(lowerName) > carriedNameLen {
+			carriedName, carriedNameLen = c.ID, len(lowerName)
 		}
 	}
-	if exact != "" {
-		return exact
+	for _, id := range []string{exactName, carriedID, carriedName} {
+		if id != "" {
+			return id
+		}
 	}
-	return contained
+	return ""
 }
 
 // adapterIntegrationRule is what the model has to know about being called

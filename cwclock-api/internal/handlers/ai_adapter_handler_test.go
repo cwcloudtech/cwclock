@@ -8,62 +8,133 @@ import (
 	"cwclock-api/internal/models"
 )
 
-// pickAdapterConnection is the CWAI adapter's subscription picker: the `adapter`
-// field of CWCloud's payload matched against the caller's subscriptions — the id
-// exactly, the name as a contained, case-insensitive substring.
-func TestPickAdapterConnection(t *testing.T) {
-	// ListFor order: the caller's own subscriptions first, then the shared ones.
-	connections := []models.AIConnection{
-		{ID: "11111111-1111-1111-1111-111111111111", Name: "Test"},
-		{ID: "22222222-2222-2222-2222-222222222222", Name: "Test (big model)"},
-		{ID: "33333333-3333-3333-3333-333333333333", Name: " Claude (daily driver) "},
-		{ID: "44444444-4444-4444-4444-444444444444", Name: ""},
-	}
+// The subscriptions the adapter picker chooses from, in ListFor order (the
+// caller's own first, then the ones shared with them).
+const (
+	idBigModel      = "11111111-1111-1111-1111-111111111111"
+	idDriver        = "22222222-2222-2222-2222-222222222222"
+	idDailyDriver   = "33333333-3333-3333-3333-333333333333"
+	idUnnamed       = "44444444-4444-4444-4444-444444444444"
+	idNotSubscribed = "99999999-9999-9999-9999-999999999999"
+)
 
+func adapterConnections() []models.AIConnection {
+	return []models.AIConnection{
+		{ID: idBigModel, Name: "Big model"},
+		{ID: idDriver, Name: "Driver"},
+		{ID: idDailyDriver, Name: " Daily driver "},
+		{ID: idUnnamed, Name: ""},
+	}
+}
+
+// pickAdapterConnection is the CWAI adapter's subscription picker. The
+// containment runs adapter-side: the `adapter` field CWCloud sends is a label
+// that must carry the subscription's name or id (case-insensitive), not a
+// fragment a subscription name happens to contain.
+func TestPickAdapterConnection(t *testing.T) {
 	tests := []struct {
 		name    string
 		adapter string
 		want    string
 	}{
-		{"exact name", "Test", "11111111-1111-1111-1111-111111111111"},
-		{"different case", "tEsT", "11111111-1111-1111-1111-111111111111"},
-		{"surrounding spaces", "   Test   ", "11111111-1111-1111-1111-111111111111"},
-		{"exact name beats a partial one", "test", "11111111-1111-1111-1111-111111111111"},
-		{"exact id", "22222222-2222-2222-2222-222222222222", "22222222-2222-2222-2222-222222222222"},
-		{"contained fragment", "big", "22222222-2222-2222-2222-222222222222"},
-		{"contained fragment across words", "ig mod", "22222222-2222-2222-2222-222222222222"},
-		{"contained fragment, different case", "BIG MODEL", "22222222-2222-2222-2222-222222222222"},
-		{"contained against a padded name", "claude", "33333333-3333-3333-3333-333333333333"},
-		{"contained is the whole padded name", "Claude (daily driver)", "33333333-3333-3333-3333-333333333333"},
+		// The adapter IS the name, or the id.
+		{"exact name", "Big model", idBigModel},
+		{"different case", "big model", idBigModel},
+		{"surrounding spaces", "  BIG MODEL  ", idBigModel},
+		{"exact id", idDriver, idDriver},
+		{"a padded name, exactly", "Daily driver", idDailyDriver},
+
+		// The adapter CARRIES the name — a label written in CWCloud's catalogue.
+		{"a label carrying the name", "cwclock big model", idBigModel},
+		{"a label carrying the name in brackets", "Sourcing (BIG MODEL)", idBigModel},
+		{"a label carrying the name mid-sentence", "ask the big model please", idBigModel},
+		{"a label carrying the id", "cwclock-" + idDriver, idDriver},
+		{"a label carrying the id, upper case", "CWCLOCK-" + strings.ToUpper(idDriver), idDriver},
+
+		// The other direction must NOT match: a fragment of a name is not a
+		// label for it.
+		{"a fragment of the name does not match", "big", ""},
+		{"a shorter fragment does not match", "mod", ""},
+		{"a truncated name does not match", "Daily dri", ""},
+
+		// The longest name the label carries is the one it means.
+		{"the longest name carried wins", "ask the daily driver please", idDailyDriver},
+		{"only the shorter name is carried", "ask the driver please", idDriver},
+
+		// Nothing matched: the default subscription answers.
 		{"no match falls back to the default", "mistral", ""},
-		{"an unknown id falls back to the default", "99999999-9999-9999-9999-999999999999", ""},
+		{"an unknown id falls back to the default", idNotSubscribed, ""},
 		{"empty adapter falls back to the default", "", ""},
 		{"blank adapter falls back to the default", "   ", ""},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := pickAdapterConnection(connections, tt.adapter); got != tt.want {
+			if got := pickAdapterConnection(adapterConnections(), tt.adapter); got != tt.want {
 				t.Errorf("pickAdapterConnection(%q) = %q; want %q", tt.adapter, got, tt.want)
 			}
 		})
 	}
 
 	t.Run("no subscriptions", func(t *testing.T) {
-		if got := pickAdapterConnection(nil, "Test"); got != "" {
-			t.Errorf("pickAdapterConnection(nil, %q) = %q; want \"\"", "Test", got)
+		if got := pickAdapterConnection(nil, "Big model"); got != "" {
+			t.Errorf("pickAdapterConnection(nil, %q) = %q; want \"\"", "Big model", got)
 		}
 	})
 
-	t.Run("an id wins over another subscription's exact name", func(t *testing.T) {
-		// The adapter string is both one subscription's id and another's name:
-		// the id is the certain match, so it wins wherever it sits in the list.
-		byID := []models.AIConnection{
-			{ID: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", Name: "claude"},
-			{ID: "claude", Name: "Claude (daily driver)"},
+	t.Run("a blank name is carried by nothing", func(t *testing.T) {
+		// "" is contained in every string, so an unnamed subscription would
+		// otherwise answer every adapter CWCloud ever registers.
+		for _, adapter := range []string{"whatever", "cwclock", idNotSubscribed} {
+			if got := pickAdapterConnection(adapterConnections(), adapter); got == idUnnamed {
+				t.Errorf("pickAdapterConnection(%q) picked the unnamed subscription", adapter)
+			}
 		}
-		if got := pickAdapterConnection(byID, "claude"); got != "claude" {
+	})
+
+	// The tiers, from the most certain to the least.
+	t.Run("the exact id wins over another subscription's exact name", func(t *testing.T) {
+		connections := []models.AIConnection{
+			{ID: idBigModel, Name: "claude"},
+			{ID: "claude", Name: "Daily driver"},
+		}
+		if got := pickAdapterConnection(connections, "claude"); got != "claude" {
 			t.Errorf("pickAdapterConnection(%q) = %q; want %q", "claude", got, "claude")
+		}
+	})
+
+	t.Run("an exact name wins over a carried id", func(t *testing.T) {
+		connections := []models.AIConnection{
+			{ID: "big", Name: "Something else"},
+			{ID: idBigModel, Name: "cwclock big model"},
+		}
+		if got := pickAdapterConnection(connections, "cwclock big model"); got != idBigModel {
+			t.Errorf("pickAdapterConnection(%q) = %q; want %q", "cwclock big model", got, idBigModel)
+		}
+	})
+
+	t.Run("a carried id wins over a carried name", func(t *testing.T) {
+		connections := []models.AIConnection{
+			{ID: idBigModel, Name: "Big model"},
+			{ID: idDriver, Name: "Driver"},
+		}
+		adapter := "big model via " + idDriver
+		if got := pickAdapterConnection(connections, adapter); got != idDriver {
+			t.Errorf("pickAdapterConnection(%q) = %q; want %q", adapter, got, idDriver)
+		}
+	})
+
+	t.Run("a name holding a wildcard is matched as text", func(t *testing.T) {
+		// Nothing here is a SQL pattern: % and _ are characters.
+		connections := []models.AIConnection{
+			{ID: idBigModel, Name: "100%_model"},
+			{ID: idDriver, Name: "Driver"},
+		}
+		if got := pickAdapterConnection(connections, "cwclock 100%_model"); got != idBigModel {
+			t.Errorf("a literal %% / _ in a name must match as itself, got %q", got)
+		}
+		if got := pickAdapterConnection(connections, "cwclock 100XYmodel"); got != "" {
+			t.Errorf("%% / _ must not act as wildcards, got %q", got)
 		}
 	})
 }
