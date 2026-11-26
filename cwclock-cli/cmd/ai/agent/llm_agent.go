@@ -60,6 +60,11 @@ func NewLLMAgent(serverURL string, modelName string, provider string) *LLMAgent 
 		baseURL = config.GetMistralBaseURL()
 		apiKey = config.GetMistralAPIKey()
 		defaultModel = "mistral-small-latest"
+	case "cwcloud", "cwai":
+		baseURL = config.GetCwcloudBaseURL()
+		apiKey = config.GetCwcloudAPIKey()
+		defaultModel = "claude-sonnet"
+		providerName = "cwcloud"
 	default:
 		baseURL = config.GetOpenAIBaseURL()
 		apiKey = config.GetOpenAIAPIKey()
@@ -432,6 +437,9 @@ func (agent *LLMAgent) ProcessConversationWithUsage(messages []AgentConversation
 		result, err = agent.runAnthropic(ctx, effectiveMessages, maxTokens, claudeTools)
 	case "google":
 		result, err = agent.runGemini(ctx, effectiveMessages, maxTokens, geminiTools)
+	case "cwcloud":
+		// CWAI cannot call tools, so it answers from the conversation only.
+		result, err = agent.runCwcloud(ctx, effectiveMessages, maxTokens)
 	case "mistral":
 		result, err = agent.runOpenAI(ctx, effectiveMessages, maxTokens, openAITools)
 	default:
@@ -900,6 +908,172 @@ func (agent *LLMAgent) runOpenAI(ctx context.Context, messages []AgentConversati
 	}
 
 	return &ConversationResult{Response: msg.Content, Usage: tokenUsage}, nil
+}
+
+// --- CWCloud (CWAI prompt API) ---
+
+// CwcloudMessage is one turn in CWAI's shape: the text is in `message`, not
+// `content`.
+type CwcloudMessage struct {
+	Role    string `json:"role"`
+	Message string `json:"message"`
+}
+
+// CwcloudRequest is a POST to {base}/v1/ai/prompt. The model is carried in
+// `adapter`, and enable_history is false so a CLI call never fills the user's
+// CWCloud prompt history.
+type CwcloudRequest struct {
+	Adapter       string           `json:"adapter"`
+	Messages      []CwcloudMessage `json:"messages"`
+	Settings      map[string]any   `json:"settings"`
+	EnableHistory bool             `json:"enable_history"`
+}
+
+type CwcloudUsage struct {
+	Prompt     int `json:"prompt,omitempty"`
+	Completion int `json:"completion,omitempty"`
+	Total      int `json:"total,omitempty"`
+	Cached     int `json:"cached,omitempty"`
+}
+
+type CwcloudUpstream struct {
+	HTTPCode int             `json:"http_code,omitempty"`
+	Body     json.RawMessage `json:"body,omitempty"`
+	Source   string          `json:"source,omitempty"`
+	Adapter  string          `json:"adapter,omitempty"`
+}
+
+// CwcloudResponse is the 201 reply; `response` is a string OR an array of
+// strings, and a `ko` status can ride a 2xx.
+type CwcloudResponse struct {
+	Status   string           `json:"status"`
+	Response json.RawMessage  `json:"response"`
+	Model    string           `json:"model,omitempty"`
+	Usage    *CwcloudUsage    `json:"usage,omitempty"`
+	Error    string           `json:"error,omitempty"`
+	Upstream *CwcloudUpstream `json:"upstream,omitempty"`
+}
+
+// cwcloudNoToolsNotice is prepended because CWAI cannot call tools, so the model
+// must not pretend to run commands it cannot.
+const cwcloudNoToolsNotice = "You are answering through CWCloud's CWAI, which cannot call tools or run commands. " +
+	"Answer only from the conversation above. If the task needs an action you cannot perform, say so plainly and " +
+	"describe what the user should run, instead of pretending to have done it."
+
+// cwcloudEndpoint tolerates a base of the full endpoint, the /v1 root, or the
+// host alone, appending whatever is missing.
+func cwcloudEndpoint(baseURL string) string {
+	trimmed := strings.TrimRight(strings.TrimSpace(baseURL), "/")
+	switch {
+	case strings.HasSuffix(trimmed, "/ai/prompt"):
+		return trimmed
+	case strings.HasSuffix(trimmed, "/v1"):
+		return trimmed + "/ai/prompt"
+	default:
+		return trimmed + "/v1/ai/prompt"
+	}
+}
+
+// cwcloudText renders CWAI's `response`, a string or an array of strings joined
+// with newlines.
+func cwcloudText(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return utils.EMPTY
+	}
+	var single string
+	if json.Unmarshal(raw, &single) == nil {
+		return single
+	}
+	var list []string
+	if json.Unmarshal(raw, &list) == nil {
+		return strings.Join(list, "\n")
+	}
+	return utils.EMPTY
+}
+
+func (agent *LLMAgent) runCwcloud(ctx context.Context, messages []AgentConversationMessage, maxTokens int) (*ConversationResult, error) {
+	cwMessages := make([]CwcloudMessage, 0, len(messages)+1)
+	cwMessages = append(cwMessages, CwcloudMessage{Role: "system", Message: cwcloudNoToolsNotice})
+	for _, input := range messages {
+		if utils.IsBlank(input.Message) {
+			continue
+		}
+		role := strings.ToLower(strings.TrimSpace(input.Role))
+		if !utils.ContainsValue(role, []string{"system", "assistant", "user"}) {
+			role = "user"
+		}
+		cwMessages = append(cwMessages, CwcloudMessage{Role: role, Message: input.Message})
+	}
+
+	resp, err := agent.callCwcloud(ctx, CwcloudRequest{
+		Adapter:  agent.modelName,
+		Messages: cwMessages,
+		Settings: map[string]any{"max_tokens": maxTokens},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var tokenUsage *TokenUsage
+	if utils.IsNotEmpty(resp.Usage) {
+		tokenUsage = &TokenUsage{
+			Prompt:     resp.Usage.Prompt,
+			Completion: resp.Usage.Completion,
+			Total:      resp.Usage.Total,
+		}
+	}
+
+	return &ConversationResult{Response: cwcloudText(resp.Response), Usage: tokenUsage}, nil
+}
+
+func (agent *LLMAgent) callCwcloud(ctx context.Context, req CwcloudRequest) (*CwcloudResponse, error) {
+	if utils.IsBlank(agent.apiKey) {
+		return nil, fmt.Errorf("cwcloud_api_key config is not set")
+	}
+
+	reqBody, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal CWCloud request: %w", err)
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", cwcloudEndpoint(agent.providerBaseUrl), bytes.NewReader(reqBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create CWCloud request: %w", err)
+	}
+
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Accept", "application/json")
+	httpReq.Header.Set("X-Auth-Token", agent.apiKey)
+
+	httpResp, err := agent.httpClient.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call CWCloud API: %w", err)
+	}
+	defer httpResp.Body.Close()
+
+	body, err := io.ReadAll(httpResp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read CWCloud response: %w", err)
+	}
+
+	var response CwcloudResponse
+	_ = json.Unmarshal(body, &response)
+
+	// A ko can ride a 2xx, and a 424 means the model behind CWAI failed — its
+	// real cause is under `upstream`, so unwrap it.
+	if httpResp.StatusCode >= 300 || response.Status == "ko" {
+		detail := strings.TrimSpace(response.Error)
+		if utils.IsNotEmpty(response.Upstream) {
+			detail = strings.TrimSpace(fmt.Sprintf("%s (upstream %s %d: %s)",
+				detail, response.Upstream.Source, response.Upstream.HTTPCode, string(response.Upstream.Body)))
+		}
+		if utils.IsBlank(detail) {
+			detail = string(body)
+		}
+		return nil, fmt.Errorf("CWCloud API error: %s", detail)
+	}
+
+	return &response, nil
 }
 
 func (agent *LLMAgent) callGemini(ctx context.Context, req GeminiGenerateContentRequest) (*GeminiGenerateContentResponse, error) {

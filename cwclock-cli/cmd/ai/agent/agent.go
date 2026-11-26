@@ -48,7 +48,7 @@ func init() {
 	AgentCmd.Flags().StringVarP(&promptText, "prompt", "p", utils.EMPTY, "The prompt to send to the LLM")
 	AgentCmd.Flags().StringVarP(&serverURL, "server", "s", "http://127.0.0.1:8080/mcp", "The MCP server URL")
 	AgentCmd.Flags().StringVarP(&modelName, "model", "m", config.GetDefaultAiModel(), "The LLM model to use (default: llama for openrouter, gpt-4o-mini for openai, gemini-2.5-flash for google, deepseek-chat for deepseek, claude-haiku-4-5 for anthropic)")
-	AgentCmd.Flags().StringVar(&provider, "provider", config.GetDefaultAiProvider(), "LLM provider: openrouter, openai, google, deepseek or anthropic")
+	AgentCmd.Flags().StringVar(&provider, "provider", config.GetDefaultAiProvider(), "LLM provider: openrouter, openai, google, deepseek, anthropic, mistral or cwcloud")
 	AgentCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Interactive mode (optional)")
 }
 

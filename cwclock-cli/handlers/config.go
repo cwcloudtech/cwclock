@@ -19,6 +19,8 @@ var availableConfigKeys = []string{
 	"anthropic_base_url",
 	"api_key",
 	"api_url",
+	"cwcloud_api_key",
+	"cwcloud_base_url",
 	"deepseek_api_key",
 	"deepseek_base_url",
 	"default_helm_directory",

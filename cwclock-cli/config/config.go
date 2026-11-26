@@ -104,6 +104,18 @@ func GetMistralAPIKey() string {
 	return GetConfigValue("mistral_api_key", utils.EMPTY)
 }
 
+// CWCloud (CWAI) is reached through its own prompt API (POST .../v1/ai/prompt
+// with an X-Auth-Token), not an OpenAI-compatible endpoint; the base URL
+// defaults to the full endpoint, which the client also tolerates as a host or
+// /v1 root.
+func GetCwcloudBaseURL() string {
+	return GetConfigValue("cwcloud_base_url", "https://api.cwcloud.tech/v1/ai/prompt")
+}
+
+func GetCwcloudAPIKey() string {
+	return GetConfigValue("cwcloud_api_key", utils.EMPTY)
+}
+
 func GetDefaultAiProvider() string {
 	return GetConfigValue("default_ai_provider", "openai")
 }

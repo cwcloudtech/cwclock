@@ -116,7 +116,7 @@ func init() {
 	WebAgentCmd.Flags().StringVarP(&listenAddr, "address", "a", "127.0.0.1", "Web-agent listen address")
 	WebAgentCmd.Flags().StringVarP(&serverURL, "server", "s", "http://127.0.0.1:8080/mcp", "The MCP server URL")
 	WebAgentCmd.Flags().StringVarP(&modelName, "model", "m", config.GetDefaultAiModel(), "The LLM model to use")
-	WebAgentCmd.Flags().StringVar(&provider, "provider", config.GetDefaultAiProvider(), "LLM provider: openrouter, openai, google, deepseek, anthropic or mistral")
+	WebAgentCmd.Flags().StringVar(&provider, "provider", config.GetDefaultAiProvider(), "LLM provider: openrouter, openai, google, deepseek, anthropic, mistral or cwcloud")
 }
 
 func handleWebAgentRequest(w http.ResponseWriter, r *http.Request, llmAgent *agent.LLMAgent) {
