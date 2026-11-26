@@ -11,7 +11,7 @@ FROM node:${NODE_IMAGE_TAG} AS ui-build
 WORKDIR /app
 RUN npm i -g pnpm
 COPY cwclock-ui/package.json cwclock-ui/pnpm-lock.yaml cwclock-ui/pnpm-workspace.yaml ./
-RUN pnpm install
+RUN pnpm install --frozen-lockfile
 COPY cwclock-ui/ ./
 COPY manifest.json ./manifest.json
 RUN pnpm run build:docker
