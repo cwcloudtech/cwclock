@@ -1,0 +1,10 @@
+allowBuilds:
+  core-js: true
+  core-js-pure: true
+  '@parcel/watcher': false
+publicHoistPattern:
+  - '*eslint*'
+  - '*prettier*'
+overrides:
+  autoprefixer: 10.4.5
+  typescript: ^4.9.5

@@ -9,11 +9,12 @@ ARG FLUTTER_IMAGE_TAG=3.44.0
 # Stage ui build
 FROM node:${NODE_IMAGE_TAG} AS ui-build
 WORKDIR /app
-COPY cwclock-ui/package.json cwclock-ui/package-lock.json ./
-RUN npm ci
+RUN npm i -g pnpm
+COPY cwclock-ui/package.json cwclock-ui/pnpm-lock.yaml cwclock-ui/pnpm-workspace.yaml ./
+RUN pnpm install
 COPY cwclock-ui/ ./
 COPY manifest.json ./manifest.json
-RUN npm run build:docker
+RUN pnpm run build:docker
 
 # Stage api build
 FROM golang:${GOLANG_IMAGE_TAG} AS api-build
