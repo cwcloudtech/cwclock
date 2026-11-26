@@ -148,12 +148,13 @@ func UsageOf(usage map[string]any) Usage {
 		return total
 	}
 
+	// CWCloud (CWAI) names them prompt/completion/cached — a fourth vocabulary.
 	tokens := Usage{
-		Input: read("prompt_tokens", "input_tokens", "promptTokenCount"),
+		Input: read("prompt_tokens", "input_tokens", "promptTokenCount", "prompt"),
 		Output: read("completion_tokens", "output_tokens", "candidatesTokenCount",
-			"candidates_token_count"),
+			"candidates_token_count", "completion"),
 		Cached: read("cache_read_input_tokens", "cache_creation_input_tokens",
-			"cachedContentTokenCount", "cached_content_token_count"),
+			"cachedContentTokenCount", "cached_content_token_count", "cached"),
 	}
 	// OpenAI nests its cached count a level down.
 	if details, ok := usage["prompt_tokens_details"].(map[string]any); ok {
@@ -207,6 +208,8 @@ func (c *Client) Ask(ctx context.Context, connection models.AIConnection, reques
 		return c.askAnthropic(ctx, connection, model, request)
 	case models.AIFormatGemini:
 		return c.askGemini(ctx, connection, model, request)
+	case models.AIFormatCWCloud:
+		return c.askCWCloud(ctx, connection, model, request)
 	default:
 		return c.askOpenAI(ctx, connection, model, request)
 	}
@@ -587,6 +590,159 @@ func geminiTurn(turn Turn) geminiContent {
 	default:
 		return geminiContent{Role: models.AIChatRoleUser, Parts: []geminiPart{{Text: turn.Text}}}
 	}
+}
+
+// --- CWCloud (CWAI prompt API) ---
+//
+// POST {base}/v1/ai/prompt with X-Auth-Token. The model name is carried in the
+// `adapter` field (CWCloud's "adapters" are its model names), a turn's text is
+// in `message` (not `content`), and there is no system field — a leading
+// {role:"system"} message is the whole of a system prompt here. It cannot do
+// tools (the caller withholds them), and it answers HTTP 201, with `response`
+// being either a string or an array of strings. Usage keys are prompt/
+// completion/cached. A `ko` status can arrive on a 2xx, and 424 means the model
+// behind CWAI failed — its real cause is under `upstream`.
+
+type cwcloudMessage struct {
+	Role    string `json:"role"`
+	Message string `json:"message"`
+}
+
+// cwcloudEndpoint tolerates a base of the full endpoint, the /v1 root, or the
+// host alone — appending whatever is missing — since the address the user pastes
+// varies (CWCloud's docs give the full /v1/ai/prompt line).
+func cwcloudEndpoint(baseURL string) string {
+	u := strings.TrimRight(strings.TrimSpace(baseURL), "/")
+	switch {
+	case strings.HasSuffix(u, "/v1/ai/prompt"):
+		return u
+	case strings.HasSuffix(u, "/ai/prompt"):
+		return u
+	case strings.HasSuffix(u, "/v1"):
+		return u + "/ai/prompt"
+	default:
+		return u + "/v1/ai/prompt"
+	}
+}
+
+// cwcloudRole maps a transcript role to one CWAI accepts.
+func cwcloudRole(role string) string {
+	switch role {
+	case models.AIChatRoleAssistant:
+		return models.AIChatRoleAssistant
+	case models.AIChatRoleSystem:
+		return models.AIChatRoleSystem
+	default:
+		return models.AIChatRoleUser
+	}
+}
+
+// cwcloudText renders CWAI's `response`, which is a string or an array of
+// strings (joined with newlines, as the mobile client does).
+func cwcloudText(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	var s string
+	if json.Unmarshal(raw, &s) == nil {
+		return s
+	}
+	var list []string
+	if json.Unmarshal(raw, &list) == nil {
+		return strings.Join(list, "\n")
+	}
+	return ""
+}
+
+func (c *Client) askCWCloud(ctx context.Context, connection models.AIConnection,
+	model string, request Request) (Response, error) {
+	messages := make([]cwcloudMessage, 0, len(request.Messages)+1)
+	if request.System != "" {
+		messages = append(messages, cwcloudMessage{Role: models.AIChatRoleSystem, Message: request.System})
+	}
+	for _, turn := range request.Messages {
+		if turn.Role == RoleTool {
+			continue // this format never produced a tool call, so there are none to feed back
+		}
+		messages = append(messages, cwcloudMessage{Role: cwcloudRole(turn.Role), Message: turn.Text})
+	}
+
+	body := struct {
+		Adapter  string          `json:"adapter"`
+		Messages []cwcloudMessage `json:"messages"`
+		Settings map[string]any  `json:"settings"`
+		// enable_history defaults to true server-side; a call on the user's
+		// behalf has no business filling their CWCloud prompt history — cwclock
+		// keeps the conversation itself.
+		EnableHistory bool `json:"enable_history"`
+	}{Adapter: model, Messages: messages, Settings: map[string]any{"max_tokens": request.MaxTokens}}
+
+	encoded, err := json.Marshal(body)
+	if err != nil {
+		return Response{}, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, cwcloudEndpoint(connection.BaseURL), bytes.NewReader(encoded))
+	if err != nil {
+		return Response{}, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("X-Auth-Token", connection.Token)
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return Response{}, err
+	}
+	defer resp.Body.Close()
+	raw, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
+	if err != nil {
+		return Response{}, err
+	}
+
+	var parsed struct {
+		Status   string          `json:"status"`
+		Response json.RawMessage `json:"response"`
+		Model    string          `json:"model"`
+		Usage    map[string]any  `json:"usage"`
+		Error    string          `json:"error"`
+		Upstream struct {
+			HTTPCode int             `json:"http_code"`
+			Body     json.RawMessage `json:"body"`
+			Source   string          `json:"source"`
+			Adapter  string          `json:"adapter"`
+		} `json:"upstream"`
+	}
+	_ = json.Unmarshal(raw, &parsed)
+
+	// A ko can arrive on a 2xx, so the body's status is checked too. On a 424
+	// (the model behind CWAI failed) the real cause is in `upstream` — unwrap it
+	// so the user reads "401 Incorrect API key", not the envelope.
+	if resp.StatusCode >= 300 || parsed.Status == "ko" {
+		detail := strings.TrimSpace(parsed.Error)
+		if parsed.Upstream.HTTPCode != 0 || len(parsed.Upstream.Body) > 0 {
+			detail = strings.TrimSpace(fmt.Sprintf("%s (upstream %s %d: %s)",
+				detail, parsed.Upstream.Source, parsed.Upstream.HTTPCode, snippet(parsed.Upstream.Body)))
+		}
+		if detail == "" {
+			detail = snippet(raw)
+		}
+		status := resp.StatusCode
+		if status < 300 {
+			status = http.StatusBadGateway // a ko on a 2xx is still a refusal
+		}
+		return Response{}, ErrRefused{Status: status, Detail: detail}
+	}
+
+	message := strings.TrimSpace(cwcloudText(parsed.Response))
+	if message == "" {
+		return Response{}, errors.New("ai: the provider returned no answer")
+	}
+	return Response{
+		Message: message,
+		Usage:   parsed.Usage,
+		Model:   parsed.Model, // what CWCloud actually spent behind the adapter
+		Tokens:  UsageOf(parsed.Usage),
+	}, nil
 }
 
 // --- tool-argument helpers ---

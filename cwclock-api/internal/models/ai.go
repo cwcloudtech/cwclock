@@ -18,7 +18,20 @@ const (
 	AIFormatOpenAI    = "openai"
 	AIFormatAnthropic = "anthropic"
 	AIFormatGemini    = "gemini"
+	// AIFormatCWCloud is CWCloud's CWAI prompt API (POST /v1/ai/prompt). Unlike
+	// the others it cannot do tools — it takes a transcript and returns prose —
+	// so the assistant must ask it with the tool catalogue withheld.
+	AIFormatCWCloud = "cwcloud"
 )
+
+// AIFormatSupportsTools reports whether a wire format can be given a tool
+// catalogue and return tool calls. CWCloud cannot: it only answers prose, so a
+// question put through it must be asked with tools withheld AND the system
+// prompt told so (else the assistant reports figures it never read). This is the
+// one place that answers the question.
+func AIFormatSupportsTools(format string) bool {
+	return format != AIFormatCWCloud
+}
 
 // Roles on a connection. Two, not three: there is no reading a connection without
 // spending it.
